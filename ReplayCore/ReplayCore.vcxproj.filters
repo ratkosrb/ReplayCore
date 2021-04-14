@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Database\Database.cpp">
+      <Filter>Database</Filter>
+    </ClCompile>
+    <ClCompile Include="Database\DbField.cpp">
+      <Filter>Database</Filter>
+    </ClCompile>
+    <ClCompile Include="Database\QueryObject.cpp">
+      <Filter>Database</Filter>
+    </ClCompile>
+    <ClCompile Include="Database\QueryResult.cpp">
+      <Filter>Database</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Auth\AuthServer.cpp">
+      <Filter>Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="Crypto\ARC4.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="Crypto\AuthCrypt.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="Crypto\base32.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="Crypto\BigNumber.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="Crypto\Hmac.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="Crypto\HMACSHA1.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="Crypto\md5.c">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="Crypto\Sha1.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="World\WorldServer.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\Opcodes.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Database\Database.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\DbField.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\QueryObjects.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\QueryResult.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\SafeQueue.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines\Common.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
+    <ClInclude Include="Auth\AuthServer.h">
+      <Filter>Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines\Utility.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
+    <ClInclude Include="Auth\AuthDefines.h">
+      <Filter>Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="Crypto\ARC4.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="Crypto\AuthCrypt.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="Crypto\base32.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="Crypto\BigNumber.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="Crypto\Hmac.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="Crypto\HMACSHA1.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="Crypto\md5.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="Crypto\Sha1.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines\ByteBuffer.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines\ByteConverter.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
+    <ClInclude Include="World\WorldServer.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines\WorldPacket.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Opcodes.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines\GameAccount.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Database">
+      <UniqueIdentifier>{774c45f0-01e8-4712-9236-2ef70cb287f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Defines">
+      <UniqueIdentifier>{36f5f2bf-3ee5-4eaa-b3b4-581ef756a46f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Auth">
+      <UniqueIdentifier>{d3ad7d25-fd2b-4cfd-ab52-4d443cf74aef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto">
+      <UniqueIdentifier>{e920d820-6df0-4315-9c5d-a4cb835036ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World">
+      <UniqueIdentifier>{6a010d4a-05cf-49f3-8fe1-492889bcf217}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
