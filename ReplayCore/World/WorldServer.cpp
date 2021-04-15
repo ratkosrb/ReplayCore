@@ -325,8 +325,7 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
     }
     else
     {
-        m_sessionData.m_encryption.SetKey(K.AsByteArray());
-        m_sessionData.m_encryption.Init();
+        m_sessionData.m_encryption.InitVanilla(&K);
     }
     printf("end wotlk\n");
 
@@ -345,4 +344,13 @@ void WorldServer::HandleEnumCharacters(WorldPacket& packet)
     WorldPacket response(GetOpcode("SMSG_CHAR_ENUM"), 1);
     response << uint8(0);
     SendPacket(response);
+}
+
+uint32 WorldServer::GetAllowedRaceMask()
+{
+    
+}
+uint32 WorldServer::GetAllowedClassMask()
+{
+
 }

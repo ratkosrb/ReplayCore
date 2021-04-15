@@ -26,7 +26,7 @@
 #define MANGOS_H_AUTHCRYPT
 
 #include "../Defines//Common.h"
-#include "ARC4.h"
+#include <openssl/rc4.h>
 #include <vector>
 
 class BigNumber;
@@ -40,7 +40,7 @@ class AuthCrypt
         static size_t const CRYPTED_SEND_LEN = 4;
         static size_t const CRYPTED_RECV_LEN = 6;
 
-        void Init();
+        void InitVanilla(BigNumber* K);
         void InitTBC(BigNumber* K);
         void InitWOTLK(BigNumber* K);
 
@@ -50,32 +50,18 @@ class AuthCrypt
         void DecryptRecv(uint8*, size_t);
         void EncryptSend(uint8*, size_t);
 
-        bool IsInitialized() { return _initialized; }
+        bool IsInitialized() { return m_isInitialized; }
 
         static void GenerateKey(uint8*, BigNumber*);
 
     private:
-        bool wotlk = false;
-        ARC4 _clientDecrypt;
-        ARC4 _serverEncrypt;
-        std::vector<uint8> _key;
-        uint8 _send_i, _send_j, _recv_i, _recv_j;
-        bool _initialized;
-};
+        bool m_wotlk = false;
+        RC4_KEY m_clientWotlkDecryptKey;
+        RC4_KEY m_serverWotlkEncryptKey;
 
-
-class NoCrypt
-{
-    public:
-        NoCrypt() {}
-
-        void Init() {}
-
-        void SetKey(std::vector<uint8> const& key) {}
-        void SetKey(uint8* key, size_t len) {}
-
-        void DecryptRecv(uint8*, size_t) {}
-        void EncryptSend(uint8*, size_t) {}
+        std::vector<uint8> m_key;
+        uint8 m_send_i, m_send_j, m_recv_i, m_recv_j;
+        bool m_isInitialized;
 };
 
 #endif

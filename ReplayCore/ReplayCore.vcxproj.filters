@@ -32,9 +32,6 @@
     <ClCompile Include="Crypto\Hmac.cpp">
       <Filter>Crypto</Filter>
     </ClCompile>
-    <ClCompile Include="Crypto\HMACSHA1.cpp">
-      <Filter>Crypto</Filter>
-    </ClCompile>
     <ClCompile Include="Crypto\md5.c">
       <Filter>Crypto</Filter>
     </ClCompile>
@@ -45,6 +42,12 @@
       <Filter>World</Filter>
     </ClCompile>
     <ClCompile Include="World\Opcodes.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\ObjectGuid.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\ReplayMgr.cpp">
       <Filter>World</Filter>
     </ClCompile>
   </ItemGroup>
@@ -91,9 +94,6 @@
     <ClInclude Include="Crypto\Hmac.h">
       <Filter>Crypto</Filter>
     </ClInclude>
-    <ClInclude Include="Crypto\HMACSHA1.h">
-      <Filter>Crypto</Filter>
-    </ClInclude>
     <ClInclude Include="Crypto\md5.h">
       <Filter>Crypto</Filter>
     </ClInclude>
@@ -116,6 +116,36 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="Defines\GameAccount.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ObjectDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ObjectGuid.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Object.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Unit.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\UnitDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Geometry.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Player.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\PlayerDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ReplayMgr.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines\Databases.h">
       <Filter>Defines</Filter>
     </ClInclude>
   </ItemGroup>

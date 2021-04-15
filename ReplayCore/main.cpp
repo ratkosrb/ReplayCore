@@ -10,7 +10,8 @@
 #include "Auth\AuthServer.h"
 #include "World\WorldServer.h"
 
-Database GameDb;
+Database WorldDatabase;
+Database SniffDatabase;
 
 std::string MakeConnectionString()
 {
@@ -18,7 +19,6 @@ std::string MakeConnectionString()
     std::string mysql_port;
     std::string mysql_user;
     std::string mysql_pass;
-    std::string mysql_db;
 
     printf("Host: ");
     getline(std::cin, mysql_host);
@@ -40,28 +40,56 @@ std::string MakeConnectionString()
     if (mysql_pass.empty())
         mysql_pass = "root";
 
-    printf("Database: ");
+    return mysql_host + ";" + mysql_port + ";" + mysql_user + ";" + mysql_pass + ";";
+}
+
+static std::string GetWorldDatabaseName()
+{
+    std::string mysql_db;
+
+    printf("World Database: ");
     getline(std::cin, mysql_db);
     if (mysql_db.empty())
         mysql_db = "mangos";
 
-    return mysql_host + ";" + mysql_port + ";" + mysql_user + ";" + mysql_pass + ";" + mysql_db;
+    return mysql_db;
+}
+
+static std::string GetSniffDatabaseName()
+{
+    std::string mysql_db;
+
+    printf("Sniff Database: ");
+    getline(std::cin, mysql_db);
+    if (mysql_db.empty())
+        mysql_db = "sniffs_new_test";
+
+    return mysql_db;
 }
 
 int main()
 {
-    /*
     printf("\nEnter your database connection info.\n");
-    std::string const connection_string = MakeConnectionString();
+    std::string const connectionString = MakeConnectionString();
+    std::string const worldConnectionString = connectionString + GetWorldDatabaseName();
+    std::string const sniffConnectionString = connectionString + GetSniffDatabaseName();
 
-    printf("\nConnecting to database.\n");
-    if (!GameDb.Initialize(connection_string.c_str()))
+    printf("\nConnecting to world database.\n");
+    if (!WorldDatabase.Initialize(worldConnectionString.c_str()))
     {
-        printf("\nError: Cannot connect to character database!\n");
+        printf("\nError: Cannot connect to world database!\n");
         getchar();
         return 1;
     }
-    */
+
+    printf("\nConnecting to sniff database.\n");
+    if (!SniffDatabase.Initialize(sniffConnectionString.c_str()))
+    {
+        printf("\nError: Cannot connect to sniff database!\n");
+        getchar();
+        return 1;
+    }
+
     WSAData data;
     int result = WSAStartup(0x0202, &data);
     if (result == SOCKET_ERROR)
@@ -78,7 +106,8 @@ int main()
         sWorld.m_networkThread.join();
 
     getchar();
-    GameDb.Uninitialise();
+    WorldDatabase.Uninitialise();
+    SniffDatabase.Uninitialise();
     WSACleanup();
     return 0;
 }

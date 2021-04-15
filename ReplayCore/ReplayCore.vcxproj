@@ -88,7 +88,6 @@
     <ClInclude Include="Crypto\base32.h" />
     <ClInclude Include="Crypto\BigNumber.h" />
     <ClInclude Include="Crypto\Hmac.h" />
-    <ClInclude Include="Crypto\HMACSHA1.h" />
     <ClInclude Include="Crypto\md5.h" />
     <ClInclude Include="Crypto\Sha1.h" />
     <ClInclude Include="Database\Database.h" />
@@ -99,10 +98,20 @@
     <ClInclude Include="Defines\ByteBuffer.h" />
     <ClInclude Include="Defines\ByteConverter.h" />
     <ClInclude Include="Defines\Common.h" />
+    <ClInclude Include="Defines\Databases.h" />
     <ClInclude Include="Defines\GameAccount.h" />
     <ClInclude Include="Defines\Utility.h" />
     <ClInclude Include="Defines\WorldPacket.h" />
+    <ClInclude Include="World\Geometry.h" />
+    <ClInclude Include="World\Object.h" />
+    <ClInclude Include="World\ObjectDefines.h" />
+    <ClInclude Include="World\ObjectGuid.h" />
     <ClInclude Include="World\Opcodes.h" />
+    <ClInclude Include="World\Player.h" />
+    <ClInclude Include="World\PlayerDefines.h" />
+    <ClInclude Include="World\ReplayMgr.h" />
+    <ClInclude Include="World\Unit.h" />
+    <ClInclude Include="World\UnitDefines.h" />
     <ClInclude Include="World\WorldServer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -112,7 +121,6 @@
     <ClCompile Include="Crypto\base32.cpp" />
     <ClCompile Include="Crypto\BigNumber.cpp" />
     <ClCompile Include="Crypto\Hmac.cpp" />
-    <ClCompile Include="Crypto\HMACSHA1.cpp" />
     <ClCompile Include="Crypto\md5.c" />
     <ClCompile Include="Crypto\Sha1.cpp" />
     <ClCompile Include="Database\Database.cpp" />
@@ -120,7 +128,9 @@
     <ClCompile Include="Database\QueryObject.cpp" />
     <ClCompile Include="Database\QueryResult.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="World\ObjectGuid.cpp" />
     <ClCompile Include="World\Opcodes.cpp" />
+    <ClCompile Include="World\ReplayMgr.cpp" />
     <ClCompile Include="World\WorldServer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

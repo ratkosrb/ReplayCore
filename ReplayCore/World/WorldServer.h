@@ -39,6 +39,8 @@ private:
     std::map<uint16, WorldOpcodeHandler> m_opcodeHandlers;
     uint16 GetOpcode(std::string name);
     std::string GetOpcode(uint16 opcode);
+    uint32 GetAllowedRaceMask();
+    uint32 GetAllowedClassMask();
 
     void ResetClientData();
     void SetupOpcodeHandlers();
