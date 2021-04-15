@@ -117,6 +117,7 @@
     <ClInclude Include="World\ReplayMgr.h" />
     <ClInclude Include="World\Unit.h" />
     <ClInclude Include="World\UnitDefines.h" />
+    <ClInclude Include="World\UpdateFields.h" />
     <ClInclude Include="World\WorldServer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -137,6 +138,7 @@
     <ClCompile Include="World\ObjectGuid.cpp" />
     <ClCompile Include="World\Opcodes.cpp" />
     <ClCompile Include="World\ReplayMgr.cpp" />
+    <ClCompile Include="World\UpdateFields.cpp" />
     <ClCompile Include="World\WorldServer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

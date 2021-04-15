@@ -9,6 +9,7 @@
 #include "../Crypto/Sha1.h"
 #include "../Auth/AuthServer.h"
 #include "Opcodes.h"
+#include "UpdateFields.h"
 #include "ReplayMgr.h"
 #include "GameDataMgr.h"
 
@@ -138,9 +139,19 @@ std::string WorldServer::GetOpcode(uint16 opcode)
     return Opcodes::GetOpcodeName(opcode, m_sessionData.build);
 }
 
+uint16 WorldServer::GetUpdateField(std::string name)
+{
+    return UpdateFields::GetUpdateFieldValue(name, m_sessionData.build);
+}
+
+std::string WorldServer::GetUpdateField(uint16 opcode)
+{
+    return UpdateFields::GetUpdateFieldName(opcode, m_sessionData.build);
+}
+
 void  WorldServer::SendPacket(WorldPacket& packet)
 {
-    if (m_sessionData.build >= 12340)
+    if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
     {
         ServerPktHeaderWotlk header(packet.size() + 2, packet.GetOpcode());
         m_sessionData.m_encryption.EncryptSend((uint8*)header.header, header.getHeaderLength());
@@ -204,7 +215,7 @@ void WorldServer::HandlePacket(ByteBuffer& buffer)
 
 void WorldServer::SendAuthChallenge()
 {
-    if (m_sessionData.build >= 12340)
+    if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
     {
         WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 40);
         packet << uint32(1);
@@ -327,7 +338,7 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
     else
         m_sessionData.m_encryption.InitVanilla(&K);
 
-    WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1 + 4 + 1 + 4 + (m_sessionData.build > 5875 ? 1 : 0));
+    WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1 + 4 + 1 + 4 + (m_sessionData.build >= CLIENT_BUILD_2_0_1 ? 1 : 0));
     response << uint8(12);
     response << uint32(0);                                    // BillingTimeRemaining
     response << uint8(0);                                     // BillingPlanFlags

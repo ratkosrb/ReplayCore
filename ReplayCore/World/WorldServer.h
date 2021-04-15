@@ -20,7 +20,6 @@ struct WorldSessionData
     uint32 seed = 1212669851;
     uint16 build = 0;
     std::string sessionKey;
-    bool m_encryptionInitialized = false;
     AuthCrypt m_encryption;
 };
 
@@ -80,6 +79,8 @@ private:
     std::map<uint16, WorldOpcodeHandler> m_opcodeHandlers;
     uint16 GetOpcode(std::string name);
     std::string GetOpcode(uint16 opcode);
+    uint16 GetUpdateField(std::string name);
+    std::string GetUpdateField(uint16 opcode);
     void ResetClientData();
     void SetupOpcodeHandlers();
     void SetOpcodeHandler(const char* opcodeName, WorldOpcodeHandler handler);

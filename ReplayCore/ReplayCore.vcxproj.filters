@@ -53,6 +53,9 @@
     <ClCompile Include="World\GameDataMgr.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\UpdateFields.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -164,6 +167,9 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\MovementDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\UpdateFields.h">
       <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>
