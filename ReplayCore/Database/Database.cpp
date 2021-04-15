@@ -198,7 +198,7 @@ int32 Database::QueryInt32(const char* format, ...)
     if (std::shared_ptr<QueryResult> result = LockedPerformQuery(strQuery))
     {
         DbField* pFields = result->fetchCurrentRow();
-        return pFields[0].getInt32();
+        return pFields[0].GetInt32();
     }
 
     return 0;

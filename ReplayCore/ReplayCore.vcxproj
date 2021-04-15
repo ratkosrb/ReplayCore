@@ -97,12 +97,17 @@
     <ClInclude Include="Database\SafeQueue.h" />
     <ClInclude Include="Defines\ByteBuffer.h" />
     <ClInclude Include="Defines\ByteConverter.h" />
+    <ClInclude Include="Defines\ClientVersions.h" />
     <ClInclude Include="Defines\Common.h" />
     <ClInclude Include="Defines\Databases.h" />
     <ClInclude Include="Defines\GameAccount.h" />
     <ClInclude Include="Defines\Utility.h" />
     <ClInclude Include="Defines\WorldPacket.h" />
+    <ClInclude Include="World\GameDataDefines.h" />
+    <ClInclude Include="World\GameDataMgr.h" />
     <ClInclude Include="World\Geometry.h" />
+    <ClInclude Include="World\ItemPrototype.h" />
+    <ClInclude Include="World\MovementDefines.h" />
     <ClInclude Include="World\Object.h" />
     <ClInclude Include="World\ObjectDefines.h" />
     <ClInclude Include="World\ObjectGuid.h" />
@@ -128,6 +133,7 @@
     <ClCompile Include="Database\QueryObject.cpp" />
     <ClCompile Include="Database\QueryResult.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="World\GameDataMgr.cpp" />
     <ClCompile Include="World\ObjectGuid.cpp" />
     <ClCompile Include="World\Opcodes.cpp" />
     <ClCompile Include="World\ReplayMgr.cpp" />

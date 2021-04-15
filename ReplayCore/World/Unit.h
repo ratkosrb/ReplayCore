@@ -3,6 +3,7 @@
 
 #include "Object.h"
 #include "UnitDefines.h"
+#include "MovementDefines.h"
 
 struct UnitData
 {
@@ -28,6 +29,7 @@ struct UnitData
     uint32 auras[MAX_AURAS] = {};
     uint8 auraLevels[MAX_AURAS] = {};
     uint8 auraStacks[MAX_AURAS] = {};
+    uint32 auraState = 0;
     uint32 mainHandAttackTime = 2000;
     uint32 offHandAttackTime = 2000;
     float boundingRadius = 1.0f;
@@ -50,6 +52,7 @@ struct UnitData
     uint32 baseHealth = 0;
     uint32 baseMana = 0;
     uint8 sheathState = 0;
+    float speedRate[MAX_MOVE_TYPE] = {};
 };
 
 class Unit : public WorldObject
@@ -60,14 +63,21 @@ public :
         m_objectType |= TYPEMASK_UNIT;
         m_objectTypeId = TYPEID_UNIT;
     }
-    Unit(ObjectGuid guid, ObjectData objectData, WorldLocation location, UnitData unitdata) :
-        WorldObject(guid, objectData, location), m_unitData(unitdata)
+    Unit(ObjectGuid guid, ObjectData objectData, WorldLocation location, MovementInfo movementInfo, UnitData unitdata) :
+        WorldObject(guid, objectData, location), m_movementInfo(movementInfo), m_unitData(unitdata)
     {
         m_objectType |= TYPEMASK_UNIT;
         m_objectTypeId = TYPEID_UNIT;
     }
+
+    uint8 GetRace() const { return m_unitData.raceId; }
+    uint8 GetClass() const { return m_unitData.classId; }
+    uint8 GetGender() const { return m_unitData.gender; }
+    uint32 GetLevel() const { return m_unitData.level; }
+
 protected:
     UnitData m_unitData;
+    MovementInfo m_movementInfo;
 };
 
 #endif

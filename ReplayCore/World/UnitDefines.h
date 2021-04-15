@@ -46,7 +46,7 @@ enum Races
 #define RACEMASK_ALL_VANILLA \
     ((1<<(RACE_HUMAN-1))    |(1<<(RACE_ORC-1))      |(1<<(RACE_DWARF-1))   | \
     (1<<(RACE_NIGHTELF-1))  |(1<<(RACE_UNDEAD-1))   |(1<<(RACE_TAUREN-1))  | \
-    (1<<(RACE_GNOME-1))     |(1<<(RACE_TROLL-1)))   |(1<<(RACE_GOBLIN-1)))
+    (1<<(RACE_GNOME-1))     |(1<<(RACE_TROLL-1))   |(1<<(RACE_GOBLIN-1)))
 
 #define RACEMASK_ALL_TBC \
     ((1<<(RACE_HUMAN-1))    |(1<<(RACE_ORC-1))      |(1<<(RACE_DWARF-1))   | \
@@ -161,6 +161,52 @@ enum VirtualItemSlot
 #define MAX_VIRTUAL_ITEM_SLOT 3
 
 #define MAX_AURAS 48
+
+#define MAX_FACTION_TEMPLATE_VANILLA 1677
+#define MAX_FACTION_TEMPLATE_TBC 2074
+#define MAX_FACTION_TEMPLATE_WOTLK 2236
+
+#define MAX_EMOTE_VANILLA 376
+#define MAX_EMOTE_TBC 423
+#define MAX_EMOTE_WOTLK 476
+
+// byte value (UNIT_FIELD_BYTES_1,0)
+enum UnitStandStateType
+{
+    UNIT_STAND_STATE_STAND             = 0,
+    UNIT_STAND_STATE_SIT               = 1,
+    UNIT_STAND_STATE_SIT_CHAIR         = 2,
+    UNIT_STAND_STATE_SLEEP             = 3,
+    UNIT_STAND_STATE_SIT_LOW_CHAIR     = 4,
+    UNIT_STAND_STATE_SIT_MEDIUM_CHAIR  = 5,
+    UNIT_STAND_STATE_SIT_HIGH_CHAIR    = 6,
+    UNIT_STAND_STATE_DEAD              = 7,
+    UNIT_STAND_STATE_KNEEL             = 8
+};
+
+#define MAX_UNIT_STAND_STATE             9
+
+// byte value (UNIT_FIELD_BYTES_2,0)
+enum SheathState
+{
+    SHEATH_STATE_UNARMED  = 0,                              // non prepared weapon
+    SHEATH_STATE_MELEE    = 1,                              // prepared melee weapon
+    SHEATH_STATE_RANGED   = 2                               // prepared ranged weapon
+};
+
+#define MAX_SHEATH_STATE    3
+
+enum UnitMoveType
+{
+    MOVE_WALK = 0,
+    MOVE_RUN = 1,
+    MOVE_RUN_BACK = 2,
+    MOVE_SWIM = 3,
+    MOVE_SWIM_BACK = 4,
+    MOVE_TURN_RATE = 5,
+};
+
+#define MAX_MOVE_TYPE 6
 
 
 #endif

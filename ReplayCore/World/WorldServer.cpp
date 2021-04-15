@@ -3,11 +3,15 @@
 #include "../Defines//WorldPacket.h"
 #include "../Defines/Utility.h"
 #include "../Defines/GameAccount.h"
+#include "../Defines/ClientVersions.h"
 #include "../Crypto/Hmac.h"
 #include "../Crypto/base32.h"
 #include "../Crypto/Sha1.h"
 #include "../Auth/AuthServer.h"
 #include "Opcodes.h"
+#include "ReplayMgr.h"
+#include "GameDataMgr.h"
+
 #include <array>
 
 #define WORLD_DEBUG
@@ -18,7 +22,7 @@ WorldServer& WorldServer::Instance()
     return instance;
 }
 
-void WorldServer::Start()
+void WorldServer::StartNetwork()
 {
     m_socketPrototype = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     int result = 1;
@@ -45,10 +49,10 @@ void WorldServer::Start()
 
     m_enabled = true;
 
-    m_networkThread = std::thread(&WorldServer::Loop, this);
+    m_networkThread = std::thread(&WorldServer::NetworkLoop, this);
 }
 
-void WorldServer::Loop()
+void WorldServer::NetworkLoop()
 {
     do
     {
@@ -112,8 +116,16 @@ void WorldServer::ResetClientData()
 
 void WorldServer::SetupOpcodeHandlers()
 {
-    m_opcodeHandlers[GetOpcode("CMSG_AUTH_SESSION")] = &WorldServer::HandleAuthSession;
-    m_opcodeHandlers[GetOpcode("CMSG_CHAR_ENUM")] = &WorldServer::HandleEnumCharacters;
+    SetOpcodeHandler("CMSG_AUTH_SESSION", &WorldServer::HandleAuthSession);
+    SetOpcodeHandler("CMSG_CHAR_ENUM", &WorldServer::HandleEnumCharacters);
+    SetOpcodeHandler("CMSG_PING", &WorldServer::HandlePing);
+    SetOpcodeHandler("CMSG_REALM_SPLIT", &WorldServer::HandleRealmSplit);
+}
+
+void WorldServer::SetOpcodeHandler(const char* opcodeName, WorldOpcodeHandler handler)
+{
+    if (uint16 opcode = GetOpcode(opcodeName))
+        m_opcodeHandlers[opcode] = handler;
 }
 
 uint16 WorldServer::GetOpcode(std::string name)
@@ -160,29 +172,6 @@ void  WorldServer::SendPacket(WorldPacket& packet)
     }
 }
 
-void WorldServer::SendAuthChallenge()
-{
-    if (m_sessionData.build >= 12340)
-    {
-        WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 40);
-        packet << uint32(1);
-        packet << m_sessionData.seed;
-        BigNumber seed1;
-        seed1.SetRand(16 * 8);
-        packet.append(seed1.AsByteArray(16).data(), 16);               // new encryption seeds
-        BigNumber seed2;
-        seed2.SetRand(16 * 8);
-        packet.append(seed2.AsByteArray(16).data(), 16);               // new encryption seeds
-        SendPacket(packet);
-    }
-    else
-    {
-        WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 4);
-        packet << m_sessionData.seed;
-        SendPacket(packet);
-    }
-}
-
 void WorldServer::HandlePacket(ByteBuffer& buffer)
 {
     ClientPktHeader header;
@@ -213,6 +202,29 @@ void WorldServer::HandlePacket(ByteBuffer& buffer)
     (this->*(itr->second))(packet);
 }
 
+void WorldServer::SendAuthChallenge()
+{
+    if (m_sessionData.build >= 12340)
+    {
+        WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 40);
+        packet << uint32(1);
+        packet << m_sessionData.seed;
+        BigNumber seed1;
+        seed1.SetRand(16 * 8);
+        packet.append(seed1.AsByteArray(16).data(), 16);               // new encryption seeds
+        BigNumber seed2;
+        seed2.SetRand(16 * 8);
+        packet.append(seed2.AsByteArray(16).data(), 16);               // new encryption seeds
+        SendPacket(packet);
+    }
+    else
+    {
+        WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 4);
+        packet << m_sessionData.seed;
+        SendPacket(packet);
+    }
+}
+
 void WorldServer::HandleAuthSession(WorldPacket& packet)
 {
     // Read the content of the packet
@@ -223,29 +235,29 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
     std::string account;
     packet >> account;
 
-    if (build >= 9056)
+    if (build >= CLIENT_BUILD_3_0_2)
     {
-        uint32 unk;
-        packet >> unk;
+        uint32 loginServerType;
+        packet >> loginServerType;
     }
 
     uint32 clientSeed;
     packet >> clientSeed;
 
-    if (build >= 12340)
+    if (build >= CLIENT_BUILD_3_3_5a)
     {
-        uint32 unk1;
-        packet >> unk1;
-        uint32 unk2;
-        packet >> unk2;
-        uint32 unk3;
-        packet >> unk3;
+        uint32 regionId;
+        packet >> regionId;
+        uint32 battlegroupId;
+        packet >> battlegroupId;
+        uint32 realm;
+        packet >> realm;
     }
 
-    if (build >= 10192)
+    if (build >= CLIENT_BUILD_3_2_0)
     {
-        uint64 unk;
-        packet >> unk;
+        uint64 dosResponse;
+        packet >> dosResponse;
     }
 
     uint8 digest[20];
@@ -274,12 +286,6 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
 
     char const* sStr = s.AsHexStr();                        //Must be freed by OPENSSL_free()
     char const* vStr = v.AsHexStr();                        //Must be freed by OPENSSL_free()
-
-#ifdef WORLD_DEBUG
-    printf("s: %s\nv: %s\n",
-        sStr,
-        vStr);
-#endif
 
     OPENSSL_free((void*)sStr);
     OPENSSL_free((void*)vStr);
@@ -314,43 +320,139 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
     }
 
     printf("[WORLD] Authentication successful.\n");
-    if (m_sessionData.build >= 12340)
-    {
-        printf("start wotlk\n");
+    if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
         m_sessionData.m_encryption.InitWOTLK(&K);
-    }
-    else if (m_sessionData.build > 5875)
-    {
+    else if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
         m_sessionData.m_encryption.InitTBC(&K);
-    }
     else
-    {
         m_sessionData.m_encryption.InitVanilla(&K);
-    }
-    printf("end wotlk\n");
 
     WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1 + 4 + 1 + 4 + (m_sessionData.build > 5875 ? 1 : 0));
     response << uint8(12);
     response << uint32(0);                                    // BillingTimeRemaining
     response << uint8(0);                                     // BillingPlanFlags
     response << uint32(0);                                    // BillingTimeRested
-    if (m_sessionData.build > 5875)
+    if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
         response << uint8(1);                                 // Expansion
     SendPacket(response);
 }
 
+#undef min
+
 void WorldServer::HandleEnumCharacters(WorldPacket& packet)
 {
-    WorldPacket response(GetOpcode("SMSG_CHAR_ENUM"), 1);
-    response << uint8(0);
+    std::set<ObjectGuid> const& activePlayers = sReplayMgr.GetActivePlayers();
+    uint8 count = std::min(uint32(activePlayers.size()), uint32(10));
+
+    WorldPacket response(GetOpcode("SMSG_CHAR_ENUM"));
+    response << uint8(count);
+
+    for (const auto& guid : activePlayers)
+    {
+        if (count <= 0)
+            break;
+
+        if (Player* pPlayer = FindPlayer(guid))
+        {
+            response << guid;
+            response << pPlayer->GetName();
+            response << pPlayer->GetRace();
+            response << pPlayer->GetClass();
+            response << pPlayer->GetGender();
+            response << pPlayer->GetSkinColor();
+            response << pPlayer->GetFace();
+            response << pPlayer->GetHairStyle();
+            response << pPlayer->GetHairColor();
+            response << pPlayer->GetFacialHair();
+            response << uint8(pPlayer->GetLevel());
+            response << uint32(0); // zone id
+            response << uint32(0); // area id
+            response << pPlayer->GetPositionX();
+            response << pPlayer->GetPositionY();
+            response << pPlayer->GetPositionZ();
+            response << uint32(0); // guild id
+            response << uint32(0); // character flags
+
+            if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+                response << uint32(0); // customization flags
+
+            response << uint8(0); // first login
+            response << uint32(0); // pet display id
+            response << uint32(0); // pet level
+            response << uint32(0); // pet family
+
+            for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
+            {
+                if (ItemPrototype const* pItem = sGameDataMgr.GetItemPrototype(pPlayer->GetVisibleItem(i)))
+                {
+                    response << pItem->DisplayInfoID;
+                    response << uint8(pItem->InventoryType);
+                    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+                        response << pPlayer->GetVisibleItemEnchant(i);
+                }
+                else
+                {
+                    response << uint32(0); // display id
+                    response << uint8(0); // inventory type;
+                    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+                        response << uint32(0); // enchant id
+                }
+            }
+
+            int bagCount = (GetClientBuild() >= CLIENT_BUILD_3_3_3) ? 4 : 1;
+            for (int j = 0; j < bagCount; j++)
+            {
+                response << uint32(0); // display id
+                response << uint8(0); // inventory type;
+                if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+                    response << uint32(0); // enchant id
+            }
+        }
+
+        count--;
+    }
+
     SendPacket(response);
 }
 
-uint32 WorldServer::GetAllowedRaceMask()
+void WorldServer::HandlePing(WorldPacket& packet)
 {
-    
-}
-uint32 WorldServer::GetAllowedClassMask()
-{
+    uint32 ping = 0;
+    uint32 latency = 0;
 
+    packet >> ping;
+    if (GetClientBuild() > CLIENT_BUILD_1_8_4)
+        packet >> latency;
+
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[WORLD] CMSG_PING data:\n");
+    printf("Ping: %u\n", ping);
+    printf("Latency: %u\n", latency);
+    printf("\n");
+#endif
+
+    WorldPacket response(GetOpcode("SMSG_PONG"), 4);
+    response << ping;
+    SendPacket(response);
+}
+
+void WorldServer::HandleRealmSplit(WorldPacket& packet)
+{
+    int32 clientState = 0;
+    packet >> clientState;
+
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[WORLD] CMSG_REALM_SPLIT data:\n");
+    printf("Client State: %i\n", clientState);
+    printf("\n");
+#endif
+
+    std::string const splitDate = "01/01/01";
+    WorldPacket response(GetOpcode("SMSG_REALM_SPLIT"), 4 + 4 + splitDate.length() + 1);
+    response << clientState;
+    response << int32(-1); // server state
+    response << splitDate;
+    SendPacket(response);
 }

@@ -9,6 +9,8 @@
 #include "Database\Database.h"
 #include "Auth\AuthServer.h"
 #include "World\WorldServer.h"
+#include "World\ReplayMgr.h"
+#include "World\GameDataMgr.h"
 
 Database WorldDatabase;
 Database SniffDatabase;
@@ -74,15 +76,14 @@ int main()
     std::string const worldConnectionString = connectionString + GetWorldDatabaseName();
     std::string const sniffConnectionString = connectionString + GetSniffDatabaseName();
 
-    printf("\nConnecting to world database.\n");
+    printf("\n[MAIN] Connecting to world database...\n");
     if (!WorldDatabase.Initialize(worldConnectionString.c_str()))
     {
         printf("\nError: Cannot connect to world database!\n");
         getchar();
         return 1;
     }
-
-    printf("\nConnecting to sniff database.\n");
+    printf("[MAIN] Connecting to sniff database...\n");
     if (!SniffDatabase.Initialize(sniffConnectionString.c_str()))
     {
         printf("\nError: Cannot connect to sniff database!\n");
@@ -90,6 +91,11 @@ int main()
         return 1;
     }
 
+    sGameDataMgr.LoadFactions();
+    sGameDataMgr.LoadItemPrototypes();
+    sReplayMgr.LoadEverything();
+
+    printf("\n[MAIN] Starting network...\n");
     WSAData data;
     int result = WSAStartup(0x0202, &data);
     if (result == SOCKET_ERROR)
@@ -98,8 +104,8 @@ int main()
         return 1;
     }
 
-    sAuth.Start();
-    sWorld.Start();
+    sAuth.StartNetwork();
+    sWorld.StartNetwork();
     if (sAuth.m_networkThread.joinable())
         sAuth.m_networkThread.join();
     if (sWorld.m_networkThread.joinable())

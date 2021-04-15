@@ -14,7 +14,7 @@ DbField::DbField() :
 DbField::DbField(DbField &f)
 {
     const char* value = nullptr;
-    value = f.getString();
+    value = f.GetString();
 
     if (value && (m_pData = new char[strlen(value) + 1]))
         strcpy(m_pData, value);

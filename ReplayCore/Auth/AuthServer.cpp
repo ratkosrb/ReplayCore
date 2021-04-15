@@ -18,7 +18,7 @@ AuthServer& AuthServer::Instance()
     return instance;
 }
 
-void AuthServer::Start()
+void AuthServer::StartNetwork()
 {
     SetupOpcodeHandlers();
 
@@ -47,10 +47,10 @@ void AuthServer::Start()
 
     m_enabled = true;
 
-    m_networkThread = std::thread(&AuthServer::Loop, this);
+    m_networkThread = std::thread(&AuthServer::NetworkLoop, this);
 }
 
-void AuthServer::Loop()
+void AuthServer::NetworkLoop()
 {
     do
     {

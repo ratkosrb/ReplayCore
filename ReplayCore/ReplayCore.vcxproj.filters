@@ -50,6 +50,9 @@
     <ClCompile Include="World\ReplayMgr.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\GameDataMgr.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -147,6 +150,21 @@
     </ClInclude>
     <ClInclude Include="Defines\Databases.h">
       <Filter>Defines</Filter>
+    </ClInclude>
+    <ClInclude Include="World\GameDataMgr.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\GameDataDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines\ClientVersions.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ItemPrototype.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\MovementDefines.h">
+      <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
