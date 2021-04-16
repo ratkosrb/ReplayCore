@@ -1145,7 +1145,7 @@ uint16 UpdateFields::GetUpdateFieldValue(std::string name, uint16 build)
     return itr->second;
 }
 
-std::string UpdateFields::GetUpdateFieldName(uint16 opcode, uint16 build)
+std::string UpdateFields::GetUpdateFieldName(uint16 id, uint16 build)
 {
     std::map<std::string, uint16>* updateFieldsMap = GetUpdateFieldsMapForBuild(build);
     if (!updateFieldsMap)
@@ -1153,7 +1153,7 @@ std::string UpdateFields::GetUpdateFieldName(uint16 opcode, uint16 build)
 
     for (const auto& itr : *updateFieldsMap)
     {
-        if (itr.second == opcode)
+        if (itr.second == id)
             return itr.first;
     }
 

@@ -53,7 +53,7 @@ public:
         return nullptr;
     }
 
-    void MakeNewPlayer(ObjectGuid& guid, PlayerData const& playerData)
+    void MakeNewPlayer(ObjectGuid const& guid, PlayerData const& playerData)
     {
         m_players.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(playerData));
     }
@@ -68,10 +68,12 @@ public:
 
     void StartNetwork();
     void StartWorld();
+    void SpawnWorldObjects();
     std::thread m_networkThread;
     std::thread m_worldThread;
 private:
     bool m_enabled = false;
+    bool m_worldSpawned = false;
     uint64 m_lastUpdateTimeMs = 0;
     uint32 m_msTimeSinceServerStart = 0;
 
@@ -79,9 +81,11 @@ private:
     void WorldLoop();
     std::map<ObjectGuid, Unit> m_creatures;
     std::map<ObjectGuid, Player> m_players;
+    std::unique_ptr<Player> m_clientPlayer = nullptr;
 
     // Network
     WorldSessionData m_sessionData;
+    uint16 m_lastSessionBuild = 0;
     SOCKET m_worldSocket;
     SOCKET m_socketPrototype;
     SOCKADDR_IN m_address;
@@ -95,6 +99,9 @@ private:
     void HandleEnumCharacters(WorldPacket& packet);
     void HandlePing(WorldPacket& packet);
     void HandleRealmSplit(WorldPacket& packet);
+    void HandlePlayerLogin(WorldPacket& packet);
+    void HandlePlayerNameQuery(WorldPacket& packet);
+    void HandleTimeQuery(WorldPacket& packet);
     void SendAuthChallenge();
 };
 

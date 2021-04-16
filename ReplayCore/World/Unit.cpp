@@ -28,15 +28,34 @@ Unit::Unit(UnitData const& unitData) : WorldObject(unitData.guid)
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
+    InitializePlaceholderUnitFields();
     unitData.InitializeUnit(this);
     m_uint32Values_mirror = new uint32[m_valuesCount];
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
 
+void Unit::InitializePlaceholderUnitFields()
+{
+    SetFloatValue("UNIT_MOD_CAST_SPEED", 1);
+    SetFloatValue("UNIT_FIELD_MINDAMAGE", 5);
+    SetFloatValue("UNIT_FIELD_MAXDAMAGE", 10);
+    SetFloatValue("UNIT_FIELD_MINRANGEDDAMAGE", 5);
+    SetFloatValue("UNIT_FIELD_MAXRANGEDDAMAGE", 10);
+    SetUInt32Value("UNIT_FIELD_STAT0", 50);
+    SetUInt32Value("UNIT_FIELD_STAT1", 50);
+    SetUInt32Value("UNIT_FIELD_STAT2", 50);
+    SetUInt32Value("UNIT_FIELD_STAT3", 50);
+    SetUInt32Value("UNIT_FIELD_STAT4", 50);
+    SetUInt32Value("UNIT_FIELD_ATTACK_POWER", 100);
+    SetFloatValue("UNIT_FIELD_ATTACK_POWER_MULTIPLIER", 1);
+    SetFloatValue("UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER", 1);
+    SetFloatValue("UNIT_FIELD_POWER_COST_MULTIPLIER", 1);
+}
+
 void Unit::InitializeMoveSpeeds()
 {
     for (int i = 0; i < MAX_MOVE_TYPE_WOTLK; i++)
-        m_speedRate[i] = baseMoveSpeed[i];
+        m_speedRate[i] = 1.0f;
 }
 
 void Unit::SetVirtualItem(uint8 slot, uint32 item_id)
@@ -110,6 +129,7 @@ uint32 Unit::GetAttackTime(WeaponAttackType att) const
 {
     if (uint16 uf = sWorld.GetUpdateField("UNIT_FIELD_BASEATTACKTIME"))
         return GetUInt32Value(uf + att);
+    return 0;
 }
 
 void Unit::SetAttackTime(WeaponAttackType att, uint32 val)

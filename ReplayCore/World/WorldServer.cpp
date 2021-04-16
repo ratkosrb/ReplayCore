@@ -34,8 +34,16 @@ void WorldServer::WorldLoop()
     using namespace std::chrono;
     uint64 ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 
-    uint32 diff = m_lastUpdateTimeMs ? ms - m_lastUpdateTimeMs : 0;
+    uint32 diff = uint32(m_lastUpdateTimeMs ? ms - m_lastUpdateTimeMs : 0);
     m_msTimeSinceServerStart += diff;
+}
+
+void WorldServer::SpawnWorldObjects()
+{
+    m_players.clear();
+    m_creatures.clear();
+    sReplayMgr.SpawnPlayers();
+    m_worldSpawned = true;
 }
 
 void WorldServer::StartNetwork()
@@ -78,6 +86,8 @@ void WorldServer::NetworkLoop()
         printf("[WORLD] Connection established!\n");
 
         ResetClientData();
+        if (m_lastSessionBuild && m_lastSessionBuild != m_sessionData.build)
+            SpawnWorldObjects();
 
         if (!Opcodes::GetOpcodesMapForBuild(m_sessionData.build))
         {
@@ -94,8 +104,8 @@ void WorldServer::NetworkLoop()
         do
         {
             ByteBuffer buffer;
-            buffer.resize(1024);
-            int result = recv(m_worldSocket, (char*)buffer.contents(), 1024, 0);
+            buffer.resize(4096);
+            int result = recv(m_worldSocket, (char*)buffer.contents(), 4096, 0);
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());
@@ -125,6 +135,7 @@ void WorldServer::NetworkLoop()
 
 void WorldServer::ResetClientData()
 {
+    m_lastSessionBuild = m_sessionData.build;
     m_sessionData = WorldSessionData();
     m_sessionData.build = sAuth.GetClientBuild();
     m_sessionData.sessionKey = sAuth.GetSessionKey();
@@ -136,6 +147,9 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_CHAR_ENUM", &WorldServer::HandleEnumCharacters);
     SetOpcodeHandler("CMSG_PING", &WorldServer::HandlePing);
     SetOpcodeHandler("CMSG_REALM_SPLIT", &WorldServer::HandleRealmSplit);
+    SetOpcodeHandler("CMSG_PLAYER_LOGIN", &WorldServer::HandlePlayerLogin);
+    SetOpcodeHandler("CMSG_NAME_QUERY", &WorldServer::HandlePlayerNameQuery);
+    SetOpcodeHandler("CMSG_QUERY_TIME", &WorldServer::HandleTimeQuery);
 }
 
 void WorldServer::SetOpcodeHandler(const char* opcodeName, WorldOpcodeHandler handler)
@@ -166,6 +180,10 @@ std::string WorldServer::GetUpdateField(uint16 opcode)
 
 void  WorldServer::SendPacket(WorldPacket& packet)
 {
+#ifdef WORLD_DEBUG
+    printf("[WORLD] Sending opcode %u (%s)\n", packet.GetOpcode(), GetOpcode(packet.GetOpcode()).c_str());
+#endif
+
     if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
     {
         ServerPktHeaderWotlk header(packet.size() + 2, packet.GetOpcode());
@@ -480,5 +498,145 @@ void WorldServer::HandleRealmSplit(WorldPacket& packet)
     response << clientState;
     response << int32(-1); // server state
     response << splitDate;
+    SendPacket(response);
+}
+
+#define GLOBAL_CACHE_MASK           0x15
+#define PER_CHARACTER_CACHE_MASK    0xEA
+#define NUM_ACCOUNT_DATA_TYPES 8
+
+void WorldServer::HandlePlayerLogin(WorldPacket& packet)
+{
+    ObjectGuid guid;
+    packet >> guid;
+
+    if (!m_worldSpawned)
+        SpawnWorldObjects();
+
+    Player * pPlayerToCopy = FindPlayer(guid);
+    if (!pPlayerToCopy)
+    {
+        printf("[WORLD] Error: Received request to login with unknown guid %s!\n", guid.GetString().c_str());
+        WorldPacket data(GetOpcode("SMSG_CHARACTER_LOGIN_FAILED"), 1);
+        data << (uint8)1;
+        SendPacket(data);
+        return;
+    }
+
+    WorldPacket response(GetOpcode("SMSG_LOGIN_VERIFY_WORLD"), 20);
+    response << uint32(pPlayerToCopy->GetMapId());
+    response << float(pPlayerToCopy->GetPositionX());
+    response << float(pPlayerToCopy->GetPositionY());
+    response << float(pPlayerToCopy->GetPositionZ());
+    response << float(pPlayerToCopy->GetOrientation());
+    SendPacket(response);
+
+    if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        response.Initialize(GetOpcode("SMSG_ACCOUNT_DATA_TIMES"), 128);
+        for (int i = 0; i < 32; ++i)
+            response << uint32(0);
+        SendPacket(response);
+    }
+    else
+    {
+        response.Initialize(GetOpcode("SMSG_ACCOUNT_DATA_TIMES"), 4 + 1 + 4 + 8 * 4);
+        response << uint32(time(nullptr));                             // unix time of something
+        response << uint8(1);
+
+        if (GetClientBuild() >= CLIENT_BUILD_3_2_0)
+        {
+            uint32 mask = PER_CHARACTER_CACHE_MASK;
+            response << uint32(mask);                                   // type mask
+            for (uint32 i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
+            {
+                if (mask & (1 << i))
+                {
+                    response << uint32(time(nullptr));// also unix time
+                }
+            }
+        }
+        
+        SendPacket(response);
+    }
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_2_0)
+    {
+        response.Initialize(GetOpcode("SMSG_FEATURE_SYSTEM_STATUS"), 2);
+        response << uint8(2);                                       // unknown value
+        response << uint8(0);                                       // enable(1)/disable(0) voice chat interface in client
+        SendPacket(response);
+    }
+
+    response.Initialize(GetOpcode("SMSG_BINDPOINTUPDATE"), 128);
+    response << float(pPlayerToCopy->GetPositionX());
+    response << float(pPlayerToCopy->GetPositionY());
+    response << float(pPlayerToCopy->GetPositionZ());
+    response << uint32(pPlayerToCopy->GetMapId());
+    response << uint32(0); // zone id
+    SendPacket(response);
+
+    response.Initialize(GetOpcode("SMSG_TUTORIAL_FLAGS"), 4 * 8);
+    for (int i = 0; i < 32; i++)
+        response << uint8(255);
+    SendPacket(response);
+
+    response.Initialize(GetOpcode("SMSG_INITIAL_SPELLS"));
+    response << uint8(0);
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
+        response << uint32(0);
+    else
+        response << uint16(0);
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
+        response << uint32(0);
+    else
+        response << uint16(0);
+    SendPacket(response);
+
+    response.Initialize(GetOpcode("SMSG_LOGIN_SETTIMESPEED"), 4 + 4);
+    response << uint32(secsToTimeBitFields(time(nullptr)));
+    response << (float)0.01666667f;                             // game speed
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_2)
+        response << uint32(0);
+    SendPacket(response);
+
+    //ObjectGuid newGuid(HIGHGUID_PLAYER, uint32(150000));
+    //m_clientPlayer = std::make_unique<Player>(newGuid, "TheObserver", *pPlayerToCopy);
+    //m_clientPlayer->SetVisibility(true);
+    //m_clientPlayer->SendCreateUpdateToPlayer(m_clientPlayer.get());
+    pPlayerToCopy->SendCreateUpdateToPlayer(pPlayerToCopy);
+}
+
+void WorldServer::HandlePlayerNameQuery(WorldPacket& packet)
+{
+    ObjectGuid guid;
+    packet >> guid;
+
+    Player* pPlayer = FindPlayer(guid);
+    if (!pPlayer && m_clientPlayer && m_clientPlayer->GetObjectGuid() == guid)
+        pPlayer = m_clientPlayer.get();
+
+    if (!pPlayer)
+    {
+        printf("[WORLD] Error: Received name query for unknown guid %s!\n", guid.GetString().c_str());
+        return;
+    }
+
+    WorldPacket response(GetOpcode("SMSG_NAME_QUERY_RESPONSE"), (8 + 25 + 1 + 4 + 4 + 4));   // guess size
+    response << ObjectGuid(pPlayer->GetObjectGuid());
+    response << pPlayer->GetName();                             // CString(48): played name
+    response << uint8(0);                                       // CString(256): realm name for cross realm BG usage
+    response << uint32(pPlayer->GetRace());
+    response << uint32(pPlayer->GetGender());
+    response << uint32(pPlayer->GetClass());
+    SendPacket(response);
+}
+
+void WorldServer::HandleTimeQuery(WorldPacket& packet)
+{
+    WorldPacket response(GetOpcode("SMSG_QUERY_TIME_RESPONSE"), 4);
+    response << uint32(time(nullptr));
+    if (GetClientBuild() > CLIENT_BUILD_2_0_1)
+        response << uint32(0); // daily reset time
     SendPacket(response);
 }

@@ -16,7 +16,7 @@ ReplayMgr& ReplayMgr::Instance()
 
 void ObjectData::InitializeObject(Object* pObject) const
 {
-    pObject->SetGuidValue("OBJECT_FIELD_GUID", guid);
+    pObject->SetObjectGuid(guid);
     pObject->SetUInt32Value("OBJECT_FIELD_ENTRY", entry);
     pObject->SetFloatValue("OBJECT_FIELD_SCALE_X", scale);
 }
@@ -47,11 +47,13 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     pUnit->SetGuidValue("UNIT_FIELD_TARGET", target);
     pUnit->SetUInt32Value("UNIT_FIELD_HEALTH", currentHealth);
     pUnit->SetUInt32Value("UNIT_FIELD_MAXHEALTH", maxHealth);
+    pUnit->SetUInt32Value("UNIT_FIELD_BASE_HEALTH", maxHealth);
     pUnit->SetUInt32Value("UNIT_FIELD_POWER1", currentPowers[POWER_MANA]);
     pUnit->SetUInt32Value("UNIT_FIELD_POWER2", currentPowers[POWER_RAGE]);
     pUnit->SetUInt32Value("UNIT_FIELD_POWER3", currentPowers[POWER_FOCUS]);
     pUnit->SetUInt32Value("UNIT_FIELD_POWER4", currentPowers[POWER_ENERGY]);
     pUnit->SetUInt32Value("UNIT_FIELD_POWER5", currentPowers[POWER_HAPPINESS]);
+    pUnit->SetUInt32Value("UNIT_FIELD_BASE_MANA", maxPowers[POWER_MANA]);
     pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER1", maxPowers[POWER_MANA]);
     pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER2", maxPowers[POWER_RAGE]);
     pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER3", maxPowers[POWER_FOCUS]);
@@ -59,10 +61,22 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER5", maxPowers[POWER_HAPPINESS]);
 
     pUnit->SetUInt32Value("UNIT_FIELD_LEVEL", level);
-    pUnit->SetUInt32Value("UNIT_FIELD_FACTIONTEMPLATE", faction);
 
-    pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 0, raceId);
-    pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 1, classId);
+    if (sGameDataMgr.IsValidFactionTemplate(faction))
+        pUnit->SetUInt32Value("UNIT_FIELD_FACTIONTEMPLATE", faction);
+    else
+        pUnit->SetUInt32Value("UNIT_FIELD_FACTIONTEMPLATE", 35);
+
+    if (sGameDataMgr.IsValidRace(raceId))
+        pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 0, raceId);
+    else
+        pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 0, RACE_HUMAN);
+
+    if (sGameDataMgr.IsValidClass(classId))
+        pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 1, classId);
+    else
+        pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 1, CLASS_WARRIOR);
+
     pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 2, gender);
     pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 3, powerType);
 
@@ -74,9 +88,19 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     pUnit->SetAttackTime(OFF_ATTACK, offHandAttackTime);
     pUnit->SetFloatValue("UNIT_FIELD_BOUNDINGRADIUS", boundingRadius);
     pUnit->SetFloatValue("UNIT_FIELD_COMBATREACH", combatReach);
-    pUnit->SetUInt32Value("UNIT_FIELD_DISPLAYID", displayId);
-    pUnit->SetUInt32Value("UNIT_FIELD_NATIVEDISPLAYID", nativeDisplayId);
-    pUnit->SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", mountDisplayId);
+
+    if (sGameDataMgr.IsValidUnitDisplayId(displayId))
+        pUnit->SetUInt32Value("UNIT_FIELD_DISPLAYID", displayId);
+    else
+        pUnit->SetUInt32Value("UNIT_FIELD_DISPLAYID", UNIT_DISPLAY_ID_BOX);
+
+    if (sGameDataMgr.IsValidUnitDisplayId(displayId))
+        pUnit->SetUInt32Value("UNIT_FIELD_NATIVEDISPLAYID", nativeDisplayId);
+    else
+        pUnit->SetUInt32Value("UNIT_FIELD_NATIVEDISPLAYID", UNIT_DISPLAY_ID_BOX);
+
+    if (sGameDataMgr.IsValidUnitDisplayId(displayId))
+        pUnit->SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", mountDisplayId);
     
     pUnit->SetByteValue("UNIT_FIELD_BYTES_1", 0, standState);
     pUnit->SetByteValue("UNIT_FIELD_BYTES_2", 0, sheathState);
@@ -103,7 +127,9 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     pUnit->SetUInt32Value("UNIT_DYNAMIC_FLAGS", dynamicFlags);
     pUnit->SetUInt32Value("UNIT_CHANNEL_SPELL", channelSpell);
     pUnit->SetUInt32Value("UNIT_CREATED_BY_SPELL", createdBySpell);
-    pUnit->SetUInt32Value("UNIT_NPC_EMOTESTATE", emoteState);
+
+    if (sGameDataMgr.IsValidEmote(emoteState))
+        pUnit->SetUInt32Value("UNIT_NPC_EMOTESTATE", emoteState);
 
     pUnit->SetSpeedRate(MOVE_WALK, speedRate[MOVE_WALK]);
     pUnit->SetSpeedRate(MOVE_RUN, speedRate[MOVE_RUN]);
@@ -122,8 +148,15 @@ void PlayerData::InitializePlayer(Player* pPlayer) const
     pPlayer->SetUInt32Value("PLAYER_BYTES_2", bytes2);
     pPlayer->SetUInt32Value("PLAYER_FLAGS", flags);
 
-    for (int i = i; i < EQUIPMENT_SLOT_END; i++)
+    for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
         pPlayer->SetVisibleItemSlot(i, visibleItems[i], visibleItemEnchants[i]);
+}
+
+void ReplayMgr::SpawnPlayers()
+{
+    printf("[ReplayMgr] Spawning players...\n");
+    for (const auto& itr : m_playerTemplates)
+        sWorld.MakeNewPlayer(itr.first, itr.second);
 }
 
 void ReplayMgr::LoadPlayers()
@@ -208,10 +241,10 @@ void ReplayMgr::LoadPlayers()
         }
 
         playerData.faction = fields[20].GetUInt32();
-        if (!sGameDataMgr.IsValidFactionTemplate(playerData.faction))
+        if (playerData.faction > MAX_FACTION_TEMPLATE_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid faction id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            playerData.faction = 0;
+            playerData.faction = 35;
         }
 
         playerData.unitFlags = fields[21].GetUInt32();
@@ -221,7 +254,7 @@ void ReplayMgr::LoadPlayers()
         playerData.maxPowers[POWER_MANA] = fields[25].GetUInt32();
         playerData.auraState = fields[26].GetUInt32();
         playerData.emoteState = fields[27].GetUInt32();
-        if (playerData.emoteState && !sGameDataMgr.IsValidEmote(playerData.emoteState))
+        if (playerData.emoteState && playerData.emoteState > MAX_EMOTE_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid emote state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.emoteState = 0;

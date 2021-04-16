@@ -5,6 +5,8 @@
 #include <map>
 #include <string>
 
+#define OBJECT_FIELD_GUID uint16(0)
+
 namespace UpdateFields
 {
     extern std::map<std::string, uint16> g_updateFieldValues5875;
@@ -13,7 +15,7 @@ namespace UpdateFields
 
     std::map<std::string, uint16>* GetUpdateFieldsMapForBuild(uint16 build);
     uint16 GetUpdateFieldValue(std::string name, uint16 build);
-    std::string GetUpdateFieldName(uint16 opcode, uint16 build);
+    std::string GetUpdateFieldName(uint16 id, uint16 build);
 }
 
 #endif

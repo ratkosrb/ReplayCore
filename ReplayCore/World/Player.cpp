@@ -12,9 +12,32 @@ Player::Player(PlayerData const& playerData) : Unit(playerData.guid)
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    playerData.InitializeUnit(this);
+    InitializePlaceholderUnitFields();
+    InitializePlaceholderPlayerFields();
+    playerData.InitializePlayer(this);
     m_uint32Values_mirror = new uint32[m_valuesCount];
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
+}
+
+Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : Unit(guid)
+{
+    m_name = name;
+    m_location = otherPlayer.m_location;
+    m_movementInfo = otherPlayer.m_movementInfo;
+
+    m_valuesCount = sWorld.GetUpdateField("PLAYER_END");
+    assert(m_valuesCount);
+    m_uint32Values = new uint32[m_valuesCount];
+    memcpy(m_uint32Values, otherPlayer.m_uint32Values, sizeof(uint32) * m_valuesCount);
+    SetGuidValue(OBJECT_FIELD_GUID, guid);
+    m_uint32Values_mirror = new uint32[m_valuesCount];
+    memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
+}
+
+void Player::InitializePlaceholderPlayerFields()
+{
+    SetUInt32Value("PLAYER_NEXT_LEVEL_XP", 100000);
+    SetInt32Value("PLAYER_FIELD_WATCHED_FACTION_INDEX", -1);
 }
 
 void Player::SetVisibleItemSlot(uint8 slot, uint32 itemId, uint32 enchantId)

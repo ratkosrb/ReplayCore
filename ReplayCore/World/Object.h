@@ -6,6 +6,7 @@
 #include "ObjectDefines.h"
 #include "Geometry.h"
 #include "UpdateData.h"
+#include "UpdateFields.h"
 
 struct ObjectData;
 struct WorldObjectData;
@@ -32,21 +33,18 @@ public:
     void SetObjectScale(float scale) { m_objectData.scale = scale; }
     */
 
+    bool IsVisible() const { return m_isVisible; }
+    void SetVisibility(bool on) { m_isVisible = on; }
+
     void MarkForClientUpdate();
 
-    int32 const& GetInt32Value(const char* index) const;
-
-    uint32 const& GetUInt32Value(const char* index) const;
-
-    uint64 const& GetUInt64Value(const char* index) const;
-
-    float const& GetFloatValue(const char* index) const;
-
+    int32 GetInt32Value(const char* index) const;
+    uint32 GetUInt32Value(const char* index) const;
+    uint64 GetUInt64Value(const char* index) const;
+    float GetFloatValue(const char* index) const;
     uint8 GetByteValue(const char* index, uint8 offset) const;
-
     uint16 GetUInt16Value(const char* index, uint8 offset) const;
-
-    ObjectGuid const& GetGuidValue(const char* index) const { return *reinterpret_cast<ObjectGuid const*>(&GetUInt64Value(index)); }
+    ObjectGuid GetGuidValue(const char* index) const { return *reinterpret_cast<ObjectGuid const*>(GetUInt64Value(index)); }
     std::string GetGuidStr() const { return GetObjectGuid().GetString(); }
     ObjectGuid const& GetObjectGuid() const { return m_guid; }
     PackedGuid const& GetPackGUID() const { return m_packGuid; }
@@ -59,6 +57,7 @@ public:
     void SetUInt16Value(const char* index, uint8 offset, uint16 value);
     void SetInt16Value(const char* index, uint8 offset, int16 value) { SetUInt16Value(index, offset, (uint16)value); }
     void SetGuidValue(const char* index, ObjectGuid const& value) { SetUInt64Value(index, value.GetRawValue()); }
+    void SetObjectGuid(ObjectGuid const& value) { SetUInt64Value(OBJECT_FIELD_GUID, value.GetRawValue()); }
 
     void _SetUpdateBits(UpdateMask* updateMask, Player* target) const;
     void _SetCreateBits(UpdateMask* updateMask, Player* target) const;
@@ -157,8 +156,6 @@ public:
     WorldObject(ObjectGuid guid) : Object(guid) {}
     WorldObject(WorldObjectData const& worldObjectData);
 
-    bool IsVisible() const { return m_isVisible; }
-    void SetVisibility(bool on) { m_isVisible = on; }
     uint32 GetMapId() const { return m_location.mapId; }
     float GetPositionX() const { return m_location.x; }
     float GetPositionY() const { return m_location.y; }
@@ -224,7 +221,6 @@ public:
     }
 protected:
     WorldLocation m_location;
-    bool m_isVisible = true;
 };
 
 

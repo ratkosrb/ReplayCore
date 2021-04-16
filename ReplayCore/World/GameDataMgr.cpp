@@ -59,6 +59,16 @@ bool GameDataMgr::IsValidClass(uint32 classId) const
     return (classId && (((1 << (classId - 1)) & maxClassMask) != 0));
 }
 
+bool GameDataMgr::IsValidUnitDisplayId(uint32 id) const
+{
+    if (sWorld.GetClientBuild() <= CLIENT_BUILD_1_12_1)
+        return id <= MAX_UNIT_DISPLAY_ID_VANILLA;
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
+        return id <= MAX_UNIT_DISPLAY_ID_TBC;
+    else
+        return id <= MAX_UNIT_DISPLAY_ID_WOTLK;
+}
+
 uint8 GameDataMgr::GetMoveSpeedsCount() const
 {
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)

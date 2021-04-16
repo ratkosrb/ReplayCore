@@ -30,10 +30,17 @@ public :
     MovementInfo& GetMovementInfo() { return m_movementInfo; }
     MovementInfo const& GetMovementInfo() const { return m_movementInfo; }
 
+    uint8 GetRace() const { return GetByteValue("UNIT_FIELD_BYTES_0", 0); }
+    uint32 GetRaceMask() const { return GetRace() ? 1 << (GetRace() - 1) : 0x0; }
+    uint8 GetClass() const { return GetByteValue("UNIT_FIELD_BYTES_0", 1); }
+    uint32 GetClassMask() const { return GetClass() ? 1 << (GetClass() - 1) : 0x0; }
+    uint8 GetGender() const { return GetByteValue("UNIT_FIELD_BYTES_0", 2); }
+
     void SetVirtualItem(uint8 slot, uint32 item_id);
     uint32 GetAttackTime(WeaponAttackType att) const;
     void SetAttackTime(WeaponAttackType att, uint32 val);
 
+    void InitializePlaceholderUnitFields();
     void InitializeMoveSpeeds();
     void SetSpeedRate(UnitMoveType moveType, float rate)
     {

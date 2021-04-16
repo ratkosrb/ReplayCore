@@ -299,40 +299,46 @@ void Object::MarkForClientUpdate()
     m_objectUpdated = true;
 }
 
-int32 const& Object::GetInt32Value(const char* index) const
+int32 Object::GetInt32Value(const char* index) const
 {
     if (uint16 uf = sWorld.GetUpdateField(index))
         return GetInt32Value(uf);
+    return 0;
 }
 
-uint32 const& Object::GetUInt32Value(const char* index) const
+uint32 Object::GetUInt32Value(const char* index) const
 {
     if (uint16 uf = sWorld.GetUpdateField(index))
         return GetUInt32Value(uf);
+    return 0;
 }
 
-uint64 const& Object::GetUInt64Value(const char* index) const
+uint64 Object::GetUInt64Value(const char* index) const
 {
     if (uint16 uf = sWorld.GetUpdateField(index))
         return GetUInt64Value(uf);
+    return 0;
 }
 
-float const& Object::GetFloatValue(const char* index) const
+float Object::GetFloatValue(const char* index) const
 {
     if (uint16 uf = sWorld.GetUpdateField(index))
         return GetFloatValue(uf);
+    return 0.0f;
 }
 
 uint8 Object::GetByteValue(const char* index, uint8 offset) const
 {
     if (uint16 uf = sWorld.GetUpdateField(index))
         return GetByteValue(uf, offset);
+    return 0;
 }
 
 uint16 Object::GetUInt16Value(const char* index, uint8 offset) const
 {
     if (uint16 uf = sWorld.GetUpdateField(index))
         return GetUInt16Value(uf, offset);
+    return 0;
 }
 
 void Object::SetInt32Value(const char* index, int32  value)
@@ -369,6 +375,15 @@ void Object::SetUInt16Value(const char* index, uint8 offset, uint16 value)
 {
     if (uint16 uf = sWorld.GetUpdateField(index))
         SetUInt16Value(uf, offset, value);
+}
+
+bool Object::PrintIndexError(uint32 index, bool set) const
+{
+    printf("%s nonexistent value field: %u (count: %u) for object typeid: %u type mask: %u\n",
+        (set ? "set value to" : "get value from"), index, m_valuesCount, GetTypeId(), m_objectType);
+
+    // ASSERT must fail after function call
+    return false;
 }
 
 void Object::SetInt32Value(uint16 index, int32 value)
@@ -413,9 +428,12 @@ void Object::SetUInt64Value(uint16 index, uint64 const& value)
         // with only one part whereas other times it does not. It appears to be
         // related to the number of (player) units in the vicinity.
         // The first update will correct any malformed 64bit data.
-        m_uint32Values_mirror[index] = first + 1;
-        m_uint32Values_mirror[index + 1] = second + 1;
-        MarkForClientUpdate();
+        if (m_uint32Values_mirror)
+        {
+            m_uint32Values_mirror[index] = first + 1;
+            m_uint32Values_mirror[index + 1] = second + 1;
+            MarkForClientUpdate();
+        }
     }
 }
 
