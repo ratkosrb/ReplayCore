@@ -103,6 +103,8 @@
     <ClInclude Include="Defines\GameAccount.h" />
     <ClInclude Include="Defines\Utility.h" />
     <ClInclude Include="Defines\WorldPacket.h" />
+    <ClInclude Include="World\ChatDefines.h" />
+    <ClInclude Include="World\ClassicDefines.h" />
     <ClInclude Include="World\GameDataDefines.h" />
     <ClInclude Include="World\GameDataMgr.h" />
     <ClInclude Include="World\Geometry.h" />
@@ -117,7 +119,9 @@
     <ClInclude Include="World\ReplayMgr.h" />
     <ClInclude Include="World\Unit.h" />
     <ClInclude Include="World\UnitDefines.h" />
+    <ClInclude Include="World\UpdateData.h" />
     <ClInclude Include="World\UpdateFields.h" />
+    <ClInclude Include="World\UpdateMask.h" />
     <ClInclude Include="World\WorldServer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -135,9 +139,13 @@
     <ClCompile Include="Database\QueryResult.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="World\GameDataMgr.cpp" />
+    <ClCompile Include="World\Object.cpp" />
     <ClCompile Include="World\ObjectGuid.cpp" />
     <ClCompile Include="World\Opcodes.cpp" />
+    <ClCompile Include="World\Player.cpp" />
     <ClCompile Include="World\ReplayMgr.cpp" />
+    <ClCompile Include="World\Unit.cpp" />
+    <ClCompile Include="World\UpdateData.cpp" />
     <ClCompile Include="World\UpdateFields.cpp" />
     <ClCompile Include="World\WorldServer.cpp" />
   </ItemGroup>

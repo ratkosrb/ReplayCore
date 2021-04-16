@@ -56,6 +56,18 @@
     <ClCompile Include="World\UpdateFields.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\Object.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\Unit.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\Player.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\UpdateData.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -170,6 +182,18 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\UpdateFields.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ClassicDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ChatDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\UpdateData.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\UpdateMask.h">
       <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>

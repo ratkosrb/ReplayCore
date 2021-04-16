@@ -160,6 +160,15 @@ enum VirtualItemSlot
 
 #define MAX_VIRTUAL_ITEM_SLOT 3
 
+enum WeaponAttackType                                       // The different weapon attack-types
+{
+    BASE_ATTACK   = 0,                                      // Main-hand weapon
+    OFF_ATTACK    = 1,                                      // Off-hand weapon
+    RANGED_ATTACK = 2                                       // Ranged weapon, bow/wand etc.
+};
+
+#define MAX_ATTACK  3
+
 #define MAX_AURAS 48
 
 #define MAX_FACTION_TEMPLATE_VANILLA 1677
@@ -198,15 +207,201 @@ enum SheathState
 
 enum UnitMoveType
 {
-    MOVE_WALK = 0,
-    MOVE_RUN = 1,
-    MOVE_RUN_BACK = 2,
-    MOVE_SWIM = 3,
-    MOVE_SWIM_BACK = 4,
-    MOVE_TURN_RATE = 5,
+    MOVE_WALK           = 0,
+    MOVE_RUN            = 1,
+    MOVE_RUN_BACK       = 2,
+    MOVE_SWIM           = 3,
+    MOVE_SWIM_BACK      = 4,
+    MOVE_TURN_RATE      = 5,
+    MOVE_FLIGHT         = 6,
+    MOVE_FLIGHT_BACK    = 7,
+    MOVE_PITCH_RATE     = 8
 };
 
-#define MAX_MOVE_TYPE 6
+#define MAX_MOVE_TYPE_VANILLA 6
+#define MAX_MOVE_TYPE_TBC 8
+#define MAX_MOVE_TYPE_WOTLK 9
 
+extern float baseMoveSpeed[MAX_MOVE_TYPE_WOTLK];
+
+namespace Vanilla
+{
+    enum VirtualItemInfoByteOffset
+    {
+        VIRTUAL_ITEM_INFO_0_OFFSET_CLASS         = 0,
+        VIRTUAL_ITEM_INFO_0_OFFSET_SUBCLASS      = 1,
+        VIRTUAL_ITEM_INFO_0_OFFSET_MATERIAL      = 2,
+        VIRTUAL_ITEM_INFO_0_OFFSET_INVENTORYTYPE = 3,
+
+        VIRTUAL_ITEM_INFO_1_OFFSET_SHEATH        = 0,
+    };
+
+    enum HitInfo
+    {
+        HITINFO_NORMALSWING         = 0x00000000,
+        HITINFO_UNK0                = 0x00000001,               // req correct packet structure
+        HITINFO_AFFECTS_VICTIM      = 0x00000002,
+        HITINFO_LEFTSWING           = 0x00000004,
+        HITINFO_UNK3                = 0x00000008,
+        HITINFO_MISS                = 0x00000010,
+        HITINFO_ABSORB              = 0x00000020,               // plays absorb sound
+        HITINFO_RESIST              = 0x00000040,               // resisted atleast some damage
+        HITINFO_CRITICALHIT         = 0x00000080,
+        HITINFO_UNK8                = 0x00000100,               // wotlk?
+        HITINFO_BLOCK               = 0x00000800,
+        HITINFO_UNK9                = 0x00002000,               // wotlk?
+        HITINFO_GLANCING            = 0x00004000,
+        HITINFO_CRUSHING            = 0x00008000,
+        HITINFO_NOACTION            = 0x00010000,
+        HITINFO_SWINGNOHITSOUND     = 0x00080000
+    };
+
+    enum NPCFlags
+    {
+        UNIT_NPC_FLAG_NONE                  = 0x00000000,
+        UNIT_NPC_FLAG_GOSSIP                = 0x00000001,       // 100%
+        UNIT_NPC_FLAG_QUESTGIVER            = 0x00000002,       // 100%
+        UNIT_NPC_FLAG_VENDOR                = 0x00000004,       // 100%
+        UNIT_NPC_FLAG_FLIGHTMASTER          = 0x00000008,       // 100%
+        UNIT_NPC_FLAG_TRAINER               = 0x00000010,       // 100%
+        UNIT_NPC_FLAG_SPIRITHEALER          = 0x00000020,       // guessed
+        UNIT_NPC_FLAG_SPIRITGUIDE           = 0x00000040,       // guessed
+        UNIT_NPC_FLAG_INNKEEPER             = 0x00000080,       // 100%
+        UNIT_NPC_FLAG_BANKER                = 0x00000100,       // 100%
+        UNIT_NPC_FLAG_PETITIONER            = 0x00000200,       // 100% 0xC0000 = guild petitions
+        UNIT_NPC_FLAG_TABARDDESIGNER        = 0x00000400,       // 100%
+        UNIT_NPC_FLAG_BATTLEMASTER          = 0x00000800,       // 100%
+        UNIT_NPC_FLAG_AUCTIONEER            = 0x00001000,       // 100%
+        UNIT_NPC_FLAG_STABLEMASTER          = 0x00002000,       // 100%
+        UNIT_NPC_FLAG_REPAIR                = 0x00004000,       // 100%
+    };
+}
+
+namespace TBC
+{
+    enum VirtualItemInfoByteOffset
+    {
+        VIRTUAL_ITEM_INFO_0_OFFSET_CLASS         = 0,
+        VIRTUAL_ITEM_INFO_0_OFFSET_SUBCLASS      = 1,
+        VIRTUAL_ITEM_INFO_0_OFFSET_UNK0          = 2,
+        VIRTUAL_ITEM_INFO_0_OFFSET_MATERIAL      = 3,
+
+        VIRTUAL_ITEM_INFO_1_OFFSET_INVENTORYTYPE = 0,
+        VIRTUAL_ITEM_INFO_1_OFFSET_SHEATH        = 1,
+    };
+
+    enum HitInfo
+    {
+        HITINFO_NORMALSWING         = 0x00000000,
+        HITINFO_UNK0                = 0x00000001,               // req correct packet structure
+        HITINFO_AFFECTS_VICTIM      = 0x00000002,
+        HITINFO_LEFTSWING           = 0x00000004,
+        HITINFO_UNK3                = 0x00000008,
+        HITINFO_MISS                = 0x00000010,
+        HITINFO_ABSORB              = 0x00000020,               // plays absorb sound
+        HITINFO_RESIST              = 0x00000040,               // resisted atleast some damage
+        HITINFO_CRITICALHIT         = 0x00000080,
+        HITINFO_UNK8                = 0x00000100,               // wotlk?
+        HITINFO_BLOCK               = 0x00000800,
+        HITINFO_UNK9                = 0x00002000,               // wotlk?
+        HITINFO_GLANCING            = 0x00004000,
+        HITINFO_CRUSHING            = 0x00008000,
+        HITINFO_NOACTION            = 0x00010000,
+        HITINFO_SWINGNOHITSOUND     = 0x00080000
+    };
+
+    enum NPCFlags
+    {
+        UNIT_NPC_FLAG_NONE                  = 0x00000000,
+        UNIT_NPC_FLAG_GOSSIP                = 0x00000001,       // 100%
+        UNIT_NPC_FLAG_QUESTGIVER            = 0x00000002,       // guessed, probably ok
+        UNIT_NPC_FLAG_UNK1                  = 0x00000004,
+        UNIT_NPC_FLAG_UNK2                  = 0x00000008,
+        UNIT_NPC_FLAG_TRAINER               = 0x00000010,       // 100%
+        UNIT_NPC_FLAG_TRAINER_CLASS         = 0x00000020,       // 100%
+        UNIT_NPC_FLAG_TRAINER_PROFESSION    = 0x00000040,       // 100%
+        UNIT_NPC_FLAG_VENDOR                = 0x00000080,       // 100%
+        UNIT_NPC_FLAG_VENDOR_AMMO           = 0x00000100,       // 100%, general goods vendor
+        UNIT_NPC_FLAG_VENDOR_FOOD           = 0x00000200,       // 100%
+        UNIT_NPC_FLAG_VENDOR_POISON         = 0x00000400,       // guessed
+        UNIT_NPC_FLAG_VENDOR_REAGENT        = 0x00000800,       // 100%
+        UNIT_NPC_FLAG_REPAIR                = 0x00001000,       // 100%
+        UNIT_NPC_FLAG_FLIGHTMASTER          = 0x00002000,       // 100%
+        UNIT_NPC_FLAG_SPIRITHEALER          = 0x00004000,       // guessed
+        UNIT_NPC_FLAG_SPIRITGUIDE           = 0x00008000,       // guessed
+        UNIT_NPC_FLAG_INNKEEPER             = 0x00010000,       // 100%
+        UNIT_NPC_FLAG_BANKER                = 0x00020000,       // 100%
+        UNIT_NPC_FLAG_PETITIONER            = 0x00040000,       // 100% 0xC0000 = guild petitions, 0x40000 = arena team petitions
+        UNIT_NPC_FLAG_TABARDDESIGNER        = 0x00080000,       // 100%
+        UNIT_NPC_FLAG_BATTLEMASTER          = 0x00100000,       // 100%
+        UNIT_NPC_FLAG_AUCTIONEER            = 0x00200000,       // 100%
+        UNIT_NPC_FLAG_STABLEMASTER          = 0x00400000,       // 100%
+        UNIT_NPC_FLAG_GUILD_BANKER          = 0x00800000,       // cause client to send 997 opcode
+        UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,       // cause client to send 1015 opcode (spell click), dynamic, set at loading and don't must be set in DB
+    };
+}
+
+namespace WotLK
+{
+    enum HitInfo
+    {
+        HITINFO_NORMALSWING         = 0x00000000,
+        HITINFO_UNK0                = 0x00000001,               // req correct packet structure
+        HITINFO_AFFECTS_VICTIM      = 0x00000002,
+        HITINFO_LEFTSWING           = 0x00000004,
+        HITINFO_UNK3                = 0x00000008,
+        HITINFO_MISS                = 0x00000010,
+        HITINFO_ABSORB              = 0x00000020,               // absorbed damage
+        HITINFO_ABSORB2             = 0x00000040,               // absorbed damage
+        HITINFO_RESIST              = 0x00000080,               // resisted atleast some damage
+        HITINFO_RESIST2             = 0x00000100,               // resisted atleast some damage
+        HITINFO_CRITICALHIT         = 0x00000200,               // critical hit
+        // 0x00000400
+        // 0x00000800
+        // 0x00001000
+        HITINFO_BLOCK               = 0x00002000,               // blocked damage
+        // 0x00004000
+        // 0x00008000
+        HITINFO_GLANCING            = 0x00010000,
+        HITINFO_CRUSHING            = 0x00020000,
+        HITINFO_NOACTION            = 0x00040000,               // guessed
+        // 0x00080000
+        // 0x00100000
+        HITINFO_SWINGNOHITSOUND     = 0x00200000,               // guessed
+        // 0x00400000
+        HITINFO_UNK22               = 0x00800000
+    };
+
+    enum NPCFlags
+    {
+        UNIT_NPC_FLAG_NONE                  = 0x00000000,
+        UNIT_NPC_FLAG_GOSSIP                = 0x00000001,       // 100%
+        UNIT_NPC_FLAG_QUESTGIVER            = 0x00000002,       // guessed, probably ok
+        UNIT_NPC_FLAG_UNK1                  = 0x00000004,
+        UNIT_NPC_FLAG_UNK2                  = 0x00000008,
+        UNIT_NPC_FLAG_TRAINER               = 0x00000010,       // 100%
+        UNIT_NPC_FLAG_TRAINER_CLASS         = 0x00000020,       // 100%
+        UNIT_NPC_FLAG_TRAINER_PROFESSION    = 0x00000040,       // 100%
+        UNIT_NPC_FLAG_VENDOR                = 0x00000080,       // 100%
+        UNIT_NPC_FLAG_VENDOR_AMMO           = 0x00000100,       // 100%, general goods vendor
+        UNIT_NPC_FLAG_VENDOR_FOOD           = 0x00000200,       // 100%
+        UNIT_NPC_FLAG_VENDOR_POISON         = 0x00000400,       // guessed
+        UNIT_NPC_FLAG_VENDOR_REAGENT        = 0x00000800,       // 100%
+        UNIT_NPC_FLAG_REPAIR                = 0x00001000,       // 100%
+        UNIT_NPC_FLAG_FLIGHTMASTER          = 0x00002000,       // 100%
+        UNIT_NPC_FLAG_SPIRITHEALER          = 0x00004000,       // guessed
+        UNIT_NPC_FLAG_SPIRITGUIDE           = 0x00008000,       // guessed
+        UNIT_NPC_FLAG_INNKEEPER             = 0x00010000,       // 100%
+        UNIT_NPC_FLAG_BANKER                = 0x00020000,       // 100%
+        UNIT_NPC_FLAG_PETITIONER            = 0x00040000,       // 100% 0xC0000 = guild petitions, 0x40000 = arena team petitions
+        UNIT_NPC_FLAG_TABARDDESIGNER        = 0x00080000,       // 100%
+        UNIT_NPC_FLAG_BATTLEMASTER          = 0x00100000,       // 100%
+        UNIT_NPC_FLAG_AUCTIONEER            = 0x00200000,       // 100%
+        UNIT_NPC_FLAG_STABLEMASTER          = 0x00400000,       // 100%
+        UNIT_NPC_FLAG_GUILD_BANKER          = 0x00800000,       // cause client to send 997 opcode
+        UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,       // cause client to send 1015 opcode (spell click), dynamic, set at loading and don't must be set in DB
+        UNIT_NPC_FLAG_PLAYER_VEHICLE        = 0x02000000,       // players with mounts that have vehicle data should have it set
+    };
+}
 
 #endif

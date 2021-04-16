@@ -5,41 +5,157 @@
 #include "ObjectGuid.h"
 #include "ObjectDefines.h"
 #include "Geometry.h"
+#include "UpdateData.h"
 
-// Only the mutable update fields.
-struct ObjectData
-{
-    uint32 entry = 0;
-    float scale = DEFAULT_OBJECT_SCALE;
-};
+struct ObjectData;
+struct WorldObjectData;
+class UpdateMask;
+class Player;
+class Unit;
 
 class Object
 {
 public:
     Object() = default;
-    Object(ObjectGuid guid, ObjectData objectData) :
-        m_guid(guid), m_objectData(objectData) {}
+    Object(ObjectGuid guid) : m_guid(guid)
+    {
+        m_packGuid.Set(guid);
+    }
+    Object(ObjectData const& objectData);
 
     uint8 GetTypeId() const { return m_objectTypeId; }
     bool IsType(TypeMask mask) const { return (mask & m_objectType) != 0; }
+    /*
     uint32 GetEntry() const { return m_objectData.entry; }
     void SetEntry(uint32 entry) { m_objectData.entry = entry; }
     float GetObjectScale() const { return m_objectData.scale; }
     void SetObjectScale(float scale) { m_objectData.scale = scale; }
+    */
+
+    void MarkForClientUpdate();
+
+    int32 const& GetInt32Value(const char* index) const;
+
+    uint32 const& GetUInt32Value(const char* index) const;
+
+    uint64 const& GetUInt64Value(const char* index) const;
+
+    float const& GetFloatValue(const char* index) const;
+
+    uint8 GetByteValue(const char* index, uint8 offset) const;
+
+    uint16 GetUInt16Value(const char* index, uint8 offset) const;
+
+    ObjectGuid const& GetGuidValue(const char* index) const { return *reinterpret_cast<ObjectGuid const*>(&GetUInt64Value(index)); }
+    std::string GetGuidStr() const { return GetObjectGuid().GetString(); }
+    ObjectGuid const& GetObjectGuid() const { return m_guid; }
+    PackedGuid const& GetPackGUID() const { return m_packGuid; }
+
+    void SetInt32Value(const char* index, int32  value);
+    void SetUInt32Value(const char* index, uint32  value);
+    void SetUInt64Value(const char* index, uint64 const& value);
+    void SetFloatValue(const char* index, float   value);
+    void SetByteValue(const char* index, uint8 offset, uint8 value);
+    void SetUInt16Value(const char* index, uint8 offset, uint16 value);
+    void SetInt16Value(const char* index, uint8 offset, int16 value) { SetUInt16Value(index, offset, (uint16)value); }
+    void SetGuidValue(const char* index, ObjectGuid const& value) { SetUInt64Value(index, value.GetRawValue()); }
+
+    void _SetUpdateBits(UpdateMask* updateMask, Player* target) const;
+    void _SetCreateBits(UpdateMask* updateMask, Player* target) const;
+    void SendCreateUpdateToPlayer(Player* player);
+    void BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) const;
+    void BuildValuesUpdate(uint8 updatetype, ByteBuffer* data, UpdateMask* updateMask, Player* target) const;
+    void BuildMovementUpdate(ByteBuffer* data, uint8 updateFlags) const;
+    
+    inline bool IsWorldObject() const { return IsType(TYPEMASK_WORLDOBJECT); }
+    WorldObject* ToWorldObject() { if (IsWorldObject()) return reinterpret_cast<WorldObject*>(this); else return nullptr; }
+    WorldObject const* ToWorldObject() const { if (IsWorldObject()) return reinterpret_cast<WorldObject const*>(this); else return nullptr; }
+
+    inline bool IsPlayer() const { return GetTypeId() == TYPEID_PLAYER; }
+    Player* ToPlayer() { if (IsPlayer()) return reinterpret_cast<Player*>(this); else return nullptr; }
+    Player const* ToPlayer() const { if (IsPlayer()) return reinterpret_cast<Player const*>(this); else return nullptr; }
+
+    inline bool IsCreature() const { return GetTypeId() == TYPEID_UNIT; }
+
+    inline bool IsUnit() const { return IsType(TYPEMASK_UNIT); }
+    Unit* ToUnit() { if (IsUnit()) return reinterpret_cast<Unit*>(this); else return nullptr; }
+    Unit const* ToUnit() const { if (IsUnit()) return reinterpret_cast<Unit const*>(this); else return nullptr; }
 
 protected:
+    bool m_isVisible = false;
+    bool m_isNewObject = true;
+    bool m_objectUpdated = false;
     ObjectGuid m_guid;
+    PackedGuid m_packGuid;
     uint8 m_objectTypeId = TYPEID_OBJECT;
     uint16 m_objectType = TYPEMASK_OBJECT;
-    ObjectData m_objectData;
+    uint8 m_updateFlags = 0;
+    union
+    {
+        int32* m_int32Values = nullptr;
+        uint32* m_uint32Values;
+        float* m_floatValues;
+    };
+    uint32* m_uint32Values_mirror = nullptr;;
+    uint16 m_valuesCount = 0;
+
+    int32 const& GetInt32Value(uint16 index) const
+    {
+        assert(index < m_valuesCount || PrintIndexError(index, false));
+        return m_int32Values[index];
+    }
+
+    uint32 const& GetUInt32Value(uint16 index) const
+    {
+        assert(index < m_valuesCount || PrintIndexError(index, false));
+        return m_uint32Values[index];
+    }
+
+    uint64 const& GetUInt64Value(uint16 index) const
+    {
+        assert(index + 1 < m_valuesCount || PrintIndexError(index, false));
+        return *((uint64*)&(m_uint32Values[index]));
+    }
+
+    float const& GetFloatValue(uint16 index) const
+    {
+        assert(index < m_valuesCount || PrintIndexError(index, false));
+        return m_floatValues[index];
+    }
+
+    uint8 GetByteValue(uint16 index, uint8 offset) const
+    {
+        assert(index < m_valuesCount || PrintIndexError(index, false));
+        assert(offset < 4);
+        return *(((uint8*)&m_uint32Values[index]) + offset);
+    }
+
+    uint16 GetUInt16Value(uint16 index, uint8 offset) const
+    {
+        assert(index < m_valuesCount || PrintIndexError(index, false));
+        assert(offset < 2);
+        return *(((uint16*)&m_uint32Values[index]) + offset);
+    }
+
+    ObjectGuid const& GetGuidValue(uint16 index) const { return *reinterpret_cast<ObjectGuid const*>(&GetUInt64Value(index)); }
+
+    void SetInt32Value(uint16 index, int32  value);
+    void SetUInt32Value(uint16 index, uint32  value);
+    void SetUInt64Value(uint16 index, uint64 const& value);
+    void SetFloatValue(uint16 index, float   value);
+    void SetByteValue(uint16 index, uint8 offset, uint8 value);
+    void SetUInt16Value(uint16 index, uint8 offset, uint16 value);
+    void SetInt16Value(uint16 index, uint8 offset, int16 value) { SetUInt16Value(index, offset, (uint16)value); }
+    void SetGuidValue(uint16 index, ObjectGuid const& value) { SetUInt64Value(index, value.GetRawValue()); }
+    bool PrintIndexError(uint32 index, bool set) const;
 };
 
 class WorldObject : public Object
 {
 public:
     WorldObject() = default;
-    WorldObject(ObjectGuid guid, ObjectData objectData, WorldLocation location) :
-        Object(guid, objectData), m_location(location) {}
+    WorldObject(ObjectGuid guid) : Object(guid) {}
+    WorldObject(WorldObjectData const& worldObjectData);
 
     bool IsVisible() const { return m_isVisible; }
     void SetVisibility(bool on) { m_isVisible = on; }

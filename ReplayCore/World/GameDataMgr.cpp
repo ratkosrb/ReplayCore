@@ -59,6 +59,16 @@ bool GameDataMgr::IsValidClass(uint32 classId) const
     return (classId && (((1 << (classId - 1)) & maxClassMask) != 0));
 }
 
+uint8 GameDataMgr::GetMoveSpeedsCount() const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        return MAX_MOVE_TYPE_VANILLA;
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return MAX_MOVE_TYPE_TBC;
+    
+    return MAX_MOVE_TYPE_WOTLK;
+}
+
 void GameDataMgr::LoadFactions()
 {
     // other emulators don't have faction data in db

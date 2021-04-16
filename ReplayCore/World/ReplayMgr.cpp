@@ -4,12 +4,126 @@
 #include "GameDataMgr.h"
 #include "MovementDefines.h"
 #include "WorldServer.h"
+#include "../Defines/ClientVersions.h"
+#include "ClassicDefines.h"
 #include <set>
 
 ReplayMgr& ReplayMgr::Instance()
 {
     static ReplayMgr instance;
     return instance;
+}
+
+void ObjectData::InitializeObject(Object* pObject) const
+{
+    pObject->SetGuidValue("OBJECT_FIELD_GUID", guid);
+    pObject->SetUInt32Value("OBJECT_FIELD_ENTRY", entry);
+    pObject->SetFloatValue("OBJECT_FIELD_SCALE_X", scale);
+}
+
+void WorldObjectData::InitializeWorldObject(WorldObject* pObject) const
+{
+    InitializeObject(pObject);
+    pObject->SetLocation(location);
+}
+
+void UnitData::InitializeUnit(Unit* pUnit) const
+{
+    InitializeWorldObject(pUnit);
+
+    pUnit->GetMovementInfo().pos = location.ToPosition();
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        pUnit->GetMovementInfo().SetMovementFlags(ConvertMovementFlagsToVanilla(movementFlags));
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        pUnit->GetMovementInfo().SetMovementFlags(ConvertMovementFlagsToTBC(movementFlags));
+    else
+        pUnit->GetMovementInfo().SetMovementFlags(ConvertMovementFlagsToWotLK(movementFlags));
+
+    pUnit->SetGuidValue("UNIT_FIELD_CHARM", charm);
+    pUnit->SetGuidValue("UNIT_FIELD_SUMMON", summon);
+    pUnit->SetGuidValue("UNIT_FIELD_CHARMEDBY", charmedBy);
+    pUnit->SetGuidValue("UNIT_FIELD_SUMMONEDBY", summonedBy);
+    pUnit->SetGuidValue("UNIT_FIELD_CREATEDBY", createdBy);
+    pUnit->SetGuidValue("UNIT_FIELD_TARGET", target);
+    pUnit->SetUInt32Value("UNIT_FIELD_HEALTH", currentHealth);
+    pUnit->SetUInt32Value("UNIT_FIELD_MAXHEALTH", maxHealth);
+    pUnit->SetUInt32Value("UNIT_FIELD_POWER1", currentPowers[POWER_MANA]);
+    pUnit->SetUInt32Value("UNIT_FIELD_POWER2", currentPowers[POWER_RAGE]);
+    pUnit->SetUInt32Value("UNIT_FIELD_POWER3", currentPowers[POWER_FOCUS]);
+    pUnit->SetUInt32Value("UNIT_FIELD_POWER4", currentPowers[POWER_ENERGY]);
+    pUnit->SetUInt32Value("UNIT_FIELD_POWER5", currentPowers[POWER_HAPPINESS]);
+    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER1", maxPowers[POWER_MANA]);
+    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER2", maxPowers[POWER_RAGE]);
+    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER3", maxPowers[POWER_FOCUS]);
+    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER4", maxPowers[POWER_ENERGY]);
+    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER5", maxPowers[POWER_HAPPINESS]);
+
+    pUnit->SetUInt32Value("UNIT_FIELD_LEVEL", level);
+    pUnit->SetUInt32Value("UNIT_FIELD_FACTIONTEMPLATE", faction);
+
+    pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 0, raceId);
+    pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 1, classId);
+    pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 2, gender);
+    pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 3, powerType);
+
+    for (uint8 i = 0; i < MAX_VIRTUAL_ITEM_SLOT; i++)
+        pUnit->SetVirtualItem(i, virtualItems[i]);
+
+    pUnit->SetUInt32Value("UNIT_FIELD_AURASTATE", auraState);
+    pUnit->SetAttackTime(BASE_ATTACK, mainHandAttackTime);
+    pUnit->SetAttackTime(OFF_ATTACK, offHandAttackTime);
+    pUnit->SetFloatValue("UNIT_FIELD_BOUNDINGRADIUS", boundingRadius);
+    pUnit->SetFloatValue("UNIT_FIELD_COMBATREACH", combatReach);
+    pUnit->SetUInt32Value("UNIT_FIELD_DISPLAYID", displayId);
+    pUnit->SetUInt32Value("UNIT_FIELD_NATIVEDISPLAYID", nativeDisplayId);
+    pUnit->SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", mountDisplayId);
+    
+    pUnit->SetByteValue("UNIT_FIELD_BYTES_1", 0, standState);
+    pUnit->SetByteValue("UNIT_FIELD_BYTES_2", 0, sheathState);
+    
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        pUnit->SetByteValue("UNIT_FIELD_BYTES_1", 2, shapeShiftForm);
+    else
+        pUnit->SetByteValue("UNIT_FIELD_BYTES_2", 3, shapeShiftForm);
+
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        pUnit->SetByteValue("UNIT_FIELD_BYTES_1", 3, visFlags);
+    else
+        pUnit->SetByteValue("UNIT_FIELD_BYTES_1", 2, visFlags);
+
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        pUnit->SetUInt32Value("UNIT_NPC_FLAGS", ConvertClassicNpcFlagsToVanilla(npcFlags));
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        pUnit->SetUInt32Value("UNIT_NPC_FLAGS", ConvertClassicNpcFlagsToTBC(npcFlags));
+    else
+        pUnit->SetUInt32Value("UNIT_NPC_FLAGS", ConvertClassicNpcFlagsToWotLK(npcFlags));
+
+    pUnit->SetUInt32Value("UNIT_FIELD_FLAGS", unitFlags);
+    pUnit->SetUInt32Value("UNIT_FIELD_FLAGS_2", unitFlags2);
+    pUnit->SetUInt32Value("UNIT_DYNAMIC_FLAGS", dynamicFlags);
+    pUnit->SetUInt32Value("UNIT_CHANNEL_SPELL", channelSpell);
+    pUnit->SetUInt32Value("UNIT_CREATED_BY_SPELL", createdBySpell);
+    pUnit->SetUInt32Value("UNIT_NPC_EMOTESTATE", emoteState);
+
+    pUnit->SetSpeedRate(MOVE_WALK, speedRate[MOVE_WALK]);
+    pUnit->SetSpeedRate(MOVE_RUN, speedRate[MOVE_RUN]);
+    pUnit->SetSpeedRate(MOVE_RUN_BACK, speedRate[MOVE_RUN_BACK]);
+    pUnit->SetSpeedRate(MOVE_SWIM, speedRate[MOVE_SWIM]);
+    pUnit->SetSpeedRate(MOVE_SWIM_BACK, speedRate[MOVE_SWIM_BACK]);
+    pUnit->SetSpeedRate(MOVE_FLIGHT, speedRate[MOVE_FLIGHT]);
+    pUnit->SetSpeedRate(MOVE_FLIGHT_BACK, speedRate[MOVE_FLIGHT_BACK]);
+}
+
+void PlayerData::InitializePlayer(Player* pPlayer) const
+{
+    InitializeUnit(pPlayer);
+    pPlayer->SetName(name);
+    pPlayer->SetUInt32Value("PLAYER_BYTES", bytes1);
+    pPlayer->SetUInt32Value("PLAYER_BYTES_2", bytes2);
+    pPlayer->SetUInt32Value("PLAYER_FLAGS", flags);
+
+    for (int i = i; i < EQUIPMENT_SLOT_END; i++)
+        pPlayer->SetVisibleItemSlot(i, visibleItems[i], visibleItemEnchants[i]);
 }
 
 void ReplayMgr::LoadPlayers()
@@ -32,116 +146,113 @@ void ReplayMgr::LoadPlayers()
 
         uint32 guid = fields[0].GetUInt32();
         ObjectGuid objectGuid = ObjectGuid(HIGHGUID_PLAYER, guid);
-
-        WorldLocation location;
-        MovementInfo movementInfo;
+        PlayerData& playerData = m_playerTemplates[objectGuid];
+        WorldLocation& location = playerData.location;
+        
+        playerData.guid = objectGuid;
+        playerData.typeId = TYPEID_PLAYER;
+        
         location.mapId = fields[1].GetUInt16();
         location.x = fields[2].GetFloat();
         location.y = fields[3].GetFloat();
         location.z = fields[4].GetFloat();
         location.o = fields[5].GetFloat();
-        movementInfo.pos = location.ToPosition();
-
-        ObjectData objectData;
-        UnitData unitData;
-        PlayerData playerData;
+        
         playerData.name = fields[6].GetCppString();
-        unitData.raceId = fields[7].GetUInt8();
+        playerData.raceId = fields[7].GetUInt8();
 
-        if (!unitData.raceId || (((1 << (unitData.raceId - 1)) & RACEMASK_ALL_WOTLK) == 0))
+        if (!playerData.raceId || (((1 << (playerData.raceId - 1)) & RACEMASK_ALL_WOTLK) == 0))
         {
             printf("[ReplayMgr] LoadPlayers: Invalid race for character %s (GUID: %u)\n", playerData.name.c_str(), guid);
-            unitData.raceId = RACE_HUMAN;
+            playerData.raceId = RACE_HUMAN;
         }
 
-        unitData.classId = fields[8].GetUInt8();
+        playerData.classId = fields[8].GetUInt8();
 
-        if (!unitData.classId || (((1 << (unitData.classId - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK) == 0))
+        if (!playerData.classId || (((1 << (playerData.classId - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK) == 0))
         {
             printf("[ReplayMgr] LoadPlayers: Invalid class for character %s (GUID: %u)\n", playerData.name.c_str(), guid);
-            unitData.classId = CLASS_PALADIN;
+            playerData.classId = CLASS_PALADIN;
         }
 
-        unitData.gender = fields[9].GetUInt8();
-        unitData.level = fields[10].GetUInt8();
-        if (!unitData.level)
+        playerData.gender = fields[9].GetUInt8();
+        playerData.level = fields[10].GetUInt8();
+        if (!playerData.level)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid level for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            unitData.level = 1;
+            playerData.level = 1;
         }
         playerData.bytes1 = fields[13].GetUInt32();
         playerData.bytes2 = fields[14].GetUInt32();
         playerData.flags = fields[15].GetUInt32();
-        objectData.scale = fields[16].GetFloat();
+        playerData.scale = fields[16].GetFloat();
 
-        unitData.displayId = fields[17].GetUInt32();
-        if (unitData.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        playerData.displayId = fields[17].GetUInt32();
+        if (playerData.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid display id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            unitData.displayId = UNIT_DISPLAY_ID_BOX;
+            playerData.displayId = UNIT_DISPLAY_ID_BOX;
         }
-        unitData.nativeDisplayId = fields[18].GetUInt32();
-        if (unitData.nativeDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        playerData.nativeDisplayId = fields[18].GetUInt32();
+        if (playerData.nativeDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid native display id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            unitData.nativeDisplayId = UNIT_DISPLAY_ID_BOX;
+            playerData.nativeDisplayId = UNIT_DISPLAY_ID_BOX;
         }
 
-        unitData.mountDisplayId = fields[19].GetUInt32();
-        if (unitData.mountDisplayId && unitData.mountDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        playerData.mountDisplayId = fields[19].GetUInt32();
+        if (playerData.mountDisplayId && playerData.mountDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid mount display id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            unitData.mountDisplayId = 0;
+            playerData.mountDisplayId = 0;
         }
 
-        unitData.faction = fields[20].GetUInt32();
-        if (!sGameDataMgr.IsValidFactionTemplate(unitData.faction))
+        playerData.faction = fields[20].GetUInt32();
+        if (!sGameDataMgr.IsValidFactionTemplate(playerData.faction))
         {
             printf("[ReplayMgr] LoadPlayers: Invalid faction id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            unitData.faction = 0;
+            playerData.faction = 0;
         }
 
-        unitData.unitFlags = fields[21].GetUInt32();
-        unitData.currentHealth = fields[22].GetUInt32();
-        unitData.maxHealth = fields[23].GetUInt32();
-        unitData.currentPowers[POWER_MANA] = fields[24].GetUInt32();
-        unitData.maxPowers[POWER_MANA] = fields[25].GetUInt32();
-        unitData.auraState = fields[26].GetUInt32();
-        unitData.emoteState = fields[27].GetUInt32();
-        if (unitData.emoteState && !sGameDataMgr.IsValidEmote(unitData.emoteState))
+        playerData.unitFlags = fields[21].GetUInt32();
+        playerData.currentHealth = fields[22].GetUInt32();
+        playerData.maxHealth = fields[23].GetUInt32();
+        playerData.currentPowers[POWER_MANA] = fields[24].GetUInt32();
+        playerData.maxPowers[POWER_MANA] = fields[25].GetUInt32();
+        playerData.auraState = fields[26].GetUInt32();
+        playerData.emoteState = fields[27].GetUInt32();
+        if (playerData.emoteState && !sGameDataMgr.IsValidEmote(playerData.emoteState))
         {
             printf("[ReplayMgr] LoadPlayers: Invalid emote state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            unitData.emoteState = 0;
+            playerData.emoteState = 0;
         }
 
-        unitData.standState = fields[28].GetUInt8();
-        if (unitData.standState >= MAX_UNIT_STAND_STATE)
+        playerData.standState = fields[28].GetUInt8();
+        if (playerData.standState >= MAX_UNIT_STAND_STATE)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid stand state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            unitData.standState = UNIT_STAND_STATE_STAND;
+            playerData.standState = UNIT_STAND_STATE_STAND;
         }
 
-        unitData.visFlags = fields[29].GetUInt8();
-
-        unitData.sheathState = fields[30].GetUInt8();
-        if (unitData.sheathState >= MAX_SHEATH_STATE)
+        playerData.visFlags = fields[29].GetUInt8();
+        playerData.sheathState = fields[30].GetUInt8();
+        if (playerData.sheathState >= MAX_SHEATH_STATE)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid sheath state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            unitData.sheathState = SHEATH_STATE_UNARMED;
+            playerData.sheathState = SHEATH_STATE_UNARMED;
         }
 
-        unitData.shapeShiftForm = fields[32].GetUInt8();
-
-        movementInfo.SetMovementFlags(fields[33].GetUInt32());
-        unitData.speedRate[MOVE_WALK] = fields[34].GetFloat();
-        unitData.speedRate[MOVE_RUN] = fields[35].GetFloat();
-        unitData.speedRate[MOVE_RUN_BACK] = fields[36].GetFloat();
-        unitData.speedRate[MOVE_SWIM] = fields[37].GetFloat();
-        unitData.speedRate[MOVE_SWIM_BACK] = fields[38].GetFloat();
-        unitData.boundingRadius = fields[39].GetFloat();
-        unitData.combatReach = fields[40].GetFloat();
-        unitData.mainHandAttackTime = fields[41].GetUInt32();
-        unitData.offHandAttackTime = fields[42].GetUInt32();
+        playerData.shapeShiftForm = fields[32].GetUInt8();
+        playerData.movementFlags = fields[33].GetUInt32();
+        playerData.speedRate[MOVE_WALK] = fields[34].GetFloat();
+        playerData.speedRate[MOVE_RUN] = fields[35].GetFloat();
+        playerData.speedRate[MOVE_RUN_BACK] = fields[36].GetFloat();
+        playerData.speedRate[MOVE_SWIM] = fields[37].GetFloat();
+        playerData.speedRate[MOVE_SWIM_BACK] = fields[38].GetFloat();
+        playerData.boundingRadius = fields[39].GetFloat();
+        playerData.combatReach = fields[40].GetFloat();
+        playerData.mainHandAttackTime = fields[41].GetUInt32();
+        playerData.offHandAttackTime = fields[42].GetUInt32();
         std::string equipmentCache = fields[44].GetCppString();
 
         std::string temp;
@@ -174,8 +285,6 @@ void ReplayMgr::LoadPlayers()
                 temp.clear();
             }
         }
-
-        sWorld.MakeNewPlayer(objectGuid, objectData, location, movementInfo, unitData, playerData);
         ++count;
     }
     while (result->NextRow());

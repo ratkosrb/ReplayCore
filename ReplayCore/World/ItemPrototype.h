@@ -446,6 +446,7 @@ struct ItemPrototype
     uint32 ItemId;
     uint32 Class;                                           // id from ItemClass.dbc
     uint32 SubClass;                                        // id from ItemSubClass.dbc
+    uint32 Unk0 = 0;
     char*  Name1;
     char*  Description;
     uint32 DisplayInfoID;                                   // id from ItemDisplayInfo.dbc

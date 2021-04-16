@@ -14,6 +14,7 @@
 #include "GameDataMgr.h"
 
 #include <array>
+#include <chrono>
 
 #define WORLD_DEBUG
 
@@ -21,6 +22,20 @@ WorldServer& WorldServer::Instance()
 {
     static WorldServer instance;
     return instance;
+}
+
+void WorldServer::StartWorld()
+{
+    m_worldThread = std::thread(&WorldServer::WorldLoop, this);
+}
+
+void WorldServer::WorldLoop()
+{
+    using namespace std::chrono;
+    uint64 ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+
+    uint32 diff = m_lastUpdateTimeMs ? ms - m_lastUpdateTimeMs : 0;
+    m_msTimeSinceServerStart += diff;
 }
 
 void WorldServer::StartNetwork()
@@ -363,7 +378,7 @@ void WorldServer::HandleEnumCharacters(WorldPacket& packet)
         if (count <= 0)
             break;
 
-        if (Player* pPlayer = FindPlayer(guid))
+        if (PlayerData const* pPlayer = sReplayMgr.GetPlayerTemplate(guid))
         {
             response << guid;
             response << pPlayer->GetName();

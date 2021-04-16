@@ -53,23 +53,32 @@ public:
         return nullptr;
     }
 
-    void MakeNewPlayer(ObjectGuid& guid, ObjectData& objectData, WorldLocation& location, MovementInfo& movementInfo, UnitData& unitData, PlayerData& playerData)
+    void MakeNewPlayer(ObjectGuid& guid, PlayerData const& playerData)
     {
-        m_players.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(guid, objectData, location, movementInfo, unitData, playerData));
-        m_playersBackup.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(guid, objectData, location, movementInfo, unitData, playerData));
+        m_players.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(playerData));
     }
 
+    void SendPacket(WorldPacket& packet);
+    uint16 GetOpcode(std::string name);
+    std::string GetOpcode(uint16 opcode);
+    uint16 GetUpdateField(std::string name);
+    std::string GetUpdateField(uint16 opcode);
     uint16 GetClientBuild() const { return m_sessionData.build; }
+    uint32 GetServerTimeMs() const { return m_msTimeSinceServerStart; }
+
     void StartNetwork();
+    void StartWorld();
     std::thread m_networkThread;
+    std::thread m_worldThread;
 private:
     bool m_enabled = false;
+    uint64 m_lastUpdateTimeMs = 0;
+    uint32 m_msTimeSinceServerStart = 0;
 
-    // World Objects
+    // World
+    void WorldLoop();
     std::map<ObjectGuid, Unit> m_creatures;
-    std::map<ObjectGuid, Unit> m_creaturesBackup;
     std::map<ObjectGuid, Player> m_players;
-    std::map<ObjectGuid, Player> m_playersBackup;
 
     // Network
     WorldSessionData m_sessionData;
@@ -77,10 +86,6 @@ private:
     SOCKET m_socketPrototype;
     SOCKADDR_IN m_address;
     std::map<uint16, WorldOpcodeHandler> m_opcodeHandlers;
-    uint16 GetOpcode(std::string name);
-    std::string GetOpcode(uint16 opcode);
-    uint16 GetUpdateField(std::string name);
-    std::string GetUpdateField(uint16 opcode);
     void ResetClientData();
     void SetupOpcodeHandlers();
     void SetOpcodeHandler(const char* opcodeName, WorldOpcodeHandler handler);
@@ -90,7 +95,6 @@ private:
     void HandleEnumCharacters(WorldPacket& packet);
     void HandlePing(WorldPacket& packet);
     void HandleRealmSplit(WorldPacket& packet);
-    void SendPacket(WorldPacket& packet);
     void SendAuthChallenge();
 };
 

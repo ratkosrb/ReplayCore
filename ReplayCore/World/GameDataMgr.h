@@ -26,6 +26,7 @@ public:
     bool IsValidEmote(uint32 id) const;
     bool IsValidRace(uint32 id) const;
     bool IsValidClass(uint32 id) const;
+    uint8 GetMoveSpeedsCount() const;
 
     // Items
     void LoadItemPrototypes();

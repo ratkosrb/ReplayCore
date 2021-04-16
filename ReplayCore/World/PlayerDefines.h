@@ -73,4 +73,44 @@ enum KeyRingSlots                                           // 32 slots
 
 #define MAX_KEYRING_SLOTS 32
 
+#define MAX_VISIBLE_ITEM_OFFSET_VANILLA   12
+#define MAX_VISIBLE_ITEM_OFFSET_TBC       16
+
+namespace Vanilla
+{
+    enum EnchantmentSlot
+    {
+        PERM_ENCHANTMENT_SLOT = 0,
+        TEMP_ENCHANTMENT_SLOT = 1,
+        MAX_INSPECTED_ENCHANTMENT_SLOT = 2,
+
+        PROP_ENCHANTMENT_SLOT_0 = 3,                        // used with RandomSuffix
+        PROP_ENCHANTMENT_SLOT_1 = 4,                        // used with RandomSuffix
+        PROP_ENCHANTMENT_SLOT_2 = 5,                        // used with RandomSuffix
+        PROP_ENCHANTMENT_SLOT_3 = 6,
+        MAX_ENCHANTMENT_SLOT = 7
+    };
+}
+
+namespace TBC
+{
+    enum EnchantmentSlot
+    {
+        PERM_ENCHANTMENT_SLOT           = 0,
+        TEMP_ENCHANTMENT_SLOT           = 1,
+        SOCK_ENCHANTMENT_SLOT           = 2,
+        SOCK_ENCHANTMENT_SLOT_2         = 3,
+        SOCK_ENCHANTMENT_SLOT_3         = 4,
+        BONUS_ENCHANTMENT_SLOT          = 5,
+        MAX_INSPECTED_ENCHANTMENT_SLOT  = 6,
+
+        PROP_ENCHANTMENT_SLOT_0         = 6,                    // used with RandomSuffix
+        PROP_ENCHANTMENT_SLOT_1         = 7,                    // used with RandomSuffix
+        PROP_ENCHANTMENT_SLOT_2         = 8,                    // used with RandomSuffix and RandomProperty
+        PROP_ENCHANTMENT_SLOT_3         = 9,                    // used with RandomProperty
+        PROP_ENCHANTMENT_SLOT_4         = 10,                   // used with RandomProperty
+        MAX_ENCHANTMENT_SLOT            = 11
+    };
+}
+
 #endif
