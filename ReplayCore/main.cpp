@@ -110,6 +110,10 @@ int main()
         sAuth.m_networkThread.join();
     if (sWorld.m_networkThread.joinable())
         sWorld.m_networkThread.join();
+    if (sWorld.m_packetProcessingThread.joinable())
+        sWorld.m_packetProcessingThread.join();
+    if (sWorld.m_worldThread.joinable())
+        sWorld.m_worldThread.join();
 
     getchar();
     WorldDatabase.Uninitialise();

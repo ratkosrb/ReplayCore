@@ -74,6 +74,7 @@ void WorldServer::StartNetwork()
     m_enabled = true;
 
     m_networkThread = std::thread(&WorldServer::NetworkLoop, this);
+    m_packetProcessingThread = std::thread(&WorldServer::ProcessIncomingPackets, this);
 }
 
 void WorldServer::NetworkLoop()
@@ -103,9 +104,8 @@ void WorldServer::NetworkLoop()
 
         do
         {
-            ByteBuffer buffer;
-            buffer.resize(4096);
-            int result = recv(m_worldSocket, (char*)buffer.contents(), 4096, 0);
+            uint8* buffer = new uint8[4096];
+            int result = recv(m_worldSocket, (char*)buffer, 4096, 0);
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());
@@ -124,13 +124,28 @@ void WorldServer::NetworkLoop()
                 continue;
             }
 
-            HandlePacket(buffer);
+            m_incomingPacketQueue.push(buffer);
 
         } while (m_enabled);
 
     } while (m_enabled);
 
     closesocket(m_worldSocket);
+}
+
+void WorldServer::ProcessIncomingPackets()
+{
+    do
+    {
+        Sleep(10);
+        if (m_incomingPacketQueue.empty())
+            continue;
+
+        uint8* buffer = m_incomingPacketQueue.front();
+        HandlePacket(buffer);
+        m_incomingPacketQueue.pop();
+        delete[] buffer;
+    } while (m_enabled);
 }
 
 void WorldServer::ResetClientData()
@@ -216,24 +231,15 @@ void  WorldServer::SendPacket(WorldPacket& packet)
     }
 }
 
-void WorldServer::HandlePacket(ByteBuffer& buffer)
+void WorldServer::HandlePacket(uint8* buffer)
 {
-    ClientPktHeader header;
-    buffer.read((uint8*)&header, sizeof(header));
-
-    // HACK FIX: Packet decryption breaks after entering world for unknown reasons.
-    // Attempting to decrypt the packet a second time fixes the issue.
-    uint16 opcode;
-    do
-    {
-        m_sessionData.m_encryption.DecryptRecv((uint8*)&header, sizeof(ClientPktHeader));
-        opcode = header.cmd;
-
-    } while (GetOpcode(opcode).empty());
+    ClientPktHeader& header = *((ClientPktHeader*)buffer);
+    m_sessionData.m_encryption.DecryptRecv((uint8*)&header, sizeof(ClientPktHeader));
 
     EndianConvertReverse(header.size);
     EndianConvert(header.cmd);
 
+    uint16 opcode = header.cmd;
     auto itr = m_opcodeHandlers.find(opcode);
     if (itr == m_opcodeHandlers.end())
     {
@@ -249,7 +255,7 @@ void WorldServer::HandlePacket(ByteBuffer& buffer)
 
     WorldPacket packet(opcode, header.size);
     if (header.size > 0)
-        packet.append(buffer.contents() + sizeof(ClientPktHeader), header.size);
+        packet.append(buffer + sizeof(ClientPktHeader), header.size);
 
     (this->*(itr->second))(packet);
 }

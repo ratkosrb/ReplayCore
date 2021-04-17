@@ -71,6 +71,7 @@ public:
     void SpawnWorldObjects();
     std::thread m_networkThread;
     std::thread m_worldThread;
+    std::thread m_packetProcessingThread;
 private:
     bool m_enabled = false;
     bool m_worldSpawned = false;
@@ -89,12 +90,14 @@ private:
     SOCKET m_worldSocket;
     SOCKET m_socketPrototype;
     SOCKADDR_IN m_address;
+    std::queue<uint8*> m_incomingPacketQueue;
     std::map<uint16, WorldOpcodeHandler> m_opcodeHandlers;
     void ResetClientData();
     void SetupOpcodeHandlers();
     void SetOpcodeHandler(const char* opcodeName, WorldOpcodeHandler handler);
     void NetworkLoop();
-    void HandlePacket(ByteBuffer& packet);
+    void ProcessIncomingPackets();
+    void HandlePacket(uint8* buffer);
     void HandleAuthSession(WorldPacket& packet);
     void HandleEnumCharacters(WorldPacket& packet);
     void HandlePing(WorldPacket& packet);
