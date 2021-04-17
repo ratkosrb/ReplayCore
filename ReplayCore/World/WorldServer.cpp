@@ -220,12 +220,20 @@ void WorldServer::HandlePacket(ByteBuffer& buffer)
 {
     ClientPktHeader header;
     buffer.read((uint8*)&header, sizeof(header));
-    m_sessionData.m_encryption.DecryptRecv((uint8*)&header, sizeof(ClientPktHeader));
+
+    // HACK FIX: Packet decryption breaks after entering world for unknown reasons.
+    // Attempting to decrypt the packet a second time fixes the issue.
+    uint16 opcode;
+    do
+    {
+        m_sessionData.m_encryption.DecryptRecv((uint8*)&header, sizeof(ClientPktHeader));
+        opcode = header.cmd;
+
+    } while (GetOpcode(opcode).empty());
 
     EndianConvertReverse(header.size);
     EndianConvert(header.cmd);
 
-    uint16 opcode = header.cmd;
     auto itr = m_opcodeHandlers.find(opcode);
     if (itr == m_opcodeHandlers.end())
     {
