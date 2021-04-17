@@ -109,18 +109,21 @@ void WorldServer::NetworkLoop()
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());
+                delete[] buffer;
                 break;
             }
 
             if (result == 0)
             {
                 printf("[WORLD] Connection closed.\n");
+                delete[] buffer;
                 break;
             }
 
             if (result < sizeof(ClientPktHeader))
             {
                 printf("[WORLD] Received packet with invalid size.\n");
+                delete[] buffer;
                 continue;
             }
 
@@ -142,8 +145,8 @@ void WorldServer::ProcessIncomingPackets()
             continue;
 
         uint8* buffer = m_incomingPacketQueue.front();
-        HandlePacket(buffer);
         m_incomingPacketQueue.pop();
+        HandlePacket(buffer);
         delete[] buffer;
     } while (m_enabled);
 }
@@ -165,6 +168,9 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_PLAYER_LOGIN", &WorldServer::HandlePlayerLogin);
     SetOpcodeHandler("CMSG_NAME_QUERY", &WorldServer::HandlePlayerNameQuery);
     SetOpcodeHandler("CMSG_QUERY_TIME", &WorldServer::HandleTimeQuery);
+    SetOpcodeHandler("CMSG_WHO", &WorldServer::HandleWho);
+    SetOpcodeHandler("CMSG_LOGOUT_REQUEST", &WorldServer::HandleLogoutRequest);
+    SetOpcodeHandler("CMSG_JOIN_CHANNEL", &WorldServer::HandleJoinChannel);
 }
 
 void WorldServer::SetOpcodeHandler(const char* opcodeName, WorldOpcodeHandler handler)
@@ -515,10 +521,6 @@ void WorldServer::HandleRealmSplit(WorldPacket& packet)
     SendPacket(response);
 }
 
-#define GLOBAL_CACHE_MASK           0x15
-#define PER_CHARACTER_CACHE_MASK    0xEA
-#define NUM_ACCOUNT_DATA_TYPES 8
-
 void WorldServer::HandlePlayerLogin(WorldPacket& packet)
 {
     ObjectGuid guid;
@@ -537,82 +539,20 @@ void WorldServer::HandlePlayerLogin(WorldPacket& packet)
         return;
     }
 
-    WorldPacket response(GetOpcode("SMSG_LOGIN_VERIFY_WORLD"), 20);
-    response << uint32(pPlayerToCopy->GetMapId());
-    response << float(pPlayerToCopy->GetPositionX());
-    response << float(pPlayerToCopy->GetPositionY());
-    response << float(pPlayerToCopy->GetPositionZ());
-    response << float(pPlayerToCopy->GetOrientation());
-    SendPacket(response);
-
-    if (GetClientBuild() < CLIENT_BUILD_3_0_2)
-    {
-        response.Initialize(GetOpcode("SMSG_ACCOUNT_DATA_TIMES"), 128);
-        for (int i = 0; i < 32; ++i)
-            response << uint32(0);
-        SendPacket(response);
-    }
-    else
-    {
-        response.Initialize(GetOpcode("SMSG_ACCOUNT_DATA_TIMES"), 4 + 1 + 4 + 8 * 4);
-        response << uint32(time(nullptr));                             // unix time of something
-        response << uint8(1);
-
-        if (GetClientBuild() >= CLIENT_BUILD_3_2_0)
-        {
-            uint32 mask = PER_CHARACTER_CACHE_MASK;
-            response << uint32(mask);                                   // type mask
-            for (uint32 i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
-            {
-                if (mask & (1 << i))
-                {
-                    response << uint32(time(nullptr));// also unix time
-                }
-            }
-        }
-        
-        SendPacket(response);
-    }
-
+    SendLoginVerifyWorld(pPlayerToCopy->GetLocation());
+    SendAccountDataTimes();
     if (GetClientBuild() >= CLIENT_BUILD_2_2_0)
-    {
-        response.Initialize(GetOpcode("SMSG_FEATURE_SYSTEM_STATUS"), 2);
-        response << uint8(2);                                       // unknown value
-        response << uint8(0);                                       // enable(1)/disable(0) voice chat interface in client
-        SendPacket(response);
-    }
-
-    response.Initialize(GetOpcode("SMSG_BINDPOINTUPDATE"), 128);
-    response << float(pPlayerToCopy->GetPositionX());
-    response << float(pPlayerToCopy->GetPositionY());
-    response << float(pPlayerToCopy->GetPositionZ());
-    response << uint32(pPlayerToCopy->GetMapId());
-    response << uint32(0); // zone id
-    SendPacket(response);
-
-    response.Initialize(GetOpcode("SMSG_TUTORIAL_FLAGS"), 4 * 8);
-    for (int i = 0; i < 32; i++)
-        response << uint8(255);
-    SendPacket(response);
-
-    response.Initialize(GetOpcode("SMSG_INITIAL_SPELLS"));
-    response << uint8(0);
-    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
-        response << uint32(0);
-    else
-        response << uint16(0);
-    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
-        response << uint32(0);
-    else
-        response << uint16(0);
-    SendPacket(response);
-
-    response.Initialize(GetOpcode("SMSG_LOGIN_SETTIMESPEED"), 4 + 4);
-    response << uint32(secsToTimeBitFields(time(nullptr)));
-    response << (float)0.01666667f;                             // game speed
-    if (GetClientBuild() >= CLIENT_BUILD_3_1_2)
-        response << uint32(0);
-    SendPacket(response);
+        SendFeatureSystemStatus(true, false);
+    if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+        SendSetRestStart(0);
+    SendBindPointUpdate(pPlayerToCopy->GetLocation(), 0);
+    SendTutorialFlags();
+    SendInitialSpells(pPlayerToCopy->GetRace(), pPlayerToCopy->GetClass());
+    SendLoginSetTimeSpeed();
+    SendActionButtons(pPlayerToCopy->GetRace(), pPlayerToCopy->GetClass());
+    SendFriendList();
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+        SendIgnoreList();
 
     //ObjectGuid newGuid(HIGHGUID_PLAYER, uint32(150000));
     //m_clientPlayer = std::make_unique<Player>(newGuid, "TheObserver", *pPlayerToCopy);
@@ -637,12 +577,34 @@ void WorldServer::HandlePlayerNameQuery(WorldPacket& packet)
     }
 
     WorldPacket response(GetOpcode("SMSG_NAME_QUERY_RESPONSE"), (8 + 25 + 1 + 4 + 4 + 4));   // guess size
-    response << ObjectGuid(pPlayer->GetObjectGuid());
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
+    {
+        response << pPlayer->GetPackGUID();
+        response << uint8(0); // has result
+    }
+    else
+        response << pPlayer->GetObjectGuid();
+
     response << pPlayer->GetName();                             // CString(48): played name
     response << uint8(0);                                       // CString(256): realm name for cross realm BG usage
-    response << uint32(pPlayer->GetRace());
-    response << uint32(pPlayer->GetGender());
-    response << uint32(pPlayer->GetClass());
+
+    if (GetClientBuild() > CLIENT_BUILD_3_1_0)
+    {
+        response << uint8(pPlayer->GetRace());
+        response << uint8(pPlayer->GetGender());
+        response << uint8(pPlayer->GetClass());
+    }
+    else
+    {
+        response << uint32(pPlayer->GetRace());
+        response << uint32(pPlayer->GetGender());
+        response << uint32(pPlayer->GetClass());
+    }
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        response << uint8(0); // name declined
+
     SendPacket(response);
 }
 
@@ -653,4 +615,94 @@ void WorldServer::HandleTimeQuery(WorldPacket& packet)
     if (GetClientBuild() > CLIENT_BUILD_2_0_1)
         response << uint32(0); // daily reset time
     SendPacket(response);
+}
+
+void WorldServer::HandleWho(WorldPacket& packet)
+{
+    std::string playerName, guildName;
+    uint32 levelMin, levelMax, raceMask, classMask, zonesCount, stringsCount;
+    std::vector<uint32> zones;
+    std::vector<std::string> names;
+    packet >> levelMin;                                      // minimal player level, default 0
+    packet >> levelMax;                                      // maximum player level, default 100 (MAX_LEVEL)
+    packet >> playerName;                                    // player name, case sensitive...
+
+    packet >> guildName;                                     // guild name, case sensitive...
+
+    packet >> raceMask;                                      // race mask
+    packet >> classMask;                                     // class mask
+    packet >> zonesCount;                                    // zones count, client limit=10 (2.0.10)
+
+    if (zonesCount > 10)
+    {
+        // can't be received from real client or broken packet
+        return;                                                 
+    }
+
+    for (uint32 i = 0; i < zonesCount; ++i)
+    {
+        // zone id, 0 if zone is unknown...
+        uint32 temp;
+        packet >> temp;
+        zones.push_back(temp);
+        //printf("Zone %u: %u\n", i, zoneIds[i]);
+    }
+
+    // user entered strings count, client limit=4 (checked on 2.0.10)
+    packet >> stringsCount;
+
+    if (stringsCount > 4)
+    {
+        // can't be received from real client or broken packet
+        return;
+    }
+    
+    //printf("Minlvl %u, maxlvl %u, name %s, guild %s, racemask %u, classmask %u, zones %u, strings %u\n", levelMin, levelMax, playerName.c_str(), guildName.c_str(), raceMask, classMask, zonesCount, stringsCount);
+
+    for (uint32 i = 0; i < stringsCount; ++i)
+    {
+        // user entered string, it used as universal search pattern(guild+player name)?
+        std::string temp;
+        packet >> temp;
+        names.push_back(temp);
+    }
+
+    SendWhoList(levelMin, levelMax, raceMask, classMask, playerName, guildName, zones, names);
+}
+
+void WorldServer::HandleLogoutRequest(WorldPacket& packet)
+{
+    SendLogoutResponse(0, true);
+    SendLogoutComplete();
+}
+
+void WorldServer::HandleJoinChannel(WorldPacket& packet)
+{
+    uint32 channelId = 0;
+
+    if (GetClientBuild() > CLIENT_BUILD_2_0_1)
+    {
+        packet >> channelId;
+        bool hasVoice;
+        packet >> hasVoice;
+        bool joinedByZoneUpdate;
+        packet >> joinedByZoneUpdate;
+    }
+    
+    std::string channelName, password;
+    packet >> channelName;
+    packet >> password;
+
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[WORLD] CMSG_JOIN_CHANNEL data:\n");
+    printf("Name: %s\n", channelName.c_str());
+    printf("Password: %s\n", password.c_str());
+    printf("\n");
+#endif
+
+    if (channelName.empty())
+        return;
+
+    SendJoinedChannelNotify(channelName, channelId);
 }

@@ -2,6 +2,12 @@
 #define __PLAYER_DEFINES_H
 
 #include "../Defines/Common.h"
+#include "UnitDefines.h"
+
+#define PLAYER_MAX_LEVEL_VANILLA 60
+#define PLAYER_MAX_LEVEL_TBC 70
+#define PLAYER_MAX_LEVEL_WOTLK 80
+#define PLAYER_STRONG_MAX_LEVEL 255
 
 #define INVENTORY_SLOT_BAG_0    255
 
@@ -111,6 +117,156 @@ namespace TBC
         PROP_ENCHANTMENT_SLOT_4         = 10,                   // used with RandomProperty
         MAX_ENCHANTMENT_SLOT            = 11
     };
+}
+
+enum ActionButtonType
+{
+    ACTION_BUTTON_SPELL = 0x00,
+    ACTION_BUTTON_C = 0x01,                         // click?
+    ACTION_BUTTON_MACRO = 0x40,
+    ACTION_BUTTON_CMACRO = ACTION_BUTTON_C | ACTION_BUTTON_MACRO,
+    ACTION_BUTTON_ITEM = 0x80
+};
+
+#define ACTION_BUTTON_ACTION(X) (uint32(X) & 0x00FFFFFF)
+#define ACTION_BUTTON_TYPE(X)   ((uint32(X) & 0xFF000000) >> 24)
+#define MAX_ACTION_BUTTON_ACTION_VALUE (0x00FFFFFF+1)
+
+struct ActionButton
+{
+    uint32 packedData = 0;
+    // helpers
+    ActionButtonType GetType() const { return ActionButtonType(ACTION_BUTTON_TYPE(packedData)); }
+    uint32 GetAction() const { return ACTION_BUTTON_ACTION(packedData); }
+    void SetActionAndType(uint32 action, ActionButtonType type)
+    {
+        uint32 newData = action | (uint32(type) << 24);
+        if (newData != packedData)
+        {
+            packedData = newData;
+        }
+    }
+};
+
+#define MAX_ACTION_BUTTONS_VANILLA 120
+#define MAX_ACTION_BUTTONS_TBC 132
+#define MAX_ACTION_BUTTONS_WOTLK 144
+
+struct PlayerCreateInfoItem
+{
+    PlayerCreateInfoItem(uint32 id, uint32 amount) : item_id(id), item_amount(amount) {}
+
+    uint32 item_id;
+    uint32 item_amount;
+};
+
+typedef std::list<PlayerCreateInfoItem> PlayerCreateInfoItems;
+
+struct PlayerClassLevelInfo
+{
+    uint16 basehealth = 0;
+    uint16 basemana = 0;
+};
+
+struct PlayerClassInfo
+{
+    PlayerClassLevelInfo levelInfo[PLAYER_STRONG_MAX_LEVEL];
+};
+
+struct PlayerLevelInfo
+{
+    uint8 stats[MAX_STATS] = { 0 };
+};
+
+typedef std::list<uint32> PlayerCreateInfoSpells;
+
+struct PlayerCreateInfoAction
+{
+    PlayerCreateInfoAction() = default;
+    PlayerCreateInfoAction(uint8 _button, uint32 _action, uint8 _type) : button(_button), type(_type), action(_action) {}
+
+    uint8 button = 0;
+    uint8 type = 0;
+    uint32 action = 0;
+};
+
+typedef std::list<PlayerCreateInfoAction> PlayerCreateInfoActions;
+
+struct PlayerInfo
+{
+    uint32 mapId = 0;
+    uint32 areaId = 0;
+    float positionX = 0.0f;
+    float positionY = 0.0f;
+    float positionZ = 0.0f;
+    float orientation = 0.0f;
+    uint16 displayId_m = 0;
+    uint16 displayId_f = 0;
+    PlayerCreateInfoItems item;
+    PlayerCreateInfoSpells spell;
+    PlayerCreateInfoActions action;
+
+    PlayerLevelInfo levelInfo[PLAYER_STRONG_MAX_LEVEL];
+};
+
+inline uint32 GetDefaultDisplayIdForPlayerRace(uint8 race, uint8 gender)
+{
+    switch (race)
+    {
+        case RACE_HUMAN:
+            return gender == GENDER_MALE ? 49 : 50;
+        case RACE_ORC:
+            return gender == GENDER_MALE ? 51 : 52;
+        case RACE_DWARF:
+            return gender == GENDER_MALE ? 53 : 54;
+        case RACE_NIGHTELF:
+            return gender == GENDER_MALE ? 55 : 56;
+        case RACE_UNDEAD:
+            return gender == GENDER_MALE ? 57 : 58;
+        case RACE_TAUREN:
+            return gender == GENDER_MALE ? 59 : 60;
+        case RACE_GNOME:
+            return gender == GENDER_MALE ? 1563 : 1564;
+        case RACE_TROLL:
+            return gender == GENDER_MALE ? 1478 : 1479;
+        case RACE_BLOODELF:
+            return gender == GENDER_MALE ? 15476 : 15475;
+        case RACE_DRAENEI:
+            return gender == GENDER_MALE ? 16125 : 16126;
+        default:
+            printf("Error: Unknown race %hhu in GetDefaultDisplayIdForPlayerRace!\n", race);
+            break;
+    }
+    return UNIT_DISPLAY_ID_BOX;
+}
+
+namespace XP
+{
+    inline uint32 xp_Diff(uint32 lvl)
+    {
+        if (lvl < 29)
+            return 0;
+        if (lvl == 29)
+            return 1;
+        if (lvl == 30)
+            return 3;
+        if (lvl == 32)
+            return 6;
+        else
+            return (5 * (lvl - 30));
+    }
+
+    inline uint32 mxp(uint32 lvl)
+    {
+        return (45 + (5 * lvl));
+    }
+
+    inline uint32 xp_to_level(uint32 lvl)
+    {
+        uint32 xp = (8 * lvl + xp_Diff(lvl)) * mxp(lvl);
+        // The XP to Level is always rounded to the nearest 100 points.
+        return uint32((xp + 50) * 0.01) * 100;
+    }
 }
 
 #endif

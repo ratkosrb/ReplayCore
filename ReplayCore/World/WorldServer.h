@@ -62,7 +62,7 @@ public:
     uint16 GetOpcode(std::string name);
     std::string GetOpcode(uint16 opcode);
     uint16 GetUpdateField(std::string name);
-    std::string GetUpdateField(uint16 opcode);
+    std::string GetUpdateField(uint16 id);
     uint16 GetClientBuild() const { return m_sessionData.build; }
     uint32 GetServerTimeMs() const { return m_msTimeSinceServerStart; }
 
@@ -96,6 +96,8 @@ private:
     void SetupOpcodeHandlers();
     void SetOpcodeHandler(const char* opcodeName, WorldOpcodeHandler handler);
     void NetworkLoop();
+    
+    // Packet Processing
     void ProcessIncomingPackets();
     void HandlePacket(uint8* buffer);
     void HandleAuthSession(WorldPacket& packet);
@@ -105,7 +107,27 @@ private:
     void HandlePlayerLogin(WorldPacket& packet);
     void HandlePlayerNameQuery(WorldPacket& packet);
     void HandleTimeQuery(WorldPacket& packet);
+    void HandleWho(WorldPacket& packet);
+    void HandleLogoutRequest(WorldPacket& packet);
+    void HandleJoinChannel(WorldPacket& packet);
+
+    // Packet Building
     void SendAuthChallenge();
+    void SendLoginVerifyWorld(WorldLocation const& location);
+    void SendAccountDataTimes();
+    void SendFeatureSystemStatus(bool enableComplaintChat, bool enableVoiceChat);
+    void SendLoginSetTimeSpeed();
+    void SendSetRestStart(uint32 restStateTime);
+    void SendBindPointUpdate(WorldLocation const& location, uint32 zoneId);
+    void SendTutorialFlags();
+    void SendInitialSpells(uint8 raceId, uint8 classId);
+    void SendActionButtons(uint8 raceId, uint8 classId);
+    void SendFriendList();
+    void SendIgnoreList();
+    void SendWhoList(uint32 levelMin, uint32 levelMax, uint32 raceMask, uint32 classMask, std::string playerName, std::string guildName, std::vector<uint32> zones, std::vector<std::string> names);
+    void SendLogoutResponse(uint32 reason, bool instant);
+    void SendLogoutComplete();
+    void SendJoinedChannelNotify(std::string channelName, uint32 channelId);
 };
 
 #define sWorld WorldServer::Instance()

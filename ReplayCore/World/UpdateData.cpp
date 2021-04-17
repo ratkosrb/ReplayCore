@@ -26,6 +26,7 @@
 #include "Opcodes.h"
 #include "WorldServer.h"
 #include "ObjectGuid.h"
+#include "../Defines//ClientVersions.h"
 
 #define MAX_UNCOMPRESSED_PACKET_SIZE 0x8000 // 32ko
 
@@ -79,20 +80,17 @@ bool UpdateData::BuildPacket(WorldPacket* packet, UpdatePacket const* updPacket,
 
     uint32 blockCount = updPacket ? updPacket->blockCount : 0;
     buf << (uint32)(!m_outOfRangeGUIDs.empty() ? blockCount + 1 : blockCount);
-    buf << (uint8)(hasTransport ? 1 : 0);
+
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        buf << (uint8)(hasTransport ? 1 : 0);
 
     if (!m_outOfRangeGUIDs.empty())
     {
         buf << (uint8) UPDATETYPE_OUT_OF_RANGE_OBJECTS;
         buf << (uint32) m_outOfRangeGUIDs.size();
 
-#if SUPPORTED_CLIENT_BUILD > CLIENT_BUILD_1_8_4
         for (const auto& guid : m_outOfRangeGUIDs)
             buf << guid.WriteAsPacked();
-#else
-        for (const auto& guid : m_outOfRangeGUIDs)
-            buf << guid;
-#endif
     }
 
     if (updPacket)

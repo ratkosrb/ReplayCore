@@ -93,6 +93,7 @@ int main()
 
     sGameDataMgr.LoadFactions();
     sGameDataMgr.LoadItemPrototypes();
+    sGameDataMgr.LoadPlayerInfo();
     sReplayMgr.LoadEverything();
 
     printf("\n[MAIN] Starting network...\n");

@@ -68,6 +68,9 @@
     <ClCompile Include="World\UpdateData.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\WorldPacketBuilders.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -194,6 +197,9 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\UpdateMask.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\SpellDefines.h">
       <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>

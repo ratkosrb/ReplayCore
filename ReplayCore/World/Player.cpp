@@ -1,6 +1,7 @@
 #include "Player.h"
 #include "WorldServer.h"
 #include "ReplayMgr.h"
+#include "GameDataMgr.h"
 #include "../Defines/ClientVersions.h"
 
 Player::Player(PlayerData const& playerData) : Unit(playerData.guid)
@@ -12,9 +13,10 @@ Player::Player(PlayerData const& playerData) : Unit(playerData.guid)
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
     InitializePlaceholderUnitFields();
-    InitializePlaceholderPlayerFields();
     playerData.InitializePlayer(this);
+    InitializeDefaultPlayerValues();
     m_uint32Values_mirror = new uint32[m_valuesCount];
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
@@ -34,9 +36,84 @@ Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : U
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
 
-void Player::InitializePlaceholderPlayerFields()
+static std::vector<std::pair<uint32, uint32>> const g_playerSkills =
 {
-    SetUInt32Value("PLAYER_NEXT_LEVEL_XP", 100000);
+    { 26, 1 },
+    { 43, 0 },
+    { 44, 0 },
+    { 45, 0 },
+    { 46, 0 },
+    { 54, 0 },
+    { 55, 0 },
+    { 95, 0 },
+    { 98, 0 },
+    { 109, 0 },
+    { 111, 0 },
+    { 113, 0 },
+    { 115, 0 },
+    { 118, 0 },
+    { 136, 0 },
+    { 137, 0 },
+    { 138, 0 },
+    { 139, 0 },
+    { 140, 0 },
+    { 141, 0 },
+    { 160, 0 },
+    { 162, 0 },
+    { 172, 0 },
+    { 173, 0 },
+    { 176, 0 },
+    { 226, 0 },
+    { 229, 0 },
+    { 293, 1 },
+    { 313, 0 },
+    { 315, 0 },
+    { 413, 1 },
+    { 414, 1 },
+    { 415, 1 },
+    { 433, 1 },
+    { 473, 1 },
+    { 673, 0 },
+};
+
+void Player::InitializeDefaultPlayerValues()
+{
+    PlayerClassLevelInfo classInfo;
+    sGameDataMgr.GetPlayerClassLevelInfo(GetClass(), GetLevel(), &classInfo);
+    SetUInt32Value("UNIT_FIELD_BASE_HEALTH", classInfo.basehealth);
+    SetUInt32Value("UNIT_FIELD_BASE_MANA", classInfo.basemana);
+
+    PlayerLevelInfo levelInfo;
+    sGameDataMgr.GetPlayerLevelInfo(GetRace(), GetClass(), GetLevel(), &levelInfo);
+    SetInt32Value("UNIT_FIELD_STAT0", levelInfo.stats[0]);
+    SetInt32Value("UNIT_FIELD_STAT1", levelInfo.stats[1]);
+    SetInt32Value("UNIT_FIELD_STAT2", levelInfo.stats[2]);
+    SetInt32Value("UNIT_FIELD_STAT3", levelInfo.stats[3]);
+    SetInt32Value("UNIT_FIELD_STAT4", levelInfo.stats[4]);
+
+    for (uint32 count = 0; count < g_playerSkills.size(); count++)
+    {
+        uint16 PLAYER_SKILL_INFO_1_1 = sWorld.GetUpdateField("PLAYER_SKILL_INFO_1_1");
+        assert(PLAYER_SKILL_INFO_1_1);
+
+#define MAKE_PAIR32(l, h)  uint32( uint16(l) | ( uint32(h) << 16 ) )
+#define PLAYER_SKILL_INDEX(x)       (PLAYER_SKILL_INFO_1_1 + ((x)*3))
+#define PLAYER_SKILL_VALUE_INDEX(x) (PLAYER_SKILL_INDEX(x)+1)
+#define PLAYER_SKILL_BONUS_INDEX(x) (PLAYER_SKILL_INDEX(x)+2)
+#define MAKE_SKILL_VALUE(v, m) MAKE_PAIR32(v,m)
+
+        uint32 skill = g_playerSkills[count].first;
+        uint32 value = g_playerSkills[count].second;
+        if (value == 0)
+            value = GetLevel() * 5;
+
+        SetUInt32Value(PLAYER_SKILL_INDEX(count), skill);
+        SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(count), MAKE_SKILL_VALUE(value, value));
+        SetUInt32Value(PLAYER_SKILL_BONUS_INDEX(count), 0);
+    }
+
+    SetUInt32Value("PLAYER_XP", 1);
+    SetUInt32Value("PLAYER_NEXT_LEVEL_XP", XP::xp_to_level(GetLevel()));
     SetInt32Value("PLAYER_FIELD_WATCHED_FACTION_INDEX", -1);
 }
 

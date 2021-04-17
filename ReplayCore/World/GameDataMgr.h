@@ -5,6 +5,7 @@
 #include "GameDataDefines.h"
 #include <unordered_map>
 #include "ItemPrototype.h"
+#include "PlayerDefines.h"
 
 typedef std::unordered_map<uint32, FactionEntry> FactionsMap;
 typedef std::unordered_map<uint32, FactionTemplateEntry> FactionTemplatesMap;
@@ -28,6 +29,24 @@ public:
     bool IsValidClass(uint32 id) const;
     bool IsValidUnitDisplayId(uint32 id) const;
     uint8 GetMoveSpeedsCount() const;
+
+    void LoadPlayerInfo();
+    PlayerClassInfo const* GetPlayerClassInfo(uint32 class_) const
+    {
+        if (class_ >= MAX_CLASSES) return nullptr;
+        return &m_PlayerClassInfo[class_];
+    }
+    void GetPlayerClassLevelInfo(uint32 class_, uint32 level, PlayerClassLevelInfo* info) const;
+
+    PlayerInfo const* GetPlayerInfo(uint32 race, uint32 class_) const
+    {
+        if (race >= MAX_RACES)   return nullptr;
+        if (class_ >= MAX_CLASSES) return nullptr;
+        PlayerInfo const* info = &m_PlayerInfo[race][class_];
+        if (info->displayId_m == 0 || info->displayId_f == 0) return nullptr;
+        return info;
+    }
+    void GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, PlayerLevelInfo* info) const;
 
     // Items
     void LoadItemPrototypes();
@@ -76,6 +95,9 @@ private:
     FactionsMap m_FactionsMap;
     FactionTemplatesMap m_FactionTemplatesMap;
     ItemPrototypeMap m_itemPrototypesMap;
+    PlayerClassInfo m_PlayerClassInfo[MAX_CLASSES];
+    void BuildPlayerLevelInfo(uint8 race, uint8 class_, uint8 level, PlayerLevelInfo* plinfo) const;
+    PlayerInfo m_PlayerInfo[MAX_RACES][MAX_CLASSES];
 };
 
 #define sGameDataMgr GameDataMgr::Instance()

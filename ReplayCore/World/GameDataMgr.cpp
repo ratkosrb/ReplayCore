@@ -3,6 +3,7 @@
 #include "../Defines//Databases.h"
 #include "../Defines//ClientVersions.h"
 #include "UnitDefines.h"
+#include "SpellDefines.h"
 
 GameDataMgr& GameDataMgr::Instance()
 {
@@ -77,6 +78,528 @@ uint8 GameDataMgr::GetMoveSpeedsCount() const
         return MAX_MOVE_TYPE_TBC;
     
     return MAX_MOVE_TYPE_WOTLK;
+}
+
+bool IsActionButtonDataValid(uint8 button, uint32 action, uint8 type)
+{
+    if (button >= MAX_ACTION_BUTTONS_WOTLK)
+        return false;
+
+    if (action >= MAX_ACTION_BUTTON_ACTION_VALUE)
+        return false;
+
+    switch (type)
+    {
+    case ACTION_BUTTON_SPELL:
+    {
+        if (action > MAX_SPELL_ID_WOTLK)
+            return false;
+
+        break;
+    }
+    case ACTION_BUTTON_ITEM:
+    {
+        if (!sGameDataMgr.GetItemPrototype(action))
+            return false;
+        break;
+    }
+    default:
+        break;                                          // other cases not checked at this moment
+    }
+
+    return true;
+}
+
+void GameDataMgr::LoadPlayerInfo()
+{
+    printf("[GameDataMgr] Loading player create info...\n");
+    // Load playercreateinfo
+    {
+        //                                                               0       1        2      3       4             5             6             7
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `race`, `class`, `map`, `zone`, `position_x`, `position_y`, `position_z`, `orientation` FROM `playercreateinfo`"));
+
+        uint32 count = 0;
+
+        if (!result)
+        {
+            printf(">> Loaded %u player create definitions, table is empty.\n", count);
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 current_race  = fields[0].GetUInt32();
+            uint32 current_class = fields[1].GetUInt32();
+            uint32 mapId         = fields[2].GetUInt32();
+            uint32 areaId        = fields[3].GetUInt32();
+            float  positionX     = fields[4].GetFloat();
+            float  positionY     = fields[5].GetFloat();
+            float  positionZ     = fields[6].GetFloat();
+            float  orientation   = fields[7].GetFloat();
+
+            if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_WOTLK))
+            {
+                printf("Wrong race %u in `playercreateinfo` table, ignoring.\n", current_race);
+                continue;
+            }
+
+            if (!current_class || !((1 << (current_class - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK))
+            {
+                printf("Wrong class %u in `playercreateinfo` table, ignoring.\n", current_class);
+                continue;
+            }
+
+            PlayerInfo* pInfo = &m_PlayerInfo[current_race][current_class];
+
+            pInfo->mapId       = mapId;
+            pInfo->areaId      = areaId;
+            pInfo->positionX   = positionX;
+            pInfo->positionY   = positionY;
+            pInfo->positionZ   = positionZ;
+            pInfo->orientation = orientation;
+
+            pInfo->displayId_m = GetDefaultDisplayIdForPlayerRace(current_race, GENDER_MALE);
+            pInfo->displayId_f = GetDefaultDisplayIdForPlayerRace(current_race, GENDER_FEMALE);
+            
+            ++count;
+        }
+        while (result->NextRow());
+
+        printf(">> Loaded %u player create definitions.\n", count);
+    }
+
+    // Load playercreateinfo_item
+    {
+        //                                                               0       1        2         3
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `race`, `class`, `itemid`, `amount` FROM `playercreateinfo_item`"));
+
+        uint32 count = 0;
+
+        if (!result)
+        {
+            printf(">> Loaded %u custom player create items.\n", count);
+        }
+        else
+        {
+            do
+            {
+                DbField* fields = result->fetchCurrentRow();
+
+                uint32 current_race = fields[0].GetUInt32();
+                uint32 current_class = fields[1].GetUInt32();
+
+                if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_WOTLK))
+                {
+                    printf("Error: Wrong race %u in `playercreateinfo_item` table, ignoring.\n", current_race);
+                    continue;
+                }
+
+                if (!current_class || !((1 << (current_class - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK))
+                {
+                    printf("Error: Wrong class %u in `playercreateinfo_item` table, ignoring.\n", current_class);
+                    continue;
+                }
+
+                PlayerInfo* pInfo = &m_PlayerInfo[current_race][current_class];
+
+                uint32 item_id = fields[2].GetUInt32();
+
+                if (!GetItemPrototype(item_id))
+                {
+                    printf("Error: Item id %u (race %u class %u) in `playercreateinfo_item` table but not listed in `item_template`, ignoring.\n", item_id, current_race, current_class);
+                    continue;
+                }
+
+                uint32 amount  = fields[3].GetUInt32();
+
+                if (!amount)
+                {
+                    printf("Error: Item id %u (class %u race %u) have amount==0 in `playercreateinfo_item` table, ignoring.\n", item_id, current_race, current_class);
+                    continue;
+                }
+
+                pInfo->item.push_back(PlayerCreateInfoItem(item_id, amount));
+
+                ++count;
+            }
+            while (result->NextRow());
+
+            printf(">> Loaded %u custom player create items.\n", count);
+        }
+    }
+
+    // Load playercreateinfo_spell
+    {
+        //                                                                0       1        2
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `race`, `class`, `spell` FROM `playercreateinfo_spell` WHERE %u BETWEEN `build_min` AND `build_max`", SUPPORTED_CLIENT_BUILD));
+
+        uint32 count = 0;
+
+        if (!result)
+        {
+            printf(">> Loaded %u player create spells, table is empty.", count);
+        }
+        else
+        {
+            do
+            {
+                DbField* fields = result->fetchCurrentRow();
+
+                uint32 current_race = fields[0].GetUInt32();
+                uint32 current_class = fields[1].GetUInt32();
+
+                if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_WOTLK))
+                {
+                    printf("Error: Wrong race %u in `playercreateinfo_spell` table, ignoring.\n", current_race);
+                    continue;
+                }
+
+                if (!current_class || !((1 << (current_class - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK))
+                {
+                    printf("Error: Wrong class %u in `playercreateinfo_spell` table, ignoring.\n", current_class);
+                    continue;
+                }
+
+                uint32 spell_id = fields[2].GetUInt32();
+                if (spell_id > MAX_SPELL_ID_WOTLK)
+                {
+                    printf("Error: Non existing spell %u in `playercreateinfo_spell` table, ignoring.\n", spell_id);
+                    continue;
+                }
+
+                PlayerInfo* pInfo = &m_PlayerInfo[current_race][current_class];
+                pInfo->spell.push_back(spell_id);
+
+                ++count;
+            }
+            while (result->NextRow());
+
+            printf(">> Loaded %u player create spells.\n", count);
+        }
+    }
+
+    // Load playercreateinfo_action
+    {
+        //                                                               0       1        2         3         4
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `race`, `class`, `button`, `action`, `type` FROM `playercreateinfo_action`"));
+
+        uint32 count = 0;
+
+        if (!result)
+        {
+            printf(">> Loaded %u player create actions, table is empty.\n", count);
+        }
+        else
+        {
+            do
+            {
+                DbField* fields = result->fetchCurrentRow();
+
+                uint32 current_race = fields[0].GetUInt32();
+                uint32 current_class = fields[1].GetUInt32();
+
+                if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_WOTLK))
+                {
+                    printf("Error: Wrong race %u in `playercreateinfo_action` table, ignoring.\n", current_race);
+                    continue;
+                }
+
+                if (!current_class || !((1 << (current_class - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK))
+                {
+                    printf("Error: Wrong class %u in `playercreateinfo_action` table, ignoring.\n", current_class);
+                    continue;
+                }
+
+                uint8 action_button  = fields[2].GetUInt8();
+                uint32 action = fields[3].GetUInt32();
+                uint8 action_type = fields[4].GetUInt8();
+
+                if (!IsActionButtonDataValid(action_button, action, action_type))
+                    continue;
+
+                PlayerInfo* pInfo = &m_PlayerInfo[current_race][current_class];
+                pInfo->action.push_back(PlayerCreateInfoAction(action_button, action, action_type));
+
+                ++count;
+            }
+            while (result->NextRow());
+
+            printf(">> Loaded %u player create actions.\n", count);
+        }
+    }
+
+    // Loading levels data (class only dependent)
+    {
+        //                                                               0        1        2         3
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `class`, `level`, `basehp`, `basemana` FROM `player_classlevelstats`"));
+
+        uint32 count = 0;
+
+        if (!result)
+        {
+            printf(">> Loaded %u level health/mana definitions, table is empty.\n", count);
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 current_class = fields[0].GetUInt32();
+            if (current_class >= MAX_CLASSES)
+            {
+                printf("Error: Wrong class %u in `player_classlevelstats` table, ignoring.\n", current_class);
+                continue;
+            }
+
+            uint32 current_level = fields[1].GetUInt32();
+            if (current_level == 0)
+            {
+                printf("Error: Wrong level %u in `player_classlevelstats` table, ignoring.\n", current_level);
+                continue;
+            }
+            else if (current_level > PLAYER_STRONG_MAX_LEVEL)
+            {
+                printf("Error: Wrong (> %u) level %u in `player_classlevelstats` table, ignoring.\n", PLAYER_STRONG_MAX_LEVEL, current_level);
+                continue;
+            }
+
+            PlayerClassInfo* pClassInfo = &m_PlayerClassInfo[current_class];
+
+            PlayerClassLevelInfo* pClassLevelInfo = &pClassInfo->levelInfo[current_level - 1];
+
+            pClassLevelInfo->basehealth = fields[2].GetUInt16();
+            pClassLevelInfo->basemana   = fields[3].GetUInt16();
+
+            ++count;
+        }
+        while (result->NextRow());
+
+        printf(">> Loaded %u level health/mana definitions.\n", count);
+    }
+
+    // Fill gaps and check integrity
+    for (int class_ = 1; class_ < MAX_CLASSES; ++class_)
+    {
+        // skip nonexistent classes
+        if (!((1 << (class_ - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK))
+            continue;
+
+        PlayerClassInfo* pClassInfo = &m_PlayerClassInfo[class_];
+
+        // fatal error if no level 1 data
+        if (pClassInfo->levelInfo[0].basehealth == 0)
+        {
+            printf("Error: Class %i Level 1 does not have health/mana data!\n", class_);
+            pClassInfo->levelInfo[0].basehealth = 50;
+        }
+
+        // fill level gaps
+        for (uint32 level = 1; level < PLAYER_STRONG_MAX_LEVEL; ++level)
+        {
+            if (pClassInfo->levelInfo[level].basehealth == 0)
+            {
+                //printf("Error: Class %i Level %i does not have health/mana data. Using stats data of level %i.\n", class_, level + 1, level);
+                pClassInfo->levelInfo[level] = pClassInfo->levelInfo[level - 1];
+            }
+        }
+    }
+
+    // Loading levels data (class/race dependent)
+    {
+        //                                                               0       1        2        3      4      5      6       7
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `race`, `class`, `level`, `str`, `agi`, `sta`, `inte`, `spi` FROM `player_levelstats`"));
+
+        uint32 count = 0;
+
+        if (!result)
+        {
+            printf(">> Loaded %u level stats definitions, table is empty.\n", count);
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 current_race = fields[0].GetUInt32();
+            uint32 current_class = fields[1].GetUInt32();
+
+            if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_WOTLK))
+            {
+                printf("Error: Wrong race %u in `player_levelstats` table, ignoring.\n", current_race);
+                continue;
+            }
+
+            if (!current_class || !((1 << (current_class - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK))
+            {
+                printf("Error: Wrong class %u in `player_levelstats` table, ignoring.\n", current_class);
+                continue;
+            }
+
+            uint32 current_level = fields[2].GetUInt32();
+            if (current_level > PLAYER_STRONG_MAX_LEVEL)
+            {
+                printf("Error: Wrong (> %u) level %u in `player_levelstats` table, ignoring.\n", PLAYER_STRONG_MAX_LEVEL, current_level);
+                continue;
+            }
+
+            PlayerInfo* pInfo = &m_PlayerInfo[current_race][current_class];
+
+            PlayerLevelInfo* pLevelInfo = &pInfo->levelInfo[current_level - 1];
+
+            for (int i = 0; i < MAX_STATS; ++i)
+                pLevelInfo->stats[i] = fields[i + 3].GetUInt8();
+
+            ++count;
+        }
+        while (result->NextRow());
+
+        printf(">> Loaded %u level stats definitions.\n", count);
+    }
+
+    // Fill gaps and check integrity
+    for (int race = 1; race < MAX_RACES; ++race)
+    {
+        // skip nonexistent races
+        if (!((1 << (race - 1)) & RACEMASK_ALL_PLAYABLE_TBC))
+            continue;
+
+        for (int class_ = 1; class_ < MAX_CLASSES; ++class_)
+        {
+            // skip nonexistent classes
+            if (!((1 << (class_ - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK))
+                continue;
+
+            PlayerInfo* pInfo = &m_PlayerInfo[race][class_];
+
+            // skip non loaded combinations
+            if (!pInfo->displayId_m || !pInfo->displayId_f)
+                continue;
+
+            // fatal error if no level 1 data
+            if (pInfo->levelInfo[0].stats[0] == 0)
+            {
+                printf("Error: Race %i Class %i Level 1 does not have stats data!\n", race, class_);
+                for (int j = 0; j < MAX_STATS; j++)
+                    pInfo->levelInfo[0].stats[j] = 1;
+                return;
+            }
+
+            // fill level gaps
+            for (uint32 level = 1; level < PLAYER_STRONG_MAX_LEVEL; ++level)
+            {
+                if (pInfo->levelInfo[level].stats[0] == 0)
+                {
+                    //printf("Error: Race %i Class %i Level %i does not have stats data. Using stats data of level %i.\n", race, class_, level + 1, level);
+                    pInfo->levelInfo[level] = pInfo->levelInfo[level - 1];
+                }
+            }
+        }
+    }
+}
+
+void GameDataMgr::GetPlayerClassLevelInfo(uint32 class_, uint32 level, PlayerClassLevelInfo* info) const
+{
+    if (level < 1 || class_ >= MAX_CLASSES)
+        return;
+
+    PlayerClassInfo const* pInfo = &m_PlayerClassInfo[class_];
+
+    if (level > PLAYER_STRONG_MAX_LEVEL)
+        level = PLAYER_STRONG_MAX_LEVEL;
+
+    *info = pInfo->levelInfo[level - 1];
+}
+
+void GameDataMgr::GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, PlayerLevelInfo* info) const
+{
+    if (level < 1 || race   >= MAX_RACES || class_ >= MAX_CLASSES)
+        return;
+
+    PlayerInfo const* pInfo = &m_PlayerInfo[race][class_];
+    if (pInfo->displayId_m == 0 || pInfo->displayId_f == 0)
+        return;
+
+    if (level <= PLAYER_STRONG_MAX_LEVEL)
+        *info = pInfo->levelInfo[level - 1];
+}
+
+void GameDataMgr::BuildPlayerLevelInfo(uint8 race, uint8 _class, uint8 level, PlayerLevelInfo* info) const
+{
+    // base data (last known level)
+    *info = m_PlayerInfo[race][_class].levelInfo[PLAYER_STRONG_MAX_LEVEL - 1];
+
+    for (int lvl = PLAYER_STRONG_MAX_LEVEL - 1; lvl < level; ++lvl)
+    {
+        switch (_class)
+        {
+            case CLASS_WARRIOR:
+                info->stats[STAT_STRENGTH]  += (lvl > 23 ? 2 : (lvl > 1  ? 1 : 0));
+                info->stats[STAT_STAMINA]   += (lvl > 23 ? 2 : (lvl > 1  ? 1 : 0));
+                info->stats[STAT_AGILITY]   += (lvl > 36 ? 1 : (lvl > 6 && (lvl % 2) ? 1 : 0));
+                info->stats[STAT_INTELLECT] += (lvl > 9 && !(lvl % 2) ? 1 : 0);
+                info->stats[STAT_SPIRIT]    += (lvl > 9 && !(lvl % 2) ? 1 : 0);
+                break;
+            case CLASS_PALADIN:
+                info->stats[STAT_STRENGTH]  += (lvl > 3  ? 1 : 0);
+                info->stats[STAT_STAMINA]   += (lvl > 33 ? 2 : (lvl > 1 ? 1 : 0));
+                info->stats[STAT_AGILITY]   += (lvl > 38 ? 1 : (lvl > 7 && !(lvl % 2) ? 1 : 0));
+                info->stats[STAT_INTELLECT] += (lvl > 6 && (lvl % 2) ? 1 : 0);
+                info->stats[STAT_SPIRIT]    += (lvl > 7 ? 1 : 0);
+                break;
+            case CLASS_HUNTER:
+                info->stats[STAT_STRENGTH]  += (lvl > 4  ? 1 : 0);
+                info->stats[STAT_STAMINA]   += (lvl > 4  ? 1 : 0);
+                info->stats[STAT_AGILITY]   += (lvl > 33 ? 2 : (lvl > 1 ? 1 : 0));
+                info->stats[STAT_INTELLECT] += (lvl > 8 && (lvl % 2) ? 1 : 0);
+                info->stats[STAT_SPIRIT]    += (lvl > 38 ? 1 : (lvl > 9 && !(lvl % 2) ? 1 : 0));
+                break;
+            case CLASS_ROGUE:
+                info->stats[STAT_STRENGTH]  += (lvl > 5  ? 1 : 0);
+                info->stats[STAT_STAMINA]   += (lvl > 4  ? 1 : 0);
+                info->stats[STAT_AGILITY]   += (lvl > 16 ? 2 : (lvl > 1 ? 1 : 0));
+                info->stats[STAT_INTELLECT] += (lvl > 8 && !(lvl % 2) ? 1 : 0);
+                info->stats[STAT_SPIRIT]    += (lvl > 38 ? 1 : (lvl > 9 && !(lvl % 2) ? 1 : 0));
+                break;
+            case CLASS_PRIEST:
+                info->stats[STAT_STRENGTH]  += (lvl > 9 && !(lvl % 2) ? 1 : 0);
+                info->stats[STAT_STAMINA]   += (lvl > 5  ? 1 : 0);
+                info->stats[STAT_AGILITY]   += (lvl > 38 ? 1 : (lvl > 8 && (lvl % 2) ? 1 : 0));
+                info->stats[STAT_INTELLECT] += (lvl > 22 ? 2 : (lvl > 1 ? 1 : 0));
+                info->stats[STAT_SPIRIT]    += (lvl > 3  ? 1 : 0);
+                break;
+            case CLASS_SHAMAN:
+                info->stats[STAT_STRENGTH]  += (lvl > 34 ? 1 : (lvl > 6 && (lvl % 2) ? 1 : 0));
+                info->stats[STAT_STAMINA]   += (lvl > 4 ? 1 : 0);
+                info->stats[STAT_AGILITY]   += (lvl > 7 && !(lvl % 2) ? 1 : 0);
+                info->stats[STAT_INTELLECT] += (lvl > 5 ? 1 : 0);
+                info->stats[STAT_SPIRIT]    += (lvl > 4 ? 1 : 0);
+                break;
+            case CLASS_MAGE:
+                info->stats[STAT_STRENGTH]  += (lvl > 9 && !(lvl % 2) ? 1 : 0);
+                info->stats[STAT_STAMINA]   += (lvl > 5  ? 1 : 0);
+                info->stats[STAT_AGILITY]   += (lvl > 9 && !(lvl % 2) ? 1 : 0);
+                info->stats[STAT_INTELLECT] += (lvl > 24 ? 2 : (lvl > 1 ? 1 : 0));
+                info->stats[STAT_SPIRIT]    += (lvl > 33 ? 2 : (lvl > 2 ? 1 : 0));
+                break;
+            case CLASS_WARLOCK:
+                info->stats[STAT_STRENGTH]  += (lvl > 9 && !(lvl % 2) ? 1 : 0);
+                info->stats[STAT_STAMINA]   += (lvl > 38 ? 2 : (lvl > 3 ? 1 : 0));
+                info->stats[STAT_AGILITY]   += (lvl > 9 && !(lvl % 2) ? 1 : 0);
+                info->stats[STAT_INTELLECT] += (lvl > 33 ? 2 : (lvl > 2 ? 1 : 0));
+                info->stats[STAT_SPIRIT]    += (lvl > 38 ? 2 : (lvl > 3 ? 1 : 0));
+                break;
+            case CLASS_DRUID:
+                info->stats[STAT_STRENGTH]  += (lvl > 38 ? 2 : (lvl > 6 && (lvl % 2) ? 1 : 0));
+                info->stats[STAT_STAMINA]   += (lvl > 32 ? 2 : (lvl > 4 ? 1 : 0));
+                info->stats[STAT_AGILITY]   += (lvl > 38 ? 2 : (lvl > 8 && (lvl % 2) ? 1 : 0));
+                info->stats[STAT_INTELLECT] += (lvl > 38 ? 3 : (lvl > 4 ? 1 : 0));
+                info->stats[STAT_SPIRIT]    += (lvl > 38 ? 3 : (lvl > 5 ? 1 : 0));
+        }
+    }
 }
 
 void GameDataMgr::LoadFactions()

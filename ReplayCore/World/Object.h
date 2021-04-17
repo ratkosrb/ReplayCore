@@ -46,7 +46,9 @@ public:
     uint16 GetUInt16Value(const char* index, uint8 offset) const;
     ObjectGuid GetGuidValue(const char* index) const { return *reinterpret_cast<ObjectGuid const*>(GetUInt64Value(index)); }
     std::string GetGuidStr() const { return GetObjectGuid().GetString(); }
+    uint64 const& GetGUID() const { return GetUInt64Value(OBJECT_FIELD_GUID); }
     ObjectGuid const& GetObjectGuid() const { return m_guid; }
+    uint32 GetGUIDLow() const { return GetObjectGuid().GetCounter(); }
     PackedGuid const& GetPackGUID() const { return m_packGuid; }
 
     void SetInt32Value(const char* index, int32  value);

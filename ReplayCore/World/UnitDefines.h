@@ -38,10 +38,16 @@ enum Races
 
 #define MAX_RACES         21
 
-#define RACEMASK_ALL_PLAYABLE \
+#define RACEMASK_ALL_PLAYABLE_VANILLA \
     ((1<<(RACE_HUMAN-1))    |(1<<(RACE_ORC-1))      |(1<<(RACE_DWARF-1))   | \
     (1<<(RACE_NIGHTELF-1))  |(1<<(RACE_UNDEAD-1))   |(1<<(RACE_TAUREN-1))  | \
     (1<<(RACE_GNOME-1))     |(1<<(RACE_TROLL-1)))
+
+#define RACEMASK_ALL_PLAYABLE_TBC \
+    ((1<<(RACE_HUMAN-1))    |(1<<(RACE_ORC-1))      |(1<<(RACE_DWARF-1))   | \
+    (1<<(RACE_NIGHTELF-1))  |(1<<(RACE_UNDEAD-1))   |(1<<(RACE_TAUREN-1))  | \
+    (1<<(RACE_GNOME-1))     |(1<<(RACE_TROLL-1))    |(1<<(RACE_BLOODELF-1)) | \
+    (1<<(RACE_DRAENEI-1)))
 
 #define RACEMASK_ALL_VANILLA \
     ((1<<(RACE_HUMAN-1))    |(1<<(RACE_ORC-1))      |(1<<(RACE_DWARF-1))   | \

@@ -6,6 +6,11 @@
 #include <string>
 
 #define OBJECT_FIELD_GUID uint16(0)
+#define OBJECT_FIELD_TYPE uint16(2)
+#define OBJECT_FIELD_ENTRY uint16(3)
+#define OBJECT_FIELD_SCALE_X uint16(4)
+#define OBJECT_FIELD_PADDING uint16(5)
+#define OBJECT_END uint16(6)
 
 namespace UpdateFields
 {

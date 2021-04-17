@@ -28,6 +28,7 @@ Unit::Unit(UnitData const& unitData) : WorldObject(unitData.guid)
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
     InitializePlaceholderUnitFields();
     unitData.InitializeUnit(this);
     m_uint32Values_mirror = new uint32[m_valuesCount];
@@ -46,6 +47,7 @@ void Unit::InitializePlaceholderUnitFields()
     SetUInt32Value("UNIT_FIELD_STAT2", 50);
     SetUInt32Value("UNIT_FIELD_STAT3", 50);
     SetUInt32Value("UNIT_FIELD_STAT4", 50);
+    SetUInt32Value("UNIT_FIELD_RESISTANCES", 100);
     SetUInt32Value("UNIT_FIELD_ATTACK_POWER", 100);
     SetFloatValue("UNIT_FIELD_ATTACK_POWER_MULTIPLIER", 1);
     SetFloatValue("UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER", 1);

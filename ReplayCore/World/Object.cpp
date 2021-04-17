@@ -54,7 +54,7 @@ void MovementInfo::Read(ByteBuffer &data)
     else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
     {
         data >> moveFlags;
-        data >> moveFlags2;
+        data >> moveFlags2TBC;
         data >> time;
         data >> pos.x;
         data >> pos.y;
@@ -93,7 +93,7 @@ void MovementInfo::Read(ByteBuffer &data)
     else
     {
         data >> moveFlags;
-        data >> moveFlags2;
+        data >> moveFlags2WotLK;
         data >> time;
         data >> pos.x;
         data >> pos.y;
@@ -110,13 +110,13 @@ void MovementInfo::Read(ByteBuffer &data)
             data >> t_time;
             data >> t_seat;
 
-            if (moveFlags2 & WotLK::MOVEFLAG2_INTERP_MOVEMENT)
+            if (moveFlags2WotLK & WotLK::MOVEFLAG2_INTERP_MOVEMENT)
             {
                 data >> t_time2;
             }
         }
 
-        if ((HasMovementFlag(WotLK::MOVEFLAG_SWIMMING | WotLK::MOVEFLAG_FLYING)) || (moveFlags2 & WotLK::MOVEFLAG2_ALLOW_PITCHING))
+        if ((HasMovementFlag(WotLK::MOVEFLAG_SWIMMING | WotLK::MOVEFLAG_FLYING)) || (moveFlags2WotLK & WotLK::MOVEFLAG2_ALLOW_PITCHING))
         {
             data >> s_pitch;
         }
@@ -183,7 +183,7 @@ void MovementInfo::Write(ByteBuffer &data) const
     else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
     {
         data << moveFlags;
-        data << moveFlags2;
+        data << moveFlags2TBC;
         data << time;
         data << pos.x;
         data << pos.y;
@@ -222,7 +222,7 @@ void MovementInfo::Write(ByteBuffer &data) const
     else
     {
         data << moveFlags;
-        data << moveFlags2;
+        data << moveFlags2WotLK;
         data << time;
         data << pos.x;
         data << pos.y;
@@ -239,13 +239,13 @@ void MovementInfo::Write(ByteBuffer &data) const
             data << t_time;
             data << t_seat;
 
-            if (moveFlags2 & WotLK::MOVEFLAG2_INTERP_MOVEMENT)
+            if (moveFlags2WotLK & WotLK::MOVEFLAG2_INTERP_MOVEMENT)
             {
                 data << t_time2;
             }
         }
 
-        if ((HasMovementFlag(WotLK::MOVEFLAG_SWIMMING | WotLK::MOVEFLAG_FLYING)) || (moveFlags2 & WotLK::MOVEFLAG2_ALLOW_PITCHING))
+        if ((HasMovementFlag(WotLK::MOVEFLAG_SWIMMING | WotLK::MOVEFLAG_FLYING)) || (moveFlags2WotLK & WotLK::MOVEFLAG2_ALLOW_PITCHING))
         {
             data << s_pitch;
         }
@@ -275,6 +275,7 @@ Object::Object(ObjectData const& objectData)
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
     objectData.InitializeObject(this);
     m_uint32Values_mirror = new uint32[m_valuesCount];
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
@@ -286,6 +287,7 @@ WorldObject::WorldObject(WorldObjectData const& worldObjectData) : Object(worldO
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
     worldObjectData.InitializeWorldObject(this);
     m_uint32Values_mirror = new uint32[m_valuesCount];
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
@@ -544,7 +546,11 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
 
 void Object::BuildMovementUpdate(ByteBuffer* data, uint8 updateFlags) const
 {
-    *data << uint8(updateFlags);                            // update flags
+    // update flags
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_1_0)
+        *data << uint8(updateFlags);
+    else
+        *data << uint16(updateFlags);
 
     if (updateFlags & UPDATEFLAG_LIVING)
     {
@@ -557,7 +563,6 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint8 updateFlags) const
             m.ChangePosition(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ(), unit->GetOrientation());
         }
         *data << m;
-
 
         if (unit)
         {
@@ -619,6 +624,9 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer* data, UpdateMask* u
         return;
 
     assert(updateMask && updateMask->GetCount() == m_valuesCount);
+
+    if (updateMask->GetBit(OBJECT_FIELD_GUID))
+        updateMask->SetBit(OBJECT_FIELD_GUID + 1);
 
     *data << (uint8)updateMask->GetBlockCount();
     data->append(updateMask->GetMask(), updateMask->GetLength());

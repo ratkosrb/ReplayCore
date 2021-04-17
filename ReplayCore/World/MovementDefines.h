@@ -260,7 +260,7 @@ class ByteBuffer;
 class MovementInfo
 {
     public:
-        MovementInfo() : moveFlags(0), moveFlags2(0), time(0), ctime(0),
+        MovementInfo() : moveFlags(0), moveFlags2TBC(0), moveFlags2WotLK(0), time(0), ctime(0),
             t_time(0), t_seat(0), t_time2(0), s_pitch(0.0f), fallTime(0), splineElevation(0.0f) {}
 
         // Read/Write methods
@@ -316,7 +316,8 @@ class MovementInfo
     //private:
         // common
         uint32  moveFlags;                                  // see enum MovementFlags
-        uint32  moveFlags2;                                 // see enum MovementFlags2
+        uint8 moveFlags2TBC;                                // see enum MovementFlags2
+        uint16  moveFlags2WotLK;                            // see enum MovementFlags2
         uint32  time;
         uint32  ctime; // Client time
         Position pos;

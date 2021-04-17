@@ -35,6 +35,7 @@ public :
     uint8 GetClass() const { return GetByteValue("UNIT_FIELD_BYTES_0", 1); }
     uint32 GetClassMask() const { return GetClass() ? 1 << (GetClass() - 1) : 0x0; }
     uint8 GetGender() const { return GetByteValue("UNIT_FIELD_BYTES_0", 2); }
+    uint32 GetLevel() const { return GetUInt32Value("UNIT_FIELD_LEVEL"); }
 
     void SetVirtualItem(uint8 slot, uint32 item_id);
     uint32 GetAttackTime(WeaponAttackType att) const;
