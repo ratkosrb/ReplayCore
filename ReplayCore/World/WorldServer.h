@@ -110,11 +110,15 @@ private:
     void HandleWho(WorldPacket& packet);
     void HandleLogoutRequest(WorldPacket& packet);
     void HandleJoinChannel(WorldPacket& packet);
+    void HandleUpdateAccountData(WorldPacket& packet);
 
     // Packet Building
     void SendAuthChallenge();
     void SendLoginVerifyWorld(WorldLocation const& location);
     void SendAccountDataTimes();
+    void SendAccountDataTimesVanilla();
+    void SendAccountDataTimesWotLK(uint32 mask);
+    void SendUpdateAccountDataComplete(uint32 type);
     void SendFeatureSystemStatus(bool enableComplaintChat, bool enableVoiceChat);
     void SendLoginSetTimeSpeed();
     void SendSetRestStart(uint32 restStateTime);

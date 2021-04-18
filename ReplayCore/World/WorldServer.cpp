@@ -171,6 +171,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_WHO", &WorldServer::HandleWho);
     SetOpcodeHandler("CMSG_LOGOUT_REQUEST", &WorldServer::HandleLogoutRequest);
     SetOpcodeHandler("CMSG_JOIN_CHANNEL", &WorldServer::HandleJoinChannel);
+    SetOpcodeHandler("CMSG_UPDATE_ACCOUNT_DATA", &WorldServer::HandleUpdateAccountData);
 }
 
 void WorldServer::SetOpcodeHandler(const char* opcodeName, WorldOpcodeHandler handler)
@@ -705,4 +706,29 @@ void WorldServer::HandleJoinChannel(WorldPacket& packet)
         return;
 
     SendJoinedChannelNotify(channelName, channelId);
+}
+
+void WorldServer::HandleUpdateAccountData(WorldPacket& packet)
+{
+    uint32 type = 0;
+    uint32 timestamp = 0;
+    uint32 decompressedSize = 0;
+    packet >> type;
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        packet >> timestamp;
+
+    packet >> decompressedSize;
+
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[WORLD] CMSG_UPDATE_ACCOUNT_DATA data:\n");
+    printf("Type: %u\n", type);
+    printf("Timestamp: %s\n", TimeToTimestampStr(timestamp).c_str());
+    printf("Size: %u\n", decompressedSize);
+    printf("\n");
+#endif
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        SendUpdateAccountDataComplete(type);
 }

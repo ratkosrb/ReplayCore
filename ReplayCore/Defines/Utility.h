@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include <string>
+#include <time.h>
 
 struct IpAddress
 {
@@ -27,6 +28,31 @@ void ReverseArray(T arr[], size_t size)
         arr[i] = arr[size - 1 - i];
         arr[size - 1 - i] = temp;
     }
+}
+
+inline std::tm localtime_r(const time_t& time)
+{
+    std::tm tm_snapshot;
+#if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__))
+    localtime_s(&tm_snapshot, &time);
+#else
+    localtime_r(&time, &tm_snapshot); // POSIX
+#endif
+    return tm_snapshot;
+}
+
+inline std::string TimeToTimestampStr(time_t t)
+{
+    tm aTm = localtime_r(t);
+    //       YYYY   year
+    //       MM     month (2 digits 01-12)
+    //       DD     day (2 digits 01-31)
+    //       HH     hour (2 digits 00-23)
+    //       MM     minutes (2 digits 00-59)
+    //       SS     seconds (2 digits 00-59)
+    char buf[20];
+    snprintf(buf, 20, "%04d-%02d-%02d_%02d-%02d-%02d", aTm.tm_year + 1900, aTm.tm_mon + 1, aTm.tm_mday, aTm.tm_hour, aTm.tm_min, aTm.tm_sec);
+    return std::string(buf);
 }
 
 inline uint32 secsToTimeBitFields(time_t secs)

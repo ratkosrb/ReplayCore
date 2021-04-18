@@ -27,32 +27,50 @@ void WorldServer::SendAccountDataTimes()
     WorldPacket data;
     if (GetClientBuild() < CLIENT_BUILD_3_0_2)
     {
-        data.Initialize(GetOpcode("SMSG_ACCOUNT_DATA_TIMES"), 128);
-        for (int i = 0; i < 32; ++i)
-            data << uint32(0);
-        SendPacket(data);
+        SendAccountDataTimesVanilla();
     }
     else
     {
-        data.Initialize(GetOpcode("SMSG_ACCOUNT_DATA_TIMES"), 4 + 1 + 4 + 8 * 4);
-        data << uint32(time(nullptr));                             // unix time of something
-        data << uint8(1);
+        SendAccountDataTimesWotLK(GLOBAL_CACHE_MASK);
+        SendAccountDataTimesWotLK(PER_CHARACTER_CACHE_MASK);
+    }
+}
 
-        if (GetClientBuild() >= CLIENT_BUILD_3_2_0)
+void WorldServer::SendAccountDataTimesVanilla()
+{
+    WorldPacket data(GetOpcode("SMSG_ACCOUNT_DATA_TIMES"), 128);
+    for (int i = 0; i < 32; ++i)
+        data << uint32(0);
+    SendPacket(data);
+}
+
+void WorldServer::SendAccountDataTimesWotLK(uint32 mask)
+{
+    WorldPacket data(GetOpcode("SMSG_ACCOUNT_DATA_TIMES"), 4 + 1 + 4 + 8 * 4);
+    data << uint32(time(nullptr));                             // unix time of something
+    data << uint8(1);
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_2_0)
+    {
+        data << uint32(mask);                                   // type mask
+        for (uint32 i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
         {
-            uint32 mask = PER_CHARACTER_CACHE_MASK;
-            data << uint32(mask);                                   // type mask
-            for (uint32 i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
+            if (mask & (1 << i))
             {
-                if (mask & (1 << i))
-                {
-                    data << uint32(time(nullptr));// also unix time
-                }
+                data << uint32(0);// also unix time
             }
         }
-
-        SendPacket(data);
     }
+
+    SendPacket(data);
+}
+
+void WorldServer::SendUpdateAccountDataComplete(uint32 type)
+{
+    WorldPacket data(GetOpcode("SMSG_UPDATE_ACCOUNT_DATA_COMPLETE"), 4 + 4);
+    data << uint32(type);
+    data << uint32(0);
+    SendPacket(data);
 }
 
 void WorldServer::SendFeatureSystemStatus(bool enableComplaintChat, bool enableVoiceChat)
@@ -322,6 +340,8 @@ void WorldServer::SendWhoList(uint32 levelMin, uint32 levelMax, uint32 raceMask,
         data << uint32(lvl);                                // player level
         data << uint32(class_);                             // player class
         data << uint32(race);                               // player race
+        if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+            data << uint8(pPlayer->GetGender());            // player gender
         data << uint32(0);                                  // player zone id
 
 #if SUPPORTED_CLIENT_BUILD <= CLIENT_BUILD_1_8_4
