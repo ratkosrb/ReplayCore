@@ -158,6 +158,8 @@ public:
     WorldObject(ObjectGuid guid) : Object(guid) {}
     WorldObject(WorldObjectData const& worldObjectData);
 
+    uint32 GetZoneId() const;
+    uint32 GetAreaId() const;
     uint32 GetMapId() const { return m_location.mapId; }
     float GetPositionX() const { return m_location.x; }
     float GetPositionY() const { return m_location.y; }

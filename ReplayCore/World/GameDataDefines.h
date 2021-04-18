@@ -108,4 +108,28 @@ struct FactionTemplateEntry
     bool IsContestedGuardFaction() const { return (factionFlags & FACTION_TEMPLATE_FLAG_CONTESTED_GUARD) != 0; }
 };
 
+struct AreaTableEntry
+{
+    AreaTableEntry() = default;
+    AreaTableEntry(uint32 id_, uint32 mapId_, uint32 zoneId_, std::string name_) :
+        id(id_), mapId(mapId_), zoneId(zoneId_), name(name_) {};
+    uint32 id = 0;
+    uint32 mapId = 0;
+    uint32 zoneId = 0;
+    std::string name;
+};
+
+struct AreaPOIEntry
+{
+    AreaPOIEntry() = default;
+    AreaPOIEntry(uint32 mapId_, uint32 areaId_, float x_, float y_, float z_, std::string name_) :
+        mapId(mapId_), areaId(areaId_), x(x_), y(y_), z(z_), name(name_) {};
+    uint32 mapId = 0;
+    uint32 areaId = 0;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    std::string name;
+};
+
 #endif

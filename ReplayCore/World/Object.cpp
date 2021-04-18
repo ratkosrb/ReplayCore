@@ -293,6 +293,16 @@ WorldObject::WorldObject(WorldObjectData const& worldObjectData) : Object(worldO
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
 
+uint32 WorldObject::GetZoneId() const
+{
+    return sGameDataMgr.GetZoneIdFromCoordinates(GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ());
+}
+
+uint32 WorldObject::GetAreaId() const
+{
+    return sGameDataMgr.GetAreaIdFromCoordinates(GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ());
+}
+
 void Object::MarkForClientUpdate()
 {
     if (!m_isVisible)

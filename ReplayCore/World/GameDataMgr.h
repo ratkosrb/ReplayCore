@@ -10,6 +10,8 @@
 typedef std::unordered_map<uint32, FactionEntry> FactionsMap;
 typedef std::unordered_map<uint32, FactionTemplateEntry> FactionTemplatesMap;
 typedef std::unordered_map<uint32, ItemPrototype> ItemPrototypeMap;
+typedef std::unordered_map<uint32, AreaTableEntry> AreaTableEntryMap;
+typedef std::vector<AreaPOIEntry> AreaPOIStore;
 
 enum GameDataSource
 {
@@ -29,6 +31,18 @@ public:
     bool IsValidClass(uint32 id) const;
     bool IsValidUnitDisplayId(uint32 id) const;
     uint8 GetMoveSpeedsCount() const;
+
+    uint32 GetZoneIdFromCoordinates(uint32 mapId, float x, float y, float z);
+    uint32 GetAreaIdFromCoordinates(uint32 mapId, float x, float y, float z);
+    AreaPOIEntry const* GetClosestAreaPOIEntry(uint32 mapId, float x, float y, float z) const;
+    AreaTableEntry const* GetAreaTableEntry(uint32 id) const
+    {
+        auto iter = m_areaTableEntryMap.find(id);
+        if (iter == m_areaTableEntryMap.end())
+            return nullptr;
+
+        return &iter->second;
+    }
 
     void LoadPlayerInfo();
     PlayerClassInfo const* GetPlayerClassInfo(uint32 class_) const
@@ -98,6 +112,8 @@ private:
     PlayerClassInfo m_PlayerClassInfo[MAX_CLASSES];
     void BuildPlayerLevelInfo(uint8 race, uint8 class_, uint8 level, PlayerLevelInfo* plinfo) const;
     PlayerInfo m_PlayerInfo[MAX_RACES][MAX_CLASSES];
+    static AreaTableEntryMap m_areaTableEntryMap;
+    static AreaPOIStore m_areaPOIStore;
 };
 
 #define sGameDataMgr GameDataMgr::Instance()

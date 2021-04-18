@@ -4,6 +4,7 @@
 #include "../Defines//ClientVersions.h"
 #include "UnitDefines.h"
 #include "SpellDefines.h"
+#include "Geometry.h"
 
 GameDataMgr& GameDataMgr::Instance()
 {
@@ -78,6 +79,59 @@ uint8 GameDataMgr::GetMoveSpeedsCount() const
         return MAX_MOVE_TYPE_TBC;
     
     return MAX_MOVE_TYPE_WOTLK;
+}
+
+AreaPOIEntry const* GameDataMgr::GetClosestAreaPOIEntry(uint32 mapId, float x, float y, float z) const
+{
+    AreaPOIEntry const* pEntry = nullptr;
+    float minDistance = FLT_MAX;
+    for (const auto& itr : m_areaPOIStore)
+    {
+        if (itr.mapId != mapId)
+            continue;
+
+        float distance = Geometry::GetDistance3D(x, y, z, itr.x, itr.y, itr.z);
+        if (distance < minDistance)
+        {
+            minDistance = distance;
+            pEntry = &itr;
+        }
+    }
+
+    return pEntry;
+}
+
+uint32 GameDataMgr::GetZoneIdFromCoordinates(uint32 mapId, float x, float y, float z)
+{
+    if (AreaPOIEntry const* pPOI = sGameDataMgr.GetClosestAreaPOIEntry(mapId, x, y, z))
+    {
+        if (AreaTableEntry const* pArea = sGameDataMgr.GetAreaTableEntry(pPOI->areaId))
+        {
+            if (pArea->zoneId)
+                return pArea->zoneId;
+
+            return pArea->id;
+        }
+        printf("Error: POI data references non-existant area id!\n");
+    }
+
+    for (const auto& itr : m_areaTableEntryMap)
+        if (itr.second.mapId == mapId)
+            return itr.second.zoneId ? itr.second.zoneId : itr.first;
+
+    return 0;
+}
+
+uint32 GameDataMgr::GetAreaIdFromCoordinates(uint32 mapId, float x, float y, float z)
+{
+    if (AreaPOIEntry const* pPOI = sGameDataMgr.GetClosestAreaPOIEntry(mapId, x, y, z))
+        return pPOI->areaId;
+
+    for (const auto& itr : m_areaTableEntryMap)
+        if (itr.second.mapId == mapId)
+            return itr.first;
+
+    return 0;
 }
 
 bool IsActionButtonDataValid(uint8 button, uint32 action, uint8 type)

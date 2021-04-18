@@ -430,8 +430,8 @@ void WorldServer::HandleEnumCharacters(WorldPacket& packet)
             response << pPlayer->GetHairColor();
             response << pPlayer->GetFacialHair();
             response << uint8(pPlayer->GetLevel());
-            response << uint32(0); // zone id
-            response << uint32(0); // area id
+            response << uint32(sGameDataMgr.GetZoneIdFromCoordinates(pPlayer->GetMapId(), pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ()));
+            response << uint32(0); // area id (crashes wotlk)
             response << pPlayer->GetPositionX();
             response << pPlayer->GetPositionY();
             response << pPlayer->GetPositionZ();
@@ -546,7 +546,7 @@ void WorldServer::HandlePlayerLogin(WorldPacket& packet)
         SendFeatureSystemStatus(true, false);
     if (GetClientBuild() < CLIENT_BUILD_3_0_2)
         SendSetRestStart(0);
-    SendBindPointUpdate(pPlayerToCopy->GetLocation(), 0);
+    SendBindPointUpdate(pPlayerToCopy->GetLocation(), pPlayerToCopy->GetZoneId());
     SendTutorialFlags();
     SendInitialSpells(pPlayerToCopy->GetRace(), pPlayerToCopy->GetClass());
     SendLoginSetTimeSpeed();
@@ -646,7 +646,7 @@ void WorldServer::HandleWho(WorldPacket& packet)
         uint32 temp;
         packet >> temp;
         zones.push_back(temp);
-        //printf("Zone %u: %u\n", i, zoneIds[i]);
+        //printf("Zone %u: %u\n", i, temp);
     }
 
     // user entered strings count, client limit=4 (checked on 2.0.10)

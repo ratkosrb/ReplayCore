@@ -105,7 +105,7 @@ void WorldServer::SendBindPointUpdate(WorldLocation const& location, uint32 zone
     data << float(location.y);
     data << float(location.z);
     data << uint32(location.mapId);
-    data << uint32(0); // zone id
+    data << uint32(zoneId);
     SendPacket(data);
 }
 
@@ -241,7 +241,7 @@ void WorldServer::SendFriendList()
                 if (flags)                                     // if IsFriend()
                 {
                     data << uint8(pPlayer->IsVisible());       // online/offline/etc?
-                    data << uint32(0);                         // player area
+                    data << uint32(pPlayer->GetAreaId());      // player area
                     data << uint32(pPlayer->GetLevel());       // player level
                     data << uint32(pPlayer->GetClass());       // player class
                 }
@@ -251,7 +251,7 @@ void WorldServer::SendFriendList()
                 data << uint8(pPlayer->IsVisible());           // online/offline/etc?
                 if (pPlayer->IsVisible())                      // if online
                 {
-                    data << uint32(0);                         // player area
+                    data << uint32(pPlayer->GetAreaId());      // player area
                     data << uint32(pPlayer->GetLevel());       // player level
                     data << uint32(pPlayer->GetClass());       // player class
                 }
@@ -317,6 +317,26 @@ void WorldServer::SendWhoList(uint32 levelMin, uint32 levelMax, uint32 raceMask,
         //if (!(guildName.empty() || gname.find(guildName) != std::wstring::npos))
         //    continue;
 
+        uint32 pzoneid = pPlayer->GetZoneId();
+
+        bool z_show = true;
+        for (uint32 i = 0; i < zones.size(); ++i)
+        {
+            if (zones[i] == pzoneid)
+            {
+                z_show = true;
+                break;
+            }
+
+            z_show = false;
+        }
+        if (!z_show)
+            continue;
+
+        std::string aname;
+        if (AreaTableEntry const* pAreaEntry = sGameDataMgr.GetAreaTableEntry(pzoneid))
+            aname = pAreaEntry->name;
+
         bool s_show = true;
         for (uint32 i = 0; i < names.size(); ++i)
         {
@@ -324,7 +344,8 @@ void WorldServer::SendWhoList(uint32 levelMin, uint32 levelMax, uint32 raceMask,
             {
                 if (
                     //wgname.find(str[i]) != std::wstring::npos ||
-                    pname.find(names[i]) != std::string::npos)
+                    pname.find(names[i]) != std::string::npos ||
+                    aname.find(names[i]) != std::string::npos)
                 {
                     s_show = true;
                     break;
@@ -342,7 +363,7 @@ void WorldServer::SendWhoList(uint32 levelMin, uint32 levelMax, uint32 raceMask,
         data << uint32(race);                               // player race
         if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
             data << uint8(pPlayer->GetGender());            // player gender
-        data << uint32(0);                                  // player zone id
+        data << uint32(pzoneid);                            // player zone id
 
 #if SUPPORTED_CLIENT_BUILD <= CLIENT_BUILD_1_8_4
         data << uint32(pPlayer->GetWhoListPartyStatus());   // not actually displayed anywhere
