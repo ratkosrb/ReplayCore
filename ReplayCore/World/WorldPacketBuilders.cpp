@@ -365,10 +365,7 @@ void WorldServer::SendWhoList(uint32 levelMin, uint32 levelMax, uint32 raceMask,
             data << uint8(pPlayer->GetGender());            // player gender
         data << uint32(pzoneid);                            // player zone id
 
-#if SUPPORTED_CLIENT_BUILD <= CLIENT_BUILD_1_8_4
-        data << uint32(pPlayer->GetWhoListPartyStatus());   // not actually displayed anywhere
-#endif
-                                                            // 50 is maximum player count sent to client
+        // 50 is maximum player count sent to client
         if ((++clientcount) == 49)
             break;
     }
@@ -423,5 +420,179 @@ void WorldServer::SendJoinedChannelNotify(std::string channelName, uint32 channe
         data << uint32(channelId);                             // the non-zero number will be appended to the channel name
         data << uint32(0);                                     // unknown
     }
+    SendPacket(data);
+}
+
+void WorldServer::SendMotd()
+{
+    WorldPacket data(GetOpcode("SMSG_MOTD"), 50);
+    data << uint32(1); // line count
+    data << "Sniff Replay Core v0.0";
+    SendPacket(data);
+}
+
+void WorldServer::SendTimeSyncRequest()
+{
+    WorldPacket data(GetOpcode("SMSG_TIME_SYNC_REQ"), 4);
+    data << uint32(0); // couner
+    SendPacket(data);
+}
+
+void WorldServer::SendItemQuerySingleResponse(uint32 itemId)
+{
+    ItemPrototype const* pProto = sGameDataMgr.GetItemPrototype(itemId);
+    if (!pProto)
+    {
+        WorldPacket data(GetOpcode("SMSG_ITEM_QUERY_SINGLE_RESPONSE"), 4);
+        data << uint32(itemId | 0x80000000);
+        SendPacket(data);
+        printf("Client requested info about unknown item id %u!\n", itemId);
+        return;
+    }
+
+    WorldPacket data(GetOpcode("SMSG_ITEM_QUERY_SINGLE_RESPONSE"), 600);
+    data << pProto->ItemId;
+    data << pProto->Class;
+    data << pProto->SubClass;
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_3)
+        data << pProto->SoundOverrideSubclass;
+    data << pProto->Name1;                              // max length of any of 4 names: 256 bytes
+    data << uint8(0x00);                                //pProto->Name2; // blizz not send name there, just uint8(0x00); <-- \0 = empty string = empty name...
+    data << uint8(0x00);                                //pProto->Name3; // blizz not send name there, just uint8(0x00);
+    data << uint8(0x00);                                //pProto->Name4; // blizz not send name there, just uint8(0x00);
+    data << pProto->DisplayInfoID;
+    data << pProto->Quality;
+    data << pProto->Flags;
+    if (GetClientBuild() >= CLIENT_BUILD_3_2_0)
+        data << pProto->Flags2;
+    data << pProto->BuyPrice;
+    data << pProto->SellPrice;
+    data << pProto->InventoryType;
+    data << pProto->AllowableClass;
+    data << pProto->AllowableRace;
+    data << pProto->ItemLevel;
+    data << pProto->RequiredLevel;
+    data << pProto->RequiredSkill;
+    data << pProto->RequiredSkillRank;
+    data << pProto->RequiredSpell;
+    data << pProto->RequiredHonorRank;
+    data << pProto->RequiredCityRank;
+    data << pProto->RequiredReputationFaction;
+    data << (pProto->RequiredReputationFaction > 0 ? pProto->RequiredReputationRank : 0);   // send value only if reputation faction id setted (needed for some items)
+    data << pProto->MaxCount;
+    data << pProto->Stackable;
+    data << pProto->ContainerSlots;
+
+    uint32 statFieldsCount = MAX_ITEM_PROTO_STATS;
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+    {
+        data << pProto->StatsCount;
+        statFieldsCount = pProto->StatsCount;
+    }
+
+    for (uint32 i = 0; i < statFieldsCount; ++i)
+    {
+        data << pProto->ItemStat[i].ItemStatType;
+        data << pProto->ItemStat[i].ItemStatValue;
+    }
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+    {
+        data << pProto->ScalingStatDistribution;
+        data << pProto->ScalingStatValue;
+    }
+
+    uint32 damageFieldsCount = (GetClientBuild() >= CLIENT_BUILD_3_1_0)  ? MAX_ITEM_PROTO_DAMAGES_WOTLK : MAX_ITEM_PROTO_DAMAGES_VANILLA;
+    for (uint32 i = 0; i < damageFieldsCount; ++i)
+    {
+        data << pProto->Damage[i].DamageMin;
+        data << pProto->Damage[i].DamageMax;
+        data << pProto->Damage[i].DamageType;
+    }
+
+    // resistances (7)
+    data << pProto->Armor;
+    data << pProto->HolyRes;
+    data << pProto->FireRes;
+    data << pProto->NatureRes;
+    data << pProto->FrostRes;
+    data << pProto->ShadowRes;
+    data << pProto->ArcaneRes;
+
+    data << pProto->Delay;
+    data << pProto->AmmoType;
+    data << pProto->RangedModRange;
+
+    for (const auto& itr : pProto->Spells)
+    {
+        data << itr.SpellId;
+        data << itr.SpellTrigger;
+        data << itr.SpellCharges;
+
+        data << uint32(itr.SpellCooldown);
+        data << uint32(itr.SpellCategory);
+        data << uint32(itr.SpellCategoryCooldown);
+    }
+    data << pProto->Bonding;
+    data << pProto->Description;
+    data << pProto->PageText;
+    data << pProto->LanguageID;
+    data << pProto->PageMaterial;
+    data << pProto->StartQuest;
+    data << pProto->LockID;
+    data << pProto->Material;
+    data << pProto->Sheath;
+    data << pProto->RandomProperty;
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        data << pProto->RandomSuffix;
+
+    data << pProto->Block;
+    data << pProto->ItemSet;
+    data << pProto->MaxDurability;
+    data << pProto->Area;
+    data << pProto->Map;
+    data << pProto->BagFamily;
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+    {
+        data << pProto->TotemCategory;
+        for (int s = 0; s < MAX_ITEM_PROTO_SOCKETS; ++s)
+        {
+            data << pProto->Socket[s].Color;
+            data << pProto->Socket[s].Content;
+        }
+        data << uint32(pProto->socketBonus);
+        data << uint32(pProto->GemProperties);
+        data << int32(pProto->RequiredDisenchantSkill);
+        data << float(pProto->ArmorDamageModifier);
+    }
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_4_2)
+        data << uint32(pProto->Duration);
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        data << pProto->ItemLimitCategory;
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
+        data << pProto->HolidayId;
+
+    SendPacket(data);
+}
+
+void WorldServer::SendItemNameQueryResponse(uint32 itemId)
+{
+    ItemPrototype const* pProto = sGameDataMgr.GetItemPrototype(itemId);
+    if (!pProto)
+    {
+        printf("Client requested info about unknown item id %u!\n", itemId);
+        return;
+    }
+
+    WorldPacket data(GetOpcode("SMSG_ITEM_NAME_QUERY_RESPONSE"), (4 + 10));
+    data << uint32(pProto->ItemId);
+    data << pProto->Name1;
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        data << uint32(pProto->InventoryType);
     SendPacket(data);
 }

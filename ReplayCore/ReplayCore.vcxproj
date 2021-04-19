@@ -99,6 +99,7 @@
     <ClInclude Include="Defines\ByteConverter.h" />
     <ClInclude Include="Defines\ClientVersions.h" />
     <ClInclude Include="Defines\Common.h" />
+    <ClInclude Include="Defines\Console.h" />
     <ClInclude Include="Defines\Databases.h" />
     <ClInclude Include="Defines\GameAccount.h" />
     <ClInclude Include="Defines\Utility.h" />
@@ -150,6 +151,7 @@
     <ClCompile Include="World\UpdateData.cpp" />
     <ClCompile Include="World\UpdateFields.cpp" />
     <ClCompile Include="World\WorldPacketBuilders.cpp" />
+    <ClCompile Include="World\WorldPacketHandlers.cpp" />
     <ClCompile Include="World\WorldServer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

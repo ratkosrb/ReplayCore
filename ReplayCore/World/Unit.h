@@ -15,20 +15,28 @@ public :
     {
         m_objectType |= TYPEMASK_UNIT;
         m_objectTypeId = TYPEID_UNIT;
-        m_updateFlags = (UPDATEFLAG_ALL | UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
+        m_updateFlags = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
         InitializeMoveSpeeds();
     }
     Unit(ObjectGuid guid) : WorldObject(guid)
     {
         m_objectType |= TYPEMASK_UNIT;
         m_objectTypeId = TYPEID_UNIT;
-        m_updateFlags = (UPDATEFLAG_ALL | UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
+        m_updateFlags = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
         InitializeMoveSpeeds();
     }
     Unit(UnitData const& unitData);
     
     MovementInfo& GetMovementInfo() { return m_movementInfo; }
     MovementInfo const& GetMovementInfo() const { return m_movementInfo; }
+    void SetMovementInfo(MovementInfo const& movementInfo)
+    {
+        m_movementInfo = movementInfo;
+        m_location.x = movementInfo.pos.x;
+        m_location.y = movementInfo.pos.y;
+        m_location.z = movementInfo.pos.z;
+        m_location.o = movementInfo.pos.o;
+    }
 
     uint8 GetRace() const { return GetByteValue("UNIT_FIELD_BYTES_0", 0); }
     uint32 GetRaceMask() const { return GetRace() ? 1 << (GetRace() - 1) : 0x0; }

@@ -74,6 +74,9 @@
     <ClCompile Include="World\GameData.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\WorldPacketHandlers.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -204,6 +207,9 @@
     </ClInclude>
     <ClInclude Include="World\SpellDefines.h">
       <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines\Console.h">
+      <Filter>Defines</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

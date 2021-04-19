@@ -2,6 +2,7 @@
 #include <map>
 #include <string>
 
+std::map<uint16, std::string> Opcodes::g_opcodeNames5875;
 std::map<std::string, uint16> Opcodes::g_opcodeValues5875 =
 {
     { "MSG_NULL_ACTION", 0 },
@@ -839,6 +840,7 @@ std::map<std::string, uint16> Opcodes::g_opcodeValues5875 =
     { "MSG_MOVE_STOP_SWIM_CHEAT", 834 },
 };
 
+std::map<uint16, std::string> Opcodes::g_opcodeNames8606;
 std::map<std::string, uint16> Opcodes::g_opcodeValues8606 =
 {
     { "MSG_NULL_ACTION", 0 },
@@ -1903,6 +1905,7 @@ std::map<std::string, uint16> Opcodes::g_opcodeValues8606 =
     { "SMSG_SUMMON_CANCEL", 1059 },
 };
 
+std::map<uint16, std::string> Opcodes::g_opcodeNames12340;
 std::map<std::string, uint16> Opcodes::g_opcodeValues12340 =
 {
     { "CMSG_BOOTME", 1 },
@@ -3218,7 +3221,22 @@ std::map<std::string, uint16> Opcodes::g_opcodeValues12340 =
     { "NUM_MSG_TYPES", 1311 },
 };
 
-std::map<std::string, uint16>* Opcodes::GetOpcodesMapForBuild(uint16 build)
+void Opcodes::SetupOpcodeNamesMaps()
+{
+    assert(Opcodes::g_opcodeNames5875.empty());
+    for (auto const& itr : g_opcodeValues5875)
+        g_opcodeNames5875[itr.second] = itr.first;
+
+    assert(Opcodes::g_opcodeNames8606.empty());
+    for (auto const& itr : g_opcodeValues8606)
+        g_opcodeNames8606[itr.second] = itr.first;
+
+    assert(Opcodes::g_opcodeNames12340.empty());
+    for (auto const& itr : g_opcodeValues12340)
+        g_opcodeNames12340[itr.second] = itr.first;
+}
+
+std::map<std::string, uint16>* Opcodes::GetOpcodesValuesMapForBuild(uint16 build)
 {
     switch (build)
     {
@@ -3232,11 +3250,24 @@ std::map<std::string, uint16>* Opcodes::GetOpcodesMapForBuild(uint16 build)
     return nullptr;
 }
 
+std::map<uint16, std::string>* Opcodes::GetOpcodesNamesMapForBuild(uint16 build)
+{
+    switch (build)
+    {
+        case 5875:
+            return &Opcodes::g_opcodeNames5875;
+        case 8606:
+            return &Opcodes::g_opcodeNames8606;
+        case 12340:
+            return &Opcodes::g_opcodeNames12340;
+    }
+    return nullptr;
+}
+
 uint16 Opcodes::GetOpcodeValue(std::string name, uint16 build)
 {
-    std::map<std::string, uint16>* opcodesMap = GetOpcodesMapForBuild(build);
-    if (!opcodesMap)
-        return 0;
+    std::map<std::string, uint16>* opcodesMap = GetOpcodesValuesMapForBuild(build);
+    assert(opcodesMap);
 
     auto itr = opcodesMap->find(name);
     if (itr == opcodesMap->end())
@@ -3247,15 +3278,20 @@ uint16 Opcodes::GetOpcodeValue(std::string name, uint16 build)
 
 std::string Opcodes::GetOpcodeName(uint16 opcode, uint16 build)
 {
-    std::map<std::string, uint16>* opcodesMap = GetOpcodesMapForBuild(build);
-    if (!opcodesMap)
+    std::map<uint16, std::string>* opcodesMap = GetOpcodesNamesMapForBuild(build);
+    assert(opcodesMap);
+
+    auto itr = opcodesMap->find(opcode);
+    if (itr == opcodesMap->end())
         return std::string();
 
-    for (const auto& itr : *opcodesMap)
-    {
-        if (itr.second == opcode)
-            return itr.first;
-    }
+    return itr->second;
+}
 
-    return std::string();
+bool Opcodes::IsExistingOpcode(uint16 opcode, uint16 build)
+{
+    std::map<uint16, std::string>* opcodesMap = GetOpcodesNamesMapForBuild(build);
+    assert(opcodesMap);
+
+    return opcodesMap->find(opcode) != opcodesMap->end();
 }

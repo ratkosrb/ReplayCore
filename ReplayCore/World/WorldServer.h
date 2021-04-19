@@ -23,6 +23,8 @@ struct WorldSessionData
     AuthCrypt m_encryption;
 };
 
+#define CLIENT_CHARACTER_GUID_OFFSET 50000
+
 class WorldServer
 {
 public:
@@ -59,6 +61,7 @@ public:
     }
 
     void SendPacket(WorldPacket& packet);
+    bool IsExistingOpcode(uint16);
     uint16 GetOpcode(std::string name);
     std::string GetOpcode(uint16 opcode);
     uint16 GetUpdateField(std::string name);
@@ -111,6 +114,9 @@ private:
     void HandleLogoutRequest(WorldPacket& packet);
     void HandleJoinChannel(WorldPacket& packet);
     void HandleUpdateAccountData(WorldPacket& packet);
+    void HandleItemQuerySingle(WorldPacket& packet);
+    void HandleItemNameQuery(WorldPacket& packet);
+    void HandleMovementPacket(WorldPacket& packet);
 
     // Packet Building
     void SendAuthChallenge();
@@ -132,6 +138,10 @@ private:
     void SendLogoutResponse(uint32 reason, bool instant);
     void SendLogoutComplete();
     void SendJoinedChannelNotify(std::string channelName, uint32 channelId);
+    void SendMotd();
+    void SendTimeSyncRequest();
+    void SendItemQuerySingleResponse(uint32 itemId);
+    void SendItemNameQueryResponse(uint32 itemId);
 };
 
 #define sWorld WorldServer::Instance()

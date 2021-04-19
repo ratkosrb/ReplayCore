@@ -11,6 +11,8 @@
 #include "World\WorldServer.h"
 #include "World\ReplayMgr.h"
 #include "World\GameDataMgr.h"
+#include "Defines\Console.h"
+#include "World\Opcodes.h"
 
 Database WorldDatabase;
 Database SniffDatabase;
@@ -73,16 +75,9 @@ int main()
 {
     printf("\nEnter your database connection info.\n");
     std::string const connectionString = MakeConnectionString();
-    std::string const worldConnectionString = connectionString + GetWorldDatabaseName();
     std::string const sniffConnectionString = connectionString + GetSniffDatabaseName();
+    std::string const worldConnectionString = connectionString + GetWorldDatabaseName();
 
-    printf("\n[MAIN] Connecting to world database...\n");
-    if (!WorldDatabase.Initialize(worldConnectionString.c_str()))
-    {
-        printf("\nError: Cannot connect to world database!\n");
-        getchar();
-        return 1;
-    }
     printf("[MAIN] Connecting to sniff database...\n");
     if (!SniffDatabase.Initialize(sniffConnectionString.c_str()))
     {
@@ -91,10 +86,35 @@ int main()
         return 1;
     }
 
+    printf("\n[MAIN] Connecting to world database...\n");
+    if (!WorldDatabase.Initialize(worldConnectionString.c_str()))
+    {
+        printf("\nError: Cannot connect to world database!\n");
+        getchar();
+        return 1;
+    }
+    
+    printf("Select world database type:\n");
+    printf("%u. VMaNGOS\n", DB_VMANGOS);
+    printf("%u. CMaNGOS Classic\n", DB_CMANGOS_CLASSIC);
+    printf("%u. CMaNGOS TBC\n", DB_CMANGOS_TBC);
+    printf("%u. CMaNGOS WotLK\n", DB_CMANGOS_WOTLK);
+    printf("%u. TrinityCore\n", DB_TRINITY);
+    printf("> ");
+    uint32 dbType = Console::GetUInt32();
+    if (dbType > DB_TRINITY)
+    {
+        printf("Invalid db type selected! Defaulting to vmangos.\n");
+        dbType = DB_VMANGOS;
+    }
+    sGameDataMgr.SetDataSource(GameDataSource(dbType));
+
     sGameDataMgr.LoadFactions();
     sGameDataMgr.LoadItemPrototypes();
     sGameDataMgr.LoadPlayerInfo();
     sReplayMgr.LoadEverything();
+
+    Opcodes::SetupOpcodeNamesMaps();
 
     printf("\n[MAIN] Starting network...\n");
     WSAData data;

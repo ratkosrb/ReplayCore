@@ -21,7 +21,7 @@ Unit::Unit(UnitData const& unitData) : WorldObject(unitData.guid)
 {
     m_objectType |= TYPEMASK_UNIT;
     m_objectTypeId = TYPEID_UNIT;
-    m_updateFlags = (UPDATEFLAG_ALL | UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
+    m_updateFlags = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
     InitializeMoveSpeeds();
 
     m_valuesCount = sWorld.GetUpdateField("UNIT_END");
@@ -37,6 +37,13 @@ Unit::Unit(UnitData const& unitData) : WorldObject(unitData.guid)
 
 void Unit::InitializePlaceholderUnitFields()
 {
+    SetUInt32Value("UNIT_FIELD_MAXPOWER2", 1000);
+    SetUInt32Value("UNIT_FIELD_MAXPOWER3", 100);
+    SetUInt32Value("UNIT_FIELD_MAXPOWER4", 100);
+    SetUInt32Value("UNIT_FIELD_MAXPOWER6", 8);
+    SetUInt32Value("UNIT_FIELD_MAXPOWER7", 1000);
+    SetFloatValue("UNIT_FIELD_HOVERHEIGHT", 1.0f);
+    SetUInt32Value("UNIT_FIELD_FLAGS_2", 2048);
     SetFloatValue("UNIT_MOD_CAST_SPEED", 1);
     SetFloatValue("UNIT_FIELD_MINDAMAGE", 5);
     SetFloatValue("UNIT_FIELD_MAXDAMAGE", 10);
@@ -117,7 +124,7 @@ void Unit::SetVirtualItem(uint8 slot, uint32 item_id)
         SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_DISPLAY + slot, proto->DisplayInfoID);
         SetByteValue(UNIT_VIRTUAL_ITEM_INFO + (slot * 2) + 0, TBC::VIRTUAL_ITEM_INFO_0_OFFSET_CLASS, proto->Class);
         SetByteValue(UNIT_VIRTUAL_ITEM_INFO + (slot * 2) + 0, TBC::VIRTUAL_ITEM_INFO_0_OFFSET_SUBCLASS, proto->SubClass);
-        SetByteValue(UNIT_VIRTUAL_ITEM_INFO + (slot * 2) + 0, TBC::VIRTUAL_ITEM_INFO_0_OFFSET_UNK0, proto->Unk0);
+        SetByteValue(UNIT_VIRTUAL_ITEM_INFO + (slot * 2) + 0, TBC::VIRTUAL_ITEM_INFO_0_OFFSET_UNK0, proto->SoundOverrideSubclass);
         SetByteValue(UNIT_VIRTUAL_ITEM_INFO + (slot * 2) + 0, TBC::VIRTUAL_ITEM_INFO_0_OFFSET_MATERIAL, proto->Material);
         SetByteValue(UNIT_VIRTUAL_ITEM_INFO + (slot * 2) + 1, TBC::VIRTUAL_ITEM_INFO_1_OFFSET_INVENTORYTYPE, proto->InventoryType);
 

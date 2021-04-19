@@ -16,7 +16,9 @@ typedef std::vector<AreaPOIEntry> AreaPOIStore;
 enum GameDataSource
 {
     DB_VMANGOS,
-    DB_CMANGOS,
+    DB_CMANGOS_CLASSIC,
+    DB_CMANGOS_TBC,
+    DB_CMANGOS_WOTLK,
     DB_TRINITY
 };
 

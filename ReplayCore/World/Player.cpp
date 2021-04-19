@@ -23,6 +23,9 @@ Player::Player(PlayerData const& playerData) : Unit(playerData.guid)
 
 Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : Unit(guid)
 {
+    m_objectType |= TYPEMASK_UNIT | TYPEMASK_PLAYER;
+    m_objectTypeId = TYPEID_PLAYER;
+
     m_name = name;
     m_location = otherPlayer.m_location;
     m_movementInfo = otherPlayer.m_movementInfo;
@@ -32,6 +35,7 @@ Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : U
     m_uint32Values = new uint32[m_valuesCount];
     memcpy(m_uint32Values, otherPlayer.m_uint32Values, sizeof(uint32) * m_valuesCount);
     SetGuidValue(OBJECT_FIELD_GUID, guid);
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
     m_uint32Values_mirror = new uint32[m_valuesCount];
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
@@ -115,6 +119,21 @@ void Player::InitializeDefaultPlayerValues()
     SetUInt32Value("PLAYER_XP", 1);
     SetUInt32Value("PLAYER_NEXT_LEVEL_XP", XP::xp_to_level(GetLevel()));
     SetInt32Value("PLAYER_FIELD_WATCHED_FACTION_INDEX", -1);
+    SetByteValue("PLAYER_BYTES_2", 3, REST_STATE_NORMAL);
+
+    uint32 PLAYER_FIELD_MOD_DAMAGE_DONE_PCT = sWorld.GetUpdateField("PLAYER_FIELD_MOD_DAMAGE_DONE_PCT");
+    assert(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT);
+    for (int i = 0; i < MAX_SPELL_SCHOOL; ++i)
+    {
+        SetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + i, 1.0f);
+    }
+
+    uint32 PLAYER_EXPLORED_ZONES_1 = sWorld.GetUpdateField("PLAYER_EXPLORED_ZONES_1");
+    uint32 maxExploredZoneFields = sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1 ? PLAYER_EXPLORED_ZONES_SIZE_VANILLA : PLAYER_EXPLORED_ZONES_SIZE_TBC;
+    for (uint8 i = 0; i < maxExploredZoneFields; ++i)
+    {
+        SetUInt32Value(PLAYER_EXPLORED_ZONES_1 + i, 0xFFFFFFFF);
+    }
 }
 
 void Player::SetVisibleItemSlot(uint8 slot, uint32 itemId, uint32 enchantId)

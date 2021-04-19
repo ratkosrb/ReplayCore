@@ -4,6 +4,16 @@
 #include "../Defines/Common.h"
 #include "UnitDefines.h"
 
+enum PlayerRestState
+{
+    REST_STATE_RESTED           = 0x01,
+    REST_STATE_NORMAL           = 0x02,
+    REST_STATE_RAF_LINKED       = 0x04                      // Exact use unknown
+};
+
+#define PLAYER_EXPLORED_ZONES_SIZE_VANILLA  64
+#define PLAYER_EXPLORED_ZONES_SIZE_TBC  128
+
 #define PLAYER_MAX_LEVEL_VANILLA 60
 #define PLAYER_MAX_LEVEL_TBC 70
 #define PLAYER_MAX_LEVEL_WOTLK 80
@@ -152,16 +162,6 @@ struct ActionButton
 #define MAX_ACTION_BUTTONS_TBC 132
 #define MAX_ACTION_BUTTONS_WOTLK 144
 
-struct PlayerCreateInfoItem
-{
-    PlayerCreateInfoItem(uint32 id, uint32 amount) : item_id(id), item_amount(amount) {}
-
-    uint32 item_id;
-    uint32 item_amount;
-};
-
-typedef std::list<PlayerCreateInfoItem> PlayerCreateInfoItems;
-
 struct PlayerClassLevelInfo
 {
     uint16 basehealth = 0;
@@ -202,7 +202,6 @@ struct PlayerInfo
     float orientation = 0.0f;
     uint16 displayId_m = 0;
     uint16 displayId_f = 0;
-    PlayerCreateInfoItems item;
     PlayerCreateInfoSpells spell;
     PlayerCreateInfoActions action;
 
