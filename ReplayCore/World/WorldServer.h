@@ -4,10 +4,11 @@
 #include "..\Defines\Common.h"
 #include "..\Crypto\BigNumber.h"
 #include "..\Crypto\AuthCrypt.h"
+#include "Player.h"
 #include "winsock2.h"
 #include <map>
 #include <thread>
-#include "Player.h"
+#include <set>
 
 class WorldServer;
 class ByteBuffer;
@@ -17,10 +18,13 @@ typedef void(WorldServer::*WorldOpcodeHandler) (WorldPacket& buffer);
 
 struct WorldSessionData
 {
+    bool connected = false;
+    bool isInWorld = false;
     uint32 seed = 1212669851;
     uint16 build = 0;
     std::string sessionKey;
-    AuthCrypt m_encryption;
+    AuthCrypt encryption;
+    std::set<ObjectGuid> visibleObjects;
 };
 
 #define CLIENT_CHARACTER_GUID_OFFSET 50000
@@ -66,6 +70,7 @@ public:
     std::string GetOpcode(uint16 opcode);
     uint16 GetUpdateField(std::string name);
     std::string GetUpdateField(uint16 id);
+    uint16 GetUpdateFieldFlags(uint8 objectTypeId, uint16 id);
     uint16 GetClientBuild() const { return m_sessionData.build; }
     uint32 GetServerTimeMs() const { return m_msTimeSinceServerStart; }
 
@@ -78,11 +83,13 @@ public:
 private:
     bool m_enabled = false;
     bool m_worldSpawned = false;
+    bool m_worldThreadStarted = false;
     uint64 m_lastUpdateTimeMs = 0;
     uint32 m_msTimeSinceServerStart = 0;
 
     // World
     void WorldLoop();
+    void BuildAndSendObjectUpdates();
     std::map<ObjectGuid, Unit> m_creatures;
     std::map<ObjectGuid, Player> m_players;
     std::unique_ptr<Player> m_clientPlayer = nullptr;

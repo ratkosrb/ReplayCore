@@ -216,7 +216,10 @@ void WorldServer::HandlePlayerLogin(WorldPacket& packet)
     }
     m_clientPlayer->SendCreateUpdateToPlayer(m_clientPlayer.get());
 
-    SendTimeSyncRequest();
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        SendTimeSyncRequest();
+    StartWorld();
+    m_sessionData.isInWorld = true;
 }
 
 void WorldServer::HandlePlayerNameQuery(WorldPacket& packet)
@@ -332,6 +335,8 @@ void WorldServer::HandleLogoutRequest(WorldPacket& packet)
 {
     SendLogoutResponse(0, true);
     SendLogoutComplete();
+    m_sessionData.isInWorld = false;
+    m_sessionData.visibleObjects.clear();
 }
 
 void WorldServer::HandleJoinChannel(WorldPacket& packet)

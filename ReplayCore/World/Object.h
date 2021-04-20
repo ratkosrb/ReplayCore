@@ -61,12 +61,15 @@ public:
     void SetGuidValue(const char* index, ObjectGuid const& value) { SetUInt64Value(index, value.GetRawValue()); }
     void SetObjectGuid(ObjectGuid const& value) { SetUInt64Value(OBJECT_FIELD_GUID, value.GetRawValue()); }
 
+    bool IsUpdateFieldVisibleTo(uint16 index, Player* target) const;
     void _SetUpdateBits(UpdateMask* updateMask, Player* target) const;
     void _SetCreateBits(UpdateMask* updateMask, Player* target) const;
     void SendCreateUpdateToPlayer(Player* player);
     void BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) const;
     void BuildValuesUpdate(uint8 updatetype, ByteBuffer* data, UpdateMask* updateMask, Player* target) const;
     void BuildMovementUpdate(ByteBuffer* data, uint8 updateFlags) const;
+    void BuildOutOfRangeUpdateBlock(UpdateData* data) const;
+    void SendOutOfRangeUpdateToPlayer(Player* player);
     
     inline bool IsWorldObject() const { return IsType(TYPEMASK_WORLDOBJECT); }
     WorldObject* ToWorldObject() { if (IsWorldObject()) return reinterpret_cast<WorldObject*>(this); else return nullptr; }
@@ -157,6 +160,8 @@ public:
     WorldObject() = default;
     WorldObject(ObjectGuid guid) : Object(guid) {}
     WorldObject(WorldObjectData const& worldObjectData);
+
+    bool IsWithinVisibilityDistance(WorldObject const* pObject) const;
 
     uint32 GetZoneId() const;
     uint32 GetAreaId() const;

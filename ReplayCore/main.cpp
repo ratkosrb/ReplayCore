@@ -115,6 +115,7 @@ int main()
     sReplayMgr.LoadEverything();
 
     Opcodes::SetupOpcodeNamesMaps();
+    UpdateFields::SetupUpdateFieldMaps();
 
     printf("\n[MAIN] Starting network...\n");
     WSAData data;

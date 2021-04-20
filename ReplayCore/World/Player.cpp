@@ -94,7 +94,7 @@ void Player::InitializeDefaultPlayerValues()
     SetInt32Value("UNIT_FIELD_STAT2", levelInfo.stats[2]);
     SetInt32Value("UNIT_FIELD_STAT3", levelInfo.stats[3]);
     SetInt32Value("UNIT_FIELD_STAT4", levelInfo.stats[4]);
-
+    
     for (uint32 count = 0; count < g_playerSkills.size(); count++)
     {
         uint16 PLAYER_SKILL_INFO_1_1 = sWorld.GetUpdateField("PLAYER_SKILL_INFO_1_1");

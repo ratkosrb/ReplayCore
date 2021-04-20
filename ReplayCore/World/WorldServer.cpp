@@ -25,16 +25,67 @@ WorldServer& WorldServer::Instance()
 
 void WorldServer::StartWorld()
 {
+    if (m_worldThreadStarted)
+        return;
+
+    m_worldThreadStarted = true;
     m_worldThread = std::thread(&WorldServer::WorldLoop, this);
 }
 
+#define WORLD_UPDATE_TIME 100
+
 void WorldServer::WorldLoop()
 {
-    using namespace std::chrono;
-    uint64 ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+    do
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(WORLD_UPDATE_TIME));
 
-    uint32 diff = uint32(m_lastUpdateTimeMs ? ms - m_lastUpdateTimeMs : 0);
-    m_msTimeSinceServerStart += diff;
+        // Don't update world before client connects.
+        if (!m_sessionData.connected || !m_sessionData.isInWorld || !m_clientPlayer)
+            continue;
+
+        uint64 ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        uint32 diff = uint32(m_lastUpdateTimeMs ? ms - m_lastUpdateTimeMs : 0);
+        m_msTimeSinceServerStart += diff;
+        m_lastUpdateTimeMs = ms;
+
+        BuildAndSendObjectUpdates();
+
+    } while (m_enabled);
+}
+
+void WorldServer::BuildAndSendObjectUpdates()
+{
+    uint8 createCount = 0;
+    uint32 outOfRangeCount = 0;
+    UpdateData updateData;
+
+    for (const auto& itr : m_players)
+    {
+        bool visible = m_clientPlayer->IsWithinVisibilityDistance(&itr.second);
+
+        if (visible)
+        {
+            if (createCount < 5 && m_sessionData.visibleObjects.find(itr.first) == m_sessionData.visibleObjects.end())
+            {
+                itr.second.BuildCreateUpdateBlockForPlayer(&updateData, m_clientPlayer.get());
+                m_sessionData.visibleObjects.insert(itr.first);
+                createCount++;
+            }
+        }
+        else
+        {
+            if (m_sessionData.visibleObjects.find(itr.first) != m_sessionData.visibleObjects.end())
+            {
+                itr.second.BuildOutOfRangeUpdateBlock(&updateData);
+                m_sessionData.visibleObjects.erase(itr.first);
+                outOfRangeCount++;
+            }
+        }
+    }
+
+    if (createCount || outOfRangeCount)
+        updateData.Send();
 }
 
 void WorldServer::SpawnWorldObjects()
@@ -81,6 +132,7 @@ void WorldServer::ResetClientData()
 {
     m_lastSessionBuild = m_sessionData.build;
     m_sessionData = WorldSessionData();
+    m_sessionData.connected = true;
     m_sessionData.build = sAuth.GetClientBuild();
     m_sessionData.sessionKey = sAuth.GetSessionKey();
 }
@@ -103,7 +155,7 @@ void WorldServer::NetworkLoop()
             printf("[WORLD] Unsupported client version!\n");
             shutdown(m_worldSocket, SD_BOTH);
             closesocket(m_worldSocket);
-            Sleep(1000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
         }
 
@@ -118,12 +170,14 @@ void WorldServer::NetworkLoop()
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());;
+                m_sessionData.connected = false;
                 break;
             }
 
             if (result == 0)
             {
                 printf("[WORLD] Connection closed.\n");
+                m_sessionData.connected = false;
                 break;
             }
 
@@ -134,7 +188,7 @@ void WorldServer::NetworkLoop()
             }
 
             ClientPktHeader& header = *((ClientPktHeader*)headerBuffer);
-            m_sessionData.m_encryption.DecryptRecv((uint8*)&header, sizeof(ClientPktHeader));
+            m_sessionData.encryption.DecryptRecv((uint8*)&header, sizeof(ClientPktHeader));
 
             EndianConvertReverse(header.size);
             EndianConvert(header.cmd);
@@ -145,6 +199,7 @@ void WorldServer::NetworkLoop()
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());
+                m_sessionData.connected = false;
                 delete[] buffer;
                 break;
             }
@@ -152,6 +207,7 @@ void WorldServer::NetworkLoop()
             if (result == 0)
             {
                 printf("[WORLD] Connection closed.\n");
+                m_sessionData.connected = false;
                 delete[] buffer;
                 break;
             }
@@ -178,7 +234,7 @@ void WorldServer::ProcessIncomingPackets()
 {
     do
     {
-        Sleep(10);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         if (m_incomingPacketQueue.empty())
             continue;
 
@@ -245,6 +301,11 @@ std::string WorldServer::GetUpdateField(uint16 opcode)
     return UpdateFields::GetUpdateFieldName(opcode, m_sessionData.build);
 }
 
+uint16 WorldServer::GetUpdateFieldFlags(uint8 objectTypeId, uint16 id)
+{
+    return UpdateFields::GetUpdateFieldFlags(objectTypeId, id, m_sessionData.build);
+}
+
 void  WorldServer::SendPacket(WorldPacket& packet)
 {
 #ifdef WORLD_DEBUG
@@ -254,13 +315,14 @@ void  WorldServer::SendPacket(WorldPacket& packet)
     if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
     {
         ServerPktHeaderWotlk header(packet.size() + 2, packet.GetOpcode());
-        m_sessionData.m_encryption.EncryptSend((uint8*)header.header, header.getHeaderLength());
+        m_sessionData.encryption.EncryptSend((uint8*)header.header, header.getHeaderLength());
 
         std::vector<uint8> buffer;
         uint32 packetSize = packet.size() + header.getHeaderLength();
         buffer.resize(packetSize);
         memcpy(buffer.data(), header.header, header.getHeaderLength());
-        memcpy(buffer.data() + header.getHeaderLength(), packet.contents(), packet.size());
+        if (!packet.empty())
+            memcpy(buffer.data() + header.getHeaderLength(), packet.contents(), packet.size());
         send(m_worldSocket, (char*)buffer.data(), buffer.size(), 0);
     }
     else
@@ -272,13 +334,14 @@ void  WorldServer::SendPacket(WorldPacket& packet)
         EndianConvertReverse(header.size);
         EndianConvert(header.cmd);
 
-        m_sessionData.m_encryption.EncryptSend((uint8*)& header, sizeof(header));
+        m_sessionData.encryption.EncryptSend((uint8*)& header, sizeof(header));
 
         std::vector<uint8> buffer;
         uint32 packetSize = packet.size() + sizeof(header);
         buffer.resize(packetSize);
         memcpy(buffer.data(), (uint8*)&header, sizeof(header));
-        memcpy(buffer.data() + sizeof(header), packet.contents(), packet.size());
+        if (!packet.empty())
+            memcpy(buffer.data() + sizeof(header), packet.contents(), packet.size());
         send(m_worldSocket, (char*)buffer.data(), buffer.size(), 0);
     }
 }
@@ -402,11 +465,11 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
 
     printf("[WORLD] Authentication successful.\n");
     if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
-        m_sessionData.m_encryption.InitWOTLK(&K);
+        m_sessionData.encryption.InitWOTLK(&K);
     else if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
-        m_sessionData.m_encryption.InitTBC(&K);
+        m_sessionData.encryption.InitTBC(&K);
     else
-        m_sessionData.m_encryption.InitVanilla(&K);
+        m_sessionData.encryption.InitVanilla(&K);
 
     WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1 + 4 + 1 + 4 + (m_sessionData.build >= CLIENT_BUILD_2_0_1 ? 1 : 0));
     response << uint8(12);

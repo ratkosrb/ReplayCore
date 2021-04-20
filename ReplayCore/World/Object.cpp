@@ -6,6 +6,7 @@
 #include "Player.h"
 #include "GameDataMgr.h"
 #include "../Defines/ClientVersions.h"
+#include "../Defines/WorldPacket.h"
 
 void MovementInfo::Read(ByteBuffer &data)
 {
@@ -293,6 +294,17 @@ WorldObject::WorldObject(WorldObjectData const& worldObjectData) : Object(worldO
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
 
+bool WorldObject::IsWithinVisibilityDistance(WorldObject const* pObject) const
+{
+    if (GetMapId() != pObject->GetMapId())
+        return false;
+
+    if (GetDistance3D(pObject) <= DEFAULT_VISIBILITY_DISTANCE)
+        return true;
+
+    return false;
+}
+
 uint32 WorldObject::GetZoneId() const
 {
     return sGameDataMgr.GetZoneIdFromCoordinates(GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ());
@@ -496,22 +508,46 @@ void Object::SetUInt16Value(uint16 index, uint8 offset, uint16 value)
     }
 }
 
-void Object::_SetUpdateBits(UpdateMask* updateMask, Player* /*target*/) const
+bool Object::IsUpdateFieldVisibleTo(uint16 index, Player* target) const
+{
+    assert(index < m_valuesCount);
+
+    if (this == target)
+        return true;
+
+    return (sWorld.GetUpdateFieldFlags(m_objectTypeId, index) & (UF_FLAG_PUBLIC | UF_FLAG_DYNAMIC)) != 0;
+}
+
+void Object::_SetUpdateBits(UpdateMask* updateMask, Player* target) const
 {
     for (uint16 index = 0; index < m_valuesCount; ++index)
     {
-        if (m_uint32Values_mirror[index] != m_uint32Values[index])
+        if (m_uint32Values_mirror[index] != m_uint32Values[index] && IsUpdateFieldVisibleTo(index, target))
             updateMask->SetBit(index);
     }
 }
 
-void Object::_SetCreateBits(UpdateMask* updateMask, Player* /*target*/) const
+void Object::_SetCreateBits(UpdateMask* updateMask, Player* target) const
 {
     for (uint16 index = 0; index < m_valuesCount; ++index)
     {
-        if (GetUInt32Value(index) != 0)
+        if (GetUInt32Value(index) != 0 && IsUpdateFieldVisibleTo(index, target))
             updateMask->SetBit(index);
     }
+}
+
+void Object::BuildOutOfRangeUpdateBlock(UpdateData* data) const
+{
+    data->AddOutOfRangeGUID(GetObjectGuid());
+}
+
+void Object::SendOutOfRangeUpdateToPlayer(Player* player)
+{
+    UpdateData data;
+    BuildOutOfRangeUpdateBlock(&data);
+    WorldPacket packet;
+    data.BuildPacket(&packet);
+    sWorld.SendPacket(packet);
 }
 
 void Object::SendCreateUpdateToPlayer(Player* player)
