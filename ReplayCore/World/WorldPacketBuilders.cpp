@@ -596,3 +596,65 @@ void WorldServer::SendItemNameQueryResponse(uint32 itemId)
         data << uint32(pProto->InventoryType);
     SendPacket(data);
 }
+
+void WorldServer::SendInspect(ObjectGuid guid)
+{
+    WorldPacket data(GetOpcode("SMSG_INSPECT"), 8);
+    data << ObjectGuid(guid);
+    SendPacket(data);
+}
+
+void WorldServer::SendInspectTalent(ObjectGuid guid)
+{
+    if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        uint32 talentPointsCount = 0;
+        WorldPacket data(GetOpcode("SMSG_INSPECT_TALENT"), 4 + talentPointsCount);
+        data << guid.WriteAsPacked();
+        data << uint32(talentPointsCount);
+        for (uint32 i = 0; i < talentPointsCount; ++i)
+            data << uint8(0);
+        SendPacket(data);
+    }
+    else
+    {
+        WorldPacket data(GetOpcode("SMSG_INSPECT_TALENT"), 50);
+        data << guid.WriteAsPacked();
+        data << uint32(0); // unspentTalentPoints
+        data << uint8(0); // talentGroupCount
+        data << uint8(0); // talentGroupIndex
+
+        uint32 slotUsedMask = 0;
+        size_t slotUsedMaskPos = data.wpos();
+        data << uint32(slotUsedMask); // slotUsedMask < 0x80000
+
+        if (Player const* pPlayer = FindPlayer(guid))
+        {
+            for (uint32 i = 0; i < EQUIPMENT_SLOT_END; ++i)
+            {
+                uint32 itemId = pPlayer->GetVisibleItemId(i);
+                if (!itemId)
+                    continue;
+
+                slotUsedMask |= (1 << i);
+
+                data << uint32(itemId);
+
+                uint32 enchantId = pPlayer->GetVisibleItemEnchant(i);
+                uint16 enchantmentMask = enchantId ? (1 << WotLK::PERM_ENCHANTMENT_SLOT) : 0;
+                data << uint16(enchantmentMask);
+
+                if (enchantId)
+                    data << uint16(enchantId);
+
+                data << uint16(0); // random property id
+                data << ObjectGuid().WriteAsPacked(); // creator
+                data << uint32(0); // suffix factor
+            }
+
+            data.put<uint32>(slotUsedMaskPos, slotUsedMask);
+        }
+
+        SendPacket(data);
+    }
+}

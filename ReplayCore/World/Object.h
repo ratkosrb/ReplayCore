@@ -37,6 +37,8 @@ public:
     void SetVisibility(bool on) { m_isVisible = on; }
 
     void MarkForClientUpdate();
+    void ClearUpdateMask();
+    bool IsMarkedForClientUpdate() const { return m_objectUpdated; }
 
     int32 GetInt32Value(const char* index) const;
     uint32 GetUInt32Value(const char* index) const;
@@ -62,12 +64,14 @@ public:
     void SetObjectGuid(ObjectGuid const& value) { SetUInt64Value(OBJECT_FIELD_GUID, value.GetRawValue()); }
 
     bool IsUpdateFieldVisibleTo(uint16 index, Player* target) const;
-    void _SetUpdateBits(UpdateMask* updateMask, Player* target) const;
+    bool _SetUpdateBits(UpdateMask* updateMask, Player* target) const;
     void _SetCreateBits(UpdateMask* updateMask, Player* target) const;
     void SendCreateUpdateToPlayer(Player* player);
+    void SendDirectValueUpdate(uint16 index, uint16 size = 1);
     void BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) const;
     void BuildValuesUpdate(uint8 updatetype, ByteBuffer* data, UpdateMask* updateMask, Player* target) const;
     void BuildMovementUpdate(ByteBuffer* data, uint8 updateFlags) const;
+    bool BuildValuesUpdateBlockForPlayer(UpdateData* data, Player* target) const;
     void BuildOutOfRangeUpdateBlock(UpdateData* data) const;
     void SendOutOfRangeUpdateToPlayer(Player* player);
     

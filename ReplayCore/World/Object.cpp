@@ -323,6 +323,15 @@ void Object::MarkForClientUpdate()
     m_objectUpdated = true;
 }
 
+void Object::ClearUpdateMask()
+{
+    if (m_uint32Values)
+        memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
+
+    if (m_objectUpdated)
+        m_objectUpdated = false;
+}
+
 int32 Object::GetInt32Value(const char* index) const
 {
     if (uint16 uf = sWorld.GetUpdateField(index))
@@ -518,13 +527,18 @@ bool Object::IsUpdateFieldVisibleTo(uint16 index, Player* target) const
     return (sWorld.GetUpdateFieldFlags(m_objectTypeId, index) & (UF_FLAG_PUBLIC | UF_FLAG_DYNAMIC)) != 0;
 }
 
-void Object::_SetUpdateBits(UpdateMask* updateMask, Player* target) const
+bool Object::_SetUpdateBits(UpdateMask* updateMask, Player* target) const
 {
+    bool hasData = false;
     for (uint16 index = 0; index < m_valuesCount; ++index)
     {
         if (m_uint32Values_mirror[index] != m_uint32Values[index] && IsUpdateFieldVisibleTo(index, target))
+        {
+            hasData = true;
             updateMask->SetBit(index);
+        }   
     }
+    return hasData;
 }
 
 void Object::_SetCreateBits(UpdateMask* updateMask, Player* target) const
@@ -534,6 +548,73 @@ void Object::_SetCreateBits(UpdateMask* updateMask, Player* target) const
         if (GetUInt32Value(index) != 0 && IsUpdateFieldVisibleTo(index, target))
             updateMask->SetBit(index);
     }
+}
+
+void Object::SendDirectValueUpdate(uint16 index, uint16 size)
+{
+    if (!size)
+    {
+        printf("[SendDirectValueUpdate] Error: size is zero!\n");
+        return;
+    }
+
+    if (index + size >= m_valuesCount)
+    {
+        printf("[SendDirectValueUpdate] Error: invalid index (%hu) and size (%hu), going beyond total values count!\n", index, size);
+        return;
+    }
+
+    // Do we need an update ?
+    bool updateNeeded = false;
+    for (uint16 i = 0; i < size; i++)
+    {
+        if (m_uint32Values_mirror[index] != m_uint32Values[index])
+        {
+            updateNeeded = true;
+            break;
+        }
+    }
+    
+    if (!updateNeeded)
+        return;
+
+    m_uint32Values_mirror[index] = m_uint32Values[index];
+    UpdateData data;
+    ByteBuffer buf(50);
+    buf << uint8(UPDATETYPE_VALUES);
+    buf << GetPackGUID();
+
+    UpdateMask updateMask;
+    updateMask.SetCount(m_valuesCount);
+
+    for (uint16 i = 0; i < size; i++)
+        updateMask.SetBit(index + i);
+
+    buf << (uint8)updateMask.GetBlockCount();
+    buf.append(updateMask.GetMask(), updateMask.GetLength());
+    for (uint16 i = 0; i < size; i++)
+        buf << uint32(m_uint32Values[index+i]);
+
+    data.AddUpdateBlock(buf);
+    WorldPacket packet;
+    data.BuildPacket(&packet);
+    sWorld.SendPacket(packet);
+}
+
+bool Object::BuildValuesUpdateBlockForPlayer(UpdateData* data, Player* target) const
+{
+    UpdateMask updateMask;
+    updateMask.SetCount(m_valuesCount);
+
+    if (!_SetUpdateBits(&updateMask, target))
+        return false;
+
+    ByteBuffer buf(500);
+    buf << uint8(UPDATETYPE_VALUES);
+    buf << GetPackGUID();
+    BuildValuesUpdate(UPDATETYPE_VALUES, &buf, &updateMask, target);
+    data->AddUpdateBlock(buf);
+    return true;
 }
 
 void Object::BuildOutOfRangeUpdateBlock(UpdateData* data) const

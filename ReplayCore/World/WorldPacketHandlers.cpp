@@ -49,6 +49,10 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("MSG_MOVE_STOP_ASCEND", &WorldServer::HandleMovementPacket);
     SetOpcodeHandler("CMSG_MOVE_CHNG_TRANSPORT", &WorldServer::HandleMovementPacket);
     SetOpcodeHandler("MSG_MOVE_START_DESCEND", &WorldServer::HandleMovementPacket);
+    SetOpcodeHandler("CMSG_INSPECT", &WorldServer::HandleInspect);
+    SetOpcodeHandler("CMSG_SET_SELECTION", &WorldServer::HandleSetSelection);
+    SetOpcodeHandler("CMSG_STANDSTATECHANGE", &WorldServer::HandleStandStateChange);
+    SetOpcodeHandler("CMSG_SETSHEATHED", &WorldServer::HandleSetSheathed);
 }
 
 #undef min
@@ -420,4 +424,58 @@ void WorldServer::HandleMovementPacket(WorldPacket& packet)
     MovementInfo movementInfo;
     packet >> movementInfo;
     m_clientPlayer->SetMovementInfo(movementInfo);
+}
+
+void WorldServer::HandleInspect(WorldPacket& packet)
+{
+    ObjectGuid guid;
+    packet >> guid;
+
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[HandleInspect] CMSG_INSPECT data:\n");
+    printf("GUID: %s\n", guid.GetString().c_str());
+    printf("\n");
+#endif
+
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+        SendInspect(guid);
+    else
+        SendInspectTalent(guid);
+}
+
+void WorldServer::HandleSetSelection(WorldPacket& packet)
+{
+    ObjectGuid guid;
+    packet >> guid;
+
+    if (m_clientPlayer)
+    {
+        m_clientPlayer->SetGuidValue("UNIT_FIELD_TARGET", guid);
+        m_clientPlayer->SendDirectValueUpdate(GetUpdateField("UNIT_FIELD_TARGET"), 2);
+    }
+}
+
+void WorldServer::HandleStandStateChange(WorldPacket& packet)
+{
+    uint32 standState;
+    packet >> standState;
+
+    if (m_clientPlayer)
+    {
+        m_clientPlayer->SetStandState(standState);
+        m_clientPlayer->SendDirectValueUpdate(GetUpdateField("UNIT_FIELD_BYTES_1"));
+    }
+}
+
+void WorldServer::HandleSetSheathed(WorldPacket& packet)
+{
+    uint32 sheathState;
+    packet >> sheathState;
+
+    if (m_clientPlayer)
+    {
+        m_clientPlayer->SetSheathState(sheathState);
+        m_clientPlayer->SendDirectValueUpdate(GetUpdateField("UNIT_FIELD_BYTES_2"));
+    }
 }

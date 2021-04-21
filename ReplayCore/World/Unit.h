@@ -45,6 +45,11 @@ public :
     uint8 GetGender() const { return GetByteValue("UNIT_FIELD_BYTES_0", 2); }
     uint32 GetLevel() const { return GetUInt32Value("UNIT_FIELD_LEVEL"); }
 
+    uint8 GetStandState() const { return GetByteValue("UNIT_FIELD_BYTES_1", 0); }
+    void SetStandState(uint8 standState) { SetByteValue("UNIT_FIELD_BYTES_1", 0, standState); }
+    uint8 GetSheathState() const { return GetByteValue("UNIT_FIELD_BYTES_2", 0); }
+    void SetSheathState(uint8 sheathState) { SetByteValue("UNIT_FIELD_BYTES_2", 0, sheathState); }
+
     void SetVirtualItem(uint8 slot, uint32 item_id);
     uint32 GetAttackTime(WeaponAttackType att) const;
     void SetAttackTime(WeaponAttackType att, uint32 val);

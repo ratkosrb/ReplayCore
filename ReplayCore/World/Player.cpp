@@ -194,3 +194,55 @@ void Player::SetVisibleItemSlot(uint8 slot, uint32 itemId, uint32 enchantId)
         SetUInt16Value(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT + (slot * 2), 1, 0);
     }
 }
+
+uint32 Player::GetVisibleItemId(uint8 slot) const
+{
+    uint32 itemId = 0;
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+    {
+        uint16 const PLAYER_VISIBLE_ITEM_1_0 = sWorld.GetUpdateField("PLAYER_VISIBLE_ITEM_1_0");
+        assert(PLAYER_VISIBLE_ITEM_1_0);
+        int VisibleBase = PLAYER_VISIBLE_ITEM_1_0 + (slot * MAX_VISIBLE_ITEM_OFFSET_VANILLA);
+        itemId = GetUInt32Value(VisibleBase + 0);
+    }
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        uint16 const PLAYER_VISIBLE_ITEM_1_0 = sWorld.GetUpdateField("PLAYER_VISIBLE_ITEM_1_0");
+        assert(PLAYER_VISIBLE_ITEM_1_0);
+        int VisibleBase = PLAYER_VISIBLE_ITEM_1_0 + (slot * MAX_VISIBLE_ITEM_OFFSET_TBC);
+        itemId = GetUInt32Value(VisibleBase + 0);
+    }
+    else
+    {
+        uint16 const PLAYER_VISIBLE_ITEM_1_ENTRYID = sWorld.GetUpdateField("PLAYER_VISIBLE_ITEM_1_ENTRYID");
+        assert(PLAYER_VISIBLE_ITEM_1_ENTRYID);
+        itemId = GetUInt32Value(PLAYER_VISIBLE_ITEM_1_ENTRYID + (slot * 2));;
+    }
+    return itemId;
+}
+
+uint32 Player::GetVisibleItemEnchant(uint8 slot) const
+{
+    uint32 enchantId = 0;
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+    {
+        uint16 const PLAYER_VISIBLE_ITEM_1_0 = sWorld.GetUpdateField("PLAYER_VISIBLE_ITEM_1_0");
+        assert(PLAYER_VISIBLE_ITEM_1_0);
+        int VisibleBase = PLAYER_VISIBLE_ITEM_1_0 + (slot * MAX_VISIBLE_ITEM_OFFSET_VANILLA);
+        enchantId = GetUInt32Value(VisibleBase + 1 + Vanilla::PERM_ENCHANTMENT_SLOT);
+    }
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        uint16 const PLAYER_VISIBLE_ITEM_1_0 = sWorld.GetUpdateField("PLAYER_VISIBLE_ITEM_1_0");
+        assert(PLAYER_VISIBLE_ITEM_1_0);
+        int VisibleBase = PLAYER_VISIBLE_ITEM_1_0 + (slot * MAX_VISIBLE_ITEM_OFFSET_TBC);
+        enchantId = GetUInt32Value(VisibleBase + 1 + TBC::PERM_ENCHANTMENT_SLOT);;
+    }
+    else
+    {
+        uint16 const PLAYER_VISIBLE_ITEM_1_ENCHANTMENT = sWorld.GetUpdateField("PLAYER_VISIBLE_ITEM_1_ENCHANTMENT");
+        assert(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT);
+        enchantId = GetUInt16Value(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT + (slot * 2), 0);
+    }
+    return enchantId;
+}

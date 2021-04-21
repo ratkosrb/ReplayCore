@@ -56,35 +56,48 @@ void WorldServer::WorldLoop()
 
 void WorldServer::BuildAndSendObjectUpdates()
 {
-    uint8 createCount = 0;
-    uint32 outOfRangeCount = 0;
+    // limit amount of objects updated so we don't exceed maximum packet size
+    uint8 updatesCount = 0;
+    uint8 outOfRangeCount = 0;
     UpdateData updateData;
 
-    for (const auto& itr : m_players)
+    for (auto& itr : m_players)
     {
         bool visible = m_clientPlayer->IsWithinVisibilityDistance(&itr.second);
 
         if (visible)
         {
-            if (createCount < 5 && m_sessionData.visibleObjects.find(itr.first) == m_sessionData.visibleObjects.end())
+            if (updatesCount < 5)
             {
-                itr.second.BuildCreateUpdateBlockForPlayer(&updateData, m_clientPlayer.get());
-                m_sessionData.visibleObjects.insert(itr.first);
-                createCount++;
+                if (m_sessionData.visibleObjects.find(itr.first) == m_sessionData.visibleObjects.end())
+                {
+                    itr.second.BuildCreateUpdateBlockForPlayer(&updateData, m_clientPlayer.get());
+                    m_sessionData.visibleObjects.insert(itr.first);
+                    updatesCount++;
+                }
+                else if (itr.second.IsMarkedForClientUpdate())
+                {
+                    if (itr.second.BuildValuesUpdateBlockForPlayer(&updateData, m_clientPlayer.get())) 
+                        updatesCount++;
+                    itr.second.ClearUpdateMask();
+                }
             }
         }
         else
         {
-            if (m_sessionData.visibleObjects.find(itr.first) != m_sessionData.visibleObjects.end())
+            if (outOfRangeCount < 30)
             {
-                itr.second.BuildOutOfRangeUpdateBlock(&updateData);
-                m_sessionData.visibleObjects.erase(itr.first);
-                outOfRangeCount++;
+                if (m_sessionData.visibleObjects.find(itr.first) != m_sessionData.visibleObjects.end())
+                {
+                    itr.second.BuildOutOfRangeUpdateBlock(&updateData);
+                    m_sessionData.visibleObjects.erase(itr.first);
+                    outOfRangeCount++;
+                }
             }
         }
     }
 
-    if (createCount || outOfRangeCount)
+    if (updatesCount || outOfRangeCount)
         updateData.Send();
 }
 

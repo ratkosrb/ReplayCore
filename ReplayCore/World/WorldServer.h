@@ -124,6 +124,10 @@ private:
     void HandleItemQuerySingle(WorldPacket& packet);
     void HandleItemNameQuery(WorldPacket& packet);
     void HandleMovementPacket(WorldPacket& packet);
+    void HandleInspect(WorldPacket& packet);
+    void HandleSetSelection(WorldPacket& packet);
+    void HandleStandStateChange(WorldPacket& packet);
+    void HandleSetSheathed(WorldPacket& packet);
 
     // Packet Building
     void SendAuthChallenge();
@@ -149,6 +153,8 @@ private:
     void SendTimeSyncRequest();
     void SendItemQuerySingleResponse(uint32 itemId);
     void SendItemNameQueryResponse(uint32 itemId);
+    void SendInspect(ObjectGuid guid);
+    void SendInspectTalent(ObjectGuid guid);
 };
 
 #define sWorld WorldServer::Instance()
