@@ -110,6 +110,7 @@ int main()
     }
     sGameDataMgr.SetDataSource(GameDataSource(dbType));
 
+    sGameDataMgr.LoadQuests();
     sGameDataMgr.LoadFactions();
     sGameDataMgr.LoadItemPrototypes();
     sGameDataMgr.LoadPlayerInfo();

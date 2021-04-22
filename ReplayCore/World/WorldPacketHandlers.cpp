@@ -58,6 +58,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("MSG_MOVE_WORLDPORT_ACK", &WorldServer::HandleMoveWorldportAck);
     SetOpcodeHandler("MSG_MOVE_TELEPORT_ACK", &WorldServer::HandleMoveTeleportAck);
     SetOpcodeHandler("CMSG_MESSAGECHAT", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_QUEST_QUERY", &WorldServer::HandleQuestQuery);
 }
 
 #undef min
@@ -682,4 +683,11 @@ void WorldServer::HandleMessageChat(WorldPacket& packet)
 
     CommandHandler handler(msg, false);
     handler.HandleCommand();
+}
+
+void WorldServer::HandleQuestQuery(WorldPacket& packet)
+{
+    uint32 questId;
+    packet >> questId;
+    SendQuestQueryResponse(questId);
 }

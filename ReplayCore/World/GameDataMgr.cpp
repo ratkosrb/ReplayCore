@@ -658,6 +658,75 @@ void GameDataMgr::BuildPlayerLevelInfo(uint8 race, uint8 _class, uint8 level, Pl
     }
 }
 
+void GameDataMgr::LoadQuests()
+{
+    // For reload case
+    m_QuestTemplatesMap.clear();
+    printf("[GameDataMgr] Loading quest templates...\n");
+    std::shared_ptr<QueryResult> result;
+
+    std::string whereClause;
+    if (m_dataSource == DB_VMANGOS)
+        whereClause = " FROM `quest_template` t1 WHERE `patch`=(SELECT max(`patch`) FROM `quest_template` t2 WHERE t1.`entry`=t2.`entry` && `patch` <= 10)";
+    else if (m_dataSource == DB_CMANGOS_TBC)
+    //                    123                  124
+        whereClause = ", `RewHonorableKills`, `CharTitleId` FROM `quest_template`";
+    else if (m_dataSource == DB_CMANGOS_WOTLK)
+    //                    134                 124            125             126             127                   128        129              130               131               132               133               134
+        whereClause = ", `RewHonorAddition`, `CharTitleId`, `PlayersSlain`, `BonusTalents`, `RewHonorMultiplier`, `RewXPId`, `CompletedText`, `RewRepValueId1`, `RewRepValueId2`, `RewRepValueId3`, `RewRepValueId4`, `RewRepValueId5` FROM `quest_template`";
+    else
+        whereClause = " FROM `quest_template`";
+
+    //                                    0        1         2             3           4             5       6                  7                8                9
+    result = WorldDatabase.Query("SELECT `entry`, `Method`, `ZoneOrSort`, `MinLevel`, `QuestLevel`, `Type`, `RequiredClasses`, `RequiredRaces`, `RequiredSkill`, `RequiredSkillValue`,"
+    //                        10                     11                   12                       13                     14                       15                     16                  17
+                            "`RepObjectiveFaction`, `RepObjectiveValue`, `RequiredMinRepFaction`, `RequiredMinRepValue`, `RequiredMaxRepFaction`, `RequiredMaxRepValue`, `SuggestedPlayers`, `LimitTime`,"
+    //                        18            19              20             21             22                23                  24           25              26
+                            "`QuestFlags`, `SpecialFlags`, `PrevQuestId`, `NextQuestId`, `ExclusiveGroup`, `NextQuestInChain`, `SrcItemId`, `SrcItemCount`, `SrcSpell`,"
+    //                        27       28         29            30                 31                  32         33                34                35                36
+                            "`Title`, `Details`, `Objectives`, `OfferRewardText`, `RequestItemsText`, `EndText`, `ObjectiveText1`, `ObjectiveText2`, `ObjectiveText3`, `ObjectiveText4`,"
+    //                        37            38            39            40            41               42               43               44
+                            "`ReqItemId1`, `ReqItemId2`, `ReqItemId3`, `ReqItemId4`, `ReqItemCount1`, `ReqItemCount2`, `ReqItemCount3`, `ReqItemCount4`,"
+    //                        45              46              47              48              49                 50                 51                 52
+                            "`ReqSourceId1`, `ReqSourceId2`, `ReqSourceId3`, `ReqSourceId4`, `ReqSourceCount1`, `ReqSourceCount2`, `ReqSourceCount3`, `ReqSourceCount4`,"
+    //                        53                    54                    55                    56                    57                       58                       59                       60
+                            "`ReqCreatureOrGOId1`, `ReqCreatureOrGOId2`, `ReqCreatureOrGOId3`, `ReqCreatureOrGOId4`, `ReqCreatureOrGOCount1`, `ReqCreatureOrGOCount2`, `ReqCreatureOrGOCount3`, `ReqCreatureOrGOCount4`,"
+    //                        61               62               63               64
+                            "`ReqSpellCast1`, `ReqSpellCast2`, `ReqSpellCast3`, `ReqSpellCast4`,"
+    //                        65                  66                  67                  68                  69                  70
+                            "`RewChoiceItemId1`, `RewChoiceItemId2`, `RewChoiceItemId3`, `RewChoiceItemId4`, `RewChoiceItemId5`, `RewChoiceItemId6`,"
+    //                        71                     72                     73                     74                     75                     76
+                            "`RewChoiceItemCount1`, `RewChoiceItemCount2`, `RewChoiceItemCount3`, `RewChoiceItemCount4`, `RewChoiceItemCount5`, `RewChoiceItemCount6`,"
+    //                        77            78            79            80            81               82               83               84
+                            "`RewItemId1`, `RewItemId2`, `RewItemId3`, `RewItemId4`, `RewItemCount1`, `RewItemCount2`, `RewItemCount3`, `RewItemCount4`,"
+    //                        85                86                87                88                89                90              91              92              93              94
+                            "`RewRepFaction1`, `RewRepFaction2`, `RewRepFaction3`, `RewRepFaction4`, `RewRepFaction5`, `RewRepValue1`, `RewRepValue2`, `RewRepValue3`, `RewRepValue4`, `RewRepValue5`,"
+    //                        95               96                  97          98              99                   100                 101           102       103       104
+                            "`RewOrReqMoney`, `RewMoneyMaxLevel`, `RewSpell`, `RewSpellCast`, `RewMailTemplateId`, `RewMailDelaySecs`, `PointMapId`, `PointX`, `PointY`, `PointOpt`,"
+    //                        105              106              107              108              109                   110                   111                   112
+                            "`DetailsEmote1`, `DetailsEmote2`, `DetailsEmote3`, `DetailsEmote4`, `DetailsEmoteDelay1`, `DetailsEmoteDelay2`, `DetailsEmoteDelay3`, `DetailsEmoteDelay4`,"
+    //                        113                114              115                  116                  117                  118
+                            "`IncompleteEmote`, `CompleteEmote`, `OfferRewardEmote1`, `OfferRewardEmote2`, `OfferRewardEmote3`, `OfferRewardEmote4`,"
+    //                        119                       120                       121                       122
+                            "`OfferRewardEmoteDelay1`, `OfferRewardEmoteDelay2`, `OfferRewardEmoteDelay3`, `OfferRewardEmoteDelay4` %s", whereClause.c_str());
+
+    if (!result)
+    {
+        printf(">> Loaded 0 quests definitions, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        std::unique_ptr<Quest> newQuest = std::make_unique<Quest>(fields, m_dataSource);
+        m_QuestTemplatesMap[newQuest->GetQuestId()] = std::move(newQuest);
+    }
+    while (result->NextRow());
+    printf(">> Loaded %u quest templates.\n", (uint32)m_QuestTemplatesMap.size());
+}
+
 void GameDataMgr::LoadFactions()
 {
     // other emulators don't have faction data in db
@@ -712,7 +781,7 @@ void GameDataMgr::LoadFactions()
 
         } while (result->NextRow());
     }
-    printf(">> Loaded %u factions.\n", m_FactionsMap.size());
+    printf(">> Loaded %u factions.\n", (uint32)m_FactionsMap.size());
     {
         m_FactionTemplatesMap.clear();
         printf("[GameDataMgr] Loading faction templates...\n");
@@ -751,7 +820,7 @@ void GameDataMgr::LoadFactions()
 
         } while (result->NextRow());
     }
-    printf(">> Loaded %u faction templates.\n", m_FactionTemplatesMap.size());
+    printf(">> Loaded %u faction templates.\n", (uint32)m_FactionTemplatesMap.size());
 }
 
 void GameDataMgr::LoadItemPrototypes()
@@ -809,6 +878,9 @@ void GameDataMgr::LoadItemPrototypes()
             {
                 item.ItemStat[i].ItemStatType = fields[26 + i*2].GetUInt8();
                 item.ItemStat[i].ItemStatValue = fields[27 + i*2].GetInt16();
+
+                if (item.ItemStat[i].ItemStatValue != 0)
+                    item.StatsCount++;
             }
             item.Delay = fields[46].GetUInt16();
             item.RangedModRange = fields[47].GetFloat();
@@ -858,7 +930,6 @@ void GameDataMgr::LoadItemPrototypes()
             item.MaxMoneyLoot = fields[125].GetUInt32();
         }
         while (result->NextRow());
-        printf(">> Loaded %u item prototypes.\n", m_itemPrototypesMap.size());
     }
     else if (m_dataSource == DB_CMANGOS_CLASSIC)
     {
@@ -910,6 +981,9 @@ void GameDataMgr::LoadItemPrototypes()
             {
                 item.ItemStat[i].ItemStatType = fields[26 + i * 2].GetUInt8();
                 item.ItemStat[i].ItemStatValue = fields[27 + i * 2].GetInt16();
+
+                if (item.ItemStat[i].ItemStatValue != 0)
+                    item.StatsCount++;
             }
             item.Delay = fields[46].GetUInt16();
             item.RangedModRange = fields[47].GetFloat();
@@ -958,7 +1032,6 @@ void GameDataMgr::LoadItemPrototypes()
             item.MinMoneyLoot = fields[124].GetUInt32();
             item.MaxMoneyLoot = fields[125].GetUInt32();
         } while (result->NextRow());
-        printf(">> Loaded %u item prototypes.\n", m_itemPrototypesMap.size());
     }
     else if (m_dataSource == DB_CMANGOS_TBC)
     {
@@ -1010,6 +1083,9 @@ void GameDataMgr::LoadItemPrototypes()
             {
                 item.ItemStat[i].ItemStatType = fields[26 + i * 2].GetUInt8();
                 item.ItemStat[i].ItemStatValue = fields[27 + i * 2].GetInt16();
+
+                if (item.ItemStat[i].ItemStatValue != 0)
+                    item.StatsCount++;
             }
             item.Delay = fields[46].GetUInt16();
             item.RangedModRange = fields[47].GetFloat();
@@ -1072,7 +1148,6 @@ void GameDataMgr::LoadItemPrototypes()
             item.ArmorDamageModifier = fields[138].GetFloat();
 
         } while (result->NextRow());
-        printf(">> Loaded %u item prototypes.\n", m_itemPrototypesMap.size());
     }
     else if (m_dataSource == DB_CMANGOS_WOTLK)
     {
@@ -1192,6 +1267,6 @@ void GameDataMgr::LoadItemPrototypes()
             item.ScalingStatValue = fields[144].GetUInt32();
 
         } while (result->NextRow());
-        printf(">> Loaded %u item prototypes.\n", m_itemPrototypesMap.size());
     }
+    printf(">> Loaded %u item prototypes.\n", (uint32)m_itemPrototypesMap.size());
 }

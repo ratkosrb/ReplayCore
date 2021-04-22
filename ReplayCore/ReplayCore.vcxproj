@@ -118,6 +118,7 @@
     <ClInclude Include="World\Opcodes.h" />
     <ClInclude Include="World\Player.h" />
     <ClInclude Include="World\PlayerDefines.h" />
+    <ClInclude Include="World\QuestTemplate.h" />
     <ClInclude Include="World\ReplayMgr.h" />
     <ClInclude Include="World\SpellDefines.h" />
     <ClInclude Include="World\Unit.h" />
@@ -148,6 +149,7 @@
     <ClCompile Include="World\ObjectGuid.cpp" />
     <ClCompile Include="World\Opcodes.cpp" />
     <ClCompile Include="World\Player.cpp" />
+    <ClCompile Include="World\QuestTemplate.cpp" />
     <ClCompile Include="World\ReplayMgr.cpp" />
     <ClCompile Include="World\Unit.cpp" />
     <ClCompile Include="World\UpdateData.cpp" />

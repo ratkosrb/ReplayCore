@@ -80,6 +80,9 @@
     <ClCompile Include="Input\CommandHandler.cpp">
       <Filter>Input</Filter>
     </ClCompile>
+    <ClCompile Include="World\QuestTemplate.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -216,6 +219,9 @@
     </ClInclude>
     <ClInclude Include="Input\CommandHandler.h">
       <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="World\QuestTemplate.h">
+      <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

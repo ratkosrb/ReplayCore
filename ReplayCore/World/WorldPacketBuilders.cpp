@@ -951,5 +951,156 @@ void WorldServer::PSendSysMessage(char const* format, ...)
 
 void WorldServer::SendSysMessage(char const* str)
 {
-    SendChatPacket(Vanilla::CHAT_MSG_SYSTEM, str);
+    uint32 msgType;
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+        msgType = Vanilla::CHAT_MSG_SYSTEM;
+    else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+        msgType = TBC::CHAT_MSG_SYSTEM;
+    else
+        msgType = WotLK::CHAT_MSG_SYSTEM;
+
+    SendChatPacket(msgType, str);
+}
+
+void WorldServer::SendQuestQueryResponse(uint32 questId)
+{
+    Quest const* pQuest = sGameDataMgr.GetQuestTemplate(questId);
+    if (!pQuest)
+    {
+        printf("Client requested info about unknown quest id %u!\n", questId);
+        return;
+    }
+
+    WorldPacket data(GetOpcode("SMSG_QUEST_QUERY_RESPONSE"), 100);       // guess size
+
+    data << uint32(pQuest->GetQuestId());                   // quest id
+    data << uint32(pQuest->GetQuestMethod());               // Accepted values: 0, 1 or 2. 0==IsAutoComplete() (skip objectives/details)
+    data << uint32(pQuest->GetQuestLevel());                // may be 0, static data, in other cases must be used dynamic level: Player::GetQuestLevelForPlayer
+    if (GetClientBuild() > CLIENT_BUILD_3_0_2)
+        data << uint32(pQuest->GetMinLevel());              // min required level to obtain (added for 3.3). Assumed allowed (database) range is -1 to 255 (still using uint32, since negative value would not be of any known use for client)
+    data << uint32(pQuest->GetZoneOrSort());                // zone or sort to display in quest log
+
+    data << uint32(pQuest->GetType());
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        data << uint32(pQuest->GetSuggestedPlayers());
+
+    data << uint32(pQuest->GetRepObjectiveFaction());       // shown in quest log as part of quest objective
+    data << uint32(pQuest->GetRepObjectiveValue());         // shown in quest log as part of quest objective
+
+    data << uint32(0);                                      // RequiredOpositeRepFaction
+    data << uint32(0);                                      // RequiredOpositeRepValue, required faction value with another (oposite) faction (objective)
+
+    data << uint32(pQuest->GetNextQuestInChain());          // client will request this quest from NPC, if not 0
+    if (GetClientBuild() > CLIENT_BUILD_3_0_2)
+        data << uint32(pQuest->GetRewXPId());               // column index in QuestXP.dbc (row based on quest level)
+
+    if (pQuest->HasQuestFlag(QUEST_FLAGS_HIDDEN_REWARDS))
+        data << uint32(0);                                  // Hide money rewarded
+    else
+        data << uint32(pQuest->GetRewOrReqMoney());
+
+
+    data << uint32(pQuest->GetRewMoneyMaxLevel());          // used in XP calculation at client
+
+    data << uint32(pQuest->GetRewSpell());                  // reward spell, this spell will display (icon) (casted if RewSpellCast==0)
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+    {
+        data << uint32(pQuest->GetRewSpellCast());          // casted spell
+        data << uint32(pQuest->GetRewHonorableKills());
+    }
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        data << float(pQuest->GetRewHonorMultiplier());     // new reward honor (multiplied by ~62 at client side)
+    
+    data << uint32(pQuest->GetSrcItemId());                 // source item id
+    data << uint32(pQuest->GetQuestFlags());                // quest flags
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        data << uint32(pQuest->GetCharTitleId());           // CharTitleId, new 2.4.0, player gets this title (id from CharTitles)
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+    {
+        data << uint32(pQuest->GetPlayersSlain());          // players slain
+        data << uint32(pQuest->GetBonusTalents());          // bonus talents
+        data << uint32(0);                                  // bonus arena points
+        data << uint32(0);                                  // rew rep show mask?
+    }
+
+    int iI;
+
+    if (pQuest->HasQuestFlag(QUEST_FLAGS_HIDDEN_REWARDS))
+    {
+        for (iI = 0; iI < QUEST_REWARDS_COUNT; ++iI)
+            data << uint32(0) << uint32(0);
+        for (iI = 0; iI < QUEST_REWARD_CHOICES_COUNT; ++iI)
+            data << uint32(0) << uint32(0);
+    }
+    else
+    {
+        for (iI = 0; iI < QUEST_REWARDS_COUNT; ++iI)
+        {
+            data << uint32(pQuest->RewItemId[iI]);
+            data << uint32(pQuest->RewItemCount[iI]);
+        }
+        for (iI = 0; iI < QUEST_REWARD_CHOICES_COUNT; ++iI)
+        {
+            data << uint32(pQuest->RewChoiceItemId[iI]);
+            data << uint32(pQuest->RewChoiceItemCount[iI]);
+        }
+    }
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+    {
+        for (int i = 0; i < QUEST_REPUTATIONS_COUNT; ++i)   // reward factions ids
+        {
+            data << uint32(pQuest->RewRepFaction[i]);
+        }
+
+        for (int i = 0; i < QUEST_REPUTATIONS_COUNT; ++i)   // columnid in QuestFactionReward.dbc (if negative, from second row)
+        {
+            data << int32(pQuest->RewRepValueId[i]);
+        }
+
+        for (int i = 0; i < QUEST_REPUTATIONS_COUNT; ++i)   // reward reputation override. No bonus is expected given
+        {
+            data << int32(0);
+        }
+    }
+
+    data << pQuest->GetPointMapId();
+    data << pQuest->GetPointX();
+    data << pQuest->GetPointY();
+    data << pQuest->GetPointOpt();
+
+    data << pQuest->GetTitle();
+    data << pQuest->GetObjectives();
+    data << pQuest->GetDetails();
+    data << pQuest->GetEndText();
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        data << pQuest->GetCompletedText();                 // display in quest objectives window once all objectives are completed
+
+    for (iI = 0; iI < QUEST_OBJECTIVES_COUNT; ++iI)
+    {
+        if (pQuest->ReqCreatureOrGOId[iI] < 0)
+        {
+            // client expected gameobject template id in form (id|0x80000000)
+            data << uint32((pQuest->ReqCreatureOrGOId[iI] * (-1)) | 0x80000000);
+        }
+        else
+            data << uint32(pQuest->ReqCreatureOrGOId[iI]);
+        data << uint32(pQuest->ReqCreatureOrGOCount[iI]);
+
+        if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        {
+            data << uint32(pQuest->ReqSourceId[iI]);
+            data << uint32(0);                              // req source count?
+        }
+
+        data << uint32(pQuest->ReqItemId[iI]);
+        data << uint32(pQuest->ReqItemCount[iI]);
+    }
+
+    for (iI = 0; iI < QUEST_OBJECTIVES_COUNT; ++iI)
+        data << pQuest->ObjectiveText[iI];
+
+    SendPacket(data);
 }

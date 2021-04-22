@@ -136,7 +136,7 @@ private:
     void HandleMoveWorldportAck(WorldPacket& packet);
     void HandleMoveTeleportAck(WorldPacket& packtet);
     void HandleMessageChat(WorldPacket& packet);
-
+    void HandleQuestQuery(WorldPacket& packet);
 public:
     // Packet Building
     void SendAuthChallenge();
@@ -176,6 +176,7 @@ public:
         char const* channelName = nullptr, uint8 playerRank = 0);
     void SendSysMessage(char const* str);
     void PSendSysMessage(char const* format, ...);
+    void SendQuestQueryResponse(uint32 questId);
 };
 
 #define sWorld WorldServer::Instance()

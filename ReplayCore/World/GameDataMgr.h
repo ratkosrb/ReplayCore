@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include "ItemPrototype.h"
 #include "PlayerDefines.h"
+#include "QuestTemplate.h"
 
 typedef std::unordered_map<uint32, FactionEntry> FactionsMap;
 typedef std::unordered_map<uint32, FactionTemplateEntry> FactionTemplatesMap;
@@ -13,6 +14,7 @@ typedef std::unordered_map<uint32, ItemPrototype> ItemPrototypeMap;
 typedef std::unordered_map<uint32, AreaTableEntry> AreaTableEntryMap;
 typedef std::vector<AreaPOIEntry> AreaPOIStore;
 typedef std::vector<GameTele> GameTeleStore;
+typedef std::unordered_map<uint32, std::unique_ptr<Quest>> QuestMap;
 
 enum GameDataSource
 {
@@ -69,6 +71,15 @@ public:
     }
     void GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, PlayerLevelInfo* info) const;
 
+    // Quests
+    void LoadQuests();
+    Quest const* GetQuestTemplate(uint32 quest_id) const
+    {
+        auto itr = m_QuestTemplatesMap.find(quest_id);
+        return itr != m_QuestTemplatesMap.end() ? itr->second.get() : nullptr;
+    }
+    QuestMap const& GetQuestTemplates() const { return m_QuestTemplatesMap; }
+
     // Items
     void LoadItemPrototypes();
     ItemPrototype const* GetItemPrototype(uint32 id) const
@@ -116,6 +127,7 @@ private:
     FactionsMap m_FactionsMap;
     FactionTemplatesMap m_FactionTemplatesMap;
     ItemPrototypeMap m_itemPrototypesMap;
+    QuestMap m_QuestTemplatesMap;
     PlayerClassInfo m_PlayerClassInfo[MAX_CLASSES];
     void BuildPlayerLevelInfo(uint8 race, uint8 class_, uint8 level, PlayerLevelInfo* plinfo) const;
     PlayerInfo m_PlayerInfo[MAX_RACES][MAX_CLASSES];
