@@ -658,3 +658,298 @@ void WorldServer::SendInspectTalent(ObjectGuid guid)
         SendPacket(data);
     }
 }
+
+void WorldServer::TeleportClient(WorldLocation const& location)
+{
+    if (!m_clientPlayer)
+    {
+        printf("[SendMoveTeleportAck] Error: Attempt to teleport client but he is not in world!");
+        return;
+    }
+
+    m_sessionData.isTeleportPending = true;
+    m_sessionData.pendingTeleportLocation = location;
+
+    if (m_clientPlayer->GetMapId() != location.mapId)
+    {
+        SendTransferPending(location.mapId);
+        SendNewWorld(location);
+    }
+    else
+    {
+        SendMoveTeleportAck(location.x, location.y, location.z, location.o);
+    }
+}
+
+void WorldServer::SendTransferPending(uint32 mapId)
+{
+    WorldPacket data(GetOpcode("SMSG_TRANSFER_PENDING"), 4);
+    data << uint32(mapId);
+    SendPacket(data);
+}
+
+void WorldServer::SendNewWorld(WorldLocation const& location)
+{
+    WorldPacket data(GetOpcode("SMSG_NEW_WORLD"), 20);
+    data << uint32(location.mapId);
+    data << float(location.x);
+    data << float(location.y);
+    data << float(location.z);
+    data << float(location.o);
+    SendPacket(data);
+}
+
+void WorldServer::SendMoveTeleportAck(float x, float y, float z, float o)
+{
+    if (!m_clientPlayer)
+    {
+        printf("[SendMoveTeleportAck] Error: Attempt to teleport client but he is not in world!");
+        return;
+    }
+
+    MovementInfo mi = m_clientPlayer->GetMovementInfo();
+    mi.UpdateTime(sWorld.GetServerTimeMs());
+    mi.ChangePosition(x, y, z, o);
+
+    WorldPacket data(GetOpcode("MSG_MOVE_TELEPORT_ACK"), 41);
+    data << m_clientPlayer->GetPackGUID();
+    data << m_sessionData.movementCounter;
+    data << mi;
+    SendPacket(data);
+}
+
+void WorldServer::SendPacketsBeforeAddToMap(Player const* pPlayer)
+{
+    if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+        SendSetRestStart(0);
+    SendBindPointUpdate(pPlayer->GetLocation(), pPlayer->GetZoneId());
+    SendTutorialFlags();
+    SendInitialSpells(pPlayer->GetRace(), pPlayer->GetClass());
+    SendLoginSetTimeSpeed();
+    SendActionButtons(pPlayer->GetRace(), pPlayer->GetClass());
+}
+
+void WorldServer::SendPacketsAfterAddToMap()
+{
+    m_clientPlayer->SendCreateUpdateToPlayer(m_clientPlayer.get());
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        SendTimeSyncRequest();
+}
+
+void WorldServer::SendChatPacket(uint32 msgtype, char const* message, uint32 language /*= LANG_UNIVERSAL*/, uint32 chatTag /*= CHAT_TAG_NONE*/,
+                                  ObjectGuid const& senderGuid /*= ObjectGuid()*/, char const* senderName /*= nullptr*/,
+                                  ObjectGuid const& targetGuid /*= ObjectGuid()*/, char const* targetName /*= nullptr*/,
+                                  char const* channelName /*= nullptr*/, uint8 playerRank /*= 0*/)
+{
+    WorldPacket data;
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+    {
+        data.Initialize(GetOpcode("SMSG_MESSAGECHAT"));
+        data << uint8(msgtype);
+        data << uint32(language);
+
+        switch (msgtype)
+        {
+            case Vanilla::CHAT_MSG_MONSTER_WHISPER:
+            //case CHAT_MSG_RAID_BOSS_WHISPER:
+            case Vanilla::CHAT_MSG_RAID_BOSS_EMOTE:
+            case Vanilla::CHAT_MSG_MONSTER_EMOTE:
+                assert(senderName);
+                data << uint32(strlen(senderName) + 1);
+                data << senderName;
+                data << ObjectGuid(targetGuid);
+                break;
+
+            case Vanilla::CHAT_MSG_SAY:
+            case Vanilla::CHAT_MSG_PARTY:
+            case Vanilla::CHAT_MSG_YELL:
+                data << ObjectGuid(senderGuid);
+                data << ObjectGuid(senderGuid);
+                break;
+
+            case Vanilla::CHAT_MSG_MONSTER_SAY:
+            case Vanilla::CHAT_MSG_MONSTER_YELL:
+                assert(senderName);
+                data << ObjectGuid(senderGuid);
+                data << uint32(strlen(senderName) + 1);
+                data << senderName;
+                data << ObjectGuid(targetGuid);
+                break;
+
+            case Vanilla::CHAT_MSG_CHANNEL:
+                assert(channelName);
+                data << channelName;
+                data << uint32(playerRank);
+                data << ObjectGuid(senderGuid);
+                break;
+
+            default:
+                data << ObjectGuid(senderGuid);
+                break;
+        }
+
+        assert(message);
+        data << uint32(strlen(message) + 1);
+        data << message;
+        data << uint8(chatTag);
+    }
+    else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        const bool isGM = false;
+
+        data.Initialize(isGM ? GetOpcode("SMSG_GM_MESSAGECHAT") : GetOpcode("SMSG_MESSAGECHAT"));
+        data << uint8(msgtype);
+        data << uint32(language);
+        data << ObjectGuid(senderGuid);
+        data << uint32(0);                                              // 2.1.0
+
+        switch (msgtype)
+        {
+            case TBC::CHAT_MSG_MONSTER_SAY:
+            case TBC::CHAT_MSG_MONSTER_PARTY:
+            case TBC::CHAT_MSG_MONSTER_YELL:
+            case TBC::CHAT_MSG_MONSTER_WHISPER:
+            case TBC::CHAT_MSG_MONSTER_EMOTE:
+            case TBC::CHAT_MSG_RAID_BOSS_WHISPER:
+            case TBC::CHAT_MSG_RAID_BOSS_EMOTE:
+            case TBC::CHAT_MSG_WHISPER_FOREIGN:
+                assert(senderName);
+                data << uint32(strlen(senderName) + 1);
+                data << senderName;
+                data << ObjectGuid(targetGuid);                         // Unit Target
+                if (targetGuid && !targetGuid.IsPlayer() && !targetGuid.IsPet() && (msgtype != TBC::CHAT_MSG_WHISPER_FOREIGN))
+                {
+                    data << uint32(strlen(targetName) + 1);             // target name length
+                    data << targetName;                                 // target name
+                }
+                assert(message);
+                data << uint32(strlen(message) + 1);
+                data << message;
+                data << uint8(chatTag);
+                break;
+            case TBC::CHAT_MSG_BG_SYSTEM_NEUTRAL:
+            case TBC::CHAT_MSG_BG_SYSTEM_ALLIANCE:
+            case TBC::CHAT_MSG_BG_SYSTEM_HORDE:
+                data << ObjectGuid(targetGuid);                         // Unit Target
+                if (targetGuid && !targetGuid.IsPlayer())
+                {
+                    assert(targetName);
+                    data << uint32(strlen(targetName) + 1);             // target name length
+                    data << targetName;                                 // target name
+                }
+                assert(message);
+                data << uint32(strlen(message) + 1);
+                data << message;
+                data << uint8(chatTag);
+                break;
+            default:
+                if (msgtype == TBC::CHAT_MSG_CHANNEL)
+                {
+                    assert(channelName);
+                    data << channelName;
+                }
+                data << ObjectGuid(targetGuid);
+                assert(message);
+                data << uint32(strlen(message) + 1);
+                data << message;
+                data << uint8(chatTag);
+                if (isGM)
+                {
+                    assert(senderName);
+                    data << uint32(strlen(senderName) + 1);
+                    data << senderName;
+                }
+                break;
+        }
+    }
+    else
+    {
+        const bool isGM = false;
+        bool isAchievement = false;
+        uint32 achievementId = 0;
+
+        data.Initialize(isGM ? GetOpcode("SMSG_GM_MESSAGECHAT") : GetOpcode("SMSG_MESSAGECHAT"));
+        data << uint8(msgtype);
+        data << uint32(language);
+        data << ObjectGuid(senderGuid);
+        data << uint32(0);                                              // 2.1.0
+
+        switch (msgtype)
+        {
+        case WotLK::CHAT_MSG_MONSTER_SAY:
+        case WotLK::CHAT_MSG_MONSTER_PARTY:
+        case WotLK::CHAT_MSG_MONSTER_YELL:
+        case WotLK::CHAT_MSG_MONSTER_WHISPER:
+        case WotLK::CHAT_MSG_MONSTER_EMOTE:
+        case WotLK::CHAT_MSG_RAID_BOSS_WHISPER:
+        case WotLK::CHAT_MSG_RAID_BOSS_EMOTE:
+        case WotLK::CHAT_MSG_BNET:
+        case WotLK::CHAT_MSG_WHISPER_FOREIGN:
+            assert(senderName);
+            data << uint32(strlen(senderName) + 1);
+            data << senderName;
+            data << ObjectGuid(targetGuid);                         // Unit Target
+            if (targetGuid && !targetGuid.IsPlayer() && !targetGuid.IsPet() && (msgtype != WotLK::CHAT_MSG_WHISPER_FOREIGN))
+            {
+                data << uint32(strlen(targetName) + 1);             // target name length
+                data << targetName;                                 // target name
+            }
+            break;
+        case WotLK::CHAT_MSG_BG_SYSTEM_NEUTRAL:
+        case WotLK::CHAT_MSG_BG_SYSTEM_ALLIANCE:
+        case WotLK::CHAT_MSG_BG_SYSTEM_HORDE:
+            data << ObjectGuid(targetGuid);                         // Unit Target
+            if (targetGuid && !targetGuid.IsPlayer())
+            {
+                assert(targetName);
+                data << uint32(strlen(targetName) + 1);             // target name length
+                data << targetName;                                 // target name
+            }
+            break;
+        case WotLK::CHAT_MSG_ACHIEVEMENT:
+        case WotLK::CHAT_MSG_GUILD_ACHIEVEMENT:
+            data << ObjectGuid(targetGuid);                         // Unit Target
+            isAchievement = true;
+            break;
+        default:
+            if (isGM)
+            {
+                assert(senderName);
+                data << uint32(strlen(senderName) + 1);
+                data << senderName;
+            }
+
+            if (msgtype == WotLK::CHAT_MSG_CHANNEL)
+            {
+                assert(channelName);
+                data << channelName;
+            }
+            data << ObjectGuid(targetGuid);
+            break;
+        }
+        assert(message);
+        data << uint32(strlen(message) + 1);
+        data << message;
+        data << uint8(chatTag);
+
+        if (isAchievement)
+            data << uint32(achievementId);
+    }
+    SendPacket(data);
+}
+
+void WorldServer::PSendSysMessage(char const* format, ...)
+{
+    va_list ap;
+    char str[2048];
+    va_start(ap, format);
+    vsnprintf(str, 2048, format, ap);
+    va_end(ap);
+    SendSysMessage(str);
+}
+
+void WorldServer::SendSysMessage(char const* str)
+{
+    SendChatPacket(Vanilla::CHAT_MSG_SYSTEM, str);
+}

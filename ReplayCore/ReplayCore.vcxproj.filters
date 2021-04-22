@@ -77,6 +77,9 @@
     <ClCompile Include="World\WorldPacketHandlers.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="Input\CommandHandler.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -211,6 +214,9 @@
     <ClInclude Include="Defines\Console.h">
       <Filter>Defines</Filter>
     </ClInclude>
+    <ClInclude Include="Input\CommandHandler.h">
+      <Filter>Input</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Database">
@@ -227,6 +233,9 @@
     </Filter>
     <Filter Include="World">
       <UniqueIdentifier>{6a010d4a-05cf-49f3-8fe1-492889bcf217}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{2bb783f0-c9db-4289-881b-4aaa26460276}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

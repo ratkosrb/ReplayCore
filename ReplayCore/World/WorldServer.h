@@ -20,6 +20,9 @@ struct WorldSessionData
 {
     bool connected = false;
     bool isInWorld = false;
+    bool isTeleportPending = false;
+    WorldLocation pendingTeleportLocation;
+    uint32 movementCounter = 0;
     uint32 seed = 1212669851;
     uint16 build = 0;
     std::string sessionKey;
@@ -74,7 +77,9 @@ public:
     uint16 GetClientBuild() const { return m_sessionData.build; }
     uint32 GetServerTimeMs() const { return m_msTimeSinceServerStart; }
 
+    bool IsEnabled() const { return m_enabled; }
     void StartNetwork();
+    void StopNetwork();
     void StartWorld();
     void SpawnWorldObjects();
     std::thread m_networkThread;
@@ -128,7 +133,11 @@ private:
     void HandleSetSelection(WorldPacket& packet);
     void HandleStandStateChange(WorldPacket& packet);
     void HandleSetSheathed(WorldPacket& packet);
+    void HandleMoveWorldportAck(WorldPacket& packet);
+    void HandleMoveTeleportAck(WorldPacket& packtet);
+    void HandleMessageChat(WorldPacket& packet);
 
+public:
     // Packet Building
     void SendAuthChallenge();
     void SendLoginVerifyWorld(WorldLocation const& location);
@@ -155,6 +164,18 @@ private:
     void SendItemNameQueryResponse(uint32 itemId);
     void SendInspect(ObjectGuid guid);
     void SendInspectTalent(ObjectGuid guid);
+    void TeleportClient(WorldLocation const& location);
+    void SendTransferPending(uint32 mapId);
+    void SendNewWorld(WorldLocation const& location);
+    void SendMoveTeleportAck(float x, float y, float z, float o);
+    void SendPacketsBeforeAddToMap(Player const* pPlayer);
+    void SendPacketsAfterAddToMap();
+    void SendChatPacket(uint32 msgtype, char const* message, uint32 language = 0, uint32 chatTag = 0,
+        ObjectGuid const& senderGuid = ObjectGuid(), char const* senderName = nullptr,
+        ObjectGuid const& targetGuid = ObjectGuid(), char const* targetName = nullptr,
+        char const* channelName = nullptr, uint8 playerRank = 0);
+    void SendSysMessage(char const* str);
+    void PSendSysMessage(char const* format, ...);
 };
 
 #define sWorld WorldServer::Instance()

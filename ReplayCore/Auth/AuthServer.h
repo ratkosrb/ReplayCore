@@ -28,6 +28,8 @@ class AuthServer
 public:
     static AuthServer& Instance();
     void StartNetwork();
+    void StopNetwork();
+    bool IsEnabled() const { return m_enabled; }
     uint16 GetClientBuild() const { return m_clientData.build; }
     std::string GetSessionKey() const { return m_clientData.sessionKey; }
     std::thread m_networkThread;

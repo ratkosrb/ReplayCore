@@ -37,6 +37,14 @@ public :
         m_location.z = movementInfo.pos.z;
         m_location.o = movementInfo.pos.o;
     }
+    void Relocate(WorldLocation const& location) final
+    {
+        SetLocation(location);
+        m_movementInfo.pos.x = location.x;
+        m_movementInfo.pos.y = location.y;
+        m_movementInfo.pos.z = location.z;
+        m_movementInfo.pos.o = location.o;
+    }
 
     uint8 GetRace() const { return GetByteValue("UNIT_FIELD_BYTES_0", 0); }
     uint32 GetRaceMask() const { return GetRace() ? 1 << (GetRace() - 1) : 0x0; }

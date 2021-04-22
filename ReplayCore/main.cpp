@@ -13,6 +13,7 @@
 #include "World\GameDataMgr.h"
 #include "Defines\Console.h"
 #include "World\Opcodes.h"
+#include "Input\CommandHandler.h"
 
 Database WorldDatabase;
 Database SniffDatabase;
@@ -112,6 +113,7 @@ int main()
     sGameDataMgr.LoadFactions();
     sGameDataMgr.LoadItemPrototypes();
     sGameDataMgr.LoadPlayerInfo();
+    sGameDataMgr.LoadGameTele();
     sReplayMgr.LoadEverything();
 
     Opcodes::SetupOpcodeNamesMaps();
@@ -128,6 +130,22 @@ int main()
 
     sAuth.StartNetwork();
     sWorld.StartNetwork();
+
+    std::string command;
+    while (std::getline(std::cin, command))
+    {
+        if (!command.empty())
+        {
+            CommandHandler handler(command, true);
+            handler.HandleCommand();
+        }
+
+        if (!sAuth.IsEnabled() || !sWorld.IsEnabled())
+            break;
+        
+        printf("> ");
+    }
+
     if (sAuth.m_networkThread.joinable())
         sAuth.m_networkThread.join();
     if (sWorld.m_networkThread.joinable())
@@ -137,7 +155,6 @@ int main()
     if (sWorld.m_worldThread.joinable())
         sWorld.m_worldThread.join();
 
-    getchar();
     WorldDatabase.Uninitialise();
     SniffDatabase.Uninitialise();
     WSACleanup();

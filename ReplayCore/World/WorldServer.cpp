@@ -41,7 +41,7 @@ void WorldServer::WorldLoop()
         std::this_thread::sleep_for(std::chrono::milliseconds(WORLD_UPDATE_TIME));
 
         // Don't update world before client connects.
-        if (!m_sessionData.connected || !m_sessionData.isInWorld || !m_clientPlayer)
+        if (!m_sessionData.connected || !m_sessionData.isInWorld || m_sessionData.isTeleportPending || !m_clientPlayer)
             continue;
 
         uint64 ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -141,6 +141,15 @@ void WorldServer::StartNetwork()
     m_packetProcessingThread = std::thread(&WorldServer::ProcessIncomingPackets, this);
 }
 
+void WorldServer::StopNetwork()
+{
+    m_enabled = false;
+    shutdown(m_worldSocket, SD_BOTH);
+    closesocket(m_worldSocket);
+    shutdown(m_socketPrototype, SD_BOTH);
+    closesocket(m_socketPrototype);
+}
+
 void WorldServer::ResetClientData()
 {
     m_lastSessionBuild = m_sessionData.build;
@@ -157,6 +166,9 @@ void WorldServer::NetworkLoop()
         printf("[WORLD] Waiting for connection...\n");
         int addressSize = sizeof(m_address);
         m_worldSocket = accept(m_socketPrototype, (SOCKADDR*)&m_address, &addressSize);
+        if (m_worldSocket == INVALID_SOCKET)
+            break;
+
         printf("[WORLD] Connection established!\n");
 
         ResetClientData();

@@ -3,8 +3,10 @@
 #include "../Defines//WorldPacket.h"
 #include "../Defines/Utility.h"
 #include "../Defines/ClientVersions.h"
+#include "../Input/CommandHandler.h"
 #include "GameDataMgr.h"
 #include "ReplayMgr.h"
+#include "ChatDefines.h"
 #include <set>
 
 void WorldServer::SetupOpcodeHandlers()
@@ -53,6 +55,9 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_SET_SELECTION", &WorldServer::HandleSetSelection);
     SetOpcodeHandler("CMSG_STANDSTATECHANGE", &WorldServer::HandleStandStateChange);
     SetOpcodeHandler("CMSG_SETSHEATHED", &WorldServer::HandleSetSheathed);
+    SetOpcodeHandler("MSG_MOVE_WORLDPORT_ACK", &WorldServer::HandleMoveWorldportAck);
+    SetOpcodeHandler("MSG_MOVE_TELEPORT_ACK", &WorldServer::HandleMoveTeleportAck);
+    SetOpcodeHandler("CMSG_MESSAGECHAT", &WorldServer::HandleMessageChat);
 }
 
 #undef min
@@ -84,11 +89,24 @@ void WorldServer::HandleEnumCharacters(WorldPacket& packet)
             response << pPlayer->GetHairColor();
             response << pPlayer->GetFacialHair();
             response << uint8(pPlayer->GetLevel());
-            response << uint32(sGameDataMgr.GetZoneIdFromCoordinates(pPlayer->GetMapId(), pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ()));
-            response << uint32(0); // area id (crashes wotlk)
-            response << pPlayer->GetPositionX();
-            response << pPlayer->GetPositionY();
-            response << pPlayer->GetPositionZ();
+            
+            if (m_clientPlayer && m_clientPlayer->GetObjectGuid() == newGuid)
+            {
+                response << uint32(sGameDataMgr.GetZoneIdFromCoordinates(m_clientPlayer->GetMapId(), m_clientPlayer->GetPositionX(), m_clientPlayer->GetPositionY(), m_clientPlayer->GetPositionZ()));
+                response << uint32(m_clientPlayer->GetMapId());
+                response << m_clientPlayer->GetPositionX();
+                response << m_clientPlayer->GetPositionY();
+                response << m_clientPlayer->GetPositionZ();
+            }
+            else
+            {
+                response << uint32(sGameDataMgr.GetZoneIdFromCoordinates(pPlayer->GetMapId(), pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ()));
+                response << uint32(pPlayer->GetMapId());
+                response << pPlayer->GetPositionX();
+                response << pPlayer->GetPositionY();
+                response << pPlayer->GetPositionZ();
+            }
+
             response << uint32(0); // guild id
             response << uint32(0); // character flags
 
@@ -184,44 +202,43 @@ void WorldServer::HandlePlayerLogin(WorldPacket& packet)
     if (!m_worldSpawned)
         SpawnWorldObjects();
 
-    ObjectGuid sniffedCharGuid(HIGHGUID_PLAYER, uint32(guid.GetCounter() - CLIENT_CHARACTER_GUID_OFFSET));
-
-    Player * pPlayerToCopy = FindPlayer(sniffedCharGuid);
-    if (!pPlayerToCopy)
+    Player* pPlayer = nullptr;
+    if (m_clientPlayer && m_clientPlayer->GetObjectGuid() == guid)
+        pPlayer = m_clientPlayer.get();
+    else
     {
-        printf("[HandlePlayerLogin] Error: Received request to login with unknown guid %s!\n", sniffedCharGuid.GetString().c_str());
-        WorldPacket data(GetOpcode("SMSG_CHARACTER_LOGIN_FAILED"), 1);
-        data << (uint8)1;
-        SendPacket(data);
-        return;
+        ObjectGuid sniffedCharGuid(HIGHGUID_PLAYER, uint32(guid.GetCounter() - CLIENT_CHARACTER_GUID_OFFSET));
+
+        Player* pPlayerToCopy = FindPlayer(sniffedCharGuid);
+        if (!pPlayerToCopy)
+        {
+            printf("[HandlePlayerLogin] Error: Received request to login with unknown guid %s!\n", sniffedCharGuid.GetString().c_str());
+            WorldPacket data(GetOpcode("SMSG_CHARACTER_LOGIN_FAILED"), 1);
+            data << (uint8)1;
+            SendPacket(data);
+            return;
+        }
+
+        if (!m_clientPlayer || m_clientPlayer->GetObjectGuid() != guid)
+        {
+            m_clientPlayer = std::make_unique<Player>(guid, "TheObserver", *pPlayerToCopy);
+            m_clientPlayer->SetVisibility(true);
+            pPlayer = m_clientPlayer.get();
+        }
     }
 
-    SendLoginVerifyWorld(pPlayerToCopy->GetLocation());
+    SendLoginVerifyWorld(pPlayer->GetLocation());
     SendAccountDataTimes();
     if (GetClientBuild() >= CLIENT_BUILD_2_2_0)
         SendFeatureSystemStatus(true, false);
-    if (GetClientBuild() < CLIENT_BUILD_3_0_2)
-        SendSetRestStart(0);
-    SendBindPointUpdate(pPlayerToCopy->GetLocation(), pPlayerToCopy->GetZoneId());
-    SendTutorialFlags();
-    SendInitialSpells(pPlayerToCopy->GetRace(), pPlayerToCopy->GetClass());
-    SendLoginSetTimeSpeed();
+    SendPacketsBeforeAddToMap(pPlayer);
     if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
         SendMotd();
-    SendActionButtons(pPlayerToCopy->GetRace(), pPlayerToCopy->GetClass());
     SendFriendList();
     if (GetClientBuild() < CLIENT_BUILD_2_0_1)
         SendIgnoreList();
-
-    if (!m_clientPlayer || m_clientPlayer->GetObjectGuid() != guid)
-    {
-        m_clientPlayer = std::make_unique<Player>(guid, "TheObserver", *pPlayerToCopy);
-        m_clientPlayer->SetVisibility(true);
-    }
-    m_clientPlayer->SendCreateUpdateToPlayer(m_clientPlayer.get());
-
-    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
-        SendTimeSyncRequest();
+    
+    SendPacketsAfterAddToMap();
     StartWorld();
     m_sessionData.isInWorld = true;
 }
@@ -415,6 +432,9 @@ void WorldServer::HandleItemNameQuery(WorldPacket& packet)
 
 void WorldServer::HandleMovementPacket(WorldPacket& packet)
 {
+    if (m_sessionData.isTeleportPending)
+        return;
+
     if (GetClientBuild() >= CLIENT_BUILD_3_2_0)
     {
         ObjectGuid guid;
@@ -478,4 +498,188 @@ void WorldServer::HandleSetSheathed(WorldPacket& packet)
         m_clientPlayer->SetSheathState(sheathState);
         m_clientPlayer->SendDirectValueUpdate(GetUpdateField("UNIT_FIELD_BYTES_2"));
     }
+}
+
+void WorldServer::HandleMoveWorldportAck(WorldPacket& packet)
+{
+    if (!m_sessionData.isTeleportPending)
+    {
+        printf("[HandleMoveWorldportAck] Error: Client sent MSG_MOVE_WORLDPORT_ACK without being teleported!\n");
+        return;
+    }
+
+    if (!m_clientPlayer)
+    {
+        printf("[HandleMoveWorldportAck] Error: Client sent MSG_MOVE_WORLDPORT_ACK while not in world!\n");
+        return;
+    }
+    
+    m_sessionData.isTeleportPending = false;
+    m_sessionData.visibleObjects.clear();
+    m_clientPlayer->Relocate(m_sessionData.pendingTeleportLocation);
+    m_sessionData.pendingTeleportLocation = WorldLocation();
+
+    SendPacketsBeforeAddToMap(m_clientPlayer.get());
+    SendPacketsAfterAddToMap();
+}
+
+void WorldServer::HandleMoveTeleportAck(WorldPacket& packet)
+{
+    ObjectGuid guid;
+    if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+        packet >> guid;
+    else
+        packet >> guid.ReadAsPacked();
+
+    uint32 movementCounter;
+    packet >> movementCounter;
+    uint32 time = 0;
+    packet >> time;
+
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[HandleMoveTeleportAck] MSG_MOVE_TELEPORT_ACK data:\n");
+    printf("Guid: %s\n", guid.GetString().c_str());
+    printf("Counter: %u\n", movementCounter);
+    printf("Time: %u\n", time);
+    printf("\n");
+#endif
+
+    if (!m_sessionData.isTeleportPending)
+    {
+        printf("[HandleMoveWorldportAck] Error: Client sent MSG_MOVE_TELEPORT_ACK without being teleported!\n");
+        return;
+    }
+
+    if (!m_clientPlayer)
+    {
+        printf("[HandleMoveWorldportAck] Error: Client sent MSG_MOVE_TELEPORT_ACK while not in world!\n");
+        return;
+    }
+
+    if (m_clientPlayer->GetObjectGuid() != guid)
+    {
+        printf("[HandleMoveWorldportAck] Error: Client sent MSG_MOVE_TELEPORT_ACK for wrong guid %s!\n", guid.GetString().c_str());
+        return;
+    }
+
+    m_sessionData.isTeleportPending = false;
+    m_clientPlayer->Relocate(m_sessionData.pendingTeleportLocation);
+    m_sessionData.pendingTeleportLocation = WorldLocation();
+}
+
+void WorldServer::HandleMessageChat(WorldPacket& packet)
+{
+    uint32 type;
+    uint32 lang;
+
+    packet >> type;
+    packet >> lang;
+
+    std::string msg, channel, to;
+
+    // Message parsing
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+    {
+        switch (type)
+        {
+            case Vanilla::CHAT_MSG_CHANNEL:
+                packet >> channel;
+                packet >> msg;
+                break;
+            case Vanilla::CHAT_MSG_WHISPER:
+                packet >> to;
+                // no break
+            case Vanilla::CHAT_MSG_SAY:
+            case Vanilla::CHAT_MSG_EMOTE:
+            case Vanilla::CHAT_MSG_YELL:
+            case Vanilla::CHAT_MSG_PARTY:
+            case Vanilla::CHAT_MSG_GUILD:
+            case Vanilla::CHAT_MSG_OFFICER:
+            case Vanilla::CHAT_MSG_RAID:
+            case Vanilla::CHAT_MSG_RAID_LEADER:
+            case Vanilla::CHAT_MSG_RAID_WARNING:
+            case Vanilla::CHAT_MSG_BATTLEGROUND:
+            case Vanilla::CHAT_MSG_BATTLEGROUND_LEADER:
+            case Vanilla::CHAT_MSG_AFK:
+            case Vanilla::CHAT_MSG_DND:
+                packet >> msg;
+                break;
+            default:
+                printf("[HandleMessageChat] Error: unknown message type %u, lang: %u\n", type, lang);
+                return;
+        }
+    }
+    else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        switch (type)
+        {
+            case TBC::CHAT_MSG_CHANNEL:
+                packet >> channel;
+                packet >> msg;
+                break;
+            case TBC::CHAT_MSG_WHISPER:
+                packet >> to;
+            // no break
+            case TBC::CHAT_MSG_SAY:
+            case TBC::CHAT_MSG_EMOTE:
+            case TBC::CHAT_MSG_YELL:
+            case TBC::CHAT_MSG_PARTY:
+            case TBC::CHAT_MSG_GUILD:
+            case TBC::CHAT_MSG_OFFICER:
+            case TBC::CHAT_MSG_RAID:
+            case TBC::CHAT_MSG_RAID_LEADER:
+            case TBC::CHAT_MSG_RAID_WARNING:
+            case TBC::CHAT_MSG_BATTLEGROUND:
+            case TBC::CHAT_MSG_BATTLEGROUND_LEADER:
+            case TBC::CHAT_MSG_AFK:
+            case TBC::CHAT_MSG_DND:
+                packet >> msg;
+                break;
+            default:
+                printf("[HandleMessageChat] Error: unknown message type %u, lang: %u\n", type, lang);
+                break;
+        }
+    }
+    else
+    {
+        switch (type)
+        {
+            case WotLK::CHAT_MSG_CHANNEL:
+                packet >> channel;
+                packet >> msg;
+                break;
+            case WotLK::CHAT_MSG_WHISPER:
+                packet >> to;
+                // no break
+            case WotLK::CHAT_MSG_SAY:
+            case WotLK::CHAT_MSG_EMOTE:
+            case WotLK::CHAT_MSG_YELL:
+            case WotLK::CHAT_MSG_PARTY:
+            case WotLK::CHAT_MSG_PARTY_LEADER:
+            case WotLK::CHAT_MSG_GUILD:
+            case WotLK::CHAT_MSG_OFFICER:
+            case WotLK::CHAT_MSG_RAID:
+            case WotLK::CHAT_MSG_RAID_LEADER:
+            case WotLK::CHAT_MSG_RAID_WARNING:
+            case WotLK::CHAT_MSG_BATTLEGROUND:
+            case WotLK::CHAT_MSG_BATTLEGROUND_LEADER:
+            case WotLK::CHAT_MSG_AFK:
+            case WotLK::CHAT_MSG_DND:
+                packet >> msg;
+                break;
+            default:
+                printf("[HandleMessageChat] Error: unknown message type %u, lang: %u", type, lang);
+                break;
+        }
+    }
+
+    if (msg.empty())
+        return;
+
+    if (msg[0] == '.' && msg.length() > 0)
+        msg = msg.substr(1, msg.length() - 1);
+
+    CommandHandler handler(msg, false);
+    handler.HandleCommand();
 }

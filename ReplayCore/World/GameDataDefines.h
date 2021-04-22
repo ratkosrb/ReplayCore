@@ -2,6 +2,7 @@
 #define __GAME_DATA_DEFINES_H
 
 #include "../Defines/Common.h"
+#include "ObjectDefines.h"
 #include <string>
 
 #define SUPPORTED_CLIENT_BUILD 5875
@@ -130,6 +131,13 @@ struct AreaPOIEntry
     float y = 0.0f;
     float z = 0.0f;
     std::string name;
+};
+
+struct GameTele
+{
+    WorldLocation location;
+    std::string name;
+    std::string nameLow;
 };
 
 #endif

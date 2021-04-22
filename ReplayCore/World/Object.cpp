@@ -671,6 +671,53 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
     data->AddUpdateBlock(buf);
 }
 
+WorldObject* Object::ToWorldObject()
+{
+    if (IsWorldObject())
+        return static_cast<WorldObject*>(this);
+
+    return nullptr;
+}
+
+WorldObject const* Object::ToWorldObject() const
+{
+    if (IsWorldObject())
+        return static_cast<WorldObject const*>(this);
+
+    return nullptr;
+}
+
+Unit* Object::ToUnit()
+{
+    if (IsUnit())
+        return static_cast<Unit*>(this);
+    else
+        return nullptr;
+}
+
+Unit const* Object::ToUnit() const
+{
+    if (IsUnit())
+        return static_cast<Unit const*>(this);
+
+    return nullptr;
+}
+
+Player* Object::ToPlayer()
+{
+    if (IsPlayer())
+        return static_cast<Player*>(this);
+
+    return nullptr;
+}
+Player const* Object::ToPlayer() const
+{
+    if (IsPlayer())
+        return static_cast<Player const*>(this);
+
+    return nullptr;
+}
+
 void Object::BuildMovementUpdate(ByteBuffer* data, uint8 updateFlags) const
 {
     // update flags

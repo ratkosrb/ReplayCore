@@ -81,6 +81,64 @@ uint8 GameDataMgr::GetMoveSpeedsCount() const
     return MAX_MOVE_TYPE_WOTLK;
 }
 
+void GameDataMgr::LoadGameTele()
+{
+    printf("[GameDataMgr] Loading teleport locations...\n");
+    m_GameTeleStore.clear();
+
+    uint32 count = 0;
+    std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `id`, `position_x`, `position_y`, `position_z`, `orientation`, `map`, `name` FROM `game_tele`"));
+
+    if (!result)
+    {
+        printf(">> Loaded 0 teleport locations, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 id = fields[0].GetUInt32();
+        GameTele gt;
+
+        gt.location.x = fields[1].GetFloat();
+        gt.location.y = fields[2].GetFloat();
+        gt.location.z = fields[3].GetFloat();
+        gt.location.o = fields[4].GetFloat();
+        gt.location.mapId = fields[5].GetUInt32();
+        gt.name = fields[6].GetCppString();
+        gt.nameLow = gt.name;
+
+        std::for_each(gt.nameLow.begin(), gt.nameLow.end(), [](char & c) {
+            c = ::tolower(c);
+        });
+
+        m_GameTeleStore.push_back(gt);
+
+        ++count;
+    } while (result->NextRow());
+    printf(">> Loaded %u teleport locations.\n", count);
+}
+
+GameTele const* GameDataMgr::GetGameTele(std::string name) const
+{
+    // converting string that we try to find to lower case
+    std::for_each(name.begin(), name.end(), [](char & c) {
+        c = ::tolower(c);
+    });
+
+    // Alternative first GameTele what contains name as substring in case no GameTele location found
+    GameTele const* alt = nullptr;
+    for (const auto& itr : m_GameTeleStore)
+        if (itr.nameLow == name)
+            return &itr;
+        else if (alt == nullptr && itr.nameLow.find(name) != std::string::npos)
+            alt = &itr;
+
+    return alt;
+}
+
 AreaPOIEntry const* GameDataMgr::GetClosestAreaPOIEntry(uint32 mapId, float x, float y, float z) const
 {
     AreaPOIEntry const* pEntry = nullptr;

@@ -12,6 +12,7 @@ typedef std::unordered_map<uint32, FactionTemplateEntry> FactionTemplatesMap;
 typedef std::unordered_map<uint32, ItemPrototype> ItemPrototypeMap;
 typedef std::unordered_map<uint32, AreaTableEntry> AreaTableEntryMap;
 typedef std::vector<AreaPOIEntry> AreaPOIStore;
+typedef std::vector<GameTele> GameTeleStore;
 
 enum GameDataSource
 {
@@ -33,6 +34,10 @@ public:
     bool IsValidClass(uint32 id) const;
     bool IsValidUnitDisplayId(uint32 id) const;
     uint8 GetMoveSpeedsCount() const;
+
+    void LoadGameTele();
+    GameTele const* GetGameTele(std::string name) const;
+    GameTeleStore const& GetGameTeleStore() const { return m_GameTeleStore; }
 
     uint32 GetZoneIdFromCoordinates(uint32 mapId, float x, float y, float z);
     uint32 GetAreaIdFromCoordinates(uint32 mapId, float x, float y, float z);
@@ -116,6 +121,7 @@ private:
     PlayerInfo m_PlayerInfo[MAX_RACES][MAX_CLASSES];
     static AreaTableEntryMap m_areaTableEntryMap;
     static AreaPOIStore m_areaPOIStore;
+    GameTeleStore m_GameTeleStore;
 };
 
 #define sGameDataMgr GameDataMgr::Instance()

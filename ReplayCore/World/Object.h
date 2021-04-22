@@ -23,6 +23,13 @@ public:
         m_packGuid.Set(guid);
     }
     Object(ObjectData const& objectData);
+    virtual ~Object()
+    {
+        if (m_uint32Values)
+            delete [] m_uint32Values;
+        if (m_uint32Values_mirror)
+            delete [] m_uint32Values_mirror;
+    }
 
     uint8 GetTypeId() const { return m_objectTypeId; }
     bool IsType(TypeMask mask) const { return (mask & m_objectType) != 0; }
@@ -76,18 +83,18 @@ public:
     void SendOutOfRangeUpdateToPlayer(Player* player);
     
     inline bool IsWorldObject() const { return IsType(TYPEMASK_WORLDOBJECT); }
-    WorldObject* ToWorldObject() { if (IsWorldObject()) return reinterpret_cast<WorldObject*>(this); else return nullptr; }
-    WorldObject const* ToWorldObject() const { if (IsWorldObject()) return reinterpret_cast<WorldObject const*>(this); else return nullptr; }
+    WorldObject* ToWorldObject();
+    WorldObject const* ToWorldObject() const;
 
     inline bool IsPlayer() const { return GetTypeId() == TYPEID_PLAYER; }
-    Player* ToPlayer() { if (IsPlayer()) return reinterpret_cast<Player*>(this); else return nullptr; }
-    Player const* ToPlayer() const { if (IsPlayer()) return reinterpret_cast<Player const*>(this); else return nullptr; }
+    Player* ToPlayer();
+    Player const* ToPlayer() const;
 
     inline bool IsCreature() const { return GetTypeId() == TYPEID_UNIT; }
 
     inline bool IsUnit() const { return IsType(TYPEMASK_UNIT); }
-    Unit* ToUnit() { if (IsUnit()) return reinterpret_cast<Unit*>(this); else return nullptr; }
-    Unit const* ToUnit() const { if (IsUnit()) return reinterpret_cast<Unit const*>(this); else return nullptr; }
+    Unit* ToUnit();
+    Unit const* ToUnit() const;
 
 protected:
     bool m_isVisible = false;
@@ -201,6 +208,10 @@ public:
     void SetLocation(WorldLocation const& location)
     {
         m_location = location;
+    }
+    virtual void Relocate(WorldLocation const& location)
+    {
+        SetLocation(location);
     }
     float GetDistance2D(float x, float y) const
     {

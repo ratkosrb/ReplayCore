@@ -50,6 +50,15 @@ void AuthServer::StartNetwork()
     m_networkThread = std::thread(&AuthServer::NetworkLoop, this);
 }
 
+void AuthServer::StopNetwork()
+{
+    m_enabled = false;
+    shutdown(m_authSocket, SD_BOTH);
+    closesocket(m_authSocket);
+    shutdown(m_socketPrototype, SD_BOTH);
+    closesocket(m_socketPrototype);
+}
+
 void AuthServer::NetworkLoop()
 {
     do
@@ -59,6 +68,9 @@ void AuthServer::NetworkLoop()
         printf("[AUTH] Waiting for connection...\n");
         int addressSize = sizeof(m_address);
         m_authSocket = accept(m_socketPrototype, (SOCKADDR*)&m_address, &addressSize);
+        if (m_authSocket == INVALID_SOCKET)
+            break;
+
         printf("[AUTH] Connection established!\n");
 
         do
