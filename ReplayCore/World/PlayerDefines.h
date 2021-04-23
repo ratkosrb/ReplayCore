@@ -74,11 +74,7 @@ enum BuyBackSlots                                           // 12 slots after 1.
 {
     // stored in m_buybackitems
     BUYBACK_SLOT_START          = 69,
-#if SUPPORTED_CLIENT_BUILD > CLIENT_BUILD_1_7_1
     BUYBACK_SLOT_END            = 81
-#else
-    BUYBACK_SLOT_END            = 70
-#endif
 };
 
 enum KeyRingSlots                                           // 32 slots

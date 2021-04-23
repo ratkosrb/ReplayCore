@@ -14,6 +14,7 @@
 #include "Defines\Console.h"
 #include "World\Opcodes.h"
 #include "Input\CommandHandler.h"
+#include "Input\Config.h"
 
 Database WorldDatabase;
 Database SniffDatabase;
@@ -74,41 +75,47 @@ static std::string GetSniffDatabaseName()
 
 int main()
 {
-    printf("\nEnter your database connection info.\n");
-    std::string const connectionString = MakeConnectionString();
-    std::string const sniffConnectionString = connectionString + GetSniffDatabaseName();
-    std::string const worldConnectionString = connectionString + GetWorldDatabaseName();
+    printf("[MAIN] Loading config...\n");
+    if (!sConfig.LoadConfig())
+    {
+        printf("\nEnter your database connection info.\n");
+        std::string const connectionString = MakeConnectionString();
+        sConfig.SetSniffDbConnectionString(connectionString + GetSniffDatabaseName());
+        sConfig.SetWorldDbConnectionString(connectionString + GetWorldDatabaseName());
+
+        printf("Select world database type:\n");
+        printf("%u. VMaNGOS\n", DB_VMANGOS);
+        printf("%u. CMaNGOS Classic\n", DB_CMANGOS_CLASSIC);
+        printf("%u. CMaNGOS TBC\n", DB_CMANGOS_TBC);
+        printf("%u. CMaNGOS WotLK\n", DB_CMANGOS_WOTLK);
+        printf("%u. TrinityCore\n", DB_TRINITY);
+        printf("> ");
+        uint32 dbType = Console::GetUInt32();
+        if (dbType > DB_TRINITY)
+        {
+            printf("Invalid db type selected! Defaulting to vmangos.\n");
+            dbType = DB_VMANGOS;
+        }
+        sConfig.SetWorldDbType(dbType);
+    }
 
     printf("[MAIN] Connecting to sniff database...\n");
-    if (!SniffDatabase.Initialize(sniffConnectionString.c_str()))
+    if (!SniffDatabase.Initialize(sConfig.GetSniffDbConnectionString()))
     {
         printf("\nError: Cannot connect to sniff database!\n");
         getchar();
         return 1;
     }
 
-    printf("\n[MAIN] Connecting to world database...\n");
-    if (!WorldDatabase.Initialize(worldConnectionString.c_str()))
+    printf("[MAIN] Connecting to world database...\n");
+    if (!WorldDatabase.Initialize(sConfig.GetWorldDbConnectionString()))
     {
         printf("\nError: Cannot connect to world database!\n");
         getchar();
         return 1;
     }
     
-    printf("Select world database type:\n");
-    printf("%u. VMaNGOS\n", DB_VMANGOS);
-    printf("%u. CMaNGOS Classic\n", DB_CMANGOS_CLASSIC);
-    printf("%u. CMaNGOS TBC\n", DB_CMANGOS_TBC);
-    printf("%u. CMaNGOS WotLK\n", DB_CMANGOS_WOTLK);
-    printf("%u. TrinityCore\n", DB_TRINITY);
-    printf("> ");
-    uint32 dbType = Console::GetUInt32();
-    if (dbType > DB_TRINITY)
-    {
-        printf("Invalid db type selected! Defaulting to vmangos.\n");
-        dbType = DB_VMANGOS;
-    }
-    sGameDataMgr.SetDataSource(GameDataSource(dbType));
+    sGameDataMgr.SetDataSource(GameDataSource(sConfig.GetWorldDbType()));
 
     sGameDataMgr.LoadQuests();
     sGameDataMgr.LoadFactions();
@@ -132,19 +139,22 @@ int main()
     sAuth.StartNetwork();
     sWorld.StartNetwork();
 
-    std::string command;
-    while (std::getline(std::cin, command))
+    if (sConfig.IsCLIEnabled())
     {
-        if (!command.empty())
+        std::string command;
+        while (std::getline(std::cin, command))
         {
-            CommandHandler handler(command, true);
-            handler.HandleCommand();
-        }
+            if (!command.empty())
+            {
+                CommandHandler handler(command, true);
+                handler.HandleCommand();
+            }
 
-        if (!sAuth.IsEnabled() || !sWorld.IsEnabled())
-            break;
-        
-        printf("> ");
+            if (!sAuth.IsEnabled() || !sWorld.IsEnabled())
+                break;
+
+            printf("> ");
+        }
     }
 
     if (sAuth.m_networkThread.joinable())

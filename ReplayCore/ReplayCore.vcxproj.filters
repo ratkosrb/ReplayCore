@@ -83,6 +83,9 @@
     <ClCompile Include="World\QuestTemplate.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="Input\Config.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -222,6 +225,12 @@
     </ClInclude>
     <ClInclude Include="World\QuestTemplate.h">
       <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\INIReader.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\Config.h">
+      <Filter>Input</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

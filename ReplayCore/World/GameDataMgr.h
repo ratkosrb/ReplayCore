@@ -16,15 +16,6 @@ typedef std::vector<AreaPOIEntry> AreaPOIStore;
 typedef std::vector<GameTele> GameTeleStore;
 typedef std::unordered_map<uint32, std::unique_ptr<Quest>> QuestMap;
 
-enum GameDataSource
-{
-    DB_VMANGOS,
-    DB_CMANGOS_CLASSIC,
-    DB_CMANGOS_TBC,
-    DB_CMANGOS_WOTLK,
-    DB_TRINITY
-};
-
 class GameDataMgr
 {
 public:

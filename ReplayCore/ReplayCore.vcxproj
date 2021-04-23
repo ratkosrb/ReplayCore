@@ -105,6 +105,8 @@
     <ClInclude Include="Defines\Utility.h" />
     <ClInclude Include="Defines\WorldPacket.h" />
     <ClInclude Include="Input\CommandHandler.h" />
+    <ClInclude Include="Input\Config.h" />
+    <ClInclude Include="Input\INIReader.h" />
     <ClInclude Include="World\ChatDefines.h" />
     <ClInclude Include="World\ClassicDefines.h" />
     <ClInclude Include="World\GameDataDefines.h" />
@@ -142,6 +144,7 @@
     <ClCompile Include="Database\QueryObject.cpp" />
     <ClCompile Include="Database\QueryResult.cpp" />
     <ClCompile Include="Input\CommandHandler.cpp" />
+    <ClCompile Include="Input\Config.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="World\GameData.cpp" />
     <ClCompile Include="World\GameDataMgr.cpp" />

@@ -11,6 +11,7 @@
 #include "Opcodes.h"
 #include "UpdateFields.h"
 #include "ReplayMgr.h"
+#include "../Input//Config.h"
 
 #include <array>
 #include <chrono>
@@ -118,8 +119,8 @@ void WorldServer::StartNetwork()
         perror("[WORLD] setsockopt(SO_REUSEADDR) failed");
 
     m_address.sin_family = AF_INET;
-    m_address.sin_port = htons(8085);
-    m_address.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+    m_address.sin_port = htons(sConfig.GetWorldServerPort());
+    m_address.sin_addr.S_un.S_addr = inet_addr(sConfig.GetListenAddress());
 
     result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)

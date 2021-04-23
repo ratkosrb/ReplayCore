@@ -6,6 +6,7 @@
 #include "../Crypto/Hmac.h"
 #include "../Crypto/base32.h"
 #include "../Crypto/Sha1.h"
+#include "../Input/Config.h"
 #include <array>
 
 #pragma comment(lib,"WS2_32")
@@ -28,8 +29,8 @@ void AuthServer::StartNetwork()
         perror("[AUTH] setsockopt(SO_REUSEADDR) failed");
 
     m_address.sin_family = AF_INET;
-    m_address.sin_port = htons(3724);
-    m_address.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+    m_address.sin_port = htons(sConfig.GetLoginServerPort());
+    m_address.sin_addr.S_un.S_addr = inet_addr(sConfig.GetListenAddress());
 
     result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)
@@ -370,7 +371,7 @@ void AuthServer::HandleLogonProof(ByteBuffer& buffer)
     }
 }
 
-Realm realm = Realm("SniffReplay", "127.0.0.1:8085", 0, REALM_FLAG_NONE, 1, 0);
+Realm realm = Realm("SniffReplay", sConfig.GetWorldServerIpAndPort(), 0, REALM_FLAG_NONE, 1, 0);
 
 void AuthServer::HandleRealmlist(ByteBuffer& buffer)
 {

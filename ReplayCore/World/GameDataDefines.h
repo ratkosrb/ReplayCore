@@ -5,7 +5,14 @@
 #include "ObjectDefines.h"
 #include <string>
 
-#define SUPPORTED_CLIENT_BUILD 5875
+enum GameDataSource
+{
+    DB_VMANGOS,
+    DB_CMANGOS_CLASSIC,
+    DB_CMANGOS_TBC,
+    DB_CMANGOS_WOTLK,
+    DB_TRINITY
+};
 
 enum FactionTemplateFlags
 {
