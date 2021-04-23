@@ -659,6 +659,43 @@ void GameDataMgr::BuildPlayerLevelInfo(uint8 race, uint8 _class, uint8 level, Pl
     }
 }
 
+void GameDataMgr::LoadAreaTriggerTeleports()
+{
+    // For reload case
+    m_areaTriggerTeleportMap.clear();
+    printf("[GameDataMgr] Loading areatrigger teleports...\n");
+    
+    std::string fieldNames;
+    if (m_dataSource == DB_TRINITY)
+        fieldNames = "`ID`, `Name`";
+    else
+        fieldNames = "`id`, `name`";
+
+    std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT %s, `target_map`, `target_position_x`, `target_position_y`, `target_position_z`, `target_orientation` FROM `areatrigger_teleport`", fieldNames.c_str()));
+    if (!result)
+    {
+        printf(">> Loaded 0 areatrigger teleports, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 id = fields[0].GetUInt32();
+        AreaTriggerTeleportEntry& areaTrigger = m_areaTriggerTeleportMap[id];
+        areaTrigger.name = fields[1].GetCppString();
+        areaTrigger.location.mapId = fields[2].GetUInt32();
+        areaTrigger.location.x = fields[3].GetFloat();
+        areaTrigger.location.y = fields[4].GetFloat();
+        areaTrigger.location.z = fields[5].GetFloat();
+        areaTrigger.location.o = fields[6].GetFloat();
+
+    } while (result->NextRow());
+
+    printf(">> Loaded %u areatrigger teleports.\n", (uint32)m_areaTriggerTeleportMap.size());
+}
+
 void GameDataMgr::LoadQuests()
 {
     // For reload case

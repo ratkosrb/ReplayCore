@@ -137,6 +137,7 @@ private:
     void HandleMoveTeleportAck(WorldPacket& packtet);
     void HandleMessageChat(WorldPacket& packet);
     void HandleQuestQuery(WorldPacket& packet);
+    void HandleAreaTrigger(WorldPacket& packet);
 public:
     // Packet Building
     void SendAuthChallenge();

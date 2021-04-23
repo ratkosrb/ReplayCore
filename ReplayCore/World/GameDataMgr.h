@@ -15,6 +15,7 @@ typedef std::unordered_map<uint32, AreaTableEntry> AreaTableEntryMap;
 typedef std::vector<AreaPOIEntry> AreaPOIStore;
 typedef std::vector<GameTele> GameTeleStore;
 typedef std::unordered_map<uint32, std::unique_ptr<Quest>> QuestMap;
+typedef std::unordered_map<uint32, AreaTriggerTeleportEntry> AreaTriggerTeleportMap;
 
 class GameDataMgr
 {
@@ -61,6 +62,14 @@ public:
         return info;
     }
     void GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, PlayerLevelInfo* info) const;
+
+    // AreaTriggers
+    void LoadAreaTriggerTeleports();
+    AreaTriggerTeleportEntry const* GetAreaTriggerTeleportEntry(uint32 id) const
+    {
+        auto itr = m_areaTriggerTeleportMap.find(id);
+        return itr != m_areaTriggerTeleportMap.end() ? &itr->second : nullptr;
+    }
 
     // Quests
     void LoadQuests();
@@ -125,6 +134,7 @@ private:
     static AreaTableEntryMap m_areaTableEntryMap;
     static AreaPOIStore m_areaPOIStore;
     GameTeleStore m_GameTeleStore;
+    AreaTriggerTeleportMap m_areaTriggerTeleportMap;
 };
 
 #define sGameDataMgr GameDataMgr::Instance()

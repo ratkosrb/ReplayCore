@@ -59,6 +59,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("MSG_MOVE_TELEPORT_ACK", &WorldServer::HandleMoveTeleportAck);
     SetOpcodeHandler("CMSG_MESSAGECHAT", &WorldServer::HandleMessageChat);
     SetOpcodeHandler("CMSG_QUEST_QUERY", &WorldServer::HandleQuestQuery);
+    SetOpcodeHandler("CMSG_AREATRIGGER", &WorldServer::HandleAreaTrigger);
 }
 
 #undef min
@@ -690,4 +691,28 @@ void WorldServer::HandleQuestQuery(WorldPacket& packet)
     uint32 questId;
     packet >> questId;
     SendQuestQueryResponse(questId);
+}
+
+void WorldServer::HandleAreaTrigger(WorldPacket& packet)
+{
+    if (m_sessionData.isTeleportPending)
+    {
+        printf("[HandleAreaTrigger] Error: Client sent CMSG_AREATRIGGER while being teleported!\n");
+        return;
+    }
+
+    if (!m_clientPlayer)
+    {
+        printf("[HandleAreaTrigger] Error: Client sent CMSG_AREATRIGGER while not in world!\n");
+        return;
+    }
+
+    uint32 id;
+    packet >> id;
+
+    if (AreaTriggerTeleportEntry const* pAreaTrigger = sGameDataMgr.GetAreaTriggerTeleportEntry(id))
+    {
+        printf("[HandleAreaTrigger] Teleporting player to %s\n", pAreaTrigger->name.c_str());
+        TeleportClient(pAreaTrigger->location);
+    }
 }

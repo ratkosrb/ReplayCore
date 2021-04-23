@@ -147,4 +147,10 @@ struct GameTele
     std::string nameLow;
 };
 
+struct AreaTriggerTeleportEntry
+{
+    std::string name;
+    WorldLocation location;
+};
+
 #endif
