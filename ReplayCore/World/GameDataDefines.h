@@ -153,4 +153,28 @@ struct AreaTriggerTeleportEntry
     WorldLocation location;
 };
 
+#define MAX_CREATURE_MODEL 4
+#define MAX_CREATURE_QUEST_ITEMS 6
+
+struct CreatureTemplate
+{
+    uint32 entry = 0;
+    std::string name;
+    std::string subName;
+    std::string iconName;
+    uint32 typeFlags = 0;
+    uint32 type = 0;
+    uint32 family = 0;
+    uint32 rank = 0;
+    uint32 petSpellDataId = 0;
+    uint32 killCredit[2] = {};
+    uint32 displayId[MAX_CREATURE_MODEL] = {};
+    float healthMultiplier = 1.0f;
+    float powerMultiplier = 1.0f;
+    uint8 civilian = 0;
+    uint8 racialLeader = 0;
+    uint32 questItem[MAX_CREATURE_QUEST_ITEMS] = {};
+    uint32 movementTemplateId = 0;
+};
+
 #endif

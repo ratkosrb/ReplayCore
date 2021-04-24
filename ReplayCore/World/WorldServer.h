@@ -138,6 +138,7 @@ private:
     void HandleMessageChat(WorldPacket& packet);
     void HandleQuestQuery(WorldPacket& packet);
     void HandleAreaTrigger(WorldPacket& packet);
+    void HandleCreatureQuery(WorldPacket& packet);
 public:
     // Packet Building
     void SendAuthChallenge();
@@ -178,6 +179,7 @@ public:
     void SendSysMessage(char const* str);
     void PSendSysMessage(char const* format, ...);
     void SendQuestQueryResponse(uint32 questId);
+    void SendCreatureQueryResponse(uint32 creatureId);
 };
 
 #define sWorld WorldServer::Instance()

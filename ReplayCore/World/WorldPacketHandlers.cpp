@@ -60,6 +60,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_MESSAGECHAT", &WorldServer::HandleMessageChat);
     SetOpcodeHandler("CMSG_QUEST_QUERY", &WorldServer::HandleQuestQuery);
     SetOpcodeHandler("CMSG_AREATRIGGER", &WorldServer::HandleAreaTrigger);
+    SetOpcodeHandler("CMSG_CREATURE_QUERY", &WorldServer::HandleCreatureQuery);
 }
 
 #undef min
@@ -715,4 +716,14 @@ void WorldServer::HandleAreaTrigger(WorldPacket& packet)
         printf("[HandleAreaTrigger] Teleporting player to %s\n", pAreaTrigger->name.c_str());
         TeleportClient(pAreaTrigger->location);
     }
+}
+
+void WorldServer::HandleCreatureQuery(WorldPacket& packet)
+{
+    uint32 entry;
+    ObjectGuid guid;
+    packet >> entry;
+    packet >> guid;
+
+    SendCreatureQueryResponse(entry);
 }

@@ -659,6 +659,162 @@ void GameDataMgr::BuildPlayerLevelInfo(uint8 race, uint8 _class, uint8 level, Pl
     }
 }
 
+void GameDataMgr::LoadCreatureTemplates()
+{
+    // For reload case
+    m_creatureTemplateMap.clear();
+    printf("[GameDataMgr] Loading creature templates...\n");
+
+    if (m_dataSource == DB_VMANGOS)
+    {
+        //                                                               0        1       2          3             4       5               6       7                    8              9              10             11             12          13
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `entry`, `name`, `subname`, `type_flags`, `type`, `beast_family`, `rank`, `pet_spell_list_id`, `display_id1`, `display_id2`, `display_id3`, `display_id4`, `civilian`, `racial_leader` FROM `creature_template` t1 WHERE `patch`=(SELECT max(`patch`) FROM `creature_template` t2 WHERE t1.`entry`=t2.`entry` && `patch` <= %u)", sConfig.GetVmangosContentPatch()));
+        if (!result)
+        {
+            printf(">> Loaded 0 creature templates, table is empty!\n");
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 entry = fields[0].GetUInt32();
+            CreatureTemplate& creatureTemplate = m_creatureTemplateMap[entry];
+            creatureTemplate.entry = entry;
+            creatureTemplate.name = fields[1].GetCppString();
+            creatureTemplate.subName = fields[2].GetCppString();
+            creatureTemplate.typeFlags = fields[3].GetUInt32();
+            creatureTemplate.type = fields[4].GetUInt32();
+            creatureTemplate.family = fields[5].GetUInt32();
+            creatureTemplate.rank = fields[6].GetUInt32();
+            creatureTemplate.petSpellDataId = fields[7].GetUInt32();
+            creatureTemplate.displayId[0] = fields[8].GetUInt32();
+            creatureTemplate.displayId[1] = fields[9].GetUInt32();
+            creatureTemplate.displayId[2] = fields[10].GetUInt32();
+            creatureTemplate.displayId[3] = fields[11].GetUInt32();
+            creatureTemplate.civilian = fields[12].GetUInt8();
+            creatureTemplate.racialLeader = fields[13].GetUInt8();
+
+        } while (result->NextRow());
+    }
+    else if (m_dataSource == DB_CMANGOS_CLASSIC)
+    {
+        //                                                               0        1       2          3                    4               5         6       7                 8           9           10          11          12          13              14                  15
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `Entry`, `Name`, `SubName`, `CreatureTypeFlags`, `CreatureType`, `Family`, `Rank`, `PetSpellDataId`, `ModelId1`, `ModelId2`, `ModelId3`, `ModelId4`, `Civilian`, `RacialLeader`, `HealthMultiplier`, `PowerMultiplier` FROM `creature_template`"));
+        if (!result)
+        {
+            printf(">> Loaded 0 creature templates, table is empty!\n");
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 entry = fields[0].GetUInt32();
+            CreatureTemplate& creatureTemplate = m_creatureTemplateMap[entry];
+            creatureTemplate.entry = entry;
+            creatureTemplate.name = fields[1].GetCppString();
+            creatureTemplate.subName = fields[2].GetCppString();
+            creatureTemplate.typeFlags = fields[3].GetUInt32();
+            creatureTemplate.type = fields[4].GetUInt32();
+            creatureTemplate.family = fields[5].GetUInt32();
+            creatureTemplate.rank = fields[6].GetUInt32();
+            creatureTemplate.petSpellDataId = fields[7].GetUInt32();
+            creatureTemplate.displayId[0] = fields[8].GetUInt32();
+            creatureTemplate.displayId[1] = fields[9].GetUInt32();
+            creatureTemplate.displayId[2] = fields[10].GetUInt32();
+            creatureTemplate.displayId[3] = fields[11].GetUInt32();
+            creatureTemplate.civilian = fields[12].GetUInt8();
+            creatureTemplate.racialLeader = fields[13].GetUInt8();
+            creatureTemplate.healthMultiplier = fields[14].GetFloat();
+            creatureTemplate.powerMultiplier = fields[15].GetFloat();
+
+        } while (result->NextRow());
+    }
+    else if (m_dataSource == DB_CMANGOS_TBC)
+    {
+        //                                                               0        1       2          3                    4               5         6       7                 8           9           10          11          12          13              14                  15
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `Entry`, `Name`, `SubName`, `CreatureTypeFlags`, `CreatureType`, `Family`, `Rank`, `PetSpellDataId`, `ModelId1`, `ModelId2`, `ModelId3`, `ModelId4`, `IconName`, `RacialLeader`, `HealthMultiplier`, `PowerMultiplier` FROM `creature_template`"));
+        if (!result)
+        {
+            printf(">> Loaded 0 creature templates, table is empty!\n");
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 entry = fields[0].GetUInt32();
+            CreatureTemplate& creatureTemplate = m_creatureTemplateMap[entry];
+            creatureTemplate.entry = entry;
+            creatureTemplate.name = fields[1].GetCppString();
+            creatureTemplate.subName = fields[2].GetCppString();
+            creatureTemplate.typeFlags = fields[3].GetUInt32();
+            creatureTemplate.type = fields[4].GetUInt32();
+            creatureTemplate.family = fields[5].GetUInt32();
+            creatureTemplate.rank = fields[6].GetUInt32();
+            creatureTemplate.petSpellDataId = fields[7].GetUInt32();
+            creatureTemplate.displayId[0] = fields[8].GetUInt32();
+            creatureTemplate.displayId[1] = fields[9].GetUInt32();
+            creatureTemplate.displayId[2] = fields[10].GetUInt32();
+            creatureTemplate.displayId[3] = fields[11].GetUInt32();
+            creatureTemplate.iconName = fields[12].GetCppString();
+            creatureTemplate.racialLeader = fields[13].GetUInt8();
+            creatureTemplate.healthMultiplier = fields[14].GetFloat();
+            creatureTemplate.powerMultiplier = fields[15].GetFloat(); 
+
+        } while (result->NextRow());
+    }
+    else if (m_dataSource == DB_CMANGOS_WOTLK)
+    {
+        //                                                               0        1       2          3                    4               5         6       7                 8           9           10          11          12          13              14                  15                 16             17             18            19            20            21            22            23            24
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `Entry`, `Name`, `SubName`, `CreatureTypeFlags`, `CreatureType`, `Family`, `Rank`, `PetSpellDataId`, `ModelId1`, `ModelId2`, `ModelId3`, `ModelId4`, `IconName`, `RacialLeader`, `HealthMultiplier`, `PowerMultiplier`, `KillCredit1`, `KillCredit2`, `QuestItem1`, `QuestItem2`, `QuestItem3`, `QuestItem4`, `QuestItem5`, `QuestItem6`, `MovementTemplateId` FROM `creature_template`"));
+        if (!result)
+        {
+            printf(">> Loaded 0 creature templates, table is empty!\n");
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 entry = fields[0].GetUInt32();
+            CreatureTemplate& creatureTemplate = m_creatureTemplateMap[entry];
+            creatureTemplate.entry = entry;
+            creatureTemplate.name = fields[1].GetCppString();
+            creatureTemplate.subName = fields[2].GetCppString();
+            creatureTemplate.typeFlags = fields[3].GetUInt32();
+            creatureTemplate.type = fields[4].GetUInt32();
+            creatureTemplate.family = fields[5].GetUInt32();
+            creatureTemplate.rank = fields[6].GetUInt32();
+            creatureTemplate.petSpellDataId = fields[7].GetUInt32();
+            creatureTemplate.displayId[0] = fields[8].GetUInt32();
+            creatureTemplate.displayId[1] = fields[9].GetUInt32();
+            creatureTemplate.displayId[2] = fields[10].GetUInt32();
+            creatureTemplate.displayId[3] = fields[11].GetUInt32();
+            creatureTemplate.iconName = fields[12].GetCppString();
+            creatureTemplate.racialLeader = fields[13].GetUInt8();
+            creatureTemplate.healthMultiplier = fields[14].GetFloat();
+            creatureTemplate.powerMultiplier = fields[15].GetFloat();
+            creatureTemplate.killCredit[0] = fields[16].GetUInt32();
+            creatureTemplate.killCredit[1] = fields[17].GetUInt32();
+            creatureTemplate.questItem[0] = fields[18].GetUInt32();
+            creatureTemplate.questItem[1] = fields[19].GetUInt32();
+            creatureTemplate.questItem[2] = fields[20].GetUInt32();
+            creatureTemplate.questItem[3] = fields[21].GetUInt32();
+            creatureTemplate.questItem[4] = fields[22].GetUInt32();
+            creatureTemplate.questItem[5] = fields[23].GetUInt32();
+            creatureTemplate.movementTemplateId = fields[24].GetUInt32();
+
+        } while (result->NextRow());
+    }
+    printf(">> Loaded %u creature templates.\n", (uint32)m_creatureTemplateMap.size());
+}
+
 void GameDataMgr::LoadAreaTriggerTeleports()
 {
     // For reload case

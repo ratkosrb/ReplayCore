@@ -1104,3 +1104,68 @@ void WorldServer::SendQuestQueryResponse(uint32 questId)
 
     SendPacket(data);
 }
+
+void WorldServer::SendCreatureQueryResponse(uint32 creatureId)
+{
+    CreatureTemplate const* pCreature = sGameDataMgr.GetCreatureTemplateEntry(creatureId);
+    if (!pCreature)
+    {
+        WorldPacket data(GetOpcode("SMSG_CREATURE_QUERY_RESPONSE"), 4);
+        data << uint32(creatureId | 0x80000000);
+        SendPacket(data);
+        printf("Client requested info about unknown creature id %u!\n", creatureId);
+        return;
+    }
+
+    WorldPacket data(GetOpcode("SMSG_CREATURE_QUERY_RESPONSE"), 100);
+    data << uint32(creatureId);
+    data << pCreature->name;
+    data << uint8(0) << uint8(0) << uint8(0); // name2, name3, name4, always empty
+    data << pCreature->subName;
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        data << pCreature->iconName;
+    data << uint32(pCreature->typeFlags);
+    data << uint32(pCreature->type);
+    data << uint32(pCreature->family);
+    data << uint32(pCreature->rank);
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
+    {
+        data << uint32(pCreature->killCredit[0]);
+        data << uint32(pCreature->killCredit[1]);
+    }
+    else
+    {
+        if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+            data << uint32(0); // unknown
+        data << uint32(pCreature->petSpellDataId);
+    }
+
+    uint32 displayIdCount = (GetClientBuild() >= CLIENT_BUILD_2_0_1) ? MAX_CREATURE_MODEL : 1;
+    for (uint32 i = 0; i < displayIdCount; ++i)
+    {
+        data << uint32(pCreature->displayId[i]);
+    }
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+    {
+        data << float(pCreature->healthMultiplier);
+        data << float(pCreature->powerMultiplier);
+    }
+    else
+        data << uint8(pCreature->civilian);
+
+    data << uint8(pCreature->racialLeader);
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
+    {
+        uint32 questItemsCount = GetClientBuild() >= CLIENT_BUILD_3_2_0 ? 6 : 4;
+        for (uint32 i = 0; i < questItemsCount; ++i)
+        {
+            data << uint32(pCreature->questItem[i]);
+        }
+        data << uint32(pCreature->movementTemplateId);
+    }
+
+    SendPacket(data);
+}

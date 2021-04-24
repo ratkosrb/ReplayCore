@@ -123,6 +123,7 @@ int main()
     sGameDataMgr.LoadPlayerInfo();
     sGameDataMgr.LoadGameTele();
     sGameDataMgr.LoadAreaTriggerTeleports();
+    sGameDataMgr.LoadCreatureTemplates();
     sReplayMgr.LoadEverything();
 
     Opcodes::SetupOpcodeNamesMaps();
