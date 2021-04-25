@@ -30,8 +30,6 @@ void WorldObjectData::InitializeWorldObject(WorldObject* pObject) const
     pObject->SetLocation(location);
 }
 
-
-
 void GameObjectData::InitializeGameObject(GameObject* pGo) const
 {
     InitializeWorldObject(pGo);
@@ -48,7 +46,6 @@ void GameObjectData::InitializeGameObject(GameObject* pGo) const
 
     pGo->SetUInt32Value("GAMEOBJECT_FLAGS", flags);
     pGo->SetRotation(rotation);
-
     pGo->SetState(state);
     pGo->SetFloatValue("GAMEOBJECT_POS_X", location.x);
     pGo->SetFloatValue("GAMEOBJECT_POS_Y", location.y);

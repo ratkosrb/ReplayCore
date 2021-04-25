@@ -65,19 +65,4 @@ enum GOState
 #define MAX_GAMEOBJECT_DISPLAY_ID_TBC 8005
 #define MAX_GAMEOBJECT_DISPLAY_ID_WOTLK 9624
 
-struct Quat
-{
-    union
-    {
-        struct
-        {
-            float x;
-            float y;
-            float z;
-            float w;
-        };
-        int64 raw;
-    };
-};
-
 #endif
