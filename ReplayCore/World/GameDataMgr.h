@@ -66,7 +66,7 @@ public:
 
     // Creatures
     void LoadCreatureTemplates();
-    CreatureTemplate const* GetCreatureTemplateEntry(uint32 id) const
+    CreatureTemplate const* GetCreatureTemplate(uint32 id) const
     {
         auto itr = m_creatureTemplateMap.find(id);
         return itr != m_creatureTemplateMap.end() ? &itr->second : nullptr;

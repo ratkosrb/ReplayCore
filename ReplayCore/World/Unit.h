@@ -5,7 +5,7 @@
 #include "UnitDefines.h"
 #include "MovementDefines.h"
 
-struct UnitData;
+struct CreatureData;
 
 class Unit : public WorldObject
 {
@@ -25,7 +25,13 @@ public :
         m_updateFlags = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
         InitializeMoveSpeeds();
     }
-    Unit(UnitData const& unitData);
+    Unit(CreatureData const& unitData);
+
+    void AddUnitMovementFlag(uint32 f) { m_movementInfo.moveFlags |= f; }
+    void RemoveUnitMovementFlag(uint32 f) { m_movementInfo.moveFlags &= ~f; }
+    bool HasUnitMovementFlag(uint32 f) const { return (m_movementInfo.moveFlags & f) == f; }
+    uint32 GetUnitMovementFlags() const { return m_movementInfo.moveFlags; }
+    void SetUnitMovementFlags(uint32 f) { m_movementInfo.moveFlags = f; }
     
     MovementInfo& GetMovementInfo() { return m_movementInfo; }
     MovementInfo const& GetMovementInfo() const { return m_movementInfo; }

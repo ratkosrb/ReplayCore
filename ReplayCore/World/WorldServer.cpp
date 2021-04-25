@@ -50,19 +50,21 @@ void WorldServer::WorldLoop()
         m_msTimeSinceServerStart += diff;
         m_lastUpdateTimeMs = ms;
 
-        BuildAndSendObjectUpdates();
+        BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatures);
+        BuildAndSendObjectUpdates<std::map<ObjectGuid, Player>>(m_players);
 
     } while (m_enabled);
 }
 
-void WorldServer::BuildAndSendObjectUpdates()
+template<class T>
+void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
 {
     // limit amount of objects updated so we don't exceed maximum packet size
     uint8 updatesCount = 0;
     uint8 outOfRangeCount = 0;
     UpdateData updateData;
 
-    for (auto& itr : m_players)
+    for (auto& itr : objectsMap)
     {
         bool visible = m_clientPlayer->IsWithinVisibilityDistance(&itr.second);
 
@@ -108,6 +110,7 @@ void WorldServer::SpawnWorldObjects()
     m_creatures.clear();
     m_clientPlayer.reset();
     sReplayMgr.SpawnPlayers();
+    sReplayMgr.SpawnCreatures();
     m_worldSpawned = true;
 }
 

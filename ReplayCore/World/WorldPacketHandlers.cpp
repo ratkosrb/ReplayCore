@@ -78,7 +78,7 @@ void WorldServer::HandleEnumCharacters(WorldPacket& packet)
         if (count <= 0)
             break;
 
-        if (PlayerData const* pPlayer = sReplayMgr.GetPlayerTemplate(guid))
+        if (PlayerData const* pPlayer = sReplayMgr.GetPlayerSpawnData(guid.GetCounter()))
         {
             ObjectGuid newGuid(HIGHGUID_PLAYER, uint32(guid.GetCounter() + CLIENT_CHARACTER_GUID_OFFSET));
             response << newGuid;

@@ -1107,7 +1107,7 @@ void WorldServer::SendQuestQueryResponse(uint32 questId)
 
 void WorldServer::SendCreatureQueryResponse(uint32 creatureId)
 {
-    CreatureTemplate const* pCreature = sGameDataMgr.GetCreatureTemplateEntry(creatureId);
+    CreatureTemplate const* pCreature = sGameDataMgr.GetCreatureTemplate(creatureId);
     if (!pCreature)
     {
         WorldPacket data(GetOpcode("SMSG_CREATURE_QUERY_RESPONSE"), 4);

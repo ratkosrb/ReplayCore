@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include <string>
+#include <sstream>
 #include <time.h>
 
 struct IpAddress
@@ -61,6 +62,17 @@ inline uint32 secsToTimeBitFields(time_t secs)
     return (lt->tm_year - 100) << 24 | lt->tm_mon << 20 | (lt->tm_mday - 1) << 14 | lt->tm_wday << 11 | lt->tm_hour << 6 | lt->tm_min;
 }
 
+inline void ParseStringIntoVector(std::string const& text, std::vector<uint32> data)
+{
+    std::string tmp;
+    std::stringstream ss(text);
+
+    while (std::getline(ss, tmp, ' '))
+    {
+        uint32 value = static_cast<uint32>(atol(tmp.c_str()));
+        data.push_back(value);
+    }
+}
 
 #endif
 

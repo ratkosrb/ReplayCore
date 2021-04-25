@@ -230,6 +230,27 @@ enum UnitMoveType
 
 extern float baseMoveSpeed[MAX_MOVE_TYPE_WOTLK];
 
+enum CreatureMovementTypes
+{
+    IDLE_MOVEMENT     = 0,
+    RANDOM_MOVEMENT   = 1,
+    WAYPOINT_MOVEMENT = 2
+};
+
+inline char const* GetCreatureMovementTypeName(uint8 moveType)
+{
+    switch (moveType)
+    {
+        case IDLE_MOVEMENT:
+            return "Idle";
+        case RANDOM_MOVEMENT:
+            return "Random";
+        case WAYPOINT_MOVEMENT:
+            return "Waypoint";
+    }
+    return "UNKNOWN";
+}
+
 namespace Vanilla
 {
     enum VirtualItemInfoByteOffset

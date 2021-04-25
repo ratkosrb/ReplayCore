@@ -22,12 +22,14 @@ public:
     bool HandleShutdownCommand();
     bool HandleTeleportToCoordinates();
     bool HandleTeleportToLocation();
+    bool HandleSpawnInfo();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[3] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[4] =
     {
         { "shutdown", &CommandHandler::HandleShutdownCommand },
         { "go", &CommandHandler::HandleTeleportToCoordinates },
         { "tele", &CommandHandler::HandleTeleportToLocation },
+        { "spawninfo", &CommandHandler::HandleSpawnInfo },
     };
 
     bool m_console = true;

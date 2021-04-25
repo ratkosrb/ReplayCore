@@ -67,6 +67,11 @@ public:
         m_players.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(playerData));
     }
 
+    void MakeNewCreature(ObjectGuid const& guid, CreatureData const& creatureData)
+    {
+        m_creatures.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(creatureData));
+    }
+
     void SendPacket(WorldPacket& packet);
     bool IsExistingOpcode(uint16);
     uint16 GetOpcode(std::string name);
@@ -75,6 +80,7 @@ public:
     std::string GetUpdateField(uint16 id);
     uint16 GetUpdateFieldFlags(uint8 objectTypeId, uint16 id);
     uint16 GetClientBuild() const { return m_sessionData.build; }
+    Player* GetClientPlayer() { return m_clientPlayer.get(); }
     uint32 GetServerTimeMs() const { return m_msTimeSinceServerStart; }
 
     bool IsEnabled() const { return m_enabled; }
@@ -94,7 +100,8 @@ private:
 
     // World
     void WorldLoop();
-    void BuildAndSendObjectUpdates();
+    template<class T>
+    void BuildAndSendObjectUpdates(T& objectsMap);
     std::map<ObjectGuid, Unit> m_creatures;
     std::map<ObjectGuid, Player> m_players;
     std::unique_ptr<Player> m_clientPlayer = nullptr;

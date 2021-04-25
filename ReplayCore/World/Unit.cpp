@@ -17,7 +17,7 @@ float baseMoveSpeed[MAX_MOVE_TYPE_WOTLK] =
     3.14f                                                   // MOVE_PITCH_RATE
 };
 
-Unit::Unit(UnitData const& unitData) : WorldObject(unitData.guid)
+Unit::Unit(CreatureData const& unitData) : WorldObject(unitData.guid)
 {
     m_objectType |= TYPEMASK_UNIT;
     m_objectTypeId = TYPEID_UNIT;
@@ -30,7 +30,7 @@ Unit::Unit(UnitData const& unitData) : WorldObject(unitData.guid)
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
     SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
     InitializePlaceholderUnitFields();
-    unitData.InitializeUnit(this);
+    unitData.InitializeCreature(this);
     m_uint32Values_mirror = new uint32[m_valuesCount];
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }

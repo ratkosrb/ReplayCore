@@ -21,6 +21,7 @@ struct ObjectData
     uint8 typeId = 0;
     uint32 entry = 0;
     float scale = DEFAULT_OBJECT_SCALE;
+    uint32 sourceSniffId = 0;
 
     void InitializeObject(Object* pObject) const;
 };
@@ -71,6 +72,7 @@ struct UnitData : public WorldObjectData
     uint8 standState = 0;
     uint8 shapeShiftForm = 0;
     uint8 visFlags = 0;
+    uint8 pvpFlags = 0;
     uint32 npcFlags = 0;
     uint32 unitFlags = 0;
     uint32 unitFlags2 = 0;
@@ -81,6 +83,7 @@ struct UnitData : public WorldObjectData
     uint8 sheathState = 0;
     uint32 movementFlags = 0;
     float speedRate[MAX_MOVE_TYPE_TBC] = {};
+    std::vector<uint32> auras;
 
     void InitializeUnit(Unit* pUnit) const;
 
@@ -88,6 +91,17 @@ struct UnitData : public WorldObjectData
     uint8 GetClass() const { return classId; }
     uint8 GetGender() const { return gender; }
     uint32 GetLevel() const { return level; }
+};
+
+struct CreatureData : public UnitData
+{
+    float wanderDistance = 0.0f;
+    uint32 movementType = 0;
+    bool isTemporary = false;
+    bool isPet = false;
+    bool isHovering = false;
+
+    void InitializeCreature(Unit* pUnit) const;
 };
 
 struct PlayerData : public UnitData
@@ -116,21 +130,37 @@ class ReplayMgr
 {
 public:
     static ReplayMgr& Instance();
+    ObjectGuid MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std::string type);
     void LoadEverything()
     {
+        LoadCreatures();
         LoadPlayers();
         LoadActivePlayers();
     }
+    void LoadCreatures();
+    template<class T>
+    void LoadInitialGuidValues(const char* tableName, T& spawnsMap);
+    CreatureData* GetCreatureSpawnData(uint32 guid)
+    {
+        auto itr = m_creatureSpawns.find(guid);
+        if (itr == m_creatureSpawns.end())
+            return nullptr;
+
+        assert(guid == itr->second.guid.GetCounter());
+
+        return &itr->second;
+    }
+    void SpawnCreatures();
     void LoadPlayers();
     void LoadActivePlayers();
     std::set<ObjectGuid> const& GetActivePlayers() const { return m_activePlayers; }
-    PlayerData const* GetPlayerTemplate(ObjectGuid guid) const
+    PlayerData* GetPlayerSpawnData(uint32 guid)
     {
-        auto itr = m_playerTemplates.find(guid);
-        if (itr == m_playerTemplates.end())
+        auto itr = m_playerSpawns.find(guid);
+        if (itr == m_playerSpawns.end())
             return nullptr;
 
-        assert(guid == itr->second.guid);
+        assert(guid == itr->second.guid.GetCounter());
 
         return &itr->second;
     }
@@ -138,7 +168,8 @@ public:
 private:
     std::set<ObjectGuid> m_activePlayers;
     std::map<uint32 /*unixtime*/, ObjectGuid> m_activePlayerTimes;
-    std::map<ObjectGuid, PlayerData> m_playerTemplates;
+    std::map<uint32, PlayerData> m_playerSpawns;
+    std::map<uint32, CreatureData> m_creatureSpawns;
 };
 
 #define sReplayMgr ReplayMgr::Instance()

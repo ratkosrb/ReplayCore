@@ -2,6 +2,7 @@
 #include "../Auth/AuthServer.h"
 #include "../World//WorldServer.h"
 #include "../World/GameDataMgr.h"
+#include "../World/ReplayMgr.h"
 #include <sstream>
 
 CommandHandler::CommandHandler(std::string const& text, bool console) : m_console(console)
@@ -167,5 +168,66 @@ bool CommandHandler::HandleTeleportToLocation()
 
     sWorld.TeleportClient(pTeleportLocation->location);
 
+    return true;
+}
+
+bool CommandHandler::HandleSpawnInfo()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    ObjectGuid guid = pPlayer->GetGuidValue("UNIT_FIELD_TARGET");
+    if (guid.IsEmpty())
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    if (guid.IsCreature())
+    {
+        CreatureData const* pData = sReplayMgr.GetCreatureSpawnData(guid.GetCounter());
+        if (!pData)
+        {
+            SendSysMessage("No spawn data for creature found.");
+            return true;
+        }
+
+        PSendSysMessage("Spawn data for %s", guid.GetString().c_str());
+        PSendSysMessage("Map: %u", pData->location.mapId);
+        PSendSysMessage("Position: %g %g %g", pData->location.x, pData->location.y, pData->location.z);
+        PSendSysMessage("Orientation: %g\n", pData->location.o);
+        PSendSysMessage("Movement Type: %s", GetCreatureMovementTypeName(pData->movementType));
+        PSendSysMessage("Wander Distance: %g", pData->wanderDistance);
+        if (pData->createdBySpell)
+            PSendSysMessage("Summoned by spell: %u", pData->createdBySpell);
+        if (pData->isTemporary)
+            SendSysMessage("Is Temporary Spawn");
+        if (pData->isPet)
+            SendSysMessage("Is Pet");
+        PSendSysMessage("Sniff Id: %u", pData->sourceSniffId);
+        return true;
+    }
+    else if (guid.IsPlayer())
+    {
+        PlayerData const* pData = sReplayMgr.GetPlayerSpawnData(guid.GetCounter());
+        if (!pData)
+        {
+            SendSysMessage("No spawn data for player found.");
+            return true;
+        }
+
+        PSendSysMessage("Spawn data for %s", guid.GetString().c_str());
+        PSendSysMessage("Map: %u", pData->location.mapId);
+        PSendSysMessage("Position: %g %g %g", pData->location.x, pData->location.y, pData->location.z);
+        PSendSysMessage("Orientation: %g\n", pData->location.o);
+        PSendSysMessage("Sniff Id: %u", pData->sourceSniffId);
+        return true;
+    }
+    
+    SendSysMessage("Unsupported object type selected.");
     return true;
 }

@@ -29,6 +29,7 @@ Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : U
     m_name = name;
     m_location = otherPlayer.m_location;
     m_movementInfo = otherPlayer.m_movementInfo;
+    m_movementInfo.moveFlags = 0;
 
     m_valuesCount = sWorld.GetUpdateField("PLAYER_END");
     assert(m_valuesCount);
