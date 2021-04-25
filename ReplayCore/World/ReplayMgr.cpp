@@ -1,12 +1,14 @@
 #include "../Defines//Databases.h"
 #include "ReplayMgr.h"
 #include "Player.h"
+#include "GameObject.h"
 #include "GameDataMgr.h"
 #include "MovementDefines.h"
 #include "WorldServer.h"
 #include "../Defines/ClientVersions.h"
 #include "ClassicDefines.h"
 #include "../Defines//Utility.h"
+#include "GameObjectDefines.h"
 #include <set>
 
 ReplayMgr& ReplayMgr::Instance()
@@ -26,6 +28,48 @@ void WorldObjectData::InitializeWorldObject(WorldObject* pObject) const
 {
     InitializeObject(pObject);
     pObject->SetLocation(location);
+}
+
+
+
+void GameObjectData::InitializeGameObject(GameObject* pGo) const
+{
+    InitializeWorldObject(pGo);
+    pGo->SetGuidValue("OBJECT_FIELD_CREATED_BY", createdBy);
+
+    GameObjectTemplate const* gInfo = sGameDataMgr.GetGameObjectTemplate(entry);
+
+    if (sGameDataMgr.IsValidGameObjectDisplayId(displayId))
+        pGo->SetUInt32Value("GAMEOBJECT_DISPLAYID", displayId);
+    else if (gInfo && sGameDataMgr.IsValidGameObjectDisplayId(gInfo->displayId))
+        pGo->SetUInt32Value("GAMEOBJECT_DISPLAYID", gInfo->displayId);
+    else
+        pGo->SetUInt32Value("GAMEOBJECT_DISPLAYID", GAMEOBJECT_DISPLAY_ID_CHEST);
+
+    pGo->SetUInt32Value("GAMEOBJECT_FLAGS", flags);
+    pGo->SetRotation(rotation);
+
+    pGo->SetState(state);
+    pGo->SetFloatValue("GAMEOBJECT_POS_X", location.x);
+    pGo->SetFloatValue("GAMEOBJECT_POS_Y", location.y);
+    pGo->SetFloatValue("GAMEOBJECT_POS_Z", location.z);
+    pGo->SetFloatValue("GAMEOBJECT_FACING", location.o);
+    pGo->SetDynamicFlags(dynamicFlags);
+    pGo->SetPathProgress(pathProgress);
+    
+    if (faction && sGameDataMgr.IsValidFactionTemplate(faction))
+        pGo->SetUInt32Value("GAMEOBJECT_FACTION", faction);
+
+    if (sGameDataMgr.IsValidGameObjectType(type))
+        pGo->SetType(type);
+    else if (gInfo && sGameDataMgr.IsValidGameObjectType(gInfo->type))
+        pGo->SetType(gInfo->type);
+    else
+        pGo->SetType(GAMEOBJECT_TYPE_GENERIC);
+    
+    pGo->SetUInt32Value("GAMEOBJECT_LEVEL", level);
+    pGo->SetArtKit(artKit);
+    pGo->SetAnimProgress(animProgress);
 }
 
 void UnitData::InitializeUnit(Unit* pUnit) const
@@ -168,6 +212,27 @@ void PlayerData::InitializePlayer(Player* pPlayer) const
         pPlayer->SetVisibleItemSlot(i, visibleItems[i], visibleItemEnchants[i]);
 }
 
+void ReplayMgr::SpawnPlayers()
+{
+    printf("[ReplayMgr] Spawning players...\n");
+    for (const auto& itr : m_playerSpawns)
+        sWorld.MakeNewPlayer(itr.second.guid, itr.second);
+}
+
+void ReplayMgr::SpawnCreatures()
+{
+    printf("[ReplayMgr] Spawning creatures...\n");
+    for (const auto& itr : m_creatureSpawns)
+        sWorld.MakeNewCreature(itr.second.guid, itr.second);
+}
+
+void ReplayMgr::SpawnGameObjects()
+{
+    printf("[ReplayMgr] Spawning gameobjects...\n");
+    for (const auto& itr : m_gameObjectSpawns)
+        sWorld.MakeNewGameObject(itr.second.guid, itr.second);
+}
+
 ObjectGuid ReplayMgr::MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std::string type)
 {
     if (type == "Player")
@@ -182,8 +247,128 @@ ObjectGuid ReplayMgr::MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std
     return ObjectGuid();
 }
 
+void ReplayMgr::LoadGameObjects()
+{
+    printf("[ReplayMgr] Loading gameobject spawns...\n");
+    //                                                               0       1     2      3             4             5             6
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, "
+    //    7            8            9            10           11              12              13            14              15
+        "`rotation0`, `rotation1`, `rotation2`, `rotation3`, `is_temporary`, `creator_guid`, `creator_id`, `creator_type`, `display_id`, "
+    //    16       17         18       19               20               21       22      23
+        "`level`, `faction`, `flags`, `dynamic_flags`, `path_progress`, `state`, `type`, `artkit` FROM `gameobject`"));
+
+    if (!result)
+    {
+        printf(">> Loaded 0 gameobjects, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 guid = fields[0].GetUInt32();
+        uint32 entry = fields[1].GetUInt32();
+
+        GameObjectTemplate const* gInfo = sGameDataMgr.GetGameObjectTemplate(entry);
+        if (!gInfo)
+        {
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u) with non existing gameobject entry %u, skipped.\n", guid, entry);
+            //continue;
+        }
+
+        GameObjectData& data = m_gameObjectSpawns[guid];
+        ObjectGuid objectGuid = ObjectGuid(HIGHGUID_GAMEOBJECT, entry, guid);
+
+        data.guid = objectGuid;
+        data.entry = entry;
+
+        if (gInfo)
+            data.scale = gInfo->scale;
+
+        data.location.mapId = fields[2].GetUInt32();
+        data.location.x = fields[3].GetFloat();
+        data.location.y = fields[4].GetFloat();
+        data.location.z = fields[5].GetFloat();
+        data.location.o = fields[6].GetFloat();
+
+        data.rotation[0] = fields[7].GetFloat();
+        if (data.rotation[0] < -1.0f || data.rotation[0] > 1.0f)
+        {
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation0 (%f) value.\n", guid, entry, data.rotation[0]);
+            data.rotation[0] = 0.0f;
+        }
+
+        data.rotation[1] = fields[8].GetFloat();
+        if (data.rotation[1] < -1.0f || data.rotation[1] > 1.0f)
+        {
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation1 (%f) value.\n", guid, entry, data.rotation[1]);
+            data.rotation[1] = 0.0f;
+        }
+
+        data.rotation[2] = fields[9].GetFloat();
+        if (data.rotation[2] < -1.0f || data.rotation[2] > 1.0f)
+        {
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation2 (%f) value.\n", guid, entry, data.rotation[2]);
+            data.rotation[2] = 0.0f;
+        }
+
+        data.rotation[3] = fields[10].GetFloat();
+        if (data.rotation[3] < -1.0f || data.rotation[3] > 1.0f)
+        {
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation3 (%f) value.\n", guid, entry, data.rotation[3]);
+            data.rotation[3] = 0.0f;
+        }
+
+        data.isTemporary = fields[11].GetBool();
+        uint32 creatorGuid = fields[12].GetUInt32();
+        uint32 creatorId = fields[13].GetUInt32();
+        std::string creatorType = fields[14].GetCppString();
+        data.createdBy = MakeObjectGuidFromSniffData(creatorGuid, creatorId, creatorType);
+
+        data.displayId = fields[15].GetUInt32();
+        if (data.displayId > MAX_GAMEOBJECT_DISPLAY_ID_WOTLK)
+        {
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `displayId` (%u) value.\n", guid, entry, data.displayId);
+            data.displayId = gInfo->displayId;
+        }
+
+        data.level = fields[16].GetInt32();
+        data.faction = fields[17].GetUInt32();
+        if (data.faction > MAX_FACTION_TEMPLATE_WOTLK)
+        {
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `faction` (%u) value.\n", guid, entry, data.faction);
+            data.faction = 35;
+        }
+
+        data.flags = fields[18].GetUInt32();
+        data.dynamicFlags = fields[19].GetUInt32();
+        data.pathProgress = fields[20].GetUInt32();
+
+        data.state = fields[21].GetUInt32();
+        if (data.state >= MAX_GO_STATE)
+        {
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `state` (%u) value.\n", guid, entry, data.state);
+            data.state = GO_STATE_READY;
+        }
+
+        data.type = fields[22].GetUInt32();
+        if (data.type >= MAX_GAMEOBJECT_TYPE_WOTLK)
+        {
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `type` (%u) value.\n", guid, entry, data.state);
+            data.type = gInfo->type;
+        }
+
+        data.artKit = fields[23].GetUInt32();
+
+    } while (result->NextRow());
+
+   printf(">> Loaded %u gameobject spawns.\n", (uint32)m_gameObjectSpawns.size());
+}
+
 void ReplayMgr::LoadCreatures()
 {
+    printf("[ReplayMgr] Loading creature spawns...\n");
     //                                                               0       1     2      3             4             5             6              7                  8                9              10              11        12              13       14            15                   16                  17       18        19         20       21           22            23             24               25                26            27              28          29            30             31             32           33              34           35                 36            37            38           39                40            41                 42           43                44                 45              46                       47                      48                     49                    50                  51                  52       53
     std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `wander_distance`, `movement_type`, `is_hovering`, `is_temporary`, `is_pet`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `current_mana`, `max_mana`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `move_flags`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
 
@@ -386,20 +571,6 @@ void ReplayMgr::LoadInitialGuidValues(const char* tableName, T& spawnsMap)
         }
 
     } while (result->NextRow());
-}
-
-void ReplayMgr::SpawnPlayers()
-{
-    printf("[ReplayMgr] Spawning players...\n");
-    for (const auto& itr : m_playerSpawns)
-        sWorld.MakeNewPlayer(itr.second.guid, itr.second);
-}
-
-void ReplayMgr::SpawnCreatures()
-{
-    printf("[ReplayMgr] Spawning creatures...\n");
-    for (const auto& itr : m_creatureSpawns)
-        sWorld.MakeNewCreature(itr.second.guid, itr.second);
 }
 
 void ReplayMgr::LoadPlayers()

@@ -10,16 +10,6 @@ struct PlayerData;
 class Player : public Unit
 {
 public:
-    Player() : Unit()
-    {
-        m_objectType |= TYPEMASK_UNIT;
-        m_objectTypeId = TYPEID_UNIT;
-    }
-    Player(ObjectGuid guid) : Unit(guid)
-    {
-        m_objectType |= TYPEMASK_PLAYER;
-        m_objectTypeId = TYPEID_PLAYER;
-    }
     Player(PlayerData const& playerData);
     Player(ObjectGuid guid, std::string name, Player const& otherPlayer);
 

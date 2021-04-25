@@ -111,6 +111,8 @@
     <ClInclude Include="World\ClassicDefines.h" />
     <ClInclude Include="World\GameDataDefines.h" />
     <ClInclude Include="World\GameDataMgr.h" />
+    <ClInclude Include="World\GameObject.h" />
+    <ClInclude Include="World\GameObjectDefines.h" />
     <ClInclude Include="World\Geometry.h" />
     <ClInclude Include="World\ItemPrototype.h" />
     <ClInclude Include="World\MovementDefines.h" />
@@ -148,6 +150,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="World\GameData.cpp" />
     <ClCompile Include="World\GameDataMgr.cpp" />
+    <ClCompile Include="World\GameObject.cpp" />
     <ClCompile Include="World\Object.cpp" />
     <ClCompile Include="World\ObjectGuid.cpp" />
     <ClCompile Include="World\Opcodes.cpp" />

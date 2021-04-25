@@ -17,6 +17,7 @@ typedef std::vector<GameTele> GameTeleStore;
 typedef std::unordered_map<uint32, std::unique_ptr<Quest>> QuestMap;
 typedef std::unordered_map<uint32, AreaTriggerTeleportEntry> AreaTriggerTeleportMap;
 typedef std::unordered_map<uint32, CreatureTemplate> CreatureTemplateMap;
+typedef std::unordered_map<uint32, GameObjectTemplate> GameObjectTemplateMap;
 
 class GameDataMgr
 {
@@ -28,6 +29,8 @@ public:
     bool IsValidRace(uint32 id) const;
     bool IsValidClass(uint32 id) const;
     bool IsValidUnitDisplayId(uint32 id) const;
+    bool IsValidGameObjectDisplayId(uint32 id) const;
+    bool IsValidGameObjectType(uint32 type) const;
     uint8 GetMoveSpeedsCount() const;
 
     void LoadGameTele();
@@ -63,6 +66,14 @@ public:
         return info;
     }
     void GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, PlayerLevelInfo* info) const;
+
+    // GameObjects
+    void LoadGameObjectTemplates();
+    GameObjectTemplate const* GetGameObjectTemplate(uint32 id) const
+    {
+        auto itr = m_gameObjectTemplateMap.find(id);
+        return itr != m_gameObjectTemplateMap.end() ? &itr->second : nullptr;
+    }
 
     // Creatures
     void LoadCreatureTemplates();
@@ -145,6 +156,7 @@ private:
     GameTeleStore m_GameTeleStore;
     AreaTriggerTeleportMap m_areaTriggerTeleportMap;
     CreatureTemplateMap m_creatureTemplateMap;
+    GameObjectTemplateMap m_gameObjectTemplateMap;
 };
 
 #define sGameDataMgr GameDataMgr::Instance()

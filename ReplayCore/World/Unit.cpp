@@ -87,7 +87,7 @@ void Unit::SetVirtualItem(uint8 slot, uint32 item_id)
         ItemPrototype const* proto = sGameDataMgr.GetItemPrototype(item_id);
         if (!proto)
         {
-            printf("Not listed in 'item_template' item (ID:%u) used as virtual item for %s", item_id, GetGuidStr().c_str());
+            printf("Not listed in 'item_template' item (ID:%u) used as virtual item for %s\n", item_id, GetGuidStr().c_str());
             return;
         }
 
@@ -117,7 +117,7 @@ void Unit::SetVirtualItem(uint8 slot, uint32 item_id)
         ItemPrototype const* proto = sGameDataMgr.GetItemPrototype(item_id);
         if (!proto)
         {
-            printf("Not listed in 'item_template' item (ID:%u) used as virtual item for %s", item_id, GetGuidStr().c_str());
+            printf("Not listed in 'item_template' item (ID:%u) used as virtual item for %s\n", item_id, GetGuidStr().c_str());
             return;
         }
 

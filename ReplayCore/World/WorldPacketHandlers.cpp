@@ -61,6 +61,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_QUEST_QUERY", &WorldServer::HandleQuestQuery);
     SetOpcodeHandler("CMSG_AREATRIGGER", &WorldServer::HandleAreaTrigger);
     SetOpcodeHandler("CMSG_CREATURE_QUERY", &WorldServer::HandleCreatureQuery);
+    SetOpcodeHandler("CMSG_GAMEOBJECT_QUERY", &WorldServer::HandleGameObjectQuery);
 }
 
 #undef min
@@ -726,4 +727,14 @@ void WorldServer::HandleCreatureQuery(WorldPacket& packet)
     packet >> guid;
 
     SendCreatureQueryResponse(entry);
+}
+
+void WorldServer::HandleGameObjectQuery(WorldPacket& packet)
+{
+    uint32 entry;
+    ObjectGuid guid;
+    packet >> entry;
+    packet >> guid;
+
+    SendGameObjectQueryResponse(entry);
 }

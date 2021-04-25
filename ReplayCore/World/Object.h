@@ -17,12 +17,10 @@ class Unit;
 class Object
 {
 public:
-    Object() = default;
     Object(ObjectGuid guid) : m_guid(guid)
     {
         m_packGuid.Set(guid);
     }
-    Object(ObjectData const& objectData);
     virtual ~Object()
     {
         if (m_uint32Values)
@@ -77,7 +75,7 @@ public:
     void SendDirectValueUpdate(uint16 index, uint16 size = 1);
     void BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) const;
     void BuildValuesUpdate(uint8 updatetype, ByteBuffer* data, UpdateMask* updateMask, Player* target) const;
-    void BuildMovementUpdate(ByteBuffer* data, uint8 updateFlags) const;
+    void BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const;
     bool BuildValuesUpdateBlockForPlayer(UpdateData* data, Player* target) const;
     void BuildOutOfRangeUpdateBlock(UpdateData* data) const;
     void SendOutOfRangeUpdateToPlayer(Player* player);
@@ -104,7 +102,7 @@ protected:
     PackedGuid m_packGuid;
     uint8 m_objectTypeId = TYPEID_OBJECT;
     uint16 m_objectType = TYPEMASK_OBJECT;
-    uint8 m_updateFlags = 0;
+    uint16 m_updateFlags = 0;
     union
     {
         int32* m_int32Values = nullptr;
@@ -168,9 +166,7 @@ protected:
 class WorldObject : public Object
 {
 public:
-    WorldObject() = default;
     WorldObject(ObjectGuid guid) : Object(guid) {}
-    WorldObject(WorldObjectData const& worldObjectData);
 
     bool IsWithinVisibilityDistance(WorldObject const* pObject) const;
 
@@ -208,6 +204,10 @@ public:
     void SetLocation(WorldLocation const& location)
     {
         m_location = location;
+    }
+    void SetOrientation(float o)
+    {
+        m_location.o = o;
     }
     virtual void Relocate(WorldLocation const& location)
     {

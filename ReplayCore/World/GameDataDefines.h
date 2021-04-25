@@ -177,4 +177,21 @@ struct CreatureTemplate
     uint32 movementTemplateId = 0;
 };
 
+#define MAX_GAMEOBJECT_DATA 24
+#define MAX_GAMEOBJECT_QUEST_ITEMS 6
+
+struct GameObjectTemplate
+{
+    uint32 entry = 0;
+    uint32 type = 0;
+    uint32 displayId = 0;
+    float scale = 1.0f;
+    std::string name;
+    std::string iconName;
+    std::string castBarCaption;
+    std::string unkString;
+    uint32 data[MAX_GAMEOBJECT_DATA] = {};
+    uint32 questItems[MAX_GAMEOBJECT_QUEST_ITEMS] = {};
+};
+
 #endif

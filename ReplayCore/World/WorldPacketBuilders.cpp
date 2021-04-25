@@ -438,15 +438,15 @@ void WorldServer::SendTimeSyncRequest()
     SendPacket(data);
 }
 
-void WorldServer::SendItemQuerySingleResponse(uint32 itemId)
+void WorldServer::SendItemQuerySingleResponse(uint32 entry)
 {
-    ItemPrototype const* pProto = sGameDataMgr.GetItemPrototype(itemId);
+    ItemPrototype const* pProto = sGameDataMgr.GetItemPrototype(entry);
     if (!pProto)
     {
         WorldPacket data(GetOpcode("SMSG_ITEM_QUERY_SINGLE_RESPONSE"), 4);
-        data << uint32(itemId | 0x80000000);
+        data << uint32(entry | 0x80000000);
         SendPacket(data);
-        printf("Client requested info about unknown item id %u!\n", itemId);
+        printf("Client requested info about unknown item id %u!\n", entry);
         return;
     }
 
@@ -580,12 +580,12 @@ void WorldServer::SendItemQuerySingleResponse(uint32 itemId)
     SendPacket(data);
 }
 
-void WorldServer::SendItemNameQueryResponse(uint32 itemId)
+void WorldServer::SendItemNameQueryResponse(uint32 entry)
 {
-    ItemPrototype const* pProto = sGameDataMgr.GetItemPrototype(itemId);
+    ItemPrototype const* pProto = sGameDataMgr.GetItemPrototype(entry);
     if (!pProto)
     {
-        printf("Client requested info about unknown item id %u!\n", itemId);
+        printf("Client requested info about unknown item id %u!\n", entry);
         return;
     }
 
@@ -962,12 +962,12 @@ void WorldServer::SendSysMessage(char const* str)
     SendChatPacket(msgType, str);
 }
 
-void WorldServer::SendQuestQueryResponse(uint32 questId)
+void WorldServer::SendQuestQueryResponse(uint32 entry)
 {
-    Quest const* pQuest = sGameDataMgr.GetQuestTemplate(questId);
+    Quest const* pQuest = sGameDataMgr.GetQuestTemplate(entry);
     if (!pQuest)
     {
-        printf("Client requested info about unknown quest id %u!\n", questId);
+        printf("Client requested info about unknown quest id %u!\n", entry);
         return;
     }
 
@@ -1105,20 +1105,20 @@ void WorldServer::SendQuestQueryResponse(uint32 questId)
     SendPacket(data);
 }
 
-void WorldServer::SendCreatureQueryResponse(uint32 creatureId)
+void WorldServer::SendCreatureQueryResponse(uint32 entry)
 {
-    CreatureTemplate const* pCreature = sGameDataMgr.GetCreatureTemplate(creatureId);
+    CreatureTemplate const* pCreature = sGameDataMgr.GetCreatureTemplate(entry);
     if (!pCreature)
     {
         WorldPacket data(GetOpcode("SMSG_CREATURE_QUERY_RESPONSE"), 4);
-        data << uint32(creatureId | 0x80000000);
+        data << uint32(entry | 0x80000000);
         SendPacket(data);
-        printf("Client requested info about unknown creature id %u!\n", creatureId);
+        printf("Client requested info about unknown creature id %u!\n", entry);
         return;
     }
 
     WorldPacket data(GetOpcode("SMSG_CREATURE_QUERY_RESPONSE"), 100);
-    data << uint32(creatureId);
+    data << uint32(pCreature->entry);
     data << pCreature->name;
     data << uint8(0) << uint8(0) << uint8(0); // name2, name3, name4, always empty
     data << pCreature->subName;
@@ -1167,5 +1167,46 @@ void WorldServer::SendCreatureQueryResponse(uint32 creatureId)
         data << uint32(pCreature->movementTemplateId);
     }
 
+    SendPacket(data);
+}
+
+void WorldServer::SendGameObjectQueryResponse(uint32 entry)
+{
+    GameObjectTemplate const* pGo = sGameDataMgr.GetGameObjectTemplate(entry);
+    if (!pGo)
+    {
+        WorldPacket data(GetOpcode("SMSG_GAMEOBJECT_QUERY_RESPONSE"), 4);
+        data << uint32(entry | 0x80000000);
+        SendPacket(data);
+        printf("Client requested info about unknown gameobject id %u!\n", entry);
+        return;
+    }
+
+    WorldPacket data(GetOpcode("SMSG_GAMEOBJECT_QUERY_RESPONSE"), 150);
+    data << uint32(pGo->entry);
+    data << uint32(pGo->type);
+    data << uint32(pGo->displayId);
+    data << pGo->name;
+    data << uint8(0) << uint8(0) << uint8(0);   // name2, name3, name4
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_3)
+    {
+        data << pGo->iconName;
+        data << pGo->castBarCaption;
+    }
+    data << pGo->unkString;                     // one more name, client handles it a bit differently
+    data.append(pGo->data, 24);                 // these are read as int32
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_4_3)
+        data << float(pGo->scale);
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
+    {
+        uint32 questItemsCount = (GetClientBuild() >= CLIENT_BUILD_3_2_0) ? MAX_GAMEOBJECT_QUEST_ITEMS : 4;
+        for (uint32 i = 0; i < questItemsCount; ++i)
+        {
+            data << uint32(pGo->questItems[i]);
+        }
+    }
+    
     SendPacket(data);
 }

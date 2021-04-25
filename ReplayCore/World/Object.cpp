@@ -268,32 +268,6 @@ void MovementInfo::Write(ByteBuffer &data) const
     }
 }
 
-Object::Object(ObjectData const& objectData)
-{
-    m_guid = objectData.guid;
-    m_packGuid.Set(m_guid);
-    m_valuesCount = sWorld.GetUpdateField("OBJECT_END");
-    assert(m_valuesCount);
-    m_uint32Values = new uint32[m_valuesCount];
-    memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
-    objectData.InitializeObject(this);
-    m_uint32Values_mirror = new uint32[m_valuesCount];
-    memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
-}
-
-WorldObject::WorldObject(WorldObjectData const& worldObjectData) : Object(worldObjectData.guid)
-{
-    m_valuesCount = sWorld.GetUpdateField("OBJECT_END");
-    assert(m_valuesCount);
-    m_uint32Values = new uint32[m_valuesCount];
-    memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
-    worldObjectData.InitializeWorldObject(this);
-    m_uint32Values_mirror = new uint32[m_valuesCount];
-    memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
-}
-
 bool WorldObject::IsWithinVisibilityDistance(WorldObject const* pObject) const
 {
     if (GetMapId() != pObject->GetMapId())
@@ -647,7 +621,7 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
         return;
 
     uint8 updatetype = UPDATETYPE_CREATE_OBJECT;
-    uint8 updateFlags = m_updateFlags;
+    uint16 updateFlags = m_updateFlags;
 
     if (target == this)                                     // building packet for yourself
         updateFlags |= UPDATEFLAG_SELF;
@@ -718,7 +692,7 @@ Player const* Object::ToPlayer() const
     return nullptr;
 }
 
-void Object::BuildMovementUpdate(ByteBuffer* data, uint8 updateFlags) const
+void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
 {
     // update flags
     if (sWorld.GetClientBuild() < CLIENT_BUILD_3_1_0)
@@ -789,6 +763,19 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint8 updateFlags) const
     {
         // transport progress or mstime.
         *data << uint32(sWorld.GetServerTimeMs());
+    }
+
+    // 0x80
+    if (updateFlags & UPDATEFLAG_VEHICLE)
+    {
+        *data << uint32(0); // vehicle id
+        *data << float(((WorldObject*)this)->GetOrientation());
+    }
+
+    // 0x200
+    if (updateFlags & UPDATEFLAG_ROTATION)
+    {
+        *data << int64(((GameObject*)this)->GetPackedLocalRotation());
     }
 }
 

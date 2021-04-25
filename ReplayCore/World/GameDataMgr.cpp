@@ -3,6 +3,7 @@
 #include "../Defines//Databases.h"
 #include "../Defines//ClientVersions.h"
 #include "UnitDefines.h"
+#include "GameObjectDefines.h"
 #include "SpellDefines.h"
 #include "Geometry.h"
 #include "../Input/Config.h"
@@ -70,6 +71,26 @@ bool GameDataMgr::IsValidUnitDisplayId(uint32 id) const
         return id <= MAX_UNIT_DISPLAY_ID_TBC;
     else
         return id <= MAX_UNIT_DISPLAY_ID_WOTLK;
+}
+
+bool GameDataMgr::IsValidGameObjectDisplayId(uint32 id) const
+{
+    if (sWorld.GetClientBuild() <= CLIENT_BUILD_1_12_1)
+        return id <= MAX_GAMEOBJECT_DISPLAY_ID_VANILLA;
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
+        return id <= MAX_GAMEOBJECT_DISPLAY_ID_TBC;
+    else
+        return id <= MAX_GAMEOBJECT_DISPLAY_ID_WOTLK;
+}
+
+bool GameDataMgr::IsValidGameObjectType(uint32 type) const
+{
+    if (sWorld.GetClientBuild() <= CLIENT_BUILD_1_12_1)
+        return type < MAX_GAMEOBJECT_TYPE_VANILLA;
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
+        return type < MAX_GAMEOBJECT_TYPE_TBC;
+    else
+        return type < MAX_GAMEOBJECT_TYPE_WOTLK;
 }
 
 uint8 GameDataMgr::GetMoveSpeedsCount() const
@@ -656,6 +677,93 @@ void GameDataMgr::BuildPlayerLevelInfo(uint8 race, uint8 _class, uint8 level, Pl
                 info->stats[STAT_INTELLECT] += (lvl > 38 ? 3 : (lvl > 4 ? 1 : 0));
                 info->stats[STAT_SPIRIT]    += (lvl > 38 ? 3 : (lvl > 5 ? 1 : 0));
         }
+    }
+}
+
+void GameDataMgr::LoadGameObjectTemplates()
+{
+    // For reload case
+    m_gameObjectTemplateMap.clear();
+    printf("[GameDataMgr] Loading gameobject templates..\n");
+
+    std::string queryString;
+    if (m_dataSource == DB_VMANGOS)
+        //                     0        1       2            3       4       5         6       7        8        9        10       11       12       13       14       15        16        17        18        19        20        21        22        23        24        25        26        27        28
+        queryString = "SELECT `entry`, `type`, `displayId`, `name`, `size`, `data0`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`, `data8`, `data9`, `data10`, `data11`, `data12`, `data13`, `data14`, `data15`, `data16`, `data17`, `data18`, `data19`, `data20`, `data21`, `data22`, `data23` FROM `gameobject_template` t1 WHERE `patch`=(SELECT max(`patch`) FROM `gameobject_template` t2 WHERE t1.`entry`=t2.`entry` && `patch` <= " + std::to_string(sConfig.GetVmangosContentPatch()) + ")";
+    else if (m_dataSource == DB_CMANGOS_CLASSIC)
+        //                     0        1       2            3       4       5         6       7        8        9        10       11       12       13       14       15        16        17        18        19        20        21        22        23        24        25        26        27        28
+        queryString = "SELECT `entry`, `type`, `displayId`, `name`, `size`, `data0`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`, `data8`, `data9`, `data10`, `data11`, `data12`, `data13`, `data14`, `data15`, `data16`, `data17`, `data18`, `data19`, `data20`, `data21`, `data22`, `data23` FROM `gameobject_template`";
+    else if (m_dataSource == DB_CMANGOS_TBC)
+        //                     0        1       2            3       4       5         6       7        8        9        10       11       12       13       14       15        16        17        18        19        20        21        22        23        24        25        26        27        28        29          30
+        queryString = "SELECT `entry`, `type`, `displayId`, `name`, `size`, `data0`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`, `data8`, `data9`, `data10`, `data11`, `data12`, `data13`, `data14`, `data15`, `data16`, `data17`, `data18`, `data19`, `data20`, `data21`, `data22`, `data23`, `IconName`, `castBarCaption` FROM `gameobject_template`";
+    else if (m_dataSource == DB_CMANGOS_WOTLK)
+        //                     0        1       2            3       4       5         6       7        8        9        10       11       12       13       14       15        16        17        18        19        20        21        22        23        24        25        26        27        28        29          30                31            32            33            34            35            36
+        queryString = "SELECT `entry`, `type`, `displayId`, `name`, `size`, `data0`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`, `data8`, `data9`, `data10`, `data11`, `data12`, `data13`, `data14`, `data15`, `data16`, `data17`, `data18`, `data19`, `data20`, `data21`, `data22`, `data23`, `IconName`, `castBarCaption`, `questItem1`, `questItem2`, `questItem3`, `questItem4`, `questItem5`, `questItem6` FROM `gameobject_template`";
+    else if (m_dataSource == DB_TRINITY)
+        //                     0        1       2            3       4       5         6       7        8        9        10       11       12       13       14       15        16        17        18        19        20        21        22        23        24        25        26        27        28        29          30
+        queryString = "SELECT `entry`, `type`, `displayId`, `name`, `size`, `Data0`, `Data1`, `Data2`, `Data3`, `Data4`, `Data5`, `Data6`, `Data7`, `Data8`, `Data9`, `Data10`, `Data11`, `Data12`, `Data13`, `Data14`, `Data15`, `Data16`, `Data17`, `Data18`, `Data19`, `Data20`, `Data21`, `Data22`, `Data23`, `IconName`, `castBarCaption` FROM `gameobject_template`";
+
+    std::shared_ptr<QueryResult> result(WorldDatabase.Query("%s", queryString.c_str()));
+    if (!result)
+    {
+        printf(">> Loaded 0 gameobject templates, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 entry = fields[0].GetUInt32();
+        GameObjectTemplate& goTemplate = m_gameObjectTemplateMap[entry];
+        goTemplate.entry = entry;
+        goTemplate.type = fields[1].GetUInt32();
+        goTemplate.displayId = fields[2].GetUInt32();
+        goTemplate.name = fields[3].GetCppString();
+        goTemplate.scale = fields[4].GetFloat();
+
+        for (uint32 i = 0; i < MAX_GAMEOBJECT_DATA; i++)
+            goTemplate.data[i] = fields[5 + i].GetUInt32();
+
+        if (m_dataSource == DB_CMANGOS_TBC || m_dataSource == DB_CMANGOS_WOTLK || m_dataSource == DB_TRINITY)
+        {
+            goTemplate.iconName = fields[29].GetCppString();
+            goTemplate.castBarCaption = fields[30].GetCppString();
+        }
+
+        if (m_dataSource == DB_CMANGOS_WOTLK)
+        {
+            for (uint32 i = 0; i < MAX_GAMEOBJECT_QUEST_ITEMS; i++)
+                goTemplate.questItems[i] = fields[31 + i].GetUInt32();
+        }
+
+    } while (result->NextRow());
+    printf(">> Loaded %u gameobject templates.\n", (uint32)m_gameObjectTemplateMap.size());
+
+    if (m_dataSource == DB_TRINITY)
+    {
+        printf("[GameDataMgr] Loading gameobject quest items..\n");
+        //                                    0                  1      2
+        result = WorldDatabase.Query("SELECT `GameObjectEntry`, `Idx`, `ItemId` FROM `gameobject_questitem`");
+        if (!result)
+        {
+            printf(">> Loaded 0 gameobject quest items, table is empty!\n");
+            return;
+        }
+
+        uint32 count = 0;
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 entry = fields[0].GetUInt32();
+            uint32 index = fields[1].GetUInt32();
+            GameObjectTemplate& goTemplate = m_gameObjectTemplateMap[entry];
+            goTemplate.questItems[index] = fields[2].GetUInt32();
+            count++;
+
+        } while (result->NextRow());
+        printf(">> Loaded %u gameobject quest items.\n", count);
     }
 }
 

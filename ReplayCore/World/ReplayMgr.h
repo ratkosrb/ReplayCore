@@ -13,6 +13,7 @@ class Object;
 class WorldObject;
 class Unit;
 class Player;
+class GameObject;
 
 // Only the mutable update fields.
 struct ObjectData
@@ -39,6 +40,25 @@ struct WorldObjectData : public ObjectData
     float GetOrientation() const { return location.o; }
     Position const& GetPosition() const { return location; }
     WorldLocation const& GetLocation() const { return location; }
+};
+
+struct GameObjectData : public WorldObjectData
+{
+    bool isTemporary = false;
+    ObjectGuid createdBy;
+    uint32 displayId = 0;
+    uint32 flags = 0;
+    float rotation[4] = {};
+    uint32 state = 0;
+    uint32 dynamicFlags = 0;
+    uint32 pathProgress = 0;
+    uint32 faction = 0;
+    uint32 type = 0;
+    uint32 level = 0;
+    uint32 artKit = 0;
+    uint32 animProgress = 100;
+
+    void InitializeGameObject(GameObject* pGo) const;
 };
 
 struct UnitData : public WorldObjectData
@@ -133,10 +153,25 @@ public:
     ObjectGuid MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std::string type);
     void LoadEverything()
     {
+        LoadGameObjects();
         LoadCreatures();
         LoadPlayers();
         LoadActivePlayers();
     }
+    void LoadGameObjects();
+    void SpawnGameObjects();
+    GameObjectData* GetGameObjectSpawnData(uint32 guid)
+    {
+        auto itr = m_gameObjectSpawns.find(guid);
+        if (itr == m_gameObjectSpawns.end())
+            return nullptr;
+
+        assert(guid == itr->second.guid.GetCounter());
+
+        return &itr->second;
+    }
+
+    void SpawnCreatures();
     void LoadCreatures();
     template<class T>
     void LoadInitialGuidValues(const char* tableName, T& spawnsMap);
@@ -150,7 +185,8 @@ public:
 
         return &itr->second;
     }
-    void SpawnCreatures();
+    
+    void SpawnPlayers();
     void LoadPlayers();
     void LoadActivePlayers();
     std::set<ObjectGuid> const& GetActivePlayers() const { return m_activePlayers; }
@@ -164,12 +200,13 @@ public:
 
         return &itr->second;
     }
-    void SpawnPlayers();
+   
 private:
     std::set<ObjectGuid> m_activePlayers;
     std::map<uint32 /*unixtime*/, ObjectGuid> m_activePlayerTimes;
     std::map<uint32, PlayerData> m_playerSpawns;
     std::map<uint32, CreatureData> m_creatureSpawns;
+    std::map<uint32, GameObjectData> m_gameObjectSpawns;
 };
 
 #define sReplayMgr ReplayMgr::Instance()

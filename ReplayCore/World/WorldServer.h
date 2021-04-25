@@ -5,6 +5,7 @@
 #include "..\Crypto\BigNumber.h"
 #include "..\Crypto\AuthCrypt.h"
 #include "Player.h"
+#include "GameObject.h"
 #include "winsock2.h"
 #include <map>
 #include <thread>
@@ -72,6 +73,11 @@ public:
         m_creatures.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(creatureData));
     }
 
+    void MakeNewGameObject(ObjectGuid const& guid, GameObjectData const& goData)
+    {
+        m_gameObjects.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(goData));
+    }
+
     void SendPacket(WorldPacket& packet);
     bool IsExistingOpcode(uint16);
     uint16 GetOpcode(std::string name);
@@ -102,6 +108,7 @@ private:
     void WorldLoop();
     template<class T>
     void BuildAndSendObjectUpdates(T& objectsMap);
+    std::map<ObjectGuid, GameObject> m_gameObjects;
     std::map<ObjectGuid, Unit> m_creatures;
     std::map<ObjectGuid, Player> m_players;
     std::unique_ptr<Player> m_clientPlayer = nullptr;
@@ -146,6 +153,7 @@ private:
     void HandleQuestQuery(WorldPacket& packet);
     void HandleAreaTrigger(WorldPacket& packet);
     void HandleCreatureQuery(WorldPacket& packet);
+    void HandleGameObjectQuery(WorldPacket& packet);
 public:
     // Packet Building
     void SendAuthChallenge();
@@ -169,8 +177,8 @@ public:
     void SendJoinedChannelNotify(std::string channelName, uint32 channelId);
     void SendMotd();
     void SendTimeSyncRequest();
-    void SendItemQuerySingleResponse(uint32 itemId);
-    void SendItemNameQueryResponse(uint32 itemId);
+    void SendItemQuerySingleResponse(uint32 entry);
+    void SendItemNameQueryResponse(uint32 entry);
     void SendInspect(ObjectGuid guid);
     void SendInspectTalent(ObjectGuid guid);
     void TeleportClient(WorldLocation const& location);
@@ -185,8 +193,9 @@ public:
         char const* channelName = nullptr, uint8 playerRank = 0);
     void SendSysMessage(char const* str);
     void PSendSysMessage(char const* format, ...);
-    void SendQuestQueryResponse(uint32 questId);
-    void SendCreatureQueryResponse(uint32 creatureId);
+    void SendQuestQueryResponse(uint32 entry);
+    void SendCreatureQueryResponse(uint32 entry);
+    void SendGameObjectQueryResponse(uint32 entry);
 };
 
 #define sWorld WorldServer::Instance()

@@ -11,13 +11,6 @@ class Unit : public WorldObject
 {
     friend class Object;
 public :
-    Unit() : WorldObject()
-    {
-        m_objectType |= TYPEMASK_UNIT;
-        m_objectTypeId = TYPEID_UNIT;
-        m_updateFlags = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
-        InitializeMoveSpeeds();
-    }
     Unit(ObjectGuid guid) : WorldObject(guid)
     {
         m_objectType |= TYPEMASK_UNIT;

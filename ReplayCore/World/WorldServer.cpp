@@ -50,8 +50,9 @@ void WorldServer::WorldLoop()
         m_msTimeSinceServerStart += diff;
         m_lastUpdateTimeMs = ms;
 
-        BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatures);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Player>>(m_players);
+        BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatures);
+        BuildAndSendObjectUpdates<std::map<ObjectGuid, GameObject>>(m_gameObjects);
 
     } while (m_enabled);
 }
@@ -108,9 +109,11 @@ void WorldServer::SpawnWorldObjects()
 {
     m_players.clear();
     m_creatures.clear();
+    m_gameObjects.clear();
     m_clientPlayer.reset();
     sReplayMgr.SpawnPlayers();
     sReplayMgr.SpawnCreatures();
+    sReplayMgr.SpawnGameObjects();
     m_worldSpawned = true;
 }
 
