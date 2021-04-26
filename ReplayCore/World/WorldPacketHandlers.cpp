@@ -1,12 +1,17 @@
 #include "WorldServer.h"
+#include "../Crypto/Hmac.h"
+#include "../Crypto/base32.h"
+#include "../Crypto/Sha1.h"
 #include "../Defines//ByteBuffer.h"
 #include "../Defines//WorldPacket.h"
 #include "../Defines/Utility.h"
+#include "../Defines/GameAccount.h"
 #include "../Defines/ClientVersions.h"
 #include "../Input/CommandHandler.h"
 #include "GameDataMgr.h"
 #include "ReplayMgr.h"
 #include "ChatDefines.h"
+#include "../Dependencies/include/zlib/zlib.h"
 #include <set>
 
 void WorldServer::SetupOpcodeHandlers()
@@ -65,6 +70,203 @@ void WorldServer::SetupOpcodeHandlers()
 }
 
 #undef min
+
+void WorldServer::HandleAuthSession(WorldPacket& packet)
+{
+    // Read the content of the packet
+    uint32 build;
+    packet >> build;
+    uint32 serverId;
+    packet >> serverId;
+    std::string account;
+    packet >> account;
+
+    if (build >= CLIENT_BUILD_3_0_2)
+    {
+        uint32 loginServerType;
+        packet >> loginServerType;
+    }
+
+    uint32 clientSeed;
+    packet >> clientSeed;
+
+    if (build >= CLIENT_BUILD_3_3_5a)
+    {
+        uint32 regionId;
+        packet >> regionId;
+        uint32 battlegroupId;
+        packet >> battlegroupId;
+        uint32 realm;
+        packet >> realm;
+    }
+
+    if (build >= CLIENT_BUILD_3_2_0)
+    {
+        uint64 dosResponse;
+        packet >> dosResponse;
+    }
+
+    uint8 digest[20];
+    packet.read(digest, 20);
+
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[WORLD] CMSG_AUTH_SESSION data:\n");
+    printf("Client Build: %u\n", build);
+    printf("Server Id: %u\n", serverId);
+    printf("Account: %s\n", account.c_str());
+    printf("Client Seed: %u\n", clientSeed);
+    printf("Digest: ");
+    for (int i = 0; i < sizeof(digest); i++)
+        printf("%hhx ", digest[i]);
+    printf("\n\n");
+#endif
+
+    BigNumber v, s, g, N, K;
+
+    N.SetHexStr("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7");
+    g.SetDword(7);
+
+    v.SetHexStr(accountPasswordV.c_str());
+    s.SetHexStr(accountPasswordS.c_str());
+
+    char const* sStr = s.AsHexStr();                        //Must be freed by OPENSSL_free()
+    char const* vStr = v.AsHexStr();                        //Must be freed by OPENSSL_free()
+
+    OPENSSL_free((void*)sStr);
+    OPENSSL_free((void*)vStr);
+
+    K.SetHexStr(m_sessionData.sessionKey.c_str());
+    if (K.AsByteArray().empty())
+    {
+        printf("[WORLD] Error in HandleAuthSession - K.AsByteArray().empty()\n");
+        return;
+    }
+
+    // Check that Key and account name are the same on client and server
+    Sha1Hash sha;
+
+    uint32 t = 0;
+    uint32 seed = m_sessionData.seed;
+
+    sha.UpdateData(account);
+    sha.UpdateData((uint8 *)& t, 4);
+    sha.UpdateData((uint8 *)& clientSeed, 4);
+    sha.UpdateData((uint8 *)& seed, 4);
+    sha.UpdateBigNumbers(&K, nullptr);
+    sha.Finalize();
+
+    if (memcmp(sha.GetDigest(), digest, 20))
+    {
+        WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1);
+        response << uint8(13);
+        SendPacket(response);
+        printf("[WORLD] Error in HandleAuthSession - memcmp(sha.GetDigest(), digest, 20)\n");
+        return;
+    }
+
+    printf("[WORLD] Authentication successful.\n");
+    if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
+        m_sessionData.encryption.InitWOTLK(&K);
+    else if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
+        m_sessionData.encryption.InitTBC(&K);
+    else
+        m_sessionData.encryption.InitVanilla(&K);
+
+    HandleAddonInfo(packet);
+
+    WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1 + 4 + 1 + 4 + (m_sessionData.build >= CLIENT_BUILD_2_0_1 ? 1 : 0));
+    response << uint8(12);
+    response << uint32(0);                                    // BillingTimeRemaining
+    response << uint8(0);                                     // BillingPlanFlags
+    response << uint32(0);                                    // BillingTimeRested
+    if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
+        response << uint8(1);                                 // Expansion
+    SendPacket(response);
+}
+
+void WorldServer::HandleAddonInfo(WorldPacket& authSessionPacket)
+{
+    ByteBuffer unpackedDataBuffer;
+    uLongf addonRealSize;
+    uint32 currentPosition;
+    uint32 tempSize;
+
+    // broken addon packet, can't be received from real client
+    if (authSessionPacket.rpos() + 4 > authSessionPacket.size())
+        return;
+
+    // get real size of the packed structure
+    authSessionPacket >> tempSize;
+
+    // empty addon packet, nothing process, can't be received from real client
+    if (!tempSize)
+        return;
+
+    if (tempSize > 0xFFFFF)
+    {
+        printf("[HandleAddonInfo] Error: Addon info too big, size %u.", tempSize);
+        return;
+    }
+
+    addonRealSize = tempSize;                              // temp value because ZLIB only excepts uLongf
+    currentPosition = authSessionPacket.rpos();            // get the position of the pointer in the structure
+    unpackedDataBuffer.resize(addonRealSize);              // resize target for zlib action
+
+    if (uncompress(const_cast<uint8*>(unpackedDataBuffer.contents()), &addonRealSize, const_cast<uint8*>((authSessionPacket).contents() + currentPosition), (authSessionPacket).size() - currentPosition) != Z_OK)
+    {
+        printf("[HandleAddonInfo] Error: Failed do decompress addon data.\n");
+        return;
+    }
+
+    std::vector<ClientAddonData> clientAddons;
+
+    if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        while (unpackedDataBuffer.rpos() < unpackedDataBuffer.size())
+        {
+            ClientAddonData addon;
+
+            unpackedDataBuffer >> addon.name;
+
+            unpackedDataBuffer >> addon.modulusCRC >> addon.urlCRC >> addon.flags;
+
+            //printf("ADDON: Name: %s, Flags: 0x%x, Modulus CRC: 0x%x, URL CRC: 0x%x\n", addon.name.c_str(), addon.enabled, addon.crc, addon.unk1);
+
+            clientAddons.push_back(addon);
+        }
+    }
+    else
+    {
+        uint32 addonsCount;
+        unpackedDataBuffer >> addonsCount;
+
+        for (uint32 i = 0; i < addonsCount; ++i)
+        {
+            // check next addon data format correctness
+            if (unpackedDataBuffer.rpos() + 1 > unpackedDataBuffer.size())
+                break;
+
+            ClientAddonData addon;
+
+            unpackedDataBuffer >> addon.name;
+
+            unpackedDataBuffer >> addon.flags >> addon.modulusCRC >> addon.urlCRC;
+
+            //printf("ADDON: Name: %s, Flags: 0x%x, Modulus CRC: 0x%x, URL CRC: 0x%x\n", addon.name.c_str(), addon.enabled, addon.crc, addon.unk1);
+
+            clientAddons.push_back(addon);
+        }
+
+        uint32 unk2;
+        unpackedDataBuffer >> unk2;
+
+        if (unpackedDataBuffer.rpos() != unpackedDataBuffer.size())
+            printf("[HandleAddonInfo] Error: Packet not fully read!\n");
+    }
+
+    SendAddonInfo(clientAddons);
+}
 
 void WorldServer::HandleEnumCharacters(WorldPacket& packet)
 {

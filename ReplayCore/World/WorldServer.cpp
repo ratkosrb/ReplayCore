@@ -2,18 +2,13 @@
 #include "../Defines//ByteBuffer.h"
 #include "../Defines//WorldPacket.h"
 #include "../Defines/Utility.h"
-#include "../Defines/GameAccount.h"
 #include "../Defines/ClientVersions.h"
-#include "../Crypto/Hmac.h"
-#include "../Crypto/base32.h"
-#include "../Crypto/Sha1.h"
 #include "../Auth/AuthServer.h"
 #include "Opcodes.h"
 #include "UpdateFields.h"
 #include "ReplayMgr.h"
-#include "../Input//Config.h"
+#include "../Input/Config.h"
 
-#include <array>
 #include <chrono>
 
 //#define WORLD_DEBUG
@@ -33,7 +28,7 @@ void WorldServer::StartWorld()
     m_worldThread = std::thread(&WorldServer::WorldLoop, this);
 }
 
-#define WORLD_UPDATE_TIME 100
+#define WORLD_UPDATE_TIME 200
 
 void WorldServer::WorldLoop()
 {
@@ -71,7 +66,7 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
 
         if (visible)
         {
-            if (updatesCount < 5)
+            if (updatesCount < 10)
             {
                 if (m_sessionData.visibleObjects.find(itr.first) == m_sessionData.visibleObjects.end())
                 {
@@ -376,139 +371,4 @@ void  WorldServer::SendPacket(WorldPacket& packet)
             memcpy(buffer.data() + sizeof(header), packet.contents(), packet.size());
         send(m_worldSocket, (char*)buffer.data(), buffer.size(), 0);
     }
-}
-
-void WorldServer::SendAuthChallenge()
-{
-    if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
-    {
-        WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 40);
-        packet << uint32(1);
-        packet << m_sessionData.seed;
-        BigNumber seed1;
-        seed1.SetRand(16 * 8);
-        packet.append(seed1.AsByteArray(16).data(), 16);               // new encryption seeds
-        BigNumber seed2;
-        seed2.SetRand(16 * 8);
-        packet.append(seed2.AsByteArray(16).data(), 16);               // new encryption seeds
-        SendPacket(packet);
-    }
-    else
-    {
-        WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 4);
-        packet << m_sessionData.seed;
-        SendPacket(packet);
-    }
-}
-
-void WorldServer::HandleAuthSession(WorldPacket& packet)
-{
-    // Read the content of the packet
-    uint32 build;
-    packet >> build;
-    uint32 serverId;
-    packet >> serverId;
-    std::string account;
-    packet >> account;
-
-    if (build >= CLIENT_BUILD_3_0_2)
-    {
-        uint32 loginServerType;
-        packet >> loginServerType;
-    }
-
-    uint32 clientSeed;
-    packet >> clientSeed;
-
-    if (build >= CLIENT_BUILD_3_3_5a)
-    {
-        uint32 regionId;
-        packet >> regionId;
-        uint32 battlegroupId;
-        packet >> battlegroupId;
-        uint32 realm;
-        packet >> realm;
-    }
-
-    if (build >= CLIENT_BUILD_3_2_0)
-    {
-        uint64 dosResponse;
-        packet >> dosResponse;
-    }
-
-    uint8 digest[20];
-    packet.read(digest, 20);
-
-#ifdef WORLD_DEBUG
-    printf("\n");
-    printf("[WORLD] CMSG_AUTH_SESSION data:\n");
-    printf("Client Build: %u\n", build);
-    printf("Server Id: %u\n", serverId);
-    printf("Account: %s\n", account.c_str());
-    printf("Client Seed: %u\n", clientSeed);
-    printf("Digest: ");
-    for (int i = 0; i < sizeof(digest); i++)
-        printf("%hhx ", digest[i]);
-    printf("\n\n");
-#endif
-
-    BigNumber v, s, g, N, K;
-
-    N.SetHexStr("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7");
-    g.SetDword(7);
-
-    v.SetHexStr(accountPasswordV.c_str());
-    s.SetHexStr(accountPasswordS.c_str());
-
-    char const* sStr = s.AsHexStr();                        //Must be freed by OPENSSL_free()
-    char const* vStr = v.AsHexStr();                        //Must be freed by OPENSSL_free()
-
-    OPENSSL_free((void*)sStr);
-    OPENSSL_free((void*)vStr);
-
-    K.SetHexStr(m_sessionData.sessionKey.c_str());
-    if (K.AsByteArray().empty())
-    {
-        printf("[WORLD] Error in HandleAuthSession - K.AsByteArray().empty()\n");
-        return;
-    }
-
-    // Check that Key and account name are the same on client and server
-    Sha1Hash sha;
-
-    uint32 t = 0;
-    uint32 seed = m_sessionData.seed;
-
-    sha.UpdateData(account);
-    sha.UpdateData((uint8 *)& t, 4);
-    sha.UpdateData((uint8 *)& clientSeed, 4);
-    sha.UpdateData((uint8 *)& seed, 4);
-    sha.UpdateBigNumbers(&K, nullptr);
-    sha.Finalize();
-
-    if (memcmp(sha.GetDigest(), digest, 20))
-    {
-        WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1);
-        response << uint8(13);
-        SendPacket(response);
-        printf("[WORLD] Error in HandleAuthSession - memcmp(sha.GetDigest(), digest, 20)\n");
-        return;
-    }
-
-    printf("[WORLD] Authentication successful.\n");
-    if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
-        m_sessionData.encryption.InitWOTLK(&K);
-    else if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
-        m_sessionData.encryption.InitTBC(&K);
-    else
-        m_sessionData.encryption.InitVanilla(&K);
-
-    WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1 + 4 + 1 + 4 + (m_sessionData.build >= CLIENT_BUILD_2_0_1 ? 1 : 0));
-    response << uint8(12);
-    response << uint32(0);                                    // BillingTimeRemaining
-    response << uint8(0);                                     // BillingPlanFlags
-    response << uint32(0);                                    // BillingTimeRested
-    if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
-        response << uint8(1);                                 // Expansion
-    SendPacket(response);
 }

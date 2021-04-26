@@ -31,6 +31,14 @@ struct WorldSessionData
     std::set<ObjectGuid> visibleObjects;
 };
 
+struct ClientAddonData
+{
+    std::string name;
+    uint8 flags = 0;
+    uint32 modulusCRC = 0;
+    uint32 urlCRC = 0;
+};
+
 #define CLIENT_CHARACTER_GUID_OFFSET 50000
 
 class WorldServer
@@ -54,13 +62,38 @@ public:
         return &itr->second;
     }
 
+    GameObject* FindGameObject(ObjectGuid guid)
+    {
+        auto itr = m_gameObjects.find(guid);
+        if (itr == m_gameObjects.end())
+            return nullptr;
+        return &itr->second;
+    }
+
     WorldObject* FindObject(ObjectGuid guid)
     {
         if (guid.GetTypeId() == TYPEID_PLAYER)
             return FindPlayer(guid);
         else if (guid.GetTypeId() == TYPEID_UNIT)
             return FindCreature(guid);
+        else if (guid.GetTypeId() == TYPEID_GAMEOBJECT)
+            return FindGameObject(guid);
         return nullptr;
+    }
+
+    std::map<ObjectGuid, Player> const& GetPlayersMap()
+    {
+        return m_players;
+    }
+
+    std::map<ObjectGuid, Unit> const& GetCreaturesMap()
+    {
+        return m_creatures;
+    }
+
+    std::map<ObjectGuid, GameObject> const& GetGameObjectsMap()
+    {
+        return m_gameObjects;
     }
 
     void MakeNewPlayer(ObjectGuid const& guid, PlayerData const& playerData)
@@ -130,6 +163,7 @@ private:
     void ProcessIncomingPackets();
     void HandlePacket(uint8* buffer);
     void HandleAuthSession(WorldPacket& packet);
+    void HandleAddonInfo(WorldPacket& authSessionPacket);
     void HandleEnumCharacters(WorldPacket& packet);
     void HandlePing(WorldPacket& packet);
     void HandleRealmSplit(WorldPacket& packet);
@@ -157,6 +191,7 @@ private:
 public:
     // Packet Building
     void SendAuthChallenge();
+    void SendAddonInfo(std::vector<ClientAddonData> const& clientAddons);
     void SendLoginVerifyWorld(WorldLocation const& location);
     void SendAccountDataTimes();
     void SendAccountDataTimesVanilla();
@@ -196,6 +231,10 @@ public:
     void SendQuestQueryResponse(uint32 entry);
     void SendCreatureQueryResponse(uint32 entry);
     void SendGameObjectQueryResponse(uint32 entry);
+    void SendSplineSetSpeed(ObjectGuid guid, uint32 moveType, float speed);
+    void SendMovementPacket(Unit* pUnit, uint16 opcode);
+    void SendMoveSetCanFly(Unit* pUnit);
+    void SendMoveUnsetCanFly(Unit* pUnit);
 };
 
 #define sWorld WorldServer::Instance()

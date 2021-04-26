@@ -228,6 +228,32 @@ enum UnitMoveType
 #define MAX_MOVE_TYPE_TBC 8
 #define MAX_MOVE_TYPE_WOTLK 9
 
+inline char const* GetUnitMovementTypeName(uint32 moveType)
+{
+    switch (moveType)
+    {
+        case MOVE_WALK:
+            return "Walk";
+        case MOVE_RUN:
+            return "Run";
+        case MOVE_RUN_BACK:
+            return "Run Back";
+        case MOVE_SWIM:
+            return "Swim";
+        case MOVE_SWIM_BACK:
+            return "Swim Back";
+        case MOVE_TURN_RATE:
+            return "Turn";
+        case MOVE_FLIGHT:
+            return "Flight";
+        case MOVE_FLIGHT_BACK:
+            return "Flight Back";
+        case MOVE_PITCH_RATE:
+            return "Pitch";
+    }
+    return "UNKNOWN";
+}
+
 extern float baseMoveSpeed[MAX_MOVE_TYPE_WOTLK];
 
 enum CreatureMovementTypes

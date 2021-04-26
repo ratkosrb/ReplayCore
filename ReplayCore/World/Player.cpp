@@ -37,6 +37,7 @@ Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : U
     memcpy(m_uint32Values, otherPlayer.m_uint32Values, sizeof(uint32) * m_valuesCount);
     SetGuidValue(OBJECT_FIELD_GUID, guid);
     SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
+    SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", 0);
     m_uint32Values_mirror = new uint32[m_valuesCount];
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }

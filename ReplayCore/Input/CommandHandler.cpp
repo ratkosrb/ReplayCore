@@ -3,6 +3,7 @@
 #include "../World//WorldServer.h"
 #include "../World/GameDataMgr.h"
 #include "../World/ReplayMgr.h"
+#include "../Defines/ClientVersions.h"
 #include <sstream>
 
 CommandHandler::CommandHandler(std::string const& text, bool console) : m_console(console)
@@ -75,6 +76,37 @@ bool CommandHandler::ExtractString(std::string& variable)
     return false;
 }
 
+bool CommandHandler::ExtractBool(bool& variable)
+{
+    if (m_index < m_tokens.size())
+    {
+        std::string temp = m_tokens[m_index++];
+        if (temp == "on")
+        {
+            variable = true;
+            return true;
+        }
+        else if (temp == "off")
+        {
+            variable = false;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool CommandHandler::ExtractUInt32(uint32& variable)
+{
+    if (m_index < m_tokens.size())
+    {
+        variable = static_cast<uint32>(atol(m_tokens[m_index++].c_str()));
+        return true;
+    }
+
+    return false;
+}
+
 bool CommandHandler::ExtractFloat(float& variable)
 {
     if (m_index < m_tokens.size())
@@ -86,7 +118,7 @@ bool CommandHandler::ExtractFloat(float& variable)
     return false;
 }
 
-bool CommandHandler::HandleShutdownCommand()
+bool CommandHandler::HandleShutdown()
 {
     printf("Shutting down server...\n");
     sAuth.StopNetwork();
@@ -199,7 +231,7 @@ bool CommandHandler::HandleSpawnInfo()
         PSendSysMessage("Spawn data for %s", guid.GetString().c_str());
         PSendSysMessage("Map: %u", pData->location.mapId);
         PSendSysMessage("Position: %g %g %g", pData->location.x, pData->location.y, pData->location.z);
-        PSendSysMessage("Orientation: %g\n", pData->location.o);
+        PSendSysMessage("Orientation: %g", pData->location.o);
         PSendSysMessage("Movement Type: %s", GetCreatureMovementTypeName(pData->movementType));
         PSendSysMessage("Wander Distance: %g", pData->wanderDistance);
         if (pData->createdBySpell)
@@ -223,11 +255,301 @@ bool CommandHandler::HandleSpawnInfo()
         PSendSysMessage("Spawn data for %s", guid.GetString().c_str());
         PSendSysMessage("Map: %u", pData->location.mapId);
         PSendSysMessage("Position: %g %g %g", pData->location.x, pData->location.y, pData->location.z);
-        PSendSysMessage("Orientation: %g\n", pData->location.o);
+        PSendSysMessage("Orientation: %g", pData->location.o);
         PSendSysMessage("Sniff Id: %u", pData->sourceSniffId);
         return true;
     }
     
     SendSysMessage("Unsupported object type selected.");
+    return true;
+}
+
+bool CommandHandler::HandleNearCreatures()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    float radius = 10.0f;
+    ExtractFloat(radius);
+
+    PSendSysMessage("Listing creatures in %g yards radius:", radius);
+    auto const& creaturesMap = sWorld.GetCreaturesMap();
+    for (auto const& itr : creaturesMap)
+    {
+        Unit const& creature = itr.second;
+        if (creature.GetMapId() != pPlayer->GetMapId())
+            continue;
+
+        float distance = creature.GetDistance3D(pPlayer);
+        if (distance <= radius)
+        {
+            const char* name = "";
+            if (CreatureTemplate const* pTemplate = sGameDataMgr.GetCreatureTemplate(itr.first.GetEntry()))
+                name = pTemplate->name.c_str();
+            PSendSysMessage("- %s (GUID: %u, Entry: %u) (%g yards)", name, itr.first.GetCounter(), itr.first.GetEntry(), distance);
+        }
+    }
+
+    return true;
+}
+
+bool CommandHandler::HandleNearGameObjects()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    float radius = 10.0f;
+    ExtractFloat(radius);
+
+    PSendSysMessage("Listing gameobjects in %g yards radius:", radius);
+    auto const& gobjectsMap = sWorld.GetGameObjectsMap();
+    for (auto const& itr : gobjectsMap)
+    {
+        GameObject const& gobject = itr.second;
+        if (gobject.GetMapId() != pPlayer->GetMapId())
+            continue;
+
+        float distance = gobject.GetDistance3D(pPlayer);
+        if (distance <= radius)
+        {
+            const char* name = "";
+            if (GameObjectTemplate const* pTemplate = sGameDataMgr.GetGameObjectTemplate(itr.first.GetEntry()))
+                name = pTemplate->name.c_str();
+            PSendSysMessage("- %s (GUID: %u, Entry: %u) (%g yards)", name, itr.first.GetCounter(), itr.first.GetEntry(), distance);
+        }
+    }
+
+    return true;
+}
+
+bool CommandHandler::HandleTargetGuid()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    ObjectGuid guid = pPlayer->GetGuidValue("UNIT_FIELD_TARGET");
+    PSendSysMessage("Your current target is:\n%s", guid.GetString().c_str());
+    return true;
+}
+
+bool CommandHandler::HandleGoTarget()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    ObjectGuid guid = pPlayer->GetGuidValue("UNIT_FIELD_TARGET");
+    if (guid.IsEmpty())
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    WorldObject const* pTarget = sWorld.FindObject(guid);
+    if (!pTarget)
+    {
+        SendSysMessage("Can't find target in objects map.");
+        return true;
+    }
+
+    sWorld.TeleportClient(pTarget->GetLocation());
+
+    return true;
+}
+
+bool CommandHandler::HandleGoCreature()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    uint32 guid;
+    if (!ExtractUInt32(guid))
+        return false;
+
+    auto const& creaturesMap = sWorld.GetCreaturesMap();
+    for (auto const& itr : creaturesMap)
+    {
+        if (itr.first.GetCounter() == guid)
+        {
+            sWorld.TeleportClient(itr.second.GetLocation());
+            return true;
+        }
+    }
+
+    SendSysMessage("Creature not found.");
+    return true;
+}
+
+bool CommandHandler::HandleGoGameObject()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    uint32 guid;
+    if (!ExtractUInt32(guid))
+        return false;
+
+    auto const& gobjectsMap = sWorld.GetGameObjectsMap();
+    for (auto const& itr : gobjectsMap)
+    {
+        if (itr.first.GetCounter() == guid)
+        {
+            sWorld.TeleportClient(itr.second.GetLocation());
+            return true;
+        }
+    }
+
+    SendSysMessage("GameObject not found.");
+    return true;
+}
+
+bool CommandHandler::SetSpeedCommandsHelper(UnitMoveType moveType)
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    float speedRate;
+    if (!ExtractFloat(speedRate))
+        return false;
+
+    pPlayer->SetSpeedRate(moveType, speedRate);
+    sWorld.SendSplineSetSpeed(pPlayer->GetObjectGuid(), moveType, speedRate * baseMoveSpeed[moveType]);
+    PSendSysMessage("%s speed set to %g times normal.", GetUnitMovementTypeName(moveType), speedRate);
+    return true;
+}
+
+bool CommandHandler::HandleSetAllSpeeds()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    float speedRate;
+    if (!ExtractFloat(speedRate))
+        return false;
+
+    pPlayer->SetSpeedRate(MOVE_WALK, speedRate);
+    sWorld.SendSplineSetSpeed(pPlayer->GetObjectGuid(), MOVE_WALK, speedRate * baseMoveSpeed[MOVE_WALK]);
+    pPlayer->SetSpeedRate(MOVE_RUN, speedRate);
+    sWorld.SendSplineSetSpeed(pPlayer->GetObjectGuid(), MOVE_RUN, speedRate * baseMoveSpeed[MOVE_RUN]);
+    pPlayer->SetSpeedRate(MOVE_SWIM, speedRate);
+    sWorld.SendSplineSetSpeed(pPlayer->GetObjectGuid(), MOVE_SWIM, speedRate * baseMoveSpeed[MOVE_SWIM]);
+    pPlayer->SetSpeedRate(MOVE_FLIGHT, speedRate);
+    sWorld.SendSplineSetSpeed(pPlayer->GetObjectGuid(), MOVE_FLIGHT, speedRate * baseMoveSpeed[MOVE_FLIGHT]);
+    PSendSysMessage("All speeds set to %g times normal.", speedRate);
+    return true;
+}
+
+bool CommandHandler::HandleSetRunSpeed()
+{
+    return SetSpeedCommandsHelper(MOVE_RUN);
+}
+
+bool CommandHandler::HandleSetRunBackSpeed()
+{
+    return SetSpeedCommandsHelper(MOVE_RUN_BACK);
+}
+
+bool CommandHandler::HandleSetWalkSpeed()
+{
+    return SetSpeedCommandsHelper(MOVE_WALK);
+}
+
+bool CommandHandler::HandleSetSwimSpeed()
+{
+    return SetSpeedCommandsHelper(MOVE_SWIM);
+}
+
+bool CommandHandler::HandleSetSwimBackSpeed()
+{
+    return SetSpeedCommandsHelper(MOVE_SWIM_BACK);
+}
+
+bool CommandHandler::HandleSetFlySpeed()
+{
+    return SetSpeedCommandsHelper(MOVE_FLIGHT);
+}
+
+bool CommandHandler::HandleSetFlyBackSpeed()
+{
+    return SetSpeedCommandsHelper(MOVE_FLIGHT_BACK);
+}
+
+bool CommandHandler::HandleSetTurnSpeed()
+{
+    return SetSpeedCommandsHelper(MOVE_TURN_RATE);
+}
+
+bool CommandHandler::HandleSetPitchSpeed()
+{
+    return SetSpeedCommandsHelper(MOVE_PITCH_RATE);
+}
+
+bool CommandHandler::HandleSetFlyMode()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    bool enabled;
+    if (!ExtractBool(enabled))
+        return false;
+
+    if (enabled)
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        {
+            pPlayer->SetUnitMovementFlags(Vanilla::MOVEFLAG_LEVITATING | Vanilla::MOVEFLAG_SWIMMING | Vanilla::MOVEFLAG_CAN_FLY | Vanilla::MOVEFLAG_FLYING);
+            sWorld.SendMovementPacket(pPlayer, sWorld.GetOpcode("MSG_MOVE_HEARTBEAT"));
+        }
+        else
+            sWorld.SendMoveSetCanFly(pPlayer);
+        SendSysMessage("Flying mode enabled.");
+    }
+    else
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        {
+            pPlayer->RemoveUnitMovementFlag(Vanilla::MOVEFLAG_LEVITATING | Vanilla::MOVEFLAG_SWIMMING | Vanilla::MOVEFLAG_CAN_FLY | Vanilla::MOVEFLAG_FLYING);
+            sWorld.SendMovementPacket(pPlayer, sWorld.GetOpcode("MSG_MOVE_HEARTBEAT"));
+        }
+        else
+            sWorld.SendMoveUnsetCanFly(pPlayer);
+        SendSysMessage("Flying mode disabled.");
+    }
+
     return true;
 }

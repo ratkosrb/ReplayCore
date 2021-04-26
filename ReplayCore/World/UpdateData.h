@@ -62,6 +62,12 @@ class UpdatePacket
         uint32 blockCount;
 };
 
+class PacketCompressor
+{
+public:
+    static void Compress(void* dst, uint32* dst_size, void* src, int src_size);
+};
+
 class UpdateData
 {
     public:

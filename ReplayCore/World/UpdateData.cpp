@@ -27,7 +27,7 @@
 #include "WorldServer.h"
 #include "ObjectGuid.h"
 #include "../Defines//ClientVersions.h"
-
+#include "../Dependencies//include/zlib/zlib.h"
 #define MAX_UNCOMPRESSED_PACKET_SIZE 0x8000 // 32ko
 
 UpdateData::UpdateData()
@@ -65,6 +65,62 @@ void UpdateData::AddUpdateBlock(ByteBuffer const& block)
     ++it->blockCount;
 }
 
+void PacketCompressor::Compress(void* dst, uint32* dst_size, void* src, int src_size)
+{
+    z_stream c_stream;
+
+    c_stream.zalloc = (alloc_func)0;
+    c_stream.zfree = (free_func)0;
+    c_stream.opaque = (voidpf)0;
+
+    // default Z_BEST_SPEED (1)
+    int z_res = deflateInit(&c_stream, Z_BEST_SPEED);
+    if (z_res != Z_OK)
+    {
+        printf("Error: Can't compress update packet (zlib: deflateInit) Error code: %i (%s)\n", z_res, zError(z_res));
+        *dst_size = 0;
+        return;
+    }
+
+    c_stream.next_out = (Bytef*)dst;
+    c_stream.avail_out = *dst_size;
+    c_stream.next_in = (Bytef*)src;
+    c_stream.avail_in = (uInt)src_size;
+
+    z_res = deflate(&c_stream, Z_NO_FLUSH);
+    if (z_res != Z_OK)
+    {
+        printf("Error: Can't compress update packet (zlib: deflate) Error code: %i (%s)\n", z_res, zError(z_res));
+        *dst_size = 0;
+        return;
+    }
+
+    if (c_stream.avail_in != 0)
+    {
+        printf("Error: Can't compress update packet (zlib: deflate not greedy)\n");
+        *dst_size = 0;
+        return;
+    }
+
+    z_res = deflate(&c_stream, Z_FINISH);
+    if (z_res != Z_STREAM_END)
+    {
+        printf("Error: Can't compress update packet (zlib: deflate should report Z_STREAM_END instead %i (%s)\n", z_res, zError(z_res));
+        *dst_size = 0;
+        return;
+    }
+
+    z_res = deflateEnd(&c_stream);
+    if (z_res != Z_OK)
+    {
+        printf("Error: Can't compress update packet (zlib: deflateEnd) Error code: %i (%s)\n", z_res, zError(z_res));
+        *dst_size = 0;
+        return;
+    }
+
+    *dst_size = c_stream.total_out;
+}
+
 bool UpdateData::BuildPacket(WorldPacket* packet, bool hasTransport)
 {
     if (m_datas.empty())
@@ -96,14 +152,25 @@ bool UpdateData::BuildPacket(WorldPacket* packet, UpdatePacket const* updPacket,
     if (updPacket)
         buf.append(updPacket->data);
 
-    size_t pSize = buf.wpos();                              // use real used data size
+    size_t pSize = buf.wpos();                             // use real used data size
 
-    if (pSize >= MAX_UNCOMPRESSED_PACKET_SIZE)
+    if (pSize > 100)                                       // compress large packets
     {
-        printf("[CRASH-CLIENT] Too large packet: %u\n", pSize);
-        return false;
-    } 
-    else
+        if (pSize >= 900000)
+            printf("[CRASH-CLIENT] Too large packet: %u\n", pSize);
+
+        uint32 destsize = compressBound(pSize);
+        packet->resize(destsize + sizeof(uint32));
+
+        packet->put<uint32>(0, pSize);
+        PacketCompressor::Compress(const_cast<uint8*>(packet->contents()) + sizeof(uint32), &destsize, (void*)buf.contents(), pSize);
+        if (destsize == 0)
+            return false;
+
+        packet->resize(destsize + sizeof(uint32));
+        packet->SetOpcode(sWorld.GetOpcode("SMSG_COMPRESSED_UPDATE_OBJECT"));
+    }
+    else                                                    // send small packets without compression
     {
         packet->append(buf);
         packet->SetOpcode(sWorld.GetOpcode("SMSG_UPDATE_OBJECT"));

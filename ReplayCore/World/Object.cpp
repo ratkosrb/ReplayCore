@@ -630,7 +630,7 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
         updatetype = UPDATETYPE_CREATE_OBJECT2;
 
 
-    printf("BuildCreateUpdate: update-type: %u, object-type: %u got updateFlags: %X\n", updatetype, m_objectTypeId, updateFlags);
+    //printf("BuildCreateUpdate: update-type: %u, object-type: %u got updateFlags: %X\n", updatetype, m_objectTypeId, updateFlags);
 
     ByteBuffer buf(500);
     buf << (uint8)updatetype;
