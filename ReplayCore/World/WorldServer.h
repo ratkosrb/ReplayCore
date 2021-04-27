@@ -6,6 +6,8 @@
 #include "..\Crypto\AuthCrypt.h"
 #include "Player.h"
 #include "GameObject.h"
+#include "SpellCastTargets.h"
+
 #include "winsock2.h"
 #include <map>
 #include <thread>
@@ -188,6 +190,12 @@ private:
     void HandleAreaTrigger(WorldPacket& packet);
     void HandleCreatureQuery(WorldPacket& packet);
     void HandleGameObjectQuery(WorldPacket& packet);
+    void HandleQuestGiverStatusQuery(WorldPacket& packet);
+    void HandleRequestRaidInfo(WorldPacket& packet);
+    void HandleQueryNextMailTime(WorldPacket& packet);
+    void HandleLfdPlayerLockInfoRequest(WorldPacket& packet);
+    void HandleCastSpell(WorldPacket& packet);
+    void HandleAttackStop(WorldPacket& packet);
 public:
     // Packet Building
     void SendAuthChallenge();
@@ -235,6 +243,16 @@ public:
     void SendMovementPacket(Unit* pUnit, uint16 opcode);
     void SendMoveSetCanFly(Unit* pUnit);
     void SendMoveUnsetCanFly(Unit* pUnit);
+    void SendQuestGiverStatus(ObjectGuid guid, uint32 dialogStatus);
+    void SendRaidInstanceInfo();
+    void SendQueryNextMailTimeResponse();
+    void SendLfgPlayerInfo();
+    void SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, WorldObject const* pTarget, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
+    void SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
+    void SendCastResult(uint32 spellId, uint32 result, uint32 reason);
+    void SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<ObjectGuid> const& vHitTargets, std::vector<ObjectGuid> const& vMissTargets, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
+    void SendAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid);
+    void SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid);
 };
 
 #define sWorld WorldServer::Instance()

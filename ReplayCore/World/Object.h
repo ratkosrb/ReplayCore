@@ -13,6 +13,7 @@ struct WorldObjectData;
 class UpdateMask;
 class Player;
 class Unit;
+class GameObject;
 
 class Object
 {
@@ -83,6 +84,10 @@ public:
     inline bool IsWorldObject() const { return IsType(TYPEMASK_WORLDOBJECT); }
     WorldObject* ToWorldObject();
     WorldObject const* ToWorldObject() const;
+
+    inline bool IsGameObject() const { return GetTypeId() == TYPEID_GAMEOBJECT; }
+    GameObject* ToGameObject();
+    GameObject const* ToGameObject() const;
 
     inline bool IsPlayer() const { return GetTypeId() == TYPEID_PLAYER; }
     Player* ToPlayer();

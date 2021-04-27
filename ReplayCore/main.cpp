@@ -118,6 +118,7 @@ int main()
     sGameDataMgr.SetDataSource(GameDataSource(sConfig.GetWorldDbType()));
 
     sGameDataMgr.LoadQuests();
+    sGameDataMgr.LoadQuestRelations();
     sGameDataMgr.LoadFactions();
     sGameDataMgr.LoadItemPrototypes();
     sGameDataMgr.LoadPlayerInfo();

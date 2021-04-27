@@ -1029,6 +1029,131 @@ void GameDataMgr::LoadQuests()
     printf(">> Loaded %u quest templates.\n", (uint32)m_QuestTemplatesMap.size());
 }
 
+void GameDataMgr::LoadQuestRelations()
+{
+    {
+        m_creatureQuestStarters.clear();
+        printf("[GameDataMgr] Loading creature quest starters...\n");
+        std::string queryString;
+        if (m_dataSource == DB_VMANGOS)
+            queryString = "SELECT `id`, `quest` FROM `creature_questrelation` WHERE " + std::to_string(sConfig.GetVmangosContentPatch()) + " BETWEEN `patch_min` AND `patch_max`";
+        else if (m_dataSource == DB_TRINITY)
+            queryString = "SELECT `id`, `quest` FROM `creature_queststarter`";
+        else
+            queryString = "SELECT `id`, `quest` FROM `creature_questrelation`";
+
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("%s", queryString.c_str()));
+
+        if (!result)
+        {
+            printf(">> Loaded 0 creature quest starters, table is empty!\n");
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 creatureId = fields[0].GetUInt32();
+            uint32 questId = fields[1].GetUInt32();
+
+            m_creatureQuestStarters[creatureId].push_back(questId);
+
+        } while (result->NextRow());
+        printf(">> Loaded %u creature quest starters.\n", (uint32)m_creatureQuestStarters.size());
+    }
+    {
+        m_creatureQuestEnders.clear();
+        printf("[GameDataMgr] Loading creature quest enders...\n");
+        std::string queryString;
+        if (m_dataSource == DB_VMANGOS)
+            queryString = "SELECT `id`, `quest` FROM `creature_involvedrelation` WHERE " + std::to_string(sConfig.GetVmangosContentPatch()) + " BETWEEN `patch_min` AND `patch_max`";
+        else if (m_dataSource == DB_TRINITY)
+            queryString = "SELECT `id`, `quest` FROM `creature_questender`";
+        else
+            queryString = "SELECT `id`, `quest` FROM `creature_involvedrelation`";
+
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("%s", queryString.c_str()));
+        if (!result)
+        {
+            printf(">> Loaded 0 creature quest enders, table is empty!\n");
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 creatureId = fields[0].GetUInt32();
+            uint32 questId = fields[1].GetUInt32();
+
+            m_creatureQuestEnders[creatureId].push_back(questId);
+
+        } while (result->NextRow());
+        printf(">> Loaded %u creature quest enders.\n", (uint32)m_creatureQuestEnders.size());
+    }
+    {
+        m_gameobjectQuestStarters.clear();
+        printf("[GameDataMgr] Loading gameobject quest starters...\n");
+        std::string queryString;
+        if (m_dataSource == DB_VMANGOS)
+            queryString = "SELECT `id`, `quest` FROM `gameobject_questrelation` WHERE " + std::to_string(sConfig.GetVmangosContentPatch()) + " BETWEEN `patch_min` AND `patch_max`";
+        else if (m_dataSource == DB_TRINITY)
+            queryString = "SELECT `id`, `quest` FROM `gameobject_queststarter`";
+        else
+            queryString = "SELECT `id`, `quest` FROM `gameobject_questrelation`";
+
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("%s", queryString.c_str()));
+        if (!result)
+        {
+            printf(">> Loaded 0 gameobject quest starters, table is empty!\n");
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 gameObjectId = fields[0].GetUInt32();
+            uint32 questId = fields[1].GetUInt32();
+
+            m_gameobjectQuestStarters[gameObjectId].push_back(questId);
+
+        } while (result->NextRow());
+        printf(">> Loaded %u gameobject quest starters.\n", (uint32)m_gameobjectQuestStarters.size());
+    }
+    {
+        m_gameobjectQuestEnders.clear();
+        printf("[GameDataMgr] Loading gameobject quest enders...\n");
+        std::string queryString;
+        if (m_dataSource == DB_VMANGOS)
+            queryString = "SELECT `id`, `quest` FROM `gameobject_involvedrelation` WHERE " + std::to_string(sConfig.GetVmangosContentPatch()) + " BETWEEN `patch_min` AND `patch_max`";
+        else if (m_dataSource == DB_TRINITY)
+            queryString = "SELECT `id`, `quest` FROM `gameobject_questender`";
+        else
+            queryString = "SELECT `id`, `quest` FROM `gameobject_involvedrelation`";
+
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("%s", queryString.c_str()));
+        if (!result)
+        {
+            printf(">> Loaded 0 gameobject quest enders, table is empty!\n");
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 gameObjectId = fields[0].GetUInt32();
+            uint32 questId = fields[1].GetUInt32();
+
+            m_gameobjectQuestEnders[gameObjectId].push_back(questId);
+
+        } while (result->NextRow());
+        printf(">> Loaded %u gameobject quest enders.\n", (uint32)m_gameobjectQuestEnders.size());
+    }
+}
+
 void GameDataMgr::LoadFactions()
 {
     // other emulators don't have faction data in db

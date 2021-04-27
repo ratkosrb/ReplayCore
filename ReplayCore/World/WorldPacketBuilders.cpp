@@ -6,6 +6,8 @@
 #include "../Defines/Utility.h"
 #include "ReplayMgr.h"
 #include "ChatDefines.h"
+#include "SpellCastTargets.h"
+#include "SpellDefines.h"
 
 void WorldServer::SendAuthChallenge()
 {
@@ -1340,5 +1342,364 @@ void WorldServer::SendMoveUnsetCanFly(Unit* pUnit)
     WorldPacket data(GetOpcode("SMSG_MOVE_UNSET_CAN_FLY"), 12);
     data << pUnit->GetPackGUID();
     data << uint32(0); // movement counter
+    SendPacket(data);
+}
+
+void WorldServer::SendQuestGiverStatus(ObjectGuid guid, uint32 dialogStatus)
+{
+    WorldPacket data(GetOpcode("SMSG_QUESTGIVER_STATUS"), 8 + 4);
+    data << ObjectGuid(guid);
+    data << uint32(dialogStatus);
+    SendPacket(data);
+}
+
+void WorldServer::SendRaidInstanceInfo()
+{
+    WorldPacket data(GetOpcode("SMSG_RAID_INSTANCE_INFO"), 4);
+    data << uint32(0); // count
+    SendPacket(data);
+}
+
+void WorldServer::SendQueryNextMailTimeResponse()
+{
+    WorldPacket data(GetOpcode("MSG_QUERY_NEXT_MAIL_TIME"), 8);
+    data << uint32(0xC7A8C000);
+    data << uint32(0x00000000);
+    SendPacket(data);
+}
+
+void WorldServer::SendLfgPlayerInfo()
+{
+    WorldPacket data(GetOpcode("SMSG_LFG_PLAYER_INFO"), 8);
+    data << uint8(0); // dungeon count
+    data << uint32(0); // locked count
+    SendPacket(data);
+}
+
+void WorldServer::SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, WorldObject const* pTarget, uint32 ammoDisplayId, uint32 ammoInventoryType)
+{
+    SpellCastTargets targets;
+    if (Unit const* pUnitTarget = pTarget->ToUnit())
+        targets.setUnitTarget(pUnitTarget);
+    else if (GameObject const* pGoTarget = pTarget->ToGameObject())
+        targets.setGOTarget(pGoTarget);
+
+    SendSpellCastStart(spellId, castTime, castFlags, casterGuid, unitCasterGuid, targets, ammoDisplayId, ammoInventoryType);
+}
+
+void WorldServer::SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, uint32 ammoDisplayId, uint32 ammoInventoryType)
+{
+    WorldPacket data(GetOpcode("SMSG_SPELL_START"), (8 + 8 + 4 + 2 + 4));
+    data << casterGuid.WriteAsPacked();
+    data << unitCasterGuid.WriteAsPacked();
+
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+    {
+        data << uint32(spellId);
+        data << uint16(castFlags);
+    }
+    else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        data << uint32(spellId);
+        data << uint8(0); // cast count
+        data << uint16(castFlags);
+    }
+    else
+    {
+        data << uint8(0); // cast count
+        data << uint32(spellId);
+        data << uint32(castFlags);
+    }
+
+    data << uint32(castTime);
+    data << targets;
+
+    if (castFlags & CAST_FLAG_AMMO)                         // projectile info
+    {
+        data << uint32(ammoDisplayId);
+        data << uint32(ammoInventoryType);
+    }
+
+    SendPacket(data);
+}
+
+void WorldServer::SendCastResult(uint32 spellId, uint32 result, uint32 reason)
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+    {
+        WorldPacket data(GetOpcode("SMSG_CAST_RESULT"), (4 + 1 + 1));
+        data << uint32(spellId);
+        data << uint8(result);
+        if (result == 2)
+            data << uint8(reason);
+
+        SendPacket(data);
+    }
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        if (result == 0)
+            return;
+
+        WorldPacket data(GetOpcode("SMSG_CAST_RESULT"), (4 + 1 + 2));                              // single cast or multi 2.3 (0/1)
+        data << uint32(spellId);
+        data << uint8(reason);
+        data << uint8(0); // single cast or multi 2.3 (0/1)
+        switch (reason)
+        {
+            case TBC::SPELL_FAILED_REQUIRES_SPELL_FOCUS:
+                data << uint32(1);
+                break;
+            case TBC::SPELL_FAILED_REQUIRES_AREA:
+                // hardcode areas limitation case
+                switch (spellId)
+                {
+                    case 41617:                                 // Cenarion Mana Salve
+                    case 41619:                                 // Cenarion Healing Salve
+                        data << uint32(3905);
+                        break;
+                    case 41618:                                 // Bottled Nethergon Energy
+                    case 41620:                                 // Bottled Nethergon Vapor
+                        data << uint32(3842);
+                        break;
+                    case 45373:                                 // Bloodberry Elixir
+                        data << uint32(4075);
+                        break;
+                    default:                                    // default case
+                        data << uint32(0);
+                        break;
+                }
+                break;
+            case TBC::SPELL_FAILED_TOTEMS:
+                /*
+                for (uint32 i : spellInfo->Totem)
+                    if (i)
+                        data << uint32(i);
+                        */
+                break;
+            case TBC::SPELL_FAILED_TOTEM_CATEGORY:
+                /*
+                for (uint32 i : spellInfo->TotemCategory)
+                    if (i)
+                        data << uint32(i);;
+                        */
+                break;
+            case TBC::SPELL_FAILED_EQUIPPED_ITEM_CLASS:
+                data << uint32(0); // EquippedItemClass
+                data << uint32(0); // EquippedItemSubClassMask
+                data << uint32(0); // EquippedItemInventoryTypeMask
+                break;
+            default:
+                break;
+        }
+        SendPacket(data);
+    }
+    else
+    {
+        if (result == 0)
+            return;
+
+        WorldPacket data(GetOpcode("SMSG_CAST_RESULT"), (4 + 1 + 2));
+        data << uint8(0); // single cast or multi 2.3 (0/1)
+        data << uint32(spellId);
+        data << uint8(reason);
+        switch (reason)
+        {
+            case WotLK::SPELL_FAILED_NOT_READY:
+                data << uint32(0);                              // unknown, value 1 seen for 14177 (update cooldowns on client flag)
+                break;
+            case WotLK::SPELL_FAILED_REQUIRES_SPELL_FOCUS:
+                data << uint32(1);                              // SpellFocusObject.dbc id
+                break;
+            case WotLK::SPELL_FAILED_REQUIRES_AREA:             // AreaTable.dbc id
+                // hardcode areas limitation case
+                switch (spellId)
+                {
+                    case 41617:                                 // Cenarion Mana Salve
+                    case 41619:                                 // Cenarion Healing Salve
+                        data << uint32(3905);
+                        break;
+                    case 41618:                                 // Bottled Nethergon Energy
+                    case 41620:                                 // Bottled Nethergon Vapor
+                        data << uint32(3842);
+                        break;
+                    case 45373:                                 // Bloodberry Elixir
+                        data << uint32(4075);
+                        break;
+                    default:                                    // default case (don't must be)
+                        data << uint32(0);
+                        break;
+                }
+                break;
+            case WotLK::SPELL_FAILED_TOTEMS:
+                /*
+                for (unsigned int i : spellInfo->Totem)
+                    if (i)
+                        data << uint32(i);    // client needs only one id, not 2...
+                */
+                break;
+            case WotLK::SPELL_FAILED_TOTEM_CATEGORY:
+                /*
+                for (unsigned int i : spellInfo->TotemCategory)
+                    if (i)
+                        data << uint32(i);// client needs only one id, not 2...
+                */
+                break;
+            case WotLK::SPELL_FAILED_EQUIPPED_ITEM_CLASS:
+            case WotLK::SPELL_FAILED_EQUIPPED_ITEM_CLASS_MAINHAND:
+            case WotLK::SPELL_FAILED_EQUIPPED_ITEM_CLASS_OFFHAND:
+                data << uint32(0); // EquippedItemClass
+                data << uint32(0); // EquippedItemSubClassMask
+                break;
+            case WotLK::SPELL_FAILED_PREVENTED_BY_MECHANIC:
+                data << uint32(0);                              // SpellMechanic.dbc id
+                break;
+            case WotLK::SPELL_FAILED_CUSTOM_ERROR:
+                data << uint32(0);                              // custom error id (see enum SpellCastResultCustom)
+                break;
+            case WotLK::SPELL_FAILED_NEED_EXOTIC_AMMO:
+                data << uint32(0);                              // EquippedItemSubClassMask
+                break;
+            case WotLK::SPELL_FAILED_REAGENTS:
+                data << uint32(0);                              // item id
+                break;
+            case WotLK::SPELL_FAILED_NEED_MORE_ITEMS:
+                data << uint32(0);                              // item id
+                data << uint32(0);                              // item count?
+                break;
+            case WotLK::SPELL_FAILED_MIN_SKILL:
+                data << uint32(0);                              // SkillLine.dbc id
+                data << uint32(0);                              // required skill value
+                break;
+            case WotLK::SPELL_FAILED_TOO_MANY_OF_ITEM:
+                data << uint32(0);                              // ItemLimitCategory.dbc id
+                break;
+            case WotLK::SPELL_FAILED_FISHING_TOO_LOW:
+                data << uint32(0);                              // required fishing skill
+                break;
+            default:
+                break;
+        }
+        SendPacket(data);
+    }
+}
+
+void WorldServer::SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<ObjectGuid> const& vHitTargets, std::vector<ObjectGuid> const& vMissTargets, uint32 ammoDisplayId, uint32 ammoInventoryType)
+{
+    WorldPacket data(GetOpcode("SMSG_SPELL_GO"), 53);
+    data << casterGuid.WriteAsPacked();
+    data << unitCasterGuid.WriteAsPacked();
+
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+    {
+        data << uint32(spellId);
+        data << uint16(castFlags);
+    }
+    else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        data << uint32(spellId);
+        data << uint16(castFlags);
+        data << uint32(GetServerTimeMs());
+    }
+    else
+    {
+        data << uint8(0); // cast count
+        data << uint32(spellId);
+        data << uint32(castFlags);
+        data << uint32(GetServerTimeMs());
+    }
+
+    data << uint8(vHitTargets.size());
+    for (auto const& itr : vHitTargets)
+    {
+        data << itr;
+    }
+
+    data << uint8(vMissTargets.size());
+    for (auto const& itr : vMissTargets)
+    {
+        data << itr;
+        data << (uint8)SPELL_MISS_MISS;
+    }
+
+    data << targets;
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+    {
+        if (castFlags & CAST_FLAG_PREDICTED_POWER)              // predicted power
+            data << uint32(0);
+
+        if (castFlags & CAST_FLAG_PREDICTED_RUNES)              // predicted runes
+        {
+            uint8 runeMaskInitial = 0;
+            uint8 runeMaskAfterCast = 0;
+            data << uint8(runeMaskInitial);                     // runes state before
+            data << uint8(runeMaskAfterCast);                   // runes state after
+            for (uint8 i = 0; i < 6; ++i)
+            {
+                uint8 mask = (1 << i);
+                if (mask & runeMaskInitial && (!(mask & runeMaskAfterCast)))
+                {
+                    data << uint8(0);
+                }
+            }
+        }
+
+        if (castFlags & CAST_FLAG_ADJUST_MISSILE)               // adjust missile trajectory duration
+        {
+            data << float(0);
+            data << uint32(0);
+        }
+    }
+
+    if (castFlags & CAST_FLAG_AMMO)                         // projectile info
+    {
+        data << uint32(ammoDisplayId);
+        data << uint32(ammoInventoryType);
+    }
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+    {
+        if (castFlags & CAST_FLAG_VISUAL_CHAIN)                 // spell visual chain effect
+        {
+            data << uint32(0);                                  // SpellVisual.dbc id?
+            data << uint32(0);                                  // overrides previous field if > 0 and violencelevel client cvar < 2
+        }
+
+        bool sendDestLoc = false;
+        uint32 destLocCounter = 0;
+        if (targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
+        {
+            data << uint8(0); // The value increase for each time, can remind of a cast count for the spell
+        }
+
+        if (targets.m_targetMask & TARGET_FLAG_VISUAL_CHAIN)  // probably used (or can be used) with CAST_FLAG_VISUAL_CHAIN flag
+        {
+            data << uint32(0);                                  // count
+
+            // for(int = 0; i < count; ++i)
+            //{
+            //    // position and guid?
+            //    data << float(0) << float(0) << float(0) << uint64(0);
+            //}
+        }
+    }
+
+    SendPacket(data);
+}
+
+void WorldServer::SendAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid)
+{
+    WorldPacket data(GetOpcode("SMSG_ATTACKSTART"), 8 + 8);
+    data << attackerGuid;
+    data << victimGuid;
+    SendPacket(data);
+}
+
+void WorldServer::SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid)
+{
+    WorldPacket data(GetOpcode("SMSG_ATTACKSTOP"), (8 + 8 + 4));
+    data << attackerGuid.WriteAsPacked();
+    data << victimGuid.WriteAsPacked();
+    data << uint32(0);
     SendPacket(data);
 }

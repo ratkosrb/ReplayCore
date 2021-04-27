@@ -89,6 +89,9 @@
     <ClCompile Include="World\GameObject.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\SpellCastTargets.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -239,6 +242,9 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\GameObjectDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\SpellCastTargets.h">
       <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>

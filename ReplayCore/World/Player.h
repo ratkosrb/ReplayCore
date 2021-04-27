@@ -6,6 +6,7 @@
 #include <string>
 
 struct PlayerData;
+class Quest;
 
 class Player : public Unit
 {
@@ -19,6 +20,9 @@ public:
     void SetVisibleItemSlot(uint8 slot, uint32 itemId, uint32 enchantId);
     uint32 GetVisibleItemId(uint8 slot) const;
     uint32 GetVisibleItemEnchant(uint8 slot) const;
+
+    bool CanSeeStartQuest(Quest const* pQuest) const;
+    uint32 GetQuestStatus(Quest const* pQuest) const;
 
 protected:
     std::string m_name;

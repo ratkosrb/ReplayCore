@@ -1,4 +1,5 @@
 #include "Object.h"
+#include "GameObject.h"
 #include "WorldServer.h"
 #include "ReplayMgr.h"
 #include "UpdateData.h"
@@ -657,6 +658,22 @@ WorldObject const* Object::ToWorldObject() const
 {
     if (IsWorldObject())
         return static_cast<WorldObject const*>(this);
+
+    return nullptr;
+}
+
+GameObject* Object::ToGameObject()
+{
+    if (IsGameObject())
+        return static_cast<GameObject*>(this);
+
+    return nullptr;
+}
+
+GameObject const* Object::ToGameObject() const
+{
+    if (IsGameObject())
+        return static_cast<GameObject const*>(this);
 
     return nullptr;
 }

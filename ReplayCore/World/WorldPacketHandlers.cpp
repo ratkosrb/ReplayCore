@@ -11,8 +11,17 @@
 #include "GameDataMgr.h"
 #include "ReplayMgr.h"
 #include "ChatDefines.h"
+#include "SpellCastTargets.h"
 #include "../Dependencies/include/zlib/zlib.h"
 #include <set>
+
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 void WorldServer::SetupOpcodeHandlers()
 {
@@ -67,9 +76,13 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_AREATRIGGER", &WorldServer::HandleAreaTrigger);
     SetOpcodeHandler("CMSG_CREATURE_QUERY", &WorldServer::HandleCreatureQuery);
     SetOpcodeHandler("CMSG_GAMEOBJECT_QUERY", &WorldServer::HandleGameObjectQuery);
+    SetOpcodeHandler("CMSG_QUESTGIVER_STATUS_QUERY", &WorldServer::HandleQuestGiverStatusQuery);
+    SetOpcodeHandler("CMSG_REQUEST_RAID_INFO", &WorldServer::HandleRequestRaidInfo);
+    SetOpcodeHandler("MSG_QUERY_NEXT_MAIL_TIME", &WorldServer::HandleQueryNextMailTime);
+    SetOpcodeHandler("CMSG_LFD_PLAYER_LOCK_INFO_REQUEST", &WorldServer::HandleLfdPlayerLockInfoRequest);
+    SetOpcodeHandler("CMSG_CAST_SPELL", &WorldServer::HandleCastSpell);
+    SetOpcodeHandler("CMSG_ATTACKSTOP", &WorldServer::HandleAttackStop);
 }
-
-#undef min
 
 void WorldServer::HandleAuthSession(WorldPacket& packet)
 {
@@ -939,4 +952,133 @@ void WorldServer::HandleGameObjectQuery(WorldPacket& packet)
     packet >> guid;
 
     SendGameObjectQueryResponse(entry);
+}
+
+void WorldServer::HandleQuestGiverStatusQuery(WorldPacket& packet)
+{
+    if (!m_clientPlayer)
+    {
+        printf("[HandleQuestGiverStatusQuery] Error: Quest giver status query by offline player!");
+        return;
+    }
+
+    ObjectGuid guid;
+    packet >> guid;
+
+    uint32 dialogStatus = Vanilla::DIALOG_STATUS_NONE;
+    if (guid.IsCreature())
+    {
+        if (auto pQuests = sGameDataMgr.GetQuestsStartedByCreature(guid.GetEntry()))
+        {
+            for (const auto& questId : *pQuests)
+            {
+                if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(questId))
+                {
+                    dialogStatus = m_clientPlayer->GetQuestStatus(pQuest);
+                    if (dialogStatus)
+                        break;
+                }
+            }
+            
+        }
+    }
+    else if (guid.IsGameObject())
+    {
+        if (auto pQuests = sGameDataMgr.GetQuestsStartedByGameObject(guid.GetEntry()))
+        {
+            for (const auto& questId : *pQuests)
+            {
+                if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(questId))
+                {
+                    dialogStatus = m_clientPlayer->GetQuestStatus(pQuest);
+                    if (dialogStatus)
+                        break;
+                }
+            }
+
+        }
+    }
+    SendQuestGiverStatus(guid, dialogStatus);
+}
+
+void WorldServer::HandleRequestRaidInfo(WorldPacket& packet)
+{
+    SendRaidInstanceInfo();
+}
+
+void WorldServer::HandleQueryNextMailTime(WorldPacket& packet)
+{
+    SendQueryNextMailTimeResponse();
+}
+
+void WorldServer::HandleLfdPlayerLockInfoRequest(WorldPacket& packet)
+{
+    SendLfgPlayerInfo();
+}
+
+void WorldServer::HandleCastSpell(WorldPacket& packet)
+{
+    if (!m_clientPlayer)
+    {
+        printf("[HandleCastSpell] Error: Spell cast attempt by offline player!");
+        return;
+    }
+
+    uint32 spellId = 0;
+    uint8 castCount = 0;
+    uint8 castFlags = 0;
+
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+    {
+        packet >> spellId;
+    }
+    else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        packet >> spellId;
+        packet >> castCount;
+    }
+    else
+    {
+        packet >> castCount;
+        packet >> spellId;
+        packet >> castFlags;
+    }
+
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[HandlePing] CMSG_CAST_SPELL data:\n");
+    printf("Spell Id: %u\n", spellId);
+    printf("Cast Count: %hhu\n", castCount);
+    printf("Cast Flags: %hhu\n", castFlags);
+    printf("\n");
+#endif
+
+    SpellCastTargets targets;
+    packet >> targets.ReadForCaster(m_clientPlayer.get());
+
+    SendSpellCastStart(spellId, 0, 2, m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetObjectGuid(), targets);
+    SendCastResult(spellId, 0, 0);
+
+    std::vector<ObjectGuid> vHitTargets;
+
+    if (!targets.getUnitTargetGuid().IsEmpty())
+        vHitTargets.push_back(targets.getUnitTargetGuid());
+    else if (!targets.getGOTargetGuid().IsEmpty())
+        vHitTargets.push_back(targets.getGOTargetGuid());
+    else
+        vHitTargets.push_back(m_clientPlayer->GetObjectGuid());
+
+    std::vector<ObjectGuid> vMissTargets;
+    SendSpellCastGo(spellId, 256, m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetObjectGuid(), targets, vHitTargets, vMissTargets);
+}
+
+void WorldServer::HandleAttackStop(WorldPacket& packet)
+{
+    if (!m_clientPlayer)
+    {
+        printf("[HandleCastSpell] Error: Attack stop packet received while client is not in world!");
+        return;
+    }
+
+    SendAttackStop(m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetGuidValue("UNIT_FIELD_TARGET"));
 }

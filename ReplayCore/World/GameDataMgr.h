@@ -18,6 +18,7 @@ typedef std::unordered_map<uint32, std::unique_ptr<Quest>> QuestMap;
 typedef std::unordered_map<uint32, AreaTriggerTeleportEntry> AreaTriggerTeleportMap;
 typedef std::unordered_map<uint32, CreatureTemplate> CreatureTemplateMap;
 typedef std::unordered_map<uint32, GameObjectTemplate> GameObjectTemplateMap;
+typedef std::unordered_map<uint32, std::vector<uint32>> QuestRelationsMap;
 
 class GameDataMgr
 {
@@ -99,6 +100,35 @@ public:
         return itr != m_QuestTemplatesMap.end() ? itr->second.get() : nullptr;
     }
     QuestMap const& GetQuestTemplates() const { return m_QuestTemplatesMap; }
+    void LoadQuestRelations();
+    std::vector<uint32> const* GetQuestsStartedByCreature(uint32 entry)
+    {
+        auto itr = m_creatureQuestStarters.find(entry);
+        if (itr == m_creatureQuestStarters.end())
+            return nullptr;
+        return &itr->second;
+    }
+    std::vector<uint32> const* GetQuestsEndedByCreature(uint32 entry)
+    {
+        auto itr = m_creatureQuestEnders.find(entry);
+        if (itr == m_creatureQuestEnders.end())
+            return nullptr;
+        return &itr->second;
+    }
+    std::vector<uint32> const* GetQuestsStartedByGameObject(uint32 entry)
+    {
+        auto itr = m_gameobjectQuestStarters.find(entry);
+        if (itr == m_gameobjectQuestStarters.end())
+            return nullptr;
+        return &itr->second;
+    }
+    std::vector<uint32> const* GetQuestsEndedByGameObject(uint32 entry)
+    {
+        auto itr = m_gameobjectQuestEnders.find(entry);
+        if (itr == m_gameobjectQuestEnders.end())
+            return nullptr;
+        return &itr->second;
+    }
 
     // Items
     void LoadItemPrototypes();
@@ -157,6 +187,10 @@ private:
     AreaTriggerTeleportMap m_areaTriggerTeleportMap;
     CreatureTemplateMap m_creatureTemplateMap;
     GameObjectTemplateMap m_gameObjectTemplateMap;
+    QuestRelationsMap m_creatureQuestStarters;
+    QuestRelationsMap m_creatureQuestEnders;
+    QuestRelationsMap m_gameobjectQuestStarters;
+    QuestRelationsMap m_gameobjectQuestEnders;
 };
 
 #define sGameDataMgr GameDataMgr::Instance()

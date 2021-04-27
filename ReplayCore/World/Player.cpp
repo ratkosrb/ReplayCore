@@ -4,6 +4,14 @@
 #include "GameDataMgr.h"
 #include "../Defines/ClientVersions.h"
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 Player::Player(PlayerData const& playerData) : Unit(playerData.guid)
 {
     m_objectType |= TYPEMASK_UNIT | TYPEMASK_PLAYER;
@@ -120,6 +128,7 @@ void Player::InitializeDefaultPlayerValues()
 
     SetUInt32Value("PLAYER_XP", 1);
     SetUInt32Value("PLAYER_NEXT_LEVEL_XP", XP::xp_to_level(GetLevel()));
+    SetUInt32Value("PLAYER_FIELD_MAX_LEVEL", std::max(GetLevel(), 80u));
     SetInt32Value("PLAYER_FIELD_WATCHED_FACTION_INDEX", -1);
     SetByteValue("PLAYER_BYTES_2", 3, REST_STATE_NORMAL);
 
@@ -247,4 +256,59 @@ uint32 Player::GetVisibleItemEnchant(uint8 slot) const
         enchantId = GetUInt16Value(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT + (slot * 2), 0);
     }
     return enchantId;
+}
+
+bool Player::CanSeeStartQuest(Quest const* pQuest) const
+{
+    if (uint32 reqClass = pQuest->GetRequiredClasses())
+    {
+        if ((reqClass & GetClassMask()) == 0)
+            return false;
+    }
+
+    if (uint32 reqRace = pQuest->GetRequiredRaces())
+    {
+        if ((reqRace & GetRaceMask()) == 0)
+            return false;
+    }
+
+    return GetLevel() + 7 >= pQuest->GetMinLevel();
+}
+
+uint32 Player::GetQuestStatus(Quest const* pQuest) const
+{
+    if (CanSeeStartQuest(pQuest))
+    {
+        if (GetLevel() >= pQuest->GetMinLevel())
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            {
+                return Vanilla::DIALOG_STATUS_AVAILABLE;
+            }
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            {
+                if (pQuest->IsRepeatable())
+                    return TBC::DIALOG_STATUS_AVAILABLE_REP;
+                else
+                    return TBC::DIALOG_STATUS_AVAILABLE;
+            }
+            else
+            {
+                if (pQuest->IsRepeatable())
+                    return WotLK::DIALOG_STATUS_AVAILABLE_REP;
+                else
+                    return WotLK::DIALOG_STATUS_AVAILABLE;
+            }
+        }
+        else
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                return Vanilla::DIALOG_STATUS_UNAVAILABLE;
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                return TBC::DIALOG_STATUS_UNAVAILABLE;
+            else
+                return WotLK::DIALOG_STATUS_UNAVAILABLE;
+        }
+    }
+    return Vanilla::DIALOG_STATUS_NONE;
 }
