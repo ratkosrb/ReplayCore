@@ -83,12 +83,9 @@
   <ItemGroup>
     <ClInclude Include="Auth\AuthDefines.h" />
     <ClInclude Include="Auth\AuthServer.h" />
-    <ClInclude Include="Crypto\ARC4.h" />
     <ClInclude Include="Crypto\AuthCrypt.h" />
-    <ClInclude Include="Crypto\base32.h" />
     <ClInclude Include="Crypto\BigNumber.h" />
     <ClInclude Include="Crypto\Hmac.h" />
-    <ClInclude Include="Crypto\md5.h" />
     <ClInclude Include="Crypto\Sha1.h" />
     <ClInclude Include="Database\Database.h" />
     <ClInclude Include="Database\DbField.h" />
@@ -135,12 +132,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Auth\AuthServer.cpp" />
-    <ClCompile Include="Crypto\ARC4.cpp" />
     <ClCompile Include="Crypto\AuthCrypt.cpp" />
-    <ClCompile Include="Crypto\base32.cpp" />
     <ClCompile Include="Crypto\BigNumber.cpp" />
     <ClCompile Include="Crypto\Hmac.cpp" />
-    <ClCompile Include="Crypto\md5.c" />
     <ClCompile Include="Crypto\Sha1.cpp" />
     <ClCompile Include="Database\Database.cpp" />
     <ClCompile Include="Database\DbField.cpp" />

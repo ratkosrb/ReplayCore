@@ -4,7 +4,6 @@
 #include "../Defines/Utility.h"
 #include "../Defines/GameAccount.h"
 #include "../Crypto/Hmac.h"
-#include "../Crypto/base32.h"
 #include "../Crypto/Sha1.h"
 #include "../Input/Config.h"
 #include <array>

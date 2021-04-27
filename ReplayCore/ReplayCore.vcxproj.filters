@@ -17,22 +17,13 @@
     <ClCompile Include="Auth\AuthServer.cpp">
       <Filter>Auth</Filter>
     </ClCompile>
-    <ClCompile Include="Crypto\ARC4.cpp">
-      <Filter>Crypto</Filter>
-    </ClCompile>
     <ClCompile Include="Crypto\AuthCrypt.cpp">
-      <Filter>Crypto</Filter>
-    </ClCompile>
-    <ClCompile Include="Crypto\base32.cpp">
       <Filter>Crypto</Filter>
     </ClCompile>
     <ClCompile Include="Crypto\BigNumber.cpp">
       <Filter>Crypto</Filter>
     </ClCompile>
     <ClCompile Include="Crypto\Hmac.cpp">
-      <Filter>Crypto</Filter>
-    </ClCompile>
-    <ClCompile Include="Crypto\md5.c">
       <Filter>Crypto</Filter>
     </ClCompile>
     <ClCompile Include="Crypto\Sha1.cpp">
@@ -121,22 +112,13 @@
     <ClInclude Include="Auth\AuthDefines.h">
       <Filter>Auth</Filter>
     </ClInclude>
-    <ClInclude Include="Crypto\ARC4.h">
-      <Filter>Crypto</Filter>
-    </ClInclude>
     <ClInclude Include="Crypto\AuthCrypt.h">
-      <Filter>Crypto</Filter>
-    </ClInclude>
-    <ClInclude Include="Crypto\base32.h">
       <Filter>Crypto</Filter>
     </ClInclude>
     <ClInclude Include="Crypto\BigNumber.h">
       <Filter>Crypto</Filter>
     </ClInclude>
     <ClInclude Include="Crypto\Hmac.h">
-      <Filter>Crypto</Filter>
-    </ClInclude>
-    <ClInclude Include="Crypto\md5.h">
       <Filter>Crypto</Filter>
     </ClInclude>
     <ClInclude Include="Crypto\Sha1.h">

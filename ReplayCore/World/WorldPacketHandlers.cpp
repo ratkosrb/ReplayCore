@@ -1,6 +1,5 @@
 #include "WorldServer.h"
 #include "../Crypto/Hmac.h"
-#include "../Crypto/base32.h"
 #include "../Crypto/Sha1.h"
 #include "../Defines//ByteBuffer.h"
 #include "../Defines//WorldPacket.h"
