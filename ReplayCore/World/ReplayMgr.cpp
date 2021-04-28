@@ -132,7 +132,11 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     pUnit->SetFloatValue("UNIT_FIELD_COMBATREACH", combatReach);
 
     if (sGameDataMgr.IsValidUnitDisplayId(displayId))
+    {
         pUnit->SetUInt32Value("UNIT_FIELD_DISPLAYID", displayId);
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            pUnit->SetFloatValue("OBJECT_FIELD_SCALE_X", scale * sGameDataMgr.GetCreatureDisplayScale(displayId));
+    }
     else
         pUnit->SetUInt32Value("UNIT_FIELD_DISPLAYID", UNIT_DISPLAY_ID_BOX);
 

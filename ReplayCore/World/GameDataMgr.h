@@ -19,6 +19,7 @@ typedef std::unordered_map<uint32, AreaTriggerTeleportEntry> AreaTriggerTeleport
 typedef std::unordered_map<uint32, CreatureTemplate> CreatureTemplateMap;
 typedef std::unordered_map<uint32, GameObjectTemplate> GameObjectTemplateMap;
 typedef std::unordered_map<uint32, std::vector<uint32>> QuestRelationsMap;
+typedef std::unordered_map<uint32, float> CreatureDisplayScaleMap;
 
 class GameDataMgr
 {
@@ -82,6 +83,11 @@ public:
     {
         auto itr = m_creatureTemplateMap.find(id);
         return itr != m_creatureTemplateMap.end() ? &itr->second : nullptr;
+    }
+    float GetCreatureDisplayScale(uint32 displayId) const
+    {
+        auto itr = m_creatureDisplayScalesMap.find(displayId);
+        return itr != m_creatureDisplayScalesMap.end() ? itr->second : 1.0f;
     }
 
     // AreaTriggers
@@ -191,6 +197,7 @@ private:
     QuestRelationsMap m_creatureQuestEnders;
     QuestRelationsMap m_gameobjectQuestStarters;
     QuestRelationsMap m_gameobjectQuestEnders;
+    static CreatureDisplayScaleMap m_creatureDisplayScalesMap;
 };
 
 #define sGameDataMgr GameDataMgr::Instance()

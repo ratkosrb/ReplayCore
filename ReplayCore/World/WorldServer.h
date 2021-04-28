@@ -83,6 +83,15 @@ public:
         return nullptr;
     }
 
+    Unit* FindUnit(ObjectGuid guid)
+    {
+        if (guid.GetTypeId() == TYPEID_PLAYER)
+            return FindPlayer(guid);
+        else if (guid.GetTypeId() == TYPEID_UNIT)
+            return FindCreature(guid);
+        return nullptr;
+    }
+
     std::map<ObjectGuid, Player> const& GetPlayersMap()
     {
         return m_players;
@@ -225,6 +234,7 @@ public:
     void SendInspect(ObjectGuid guid);
     void SendInspectTalent(ObjectGuid guid);
     void TeleportClient(WorldLocation const& location);
+    void TeleportClient(uint32 mapId, float x, float y, float z, float o);
     void SendTransferPending(uint32 mapId);
     void SendNewWorld(WorldLocation const& location);
     void SendMoveTeleportAck(float x, float y, float z, float o);

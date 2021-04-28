@@ -146,3 +146,15 @@ void Unit::SetAttackTime(WeaponAttackType att, uint32 val)
     if (uint16 uf = sWorld.GetUpdateField("UNIT_FIELD_BASEATTACKTIME"))
         return SetUInt32Value(uf + att, val);
 }
+
+Unit* Unit::GetTarget() const
+{
+    ObjectGuid guid =GetGuidValue("UNIT_FIELD_TARGET");
+    if (guid.IsEmpty())
+        return nullptr;
+
+    if (guid == sWorld.GetClientPlayer()->GetObjectGuid())
+        return sWorld.GetClientPlayer();
+
+    return sWorld.FindUnit(guid);
+}

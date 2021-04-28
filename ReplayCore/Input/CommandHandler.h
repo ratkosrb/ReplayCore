@@ -22,6 +22,7 @@ public:
     bool ExtractBool(bool& variable);
     void HandleCommand();
     bool HandleShutdown();
+    bool HandleGPS();
     bool HandleTeleportToCoordinates();
     bool HandleTeleportToLocation();
     bool HandleSpawnInfo();
@@ -44,9 +45,10 @@ public:
     bool HandleSetPitchSpeed();
     bool HandleSetFlyMode();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[21] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[22] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
+        { "gps", &CommandHandler::HandleGPS },
         { "go", &CommandHandler::HandleTeleportToCoordinates },
         { "tele", &CommandHandler::HandleTeleportToLocation },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },

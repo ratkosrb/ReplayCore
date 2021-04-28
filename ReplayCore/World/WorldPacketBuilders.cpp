@@ -738,6 +738,12 @@ void WorldServer::SendInspectTalent(ObjectGuid guid)
     }
 }
 
+void WorldServer::TeleportClient(uint32 mapId, float x, float y, float z, float o)
+{
+    WorldLocation location(mapId, x, y, z, o);
+    TeleportClient(location);
+}
+
 void WorldServer::TeleportClient(WorldLocation const& location)
 {
     if (!m_clientPlayer)

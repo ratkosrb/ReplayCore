@@ -76,6 +76,8 @@ public :
         return m_speedRate[mtype] * baseMoveSpeed[mtype];
     }
 
+    Unit* GetTarget() const;
+
     ObjectGuid const& GetMeleeVictimGuid() const
     {
         return m_meleeVictim;

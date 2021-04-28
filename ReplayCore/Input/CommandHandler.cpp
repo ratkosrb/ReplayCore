@@ -169,8 +169,39 @@ bool CommandHandler::HandleShutdown()
     return true;
 }
 
+bool CommandHandler::HandleGPS()
+{
+    Unit* pTarget = sWorld.GetClientPlayer();
+    if (!pTarget)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    if (Unit* pNewTarget = pTarget->GetTarget())
+        pTarget = pNewTarget;
+
+    uint32 areaId = sGameDataMgr.GetAreaIdFromCoordinates(pTarget->GetMapId(), pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
+    AreaTableEntry const* pAreaEntry = sGameDataMgr.GetAreaTableEntry(areaId);
+    uint32 zoneId = pAreaEntry && pAreaEntry->zoneId ? pAreaEntry->zoneId : areaId;
+    std::string areaName = pAreaEntry ? pAreaEntry->name : "Unknown";
+    std::string zoneName = zoneId ? sGameDataMgr.GetAreaTableEntry(zoneId)->name : "Unknown";
+
+    PSendSysMessage("Current position of %s:", pTarget->GetGuidStr().c_str());
+    PSendSysMessage("Map: %u\nZone: %s (%u)\nArea: %s (%u)", pTarget->GetMapId(), zoneName.c_str(), zoneId, areaName.c_str(), areaId);
+    PSendSysMessage("Coordinates: %g %g %g\nOrientation: %g", pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), pTarget->GetOrientation());
+    return true;
+}
+
 bool CommandHandler::HandleTeleportToCoordinates()
 {
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
     float x;
     if (!ExtractFloat(x))
         return false;
@@ -180,8 +211,11 @@ bool CommandHandler::HandleTeleportToCoordinates()
     float z;
     if (!ExtractFloat(z))
         return false;
+
+    uint32 mapId = pPlayer->GetMapId();
+    ExtractUInt32(mapId);
     
-    sWorld.SendMoveTeleportAck(x, y, z, 0);
+    sWorld.TeleportClient(mapId, x, y, z, pPlayer->GetOrientation());
     return true;
 }
 
@@ -353,17 +387,10 @@ bool CommandHandler::HandleGoTarget()
         return true;
     }
 
-    ObjectGuid guid = pPlayer->GetGuidValue("UNIT_FIELD_TARGET");
-    if (guid.IsEmpty())
-    {
-        SendSysMessage("No target selected.");
-        return true;
-    }
-
-    WorldObject const* pTarget = sWorld.FindObject(guid);
+    Unit* pTarget = pPlayer->GetTarget();
     if (!pTarget)
     {
-        SendSysMessage("Can't find target in objects map.");
+        SendSysMessage("No target selected.");
         return true;
     }
 
