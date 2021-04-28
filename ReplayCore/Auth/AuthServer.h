@@ -4,6 +4,7 @@
 #include "..\Defines\Common.h"
 #include "..\Crypto\BigNumber.h"
 #include "winsock2.h"
+#include <string>
 #include <map>
 #include <thread>
 
