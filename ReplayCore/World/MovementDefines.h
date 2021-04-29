@@ -41,11 +41,13 @@ namespace Vanilla
         MOVEFLAG_INTERNAL           = 0x80000000,
 
         // Can not be present with MOVEFLAG_ROOT (otherwise client freeze)
-        MOVEFLAG_MASK_MOVING        =
+        MOVEFLAG_MASK_RUNNING = MOVEFLAG_FORWARD | MOVEFLAG_BACKWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT,
+        MOVEFLAG_MASK_MOVING =
             MOVEFLAG_FORWARD | MOVEFLAG_BACKWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT |
             MOVEFLAG_PITCH_UP | MOVEFLAG_PITCH_DOWN | MOVEFLAG_JUMPING | MOVEFLAG_FALLINGFAR |
             MOVEFLAG_SPLINE_ELEVATION,
-        MOVEFLAG_MASK_MOVING_OR_TURN= MOVEFLAG_MASK_MOVING | MOVEFLAG_TURN_LEFT | MOVEFLAG_TURN_RIGHT,
+        MOVEFLAG_MASK_TURNING = MOVEFLAG_TURN_LEFT | MOVEFLAG_TURN_RIGHT | MOVEFLAG_PITCH_UP | MOVEFLAG_PITCH_DOWN,
+        MOVEFLAG_MASK_MOVING_OR_TURN = MOVEFLAG_MASK_MOVING | MOVEFLAG_TURN_LEFT | MOVEFLAG_TURN_RIGHT,
 
         // MovementFlags mask that only contains flags for x/z translations
         // this is to avoid that a jumping character that stands still triggers melee-leeway
@@ -251,6 +253,44 @@ namespace WotLK
         Mask_CatmullRom = Flying | Catmullrom,
         // Unused, not suported flags
         Mask_Unused = No_Spline | Enter_Cycle | Frozen | Unknown7 | Unknown8 | Unknown10 | Unknown11 | Unknown12 | Unknown13,
+    };
+}
+
+namespace Classic
+{
+    enum MovementFlags
+    {
+        MOVEFLAG_NONE               = 0x00000000,
+        MOVEFLAG_FORWARD            = 0x00000001,
+        MOVEFLAG_BACKWARD           = 0x00000002,
+        MOVEFLAG_STRAFE_LEFT        = 0x00000004,
+        MOVEFLAG_STRAFE_RIGHT       = 0x00000008,
+        MOVEFLAG_TURN_LEFT          = 0x00000010,
+        MOVEFLAG_TURN_RIGHT         = 0x00000020,
+        MOVEFLAG_PITCH_UP           = 0x00000040,
+        MOVEFLAG_PITCH_DOWN         = 0x00000080,
+        MOVEFLAG_WALK_MODE          = 0x00000100,
+        MOVEFLAG_DISABLE_GRAVITY    = 0x00000200,
+        MOVEFLAG_ROOT               = 0x00000400,
+        MOVEFLAG_FALLING            = 0x00000800,
+        MOVEFLAG_FALLINGFAR         = 0x00001000,
+        MOVEFLAG_PENDINGSTOP        = 0x00002000,
+        MOVEFLAG_PENDINGSTRAFESTOP  = 0x00004000,
+        MOVEFLAG_PENDINGFORWARD     = 0x00008000,
+        MOVEFLAG_PENDINGBACKWARD    = 0x00010000,
+        MOVEFLAG_PENDINGSTRAFELEFT  = 0x00020000,
+        MOVEFLAG_PENDINGSTRAFERIGHT = 0x00040000,
+        MOVEFLAG_PENDINGROOT        = 0x00080000,
+        MOVEFLAG_SWIMMING           = 0x00100000,
+        MOVEFLAG_ASCENDING          = 0x00200000,
+        MOVEFLAG_DESCENDING         = 0x00400000,
+        MOVEFLAG_CAN_FLY            = 0x00800000,
+        MOVEFLAG_FLYING             = 0x01000000,
+        MOVEFLAG_SPLINE_ELEVATION   = 0x02000000,
+        MOVEFLAG_WATERWALKING       = 0x04000000,
+        MOVEFLAG_SAFE_FALL          = 0x08000000,
+        MOVEFLAG_HOVER              = 0x10000000,
+        MOVEFLAG_DISABLE_COLLISION  = 0x20000000,
     };
 }
 

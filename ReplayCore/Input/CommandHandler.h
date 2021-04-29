@@ -32,6 +32,7 @@ public:
     bool HandleGoTarget();
     bool HandleGoCreature();
     bool HandleGoGameObject();
+    bool HandleGoToClient();
     bool SetSpeedCommandsHelper(UnitMoveType moveType);
     bool HandleSetAllSpeeds();
     bool HandleSetRunSpeed();
@@ -44,8 +45,9 @@ public:
     bool HandleSetTurnSpeed();
     bool HandleSetPitchSpeed();
     bool HandleSetFlyMode();
+    bool HandleSniffPlay();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[22] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[24] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "gps", &CommandHandler::HandleGPS },
@@ -58,6 +60,7 @@ private:
         { "gotarget", &CommandHandler::HandleGoTarget },
         { "gocreature", &CommandHandler::HandleGoCreature },
         { "gogobject", &CommandHandler::HandleGoGameObject },
+        { "gotoclient", &CommandHandler::HandleGoToClient },
         { "aspeed", &CommandHandler::HandleSetAllSpeeds },
         { "speed", &CommandHandler::HandleSetRunSpeed },
         { "backspeed", &CommandHandler::HandleSetRunBackSpeed },
@@ -69,6 +72,7 @@ private:
         { "turnspeed", &CommandHandler::HandleSetTurnSpeed },
         { "pitchspeed", &CommandHandler::HandleSetPitchSpeed },
         { "fly", &CommandHandler::HandleSetFlyMode },
+        { "play", &CommandHandler::HandleSniffPlay },
     };
 
     bool m_console = true;

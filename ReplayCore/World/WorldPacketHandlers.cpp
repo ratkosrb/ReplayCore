@@ -574,8 +574,7 @@ void WorldServer::HandleLogoutRequest(WorldPacket& packet)
 {
     SendLogoutResponse(0, true);
     SendLogoutComplete();
-    m_sessionData.isInWorld = false;
-    m_sessionData.visibleObjects.clear();
+    OnClientLogout();
 }
 
 void WorldServer::HandleJoinChannel(WorldPacket& packet)
@@ -895,7 +894,7 @@ void WorldServer::HandleMessageChat(WorldPacket& packet)
     if (msg.empty())
         return;
 
-    if (msg[0] == '.' && msg.length() > 0)
+    if (msg[0] == '.' && msg.length() > 1)
         msg = msg.substr(1, msg.length() - 1);
 
     CommandHandler handler(msg, false);

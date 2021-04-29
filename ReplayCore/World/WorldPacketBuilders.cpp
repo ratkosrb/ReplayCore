@@ -491,7 +491,7 @@ void WorldServer::SendJoinedChannelNotify(std::string channelName, uint32 channe
     {
         data << uint32(flags);
         data << uint32(channelId);                             // the non-zero number will be appended to the channel name
-        data << uint8(0);                                      // CString max length 512, conditional read
+        //data << uint8(0);                                    // CString max length 512, conditional read
     }
     else
     {
@@ -1328,7 +1328,6 @@ void WorldServer::SendSplineSetSpeed(ObjectGuid guid, uint32 moveType, float spe
 
 void WorldServer::SendMovementPacket(Unit* pUnit, uint16 opcode)
 {
-    pUnit->GetMovementInfo().UpdateTime(sWorld.GetServerTimeMs());
     WorldPacket data(opcode);
     data << pUnit->GetPackGUID();
     data << pUnit->GetMovementInfo();
@@ -1370,7 +1369,8 @@ void WorldServer::SendQueryNextMailTimeResponse()
 {
     WorldPacket data(GetOpcode("MSG_QUERY_NEXT_MAIL_TIME"), 8);
     data << uint32(0xC7A8C000);
-    data << uint32(0x00000000);
+    if (GetClientBuild() >= CLIENT_BUILD_2_3_0)
+        data << uint32(0x00000000);
     SendPacket(data);
 }
 

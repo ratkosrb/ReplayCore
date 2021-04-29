@@ -453,183 +453,148 @@ inline uint32 ConvertClassicHitInfoFlagsToWotLK(uint32 flags)
     return newFlags;
 }
 
-enum class ClassicMovementFlag : uint32
-{
-    None = 0x00000000,
-    Forward = 0x00000001,
-    Backward = 0x00000002,
-    StrafeLeft = 0x00000004,
-    StrafeRight = 0x00000008,
-    Left = 0x00000010,
-    Right = 0x00000020,
-    PitchUp = 0x00000040,
-    PitchDown = 0x00000080,
-    Walking = 0x00000100,
-    DisableGravity = 0x00000200,
-    Root = 0x00000400,
-    Falling = 0x00000800,
-    FallingFar = 0x00001000,
-    PendingStop = 0x00002000,
-    PendingStrafeStop = 0x00004000,
-    PendingForward = 0x00008000,
-    PendingBackward = 0x00010000,
-    PendingStrafeLeft = 0x00020000,
-    PendingStrafeRight = 0x00040000,
-    PendingRoot = 0x00080000,
-    Swimming = 0x00100000,
-    Ascending = 0x00200000,
-    Descending = 0x00400000,
-    CanFly = 0x00800000,
-    Flying = 0x01000000,
-    SplineElevation = 0x02000000,
-    Waterwalking = 0x04000000,
-    FallingSlow = 0x08000000,
-    Hover = 0x10000000,
-    DisableCollision = 0x20000000,
-};
-
-inline uint32 ConvertMovementFlagsToVanilla(uint32 flags)
+inline uint32 ConvertClassicMovementFlagsToVanilla(uint32 flags)
 {
     uint32 newFlags = 0;
-    if (flags & (uint32)ClassicMovementFlag::Forward)
+    if (flags & Classic::MOVEFLAG_FORWARD)
         newFlags |= Vanilla::MOVEFLAG_FORWARD;
-    if (flags & (uint32)ClassicMovementFlag::Backward)
+    if (flags & Classic::MOVEFLAG_BACKWARD)
         newFlags |= Vanilla::MOVEFLAG_BACKWARD;
-    if (flags & (uint32)ClassicMovementFlag::StrafeLeft)
+    if (flags & Classic::MOVEFLAG_STRAFE_LEFT)
         newFlags |= Vanilla::MOVEFLAG_STRAFE_LEFT;
-    if (flags & (uint32)ClassicMovementFlag::StrafeRight)
+    if (flags & Classic::MOVEFLAG_STRAFE_RIGHT)
         newFlags |= Vanilla::MOVEFLAG_STRAFE_RIGHT;
-    if (flags & (uint32)ClassicMovementFlag::Left)
+    if (flags & Classic::MOVEFLAG_TURN_LEFT)
         newFlags |= Vanilla::MOVEFLAG_TURN_LEFT;
-    if (flags & (uint32)ClassicMovementFlag::Right)
+    if (flags & Classic::MOVEFLAG_TURN_RIGHT)
         newFlags |= Vanilla::MOVEFLAG_TURN_RIGHT;
-    if (flags & (uint32)ClassicMovementFlag::PitchUp)
+    if (flags & Classic::MOVEFLAG_PITCH_UP)
         newFlags |= Vanilla::MOVEFLAG_PITCH_UP;
-    if (flags & (uint32)ClassicMovementFlag::PitchDown)
+    if (flags & Classic::MOVEFLAG_PITCH_DOWN)
         newFlags |= Vanilla::MOVEFLAG_PITCH_DOWN;
-    if (flags & (uint32)ClassicMovementFlag::Walking)
+    if (flags & Classic::MOVEFLAG_WALK_MODE)
         newFlags |= Vanilla::MOVEFLAG_WALK_MODE;
-    if (flags & (uint32)ClassicMovementFlag::Root)
+    if (flags & Classic::MOVEFLAG_ROOT)
         newFlags |= Vanilla::MOVEFLAG_ROOT;
-    if (flags & (uint32)ClassicMovementFlag::Falling)
+    if (flags & Classic::MOVEFLAG_FALLING)
         newFlags |= Vanilla::MOVEFLAG_JUMPING;
-    if (flags & (uint32)ClassicMovementFlag::FallingFar)
+    if (flags & Classic::MOVEFLAG_FALLINGFAR)
         newFlags |= Vanilla::MOVEFLAG_FALLINGFAR;
-    if (flags & (uint32)ClassicMovementFlag::Swimming)
+    if (flags & Classic::MOVEFLAG_SWIMMING)
         newFlags |= Vanilla::MOVEFLAG_SWIMMING;
-    if (flags & (uint32)ClassicMovementFlag::CanFly)
+    if (flags & Classic::MOVEFLAG_CAN_FLY)
         newFlags |= Vanilla::MOVEFLAG_CAN_FLY;
-    if (flags & (uint32)ClassicMovementFlag::Flying)
+    if (flags & Classic::MOVEFLAG_FLYING)
         newFlags |= Vanilla::MOVEFLAG_FLYING;
-    if (flags & (uint32)ClassicMovementFlag::Waterwalking)
+    if (flags & Classic::MOVEFLAG_WATERWALKING)
         newFlags |= Vanilla::MOVEFLAG_WATERWALKING;
-    if (flags & (uint32)ClassicMovementFlag::FallingSlow)
+    if (flags & Classic::MOVEFLAG_SAFE_FALL)
         newFlags |= Vanilla::MOVEFLAG_SAFE_FALL;
-    if (flags & (uint32)ClassicMovementFlag::Hover)
+    if (flags & Classic::MOVEFLAG_HOVER)
         newFlags |= Vanilla::MOVEFLAG_HOVER;
     return newFlags;
 }
 
-inline uint32 ConvertMovementFlagsToTBC(uint32 flags)
+inline uint32 ConvertClassicMovementFlagsToTBC(uint32 flags)
 {
     uint32 newFlags = 0;
-    if (flags & (uint32)ClassicMovementFlag::Forward)
+    if (flags & Classic::MOVEFLAG_FORWARD)
         newFlags |= TBC::MOVEFLAG_FORWARD;
-    if (flags & (uint32)ClassicMovementFlag::Backward)
+    if (flags & Classic::MOVEFLAG_BACKWARD)
         newFlags |= TBC::MOVEFLAG_BACKWARD;
-    if (flags & (uint32)ClassicMovementFlag::StrafeLeft)
+    if (flags & Classic::MOVEFLAG_STRAFE_LEFT)
         newFlags |= TBC::MOVEFLAG_STRAFE_LEFT;
-    if (flags & (uint32)ClassicMovementFlag::StrafeRight)
+    if (flags & Classic::MOVEFLAG_STRAFE_RIGHT)
         newFlags |= TBC::MOVEFLAG_STRAFE_RIGHT;
-    if (flags & (uint32)ClassicMovementFlag::Left)
+    if (flags & Classic::MOVEFLAG_TURN_LEFT)
         newFlags |= TBC::MOVEFLAG_TURN_LEFT;
-    if (flags & (uint32)ClassicMovementFlag::Right)
+    if (flags & Classic::MOVEFLAG_TURN_RIGHT)
         newFlags |= TBC::MOVEFLAG_TURN_RIGHT;
-    if (flags & (uint32)ClassicMovementFlag::PitchUp)
+    if (flags & Classic::MOVEFLAG_PITCH_UP)
         newFlags |= TBC::MOVEFLAG_PITCH_UP;
-    if (flags & (uint32)ClassicMovementFlag::PitchDown)
+    if (flags & Classic::MOVEFLAG_PITCH_DOWN)
         newFlags |= TBC::MOVEFLAG_PITCH_DOWN;
-    if (flags & (uint32)ClassicMovementFlag::Walking)
+    if (flags & Classic::MOVEFLAG_WALK_MODE)
         newFlags |= TBC::MOVEFLAG_WALK_MODE;
-    if (flags & (uint32)ClassicMovementFlag::Root)
+    if (flags & Classic::MOVEFLAG_ROOT)
         newFlags |= TBC::MOVEFLAG_ROOT;
-    if (flags & (uint32)ClassicMovementFlag::Falling)
+    if (flags & Classic::MOVEFLAG_FALLING)
         newFlags |= TBC::MOVEFLAG_JUMPING;
-    if (flags & (uint32)ClassicMovementFlag::FallingFar)
+    if (flags & Classic::MOVEFLAG_FALLINGFAR)
         newFlags |= TBC::MOVEFLAG_FALLINGFAR;
-    if (flags & (uint32)ClassicMovementFlag::Swimming)
+    if (flags & Classic::MOVEFLAG_SWIMMING)
         newFlags |= TBC::MOVEFLAG_SWIMMING;
-    if (flags & (uint32)ClassicMovementFlag::Ascending)
+    if (flags & Classic::MOVEFLAG_ASCENDING)
         newFlags |= TBC::MOVEFLAG_ASCENDING;
-    if (flags & (uint32)ClassicMovementFlag::CanFly)
+    if (flags & Classic::MOVEFLAG_CAN_FLY)
         newFlags |= TBC::MOVEFLAG_CAN_FLY;
-    if (flags & (uint32)ClassicMovementFlag::Flying)
+    if (flags & Classic::MOVEFLAG_FLYING)
         newFlags |= TBC::MOVEFLAG_FLYING;
-    if (flags & (uint32)ClassicMovementFlag::Waterwalking)
+    if (flags & Classic::MOVEFLAG_WATERWALKING)
         newFlags |= TBC::MOVEFLAG_WATERWALKING;
-    if (flags & (uint32)ClassicMovementFlag::FallingSlow)
+    if (flags & Classic::MOVEFLAG_SAFE_FALL)
         newFlags |= TBC::MOVEFLAG_SAFE_FALL;
-    if (flags & (uint32)ClassicMovementFlag::Hover)
+    if (flags & Classic::MOVEFLAG_HOVER)
         newFlags |= TBC::MOVEFLAG_HOVER;
     return newFlags;
 }
 
-inline uint32 ConvertMovementFlagsToWotLK(uint32 flags)
+inline uint32 ConvertClassicMovementFlagsToWotLK(uint32 flags)
 {
     uint32 newFlags = 0;
-    if (flags & (uint32)ClassicMovementFlag::Forward)
+    if (flags & Classic::MOVEFLAG_FORWARD)
         newFlags |= WotLK::MOVEFLAG_FORWARD;
-    if (flags & (uint32)ClassicMovementFlag::Backward)
+    if (flags & Classic::MOVEFLAG_BACKWARD)
         newFlags |= WotLK::MOVEFLAG_BACKWARD;
-    if (flags & (uint32)ClassicMovementFlag::StrafeLeft)
+    if (flags & Classic::MOVEFLAG_STRAFE_LEFT)
         newFlags |= WotLK::MOVEFLAG_STRAFE_LEFT;
-    if (flags & (uint32)ClassicMovementFlag::StrafeRight)
+    if (flags & Classic::MOVEFLAG_STRAFE_RIGHT)
         newFlags |= WotLK::MOVEFLAG_STRAFE_RIGHT;
-    if (flags & (uint32)ClassicMovementFlag::Left)
+    if (flags & Classic::MOVEFLAG_TURN_LEFT)
         newFlags |= WotLK::MOVEFLAG_TURN_LEFT;
-    if (flags & (uint32)ClassicMovementFlag::Right)
+    if (flags & Classic::MOVEFLAG_TURN_RIGHT)
         newFlags |= WotLK::MOVEFLAG_TURN_RIGHT;
-    if (flags & (uint32)ClassicMovementFlag::PitchUp)
+    if (flags & Classic::MOVEFLAG_PITCH_UP)
         newFlags |= WotLK::MOVEFLAG_PITCH_UP;
-    if (flags & (uint32)ClassicMovementFlag::PitchDown)
+    if (flags & Classic::MOVEFLAG_PITCH_DOWN)
         newFlags |= WotLK::MOVEFLAG_PITCH_DOWN;
-    if (flags & (uint32)ClassicMovementFlag::Walking)
+    if (flags & Classic::MOVEFLAG_WALK_MODE)
         newFlags |= WotLK::MOVEFLAG_WALK_MODE;
-    if (flags & (uint32)ClassicMovementFlag::Root)
+    if (flags & Classic::MOVEFLAG_ROOT)
         newFlags |= WotLK::MOVEFLAG_ROOT;
-    if (flags & (uint32)ClassicMovementFlag::Falling)
+    if (flags & Classic::MOVEFLAG_FALLING)
         newFlags |= WotLK::MOVEFLAG_FALLING;
-    if (flags & (uint32)ClassicMovementFlag::FallingFar)
+    if (flags & Classic::MOVEFLAG_FALLINGFAR)
         newFlags |= WotLK::MOVEFLAG_FALLINGFAR;
-    if (flags & (uint32)ClassicMovementFlag::PendingStop)
+    if (flags & Classic::MOVEFLAG_PENDINGSTOP)
         newFlags |= WotLK::MOVEFLAG_PENDINGSTOP;
-    if (flags & (uint32)ClassicMovementFlag::PendingStrafeStop)
+    if (flags & Classic::MOVEFLAG_PENDINGSTRAFESTOP)
         newFlags |= WotLK::MOVEFLAG_PENDINGSTRAFESTOP;
-    if (flags & (uint32)ClassicMovementFlag::PendingForward)
+    if (flags & Classic::MOVEFLAG_PENDINGFORWARD)
         newFlags |= WotLK::MOVEFLAG_PENDINGFORWARD;
-    if (flags & (uint32)ClassicMovementFlag::PendingBackward)
+    if (flags & Classic::MOVEFLAG_PENDINGBACKWARD)
         newFlags |= WotLK::MOVEFLAG_PENDINGBACKWARD;
-    if (flags & (uint32)ClassicMovementFlag::PendingStrafeLeft)
+    if (flags & Classic::MOVEFLAG_PENDINGSTRAFELEFT)
         newFlags |= WotLK::MOVEFLAG_PENDINGSTRAFELEFT;
-    if (flags & (uint32)ClassicMovementFlag::PendingStrafeRight)
+    if (flags & Classic::MOVEFLAG_PENDINGSTRAFERIGHT)
         newFlags |= WotLK::MOVEFLAG_PENDINGSTRAFERIGHT;
-    if (flags & (uint32)ClassicMovementFlag::PendingRoot)
+    if (flags & Classic::MOVEFLAG_PENDINGROOT)
         newFlags |= WotLK::MOVEFLAG_PENDINGROOT;
-    if (flags & (uint32)ClassicMovementFlag::Swimming)
+    if (flags & Classic::MOVEFLAG_SWIMMING)
         newFlags |= WotLK::MOVEFLAG_SWIMMING;
-    if (flags & (uint32)ClassicMovementFlag::Ascending)
+    if (flags & Classic::MOVEFLAG_ASCENDING)
         newFlags |= WotLK::MOVEFLAG_ASCENDING;
-    if (flags & (uint32)ClassicMovementFlag::Descending)
+    if (flags & Classic::MOVEFLAG_DESCENDING)
         newFlags |= WotLK::MOVEFLAG_DESCENDING;
-    if (flags & (uint32)ClassicMovementFlag::CanFly)
+    if (flags & Classic::MOVEFLAG_CAN_FLY)
         newFlags |= WotLK::MOVEFLAG_CAN_FLY;
-    if (flags & (uint32)ClassicMovementFlag::Flying)
+    if (flags & Classic::MOVEFLAG_FLYING)
         newFlags |= WotLK::MOVEFLAG_FLYING;
-    if (flags & (uint32)ClassicMovementFlag::Waterwalking)
+    if (flags & Classic::MOVEFLAG_WATERWALKING)
         newFlags |= WotLK::MOVEFLAG_WATERWALKING;
-    if (flags & (uint32)ClassicMovementFlag::FallingSlow)
+    if (flags & Classic::MOVEFLAG_SAFE_FALL)
         newFlags |= WotLK::MOVEFLAG_SAFE_FALL;
-    if (flags & (uint32)ClassicMovementFlag::Hover)
+    if (flags & Classic::MOVEFLAG_HOVER)
         newFlags |= WotLK::MOVEFLAG_HOVER;
     return newFlags;
 }

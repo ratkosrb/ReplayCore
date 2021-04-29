@@ -20,6 +20,7 @@ typedef std::unordered_map<uint32, CreatureTemplate> CreatureTemplateMap;
 typedef std::unordered_map<uint32, GameObjectTemplate> GameObjectTemplateMap;
 typedef std::unordered_map<uint32, std::vector<uint32>> QuestRelationsMap;
 typedef std::unordered_map<uint32, float> CreatureDisplayScaleMap;
+typedef std::unordered_map<uint32, char const*> MapNamesMap;
 
 class GameDataMgr
 {
@@ -34,6 +35,8 @@ public:
     bool IsValidGameObjectDisplayId(uint32 id) const;
     bool IsValidGameObjectType(uint32 type) const;
     uint8 GetMoveSpeedsCount() const;
+    uint32 ConvertMovementFlags(uint32 moveFlags) const;
+    uint32 ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const;
 
     void LoadGameTele();
     GameTele const* GetGameTele(std::string name) const;
@@ -49,6 +52,14 @@ public:
             return nullptr;
 
         return &iter->second;
+    }
+    char const* GetMapName(uint32 id) const
+    {
+        auto iter = m_mapNamesMap.find(id);
+        if (iter == m_mapNamesMap.end())
+            return "UNKNOWN";
+
+        return iter->second;
     }
 
     void LoadPlayerInfo();
@@ -187,8 +198,8 @@ private:
     PlayerClassInfo m_PlayerClassInfo[MAX_CLASSES];
     void BuildPlayerLevelInfo(uint8 race, uint8 class_, uint8 level, PlayerLevelInfo* plinfo) const;
     PlayerInfo m_PlayerInfo[MAX_RACES][MAX_CLASSES];
-    static AreaTableEntryMap m_areaTableEntryMap;
-    static AreaPOIStore m_areaPOIStore;
+    static AreaTableEntryMap const m_areaTableEntryMap;
+    static AreaPOIStore const m_areaPOIStore;
     GameTeleStore m_GameTeleStore;
     AreaTriggerTeleportMap m_areaTriggerTeleportMap;
     CreatureTemplateMap m_creatureTemplateMap;
@@ -197,7 +208,8 @@ private:
     QuestRelationsMap m_creatureQuestEnders;
     QuestRelationsMap m_gameobjectQuestStarters;
     QuestRelationsMap m_gameobjectQuestEnders;
-    static CreatureDisplayScaleMap m_creatureDisplayScalesMap;
+    static CreatureDisplayScaleMap const m_creatureDisplayScalesMap;
+    static MapNamesMap const m_mapNamesMap;
 };
 
 #define sGameDataMgr GameDataMgr::Instance()

@@ -188,7 +188,7 @@ bool CommandHandler::HandleGPS()
     std::string zoneName = zoneId ? sGameDataMgr.GetAreaTableEntry(zoneId)->name : "Unknown";
 
     PSendSysMessage("Current position of %s:", pTarget->GetGuidStr().c_str());
-    PSendSysMessage("Map: %u\nZone: %s (%u)\nArea: %s (%u)", pTarget->GetMapId(), zoneName.c_str(), zoneId, areaName.c_str(), areaId);
+    PSendSysMessage("Map: %s (%u)\nZone: %s (%u)\nArea: %s (%u)", sGameDataMgr.GetMapName(pTarget->GetMapId()), pTarget->GetMapId(), zoneName.c_str(), zoneId, areaName.c_str(), areaId);
     PSendSysMessage("Coordinates: %g %g %g\nOrientation: %g", pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), pTarget->GetOrientation());
     return true;
 }
@@ -401,8 +401,7 @@ bool CommandHandler::HandleGoTarget()
 
 bool CommandHandler::HandleGoCreature()
 {
-    Player* pPlayer = sWorld.GetClientPlayer();
-    if (!pPlayer)
+    if (!sWorld.GetClientPlayer())
     {
         printf("Client is not in world!\n");
         return true;
@@ -428,8 +427,7 @@ bool CommandHandler::HandleGoCreature()
 
 bool CommandHandler::HandleGoGameObject()
 {
-    Player* pPlayer = sWorld.GetClientPlayer();
-    if (!pPlayer)
+    if (!sWorld.GetClientPlayer())
     {
         printf("Client is not in world!\n");
         return true;
@@ -450,6 +448,24 @@ bool CommandHandler::HandleGoGameObject()
     }
 
     SendSysMessage("GameObject not found.");
+    return true;
+}
+
+bool CommandHandler::HandleGoToClient()
+{
+    if (!sWorld.GetClientPlayer())
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    if (Player const* pActivePlayer = sReplayMgr.GetActivePlayer())
+    {
+        sWorld.TeleportClient(pActivePlayer->GetLocation());
+        return true;
+    }
+
+    SendSysMessage("Cannot find active player.\n");
     return true;
 }
 
@@ -560,6 +576,7 @@ bool CommandHandler::HandleSetFlyMode()
         if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
         {
             pPlayer->SetUnitMovementFlags(Vanilla::MOVEFLAG_LEVITATING | Vanilla::MOVEFLAG_SWIMMING | Vanilla::MOVEFLAG_CAN_FLY | Vanilla::MOVEFLAG_FLYING);
+            pPlayer->GetMovementInfo().UpdateTime(sWorld.GetServerTimeMs());
             sWorld.SendMovementPacket(pPlayer, sWorld.GetOpcode("MSG_MOVE_HEARTBEAT"));
         }
         else
@@ -571,6 +588,7 @@ bool CommandHandler::HandleSetFlyMode()
         if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
         {
             pPlayer->RemoveUnitMovementFlag(Vanilla::MOVEFLAG_LEVITATING | Vanilla::MOVEFLAG_SWIMMING | Vanilla::MOVEFLAG_CAN_FLY | Vanilla::MOVEFLAG_FLYING);
+            pPlayer->GetMovementInfo().UpdateTime(sWorld.GetServerTimeMs());
             sWorld.SendMovementPacket(pPlayer, sWorld.GetOpcode("MSG_MOVE_HEARTBEAT"));
         }
         else
@@ -578,5 +596,27 @@ bool CommandHandler::HandleSetFlyMode()
         SendSysMessage("Flying mode disabled.");
     }
 
+    return true;
+}
+
+bool CommandHandler::HandleSniffPlay()
+{
+    if (!sWorld.GetClientPlayer())
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    if (sReplayMgr.IsPlaying())
+    {
+        SendSysMessage("Sniff replay has already started!");
+        return true;
+    }
+
+    uint32 unixtime;
+    if (ExtractUInt32(unixtime))
+        sReplayMgr.SetPlayTime(unixtime);
+
+    sReplayMgr.StartPlaying();
     return true;
 }

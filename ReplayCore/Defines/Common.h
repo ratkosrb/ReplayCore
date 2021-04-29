@@ -17,4 +17,15 @@ typedef uint32_t uint32;
 typedef uint16_t uint16;
 typedef uint8_t uint8;
 
+enum TimeConstants
+{
+    MINUTE = 60,
+    HOUR   = MINUTE*60,
+    DAY    = HOUR*24,
+    WEEK   = DAY*7,
+    MONTH  = DAY*30,
+    YEAR   = MONTH*12,
+    IN_MILLISECONDS = 1000
+};
+
 #endif

@@ -132,12 +132,15 @@ public:
     uint16 GetClientBuild() const { return m_sessionData.build; }
     Player* GetClientPlayer() { return m_clientPlayer.get(); }
     uint32 GetServerTimeMs() const { return m_msTimeSinceServerStart; }
+    bool IsGuidVisibleToClient(ObjectGuid guid) const
+    {
+        return m_sessionData.visibleObjects.find(guid) != m_sessionData.visibleObjects.end();
+    }
 
     bool IsEnabled() const { return m_enabled; }
     void StartNetwork();
     void StopNetwork();
     void StartWorld();
-    void SpawnWorldObjects();
     std::thread m_networkThread;
     std::thread m_worldThread;
     std::thread m_packetProcessingThread;
@@ -150,6 +153,8 @@ private:
 
     // World
     void WorldLoop();
+    void SpawnWorldObjects();
+    void OnClientLogout();
     template<class T>
     void BuildAndSendObjectUpdates(T& objectsMap);
     std::map<ObjectGuid, GameObject> m_gameObjects;

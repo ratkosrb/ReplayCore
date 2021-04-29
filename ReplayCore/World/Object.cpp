@@ -269,6 +269,11 @@ void MovementInfo::Write(ByteBuffer &data) const
     }
 }
 
+bool Object::IsVisibleToClient() const
+{
+    return sWorld.IsGuidVisibleToClient(m_guid);
+}
+
 bool WorldObject::IsWithinVisibilityDistance(WorldObject const* pObject) const
 {
     if (GetMapId() != pObject->GetMapId())

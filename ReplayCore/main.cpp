@@ -117,6 +117,11 @@ int main()
     
     sGameDataMgr.SetDataSource(GameDataSource(sConfig.GetWorldDbType()));
 
+    printf("\nSelect sniff version:\n");
+    printf("0. Classic 1.13\n");
+    printf("> ");
+    sConfig.SetSniffVersion(Console::GetUInt32());
+
     sGameDataMgr.LoadQuests();
     sGameDataMgr.LoadQuestRelations();
     sGameDataMgr.LoadFactions();

@@ -6,6 +6,7 @@
 #include "GameObjectDefines.h"
 #include "SpellDefines.h"
 #include "Geometry.h"
+#include "ClassicDefines.h"
 #include "../Input/Config.h"
 
 GameDataMgr& GameDataMgr::Instance()
@@ -101,6 +102,25 @@ uint8 GameDataMgr::GetMoveSpeedsCount() const
         return MAX_MOVE_TYPE_TBC;
     
     return MAX_MOVE_TYPE_WOTLK;
+}
+
+uint32 GameDataMgr::ConvertMovementFlags(uint32 moveFlags) const
+{
+    return ConvertMovementFlagsForBuild(moveFlags, sWorld.GetClientBuild());
+}
+
+uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const
+{
+    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
+    {
+        if (clientBuild < CLIENT_BUILD_2_0_1)
+            return ConvertClassicMovementFlagsToVanilla(moveFlags);
+        else if (clientBuild < CLIENT_BUILD_3_0_2)
+            return ConvertClassicMovementFlagsToTBC(moveFlags);
+        else
+            return ConvertClassicMovementFlagsToWotLK(moveFlags);
+    }
+    return moveFlags;
 }
 
 void GameDataMgr::LoadGameTele()

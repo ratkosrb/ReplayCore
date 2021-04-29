@@ -75,11 +75,11 @@ void UnitData::InitializeUnit(Unit* pUnit) const
 
     pUnit->GetMovementInfo().pos = location.ToPosition();
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-        pUnit->GetMovementInfo().SetMovementFlags(ConvertMovementFlagsToVanilla(movementFlags));
+        pUnit->GetMovementInfo().SetMovementFlags(ConvertClassicMovementFlagsToVanilla(movementFlags));
     else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-        pUnit->GetMovementInfo().SetMovementFlags(ConvertMovementFlagsToTBC(movementFlags));
+        pUnit->GetMovementInfo().SetMovementFlags(ConvertClassicMovementFlagsToTBC(movementFlags));
     else
-        pUnit->GetMovementInfo().SetMovementFlags(ConvertMovementFlagsToWotLK(movementFlags));
+        pUnit->GetMovementInfo().SetMovementFlags(ConvertClassicMovementFlagsToWotLK(movementFlags));
 
     pUnit->SetGuidValue("UNIT_FIELD_CHARM", charm);
     pUnit->SetGuidValue("UNIT_FIELD_SUMMON", summon);
@@ -770,4 +770,105 @@ void ReplayMgr::LoadActivePlayers()
 
     } while (result->NextRow());
     printf(">> Loaded %u active players.\n", (uint32)m_activePlayers.size());
+}
+
+Player* ReplayMgr::GetActivePlayer()
+{
+    ObjectGuid currentCharacterGuid;
+    for (const auto& itr : m_activePlayerTimes)
+    {
+        if (itr.first < m_currentSniffTime)
+            currentCharacterGuid = itr.second;
+        else
+            break;
+    }
+
+    return sWorld.FindPlayer(currentCharacterGuid);
+}
+
+void ReplayMgr::Update(uint32 const diff)
+{
+    if (!m_enabled)
+        return;
+
+    uint64 oldSniffTimeMs = m_currentSniffTimeMs;
+    m_currentSniffTimeMs += diff;
+    m_currentSniffTime = uint32(m_currentSniffTimeMs / IN_MILLISECONDS);
+
+    for (const auto& itr : m_eventsMap)
+    {
+        if (itr.first <= oldSniffTimeMs)
+            continue;
+
+        if (itr.first > m_currentSniffTimeMs)
+            return;
+
+        itr.second->Execute();
+    }
+
+    if (m_currentSniffTimeMs > m_eventsMap.rbegin()->first)
+    {
+        printf("[ReplayMgr] Sniff replay is over.\n");
+        m_enabled = false;
+    }
+}
+
+void ReplayMgr::SetPlayTime(uint32 unixtime)
+{
+    uint32 const currentTime = uint32(time(nullptr));
+    if (unixtime > currentTime)
+    {
+        printf("[ReplayMgr] Sniff time is later than current time!\n");
+        return;
+    }
+
+    m_startTimeSniff = unixtime;
+    m_currentSniffTime = unixtime;
+    m_currentSniffTimeMs = uint64(unixtime) * 1000;
+    m_timeDifference = currentTime - m_startTimeSniff;
+    printf("[ReplayMgr] Sniff time has been set to %u.\n", unixtime);
+}
+
+void ReplayMgr::StartPlaying()
+{
+    if (!m_initialized)
+    {
+        if (m_eventsMapBackup.empty())
+        {
+            printf("[ReplayMgr] Events map is empty!\n");
+            return;
+        }
+
+        PrepareSniffedEventDataForCurrentClient();
+
+        if (!m_startTimeSniff)
+        {
+            uint32 earliestEventTime = uint32(m_eventsMap.begin()->first / IN_MILLISECONDS);
+            SetPlayTime(earliestEventTime);
+        }
+        
+        m_initialized = true;
+    }
+    printf("[ReplayMgr] Sniff replay started.\n");
+    m_enabled = true;
+}
+
+void ReplayMgr::StopPlaying()
+{
+    if (!m_enabled)
+        return;
+
+    m_enabled = false;
+    printf("[ReplayMgr] Sniff replay stopped.\n");
+}
+
+void ReplayMgr::Uninitialize()
+{
+    StopPlaying();
+    m_initialized = false;
+    m_startTimeSniff = 0;
+    m_currentSniffTime = 0;
+    m_currentSniffTimeMs = 0;
+    m_timeDifference = 0;
+    m_eventsMap.clear();
 }

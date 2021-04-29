@@ -21,10 +21,12 @@ public:
     uint32 GetWorldDbType() { return m_worldDbType; }
     uint32 GetVmangosContentPatch() { return m_vmangosContentPatch; }
     uint32 GetVmangosClientBuild() { return m_vmangosClientBuild; }
+    uint32 GetSniffVersion() { return m_sniffVersion; }
 
     void SetSniffDbConnectionString(std::string connectionString) { m_sniffDbConnectionString = connectionString; }
     void SetWorldDbConnectionString(std::string connectionString) { m_worldDbConnectionString = connectionString; }
     void SetWorldDbType(uint32 dbType) { m_worldDbType = dbType; }
+    void SetSniffVersion(uint32 version) { m_sniffVersion = version; }
 private:
     bool m_cli = false;
     std::string m_serverIp = "127.0.0.1";
@@ -35,6 +37,7 @@ private:
     uint32 m_worldDbType = 0;
     uint32 m_vmangosClientBuild = 5875;
     uint32 m_vmangosContentPatch = 10;
+    uint32 m_sniffVersion = 0;
 };
 
 #define sConfig Config::Instance()

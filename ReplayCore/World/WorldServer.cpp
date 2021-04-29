@@ -28,7 +28,7 @@ void WorldServer::StartWorld()
     m_worldThread = std::thread(&WorldServer::WorldLoop, this);
 }
 
-#define WORLD_UPDATE_TIME 200
+#define WORLD_UPDATE_TIME 100
 
 void WorldServer::WorldLoop()
 {
@@ -48,6 +48,8 @@ void WorldServer::WorldLoop()
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Player>>(m_players);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatures);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, GameObject>>(m_gameObjects);
+
+        sReplayMgr.Update(diff);
 
     } while (m_enabled);
 }
@@ -102,6 +104,7 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
 
 void WorldServer::SpawnWorldObjects()
 {
+    sReplayMgr.Uninitialize();
     m_players.clear();
     m_creatures.clear();
     m_gameObjects.clear();
@@ -161,6 +164,12 @@ void WorldServer::ResetClientData()
     m_sessionData.sessionKey = sAuth.GetSessionKey();
 }
 
+void WorldServer::OnClientLogout()
+{
+    m_sessionData.isInWorld = false;
+    m_sessionData.visibleObjects.clear();
+}
+
 void WorldServer::NetworkLoop()
 {
     do
@@ -198,6 +207,7 @@ void WorldServer::NetworkLoop()
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());;
                 m_sessionData.connected = false;
+                OnClientLogout();
                 break;
             }
 
@@ -205,6 +215,7 @@ void WorldServer::NetworkLoop()
             {
                 printf("[WORLD] Connection closed.\n");
                 m_sessionData.connected = false;
+                OnClientLogout();
                 break;
             }
 
@@ -227,6 +238,7 @@ void WorldServer::NetworkLoop()
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());
                 m_sessionData.connected = false;
+                OnClientLogout();
                 delete[] buffer;
                 break;
             }
@@ -235,6 +247,7 @@ void WorldServer::NetworkLoop()
             {
                 printf("[WORLD] Connection closed.\n");
                 m_sessionData.connected = false;
+                OnClientLogout();
                 delete[] buffer;
                 break;
             }

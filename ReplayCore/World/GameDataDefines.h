@@ -14,6 +14,11 @@ enum GameDataSource
     DB_TRINITY
 };
 
+enum SniffVersion
+{
+    SNIFF_CLASSIC,
+};
+
 enum FactionTemplateFlags
 {
     FACTION_TEMPLATE_FLAG_PVP               = 0x00000800,   // flagged for PvP

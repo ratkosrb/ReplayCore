@@ -41,6 +41,7 @@ public:
 
     bool IsVisible() const { return m_isVisible; }
     void SetVisibility(bool on) { m_isVisible = on; }
+    bool IsVisibleToClient() const;
 
     void MarkForClientUpdate();
     void ClearUpdateMask();

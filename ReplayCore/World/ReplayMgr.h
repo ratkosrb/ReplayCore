@@ -6,6 +6,7 @@
 #include "ObjectDefines.h"
 #include "UnitDefines.h"
 #include "PlayerDefines.h"
+#include "SniffedEvents.h"
 #include <set>
 #include <map>
 
@@ -14,6 +15,7 @@ class WorldObject;
 class Unit;
 class Player;
 class GameObject;
+class MovementInfo;
 
 // Only the mutable update fields.
 struct ObjectData
@@ -150,14 +152,33 @@ class ReplayMgr
 {
 public:
     static ReplayMgr& Instance();
-    ObjectGuid MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std::string type);
+    
     void LoadEverything()
     {
         LoadGameObjects();
         LoadCreatures();
         LoadPlayers();
         LoadActivePlayers();
+        LoadSniffedEvents();
     }
+
+#pragma region WorldObjects
+
+    ObjectGuid MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std::string type);
+    ObjectData* GetObjectSpawnData(uint32 guid, uint32 typeId)
+    {
+        switch (typeId)
+        {
+            case TYPEID_GAMEOBJECT:
+                return GetGameObjectSpawnData(guid);
+            case TYPEID_UNIT:
+                return GetCreatureSpawnData(guid);
+            case TYPEID_PLAYER:
+                return GetPlayerSpawnData(guid);
+        }
+        return nullptr;
+    }
+
     void LoadGameObjects();
     void SpawnGameObjects();
     GameObjectData* GetGameObjectSpawnData(uint32 guid)
@@ -189,6 +210,7 @@ public:
     void SpawnPlayers();
     void LoadPlayers();
     void LoadActivePlayers();
+    Player* GetActivePlayer();
     std::set<ObjectGuid> const& GetActivePlayers() const { return m_activePlayers; }
     PlayerData* GetPlayerSpawnData(uint32 guid)
     {
@@ -200,13 +222,51 @@ public:
 
         return &itr->second;
     }
+
+#pragma endregion WorldObjects
+
+#pragma region SniffedEvents
+
+    void LoadSniffedEvents();
+    void PrepareSniffedEventDataForCurrentClient();
+    void PrepareClientSideMovementDataForCurrentClient();
+    std::string GuessMovementOpcode(MovementInfo const& oldState, MovementInfo const& newState);
+    void LoadUnitClientSideMovement(char const* tableName, uint32 typeId);
+
+#pragma endregion SniffedEvents
+    
+#pragma region Replay
+
+    void Update(uint32 const diff);
+    void StartPlaying();
+    void StopPlaying();
+    void SetPlayTime(uint32 unixtime);
+    bool IsPlaying() { return m_enabled; }
+
+    void Uninitialize();
+
+    uint32 GetCurrentSniffTime() { return m_currentSniffTime; }
+    uint64 GetCurrentSniffTimeMs() { return m_currentSniffTimeMs; }
+    uint32 GetStartTimeSniff() { return m_startTimeSniff; }
+    uint32 GetTimeDifference() { return m_timeDifference; }
+    uint32 GetFirstEventTime() { return (m_eventsMap.empty() ? 0 : uint32(m_eventsMap.begin()->first / IN_MILLISECONDS)); }
+
+#pragma endregion Replay
    
 private:
+    bool m_enabled = false;
+    bool m_initialized = false;
+    uint32 m_currentSniffTime = 0;
+    uint64 m_currentSniffTimeMs = 0;
+    uint32 m_startTimeSniff = 0;
+    uint32 m_timeDifference = 0;
     std::set<ObjectGuid> m_activePlayers;
     std::map<uint32 /*unixtime*/, ObjectGuid> m_activePlayerTimes;
     std::map<uint32, PlayerData> m_playerSpawns;
     std::map<uint32, CreatureData> m_creatureSpawns;
     std::map<uint32, GameObjectData> m_gameObjectSpawns;
+    std::multimap<uint64, std::shared_ptr<SniffedEvent>> m_eventsMap;       // prepared data in the current client's format
+    std::multimap<uint64, std::shared_ptr<SniffedEvent>> m_eventsMapBackup; // stores the original data in sniff client format
 };
 
 #define sReplayMgr ReplayMgr::Instance()
