@@ -145,7 +145,7 @@ bool UpdateData::BuildPacket(WorldPacket* packet, UpdatePacket const* updPacket,
         buf << (uint8) UPDATETYPE_OUT_OF_RANGE_OBJECTS;
         buf << (uint32) m_outOfRangeGUIDs.size();
 
-        for (const auto& guid : m_outOfRangeGUIDs)
+        for (auto const& guid : m_outOfRangeGUIDs)
             buf << guid.WriteAsPacked();
     }
 
@@ -189,7 +189,7 @@ void UpdateData::Send(bool hasTransport)
         m_outOfRangeGUIDs.clear();
         return;
     }
-    for (const auto& itr : m_datas)
+    for (auto const& itr : m_datas)
     {
         if (BuildPacket(&data, &itr, hasTransport))
             sWorld.SendPacket(data);

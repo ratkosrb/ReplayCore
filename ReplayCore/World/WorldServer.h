@@ -289,6 +289,8 @@ public:
     void SendAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendWeather(uint32 type, float grade, uint32 soundId, bool instant);
+    void SendInitialWorldStates(std::map<uint32, uint32> worldStates);
+    void SendWorldStateUpdate(uint32 variable, uint32 value);
 };
 
 #define sWorld WorldServer::Instance()

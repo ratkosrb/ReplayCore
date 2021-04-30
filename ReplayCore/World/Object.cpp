@@ -17,6 +17,9 @@ bool Object::IsVisibleToClient() const
 
 bool WorldObject::IsWithinVisibilityDistance(WorldObject const* pObject) const
 {
+    if (sReplayMgr.IsInitialized() && !pObject->IsVisible())
+        return false;
+
     if (GetMapId() != pObject->GetMapId())
         return false;
 

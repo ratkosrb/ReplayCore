@@ -11,6 +11,14 @@
 #include "GameObjectDefines.h"
 #include <set>
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 ReplayMgr& ReplayMgr::Instance()
 {
     static ReplayMgr instance;
@@ -211,21 +219,21 @@ void PlayerData::InitializePlayer(Player* pPlayer) const
 void ReplayMgr::SpawnPlayers()
 {
     printf("[ReplayMgr] Spawning players...\n");
-    for (const auto& itr : m_playerSpawns)
+    for (auto const& itr : m_playerSpawns)
         sWorld.MakeNewPlayer(itr.second.guid, itr.second);
 }
 
 void ReplayMgr::SpawnCreatures()
 {
     printf("[ReplayMgr] Spawning creatures...\n");
-    for (const auto& itr : m_creatureSpawns)
+    for (auto const& itr : m_creatureSpawns)
         sWorld.MakeNewCreature(itr.second.guid, itr.second);
 }
 
 void ReplayMgr::SpawnGameObjects()
 {
     printf("[ReplayMgr] Spawning gameobjects...\n");
-    for (const auto& itr : m_gameObjectSpawns)
+    for (auto const& itr : m_gameObjectSpawns)
         sWorld.MakeNewGameObject(itr.second.guid, itr.second);
 }
 
@@ -241,6 +249,70 @@ ObjectGuid ReplayMgr::MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std
         return ObjectGuid(HIGHGUID_GAMEOBJECT, entry, guid);
 
     return ObjectGuid();
+}
+
+void ReplayMgr::LoadInitialWorldStates()
+{
+    printf("[ReplayMgr] Loading initial world states...\n");
+    uint32 count = 0;
+    //                                                               0             1           2
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `variable`, `value` FROM `world_state_init` ORDER BY `unixtimems`"));
+
+    if (!result)
+    {
+        printf(">> Loaded 0 initial world states, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint64 unixtimems = fields[0].GetUInt64();
+        uint32 variable = fields[1].GetUInt32();
+        uint32 value = fields[2].GetUInt32();
+
+        m_initialWorldStates[unixtimems][variable] = value;
+        count++;
+
+    } while (result->NextRow());
+
+    printf(">> Loaded %u initial world states.\n", count);
+}
+
+std::map<uint32, uint32> ReplayMgr::GetInitialWorldStatesForCurrentTime()
+{
+    std::map<uint32, uint32> worldStates;
+
+    if (m_initialWorldStates.empty())
+        return worldStates;
+
+    uint64 currentTime = std::max(GetCurrentSniffTimeMs(), m_initialWorldStates.begin()->first);
+    uint64 initialStatesTime = 0;
+    for (auto const& itr : m_initialWorldStates)
+    {
+        if (currentTime < itr.first)
+            break;
+
+        worldStates = itr.second;
+        initialStatesTime = itr.first;
+    }
+
+    for (auto const& itr : m_eventsMap)
+    {
+        if (itr.first > GetCurrentSniffTimeMs())
+            break;
+        if (itr.first < initialStatesTime)
+            continue;
+        
+        if (itr.second->GetType() == SE_WORLD_STATE_UPDATE)
+        {
+            auto worldStateEvent = std::static_pointer_cast<SniffedEvent_WorldStateUpdate>(itr.second);
+            worldStates[worldStateEvent->m_variable] = worldStateEvent->m_value;
+        }
+    }
+
+    return worldStates;
 }
 
 void ReplayMgr::LoadGameObjects()
@@ -470,6 +542,8 @@ void ReplayMgr::LoadCreatures()
             data.faction = 35;
         }
 
+        if (data.emoteState == CLASSIC_STATE_DANCE)
+            data.emoteState = EMOTE_STATE_DANCE;
         if (data.emoteState && data.emoteState > MAX_EMOTE_WOTLK)
         {
             printf("[ReplayMgr] LoadCreatures: Invalid emote state for creature (GUID %u, Entry %u)\n", guid, entry);
@@ -664,6 +738,8 @@ void ReplayMgr::LoadPlayers()
         playerData.maxPowers[POWER_MANA] = fields[26].GetUInt32();
         playerData.auraState = fields[27].GetUInt32();
         playerData.emoteState = fields[28].GetUInt32();
+        if (playerData.emoteState == CLASSIC_STATE_DANCE)
+            playerData.emoteState = EMOTE_STATE_DANCE;
         if (playerData.emoteState && playerData.emoteState > MAX_EMOTE_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid emote state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
@@ -770,7 +846,7 @@ void ReplayMgr::LoadActivePlayers()
 Player* ReplayMgr::GetActivePlayer()
 {
     ObjectGuid currentCharacterGuid;
-    for (const auto& itr : m_activePlayerTimes)
+    for (auto const& itr : m_activePlayerTimes)
     {
         if (itr.first < m_currentSniffTime)
             currentCharacterGuid = itr.second;
@@ -790,7 +866,7 @@ void ReplayMgr::Update(uint32 const diff)
     m_currentSniffTimeMs += diff;
     m_currentSniffTime = uint32(m_currentSniffTimeMs / IN_MILLISECONDS);
 
-    for (const auto& itr : m_eventsMap)
+    for (auto const& itr : m_eventsMap)
     {
         if (itr.first <= oldSniffTimeMs)
             continue;

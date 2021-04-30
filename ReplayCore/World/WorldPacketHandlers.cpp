@@ -289,7 +289,7 @@ void WorldServer::HandleEnumCharacters(WorldPacket& packet)
     WorldPacket response(GetOpcode("SMSG_CHAR_ENUM"));
     response << uint8(count);
 
-    for (const auto& guid : activePlayers)
+    for (auto const& guid : activePlayers)
     {
         if (count <= 0)
             break;
@@ -969,7 +969,7 @@ void WorldServer::HandleQuestGiverStatusQuery(WorldPacket& packet)
     {
         if (auto pQuests = sGameDataMgr.GetQuestsStartedByCreature(guid.GetEntry()))
         {
-            for (const auto& questId : *pQuests)
+            for (auto const& questId : *pQuests)
             {
                 if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(questId))
                 {
@@ -985,7 +985,7 @@ void WorldServer::HandleQuestGiverStatusQuery(WorldPacket& packet)
     {
         if (auto pQuests = sGameDataMgr.GetQuestsStartedByGameObject(guid.GetEntry()))
         {
-            for (const auto& questId : *pQuests)
+            for (auto const& questId : *pQuests)
             {
                 if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(questId))
                 {
@@ -1102,4 +1102,5 @@ void WorldServer::HandleZoneUpdate(WorldPacket& packet)
 
     m_clientPlayer->SetCachedZoneId(zoneId);
     SendWeatherForCurrentZone();
+    SendInitialWorldStates(sReplayMgr.GetInitialWorldStatesForCurrentTime());
 }

@@ -46,8 +46,9 @@ public:
     bool HandleSetPitchSpeed();
     bool HandleSetFlyMode();
     bool HandleSniffPlay();
+    bool HandleSniffGetTime();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[24] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[25] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "gps", &CommandHandler::HandleGPS },
@@ -73,6 +74,7 @@ private:
         { "pitchspeed", &CommandHandler::HandleSetPitchSpeed },
         { "fly", &CommandHandler::HandleSetFlyMode },
         { "play", &CommandHandler::HandleSniffPlay },
+        { "gettime", &CommandHandler::HandleSniffGetTime },
     };
 
     bool m_console = true;

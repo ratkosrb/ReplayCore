@@ -294,7 +294,7 @@ GameTele const* GameDataMgr::GetGameTele(std::string name) const
 
     // Alternative first GameTele what contains name as substring in case no GameTele location found
     GameTele const* alt = nullptr;
-    for (const auto& itr : m_GameTeleStore)
+    for (auto const& itr : m_GameTeleStore)
         if (itr.nameLow == name)
             return &itr;
         else if (alt == nullptr && itr.nameLow.find(name) != std::string::npos)
@@ -307,7 +307,7 @@ AreaPOIEntry const* GameDataMgr::GetClosestAreaPOIEntry(uint32 mapId, float x, f
 {
     AreaPOIEntry const* pEntry = nullptr;
     float minDistance = FLT_MAX;
-    for (const auto& itr : m_areaPOIStore)
+    for (auto const& itr : m_areaPOIStore)
     {
         if (itr.mapId != mapId)
             continue;
@@ -337,7 +337,7 @@ uint32 GameDataMgr::GetZoneIdFromCoordinates(uint32 mapId, float x, float y, flo
         printf("Error: POI data references non-existant area id!\n");
     }
 
-    for (const auto& itr : m_areaTableEntryMap)
+    for (auto const& itr : m_areaTableEntryMap)
         if (itr.second.mapId == mapId)
             return itr.second.zoneId ? itr.second.zoneId : itr.first;
 
@@ -349,7 +349,7 @@ uint32 GameDataMgr::GetAreaIdFromCoordinates(uint32 mapId, float x, float y, flo
     if (AreaPOIEntry const* pPOI = sGameDataMgr.GetClosestAreaPOIEntry(mapId, x, y, z))
         return pPOI->areaId;
 
-    for (const auto& itr : m_areaTableEntryMap)
+    for (auto const& itr : m_areaTableEntryMap)
         if (itr.second.mapId == mapId)
             return itr.first;
 

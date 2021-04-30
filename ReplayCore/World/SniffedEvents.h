@@ -31,9 +31,9 @@ enum SniffedEventType : uint8
     SE_UNIT_ATTACK_LOG,
     SE_UNIT_ATTACK_START,
     SE_UNIT_ATTACK_STOP,
-    SE_UNIT_CREATE1,
-    SE_UNIT_CREATE2,
-    SE_UNIT_DESTROY,
+    SE_WORLDOBJECT_CREATE1,
+    SE_WORLDOBJECT_CREATE2,
+    SE_WORLDOBJECT_DESTROY,
     SE_UNIT_EMOTE,
     SE_UNIT_CLIENTSIDE_MOVEMENT,
     SE_UNIT_SERVERSIDE_MOVEMENT,
@@ -105,12 +105,12 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "World Text";
         case SE_WORLD_STATE_UPDATE:
             return "World State Update";
-        case SE_UNIT_CREATE1:
-            return "Unit Create 1";
-        case SE_UNIT_CREATE2:
-            return "Unit Create 2";
-        case SE_UNIT_DESTROY:
-            return "Unit Destroy";
+        case SE_WORLDOBJECT_CREATE1:
+            return "WorldObject Create 1";
+        case SE_WORLDOBJECT_CREATE2:
+            return "WorldObject Create 2";
+        case SE_WORLDOBJECT_DESTROY:
+            return "WorldObject Destroy";
         case SE_CREATURE_TEXT:
             return "Creature Text";
         case SE_CREATURE_EQUIPMENT_UPDATE:
@@ -285,6 +285,68 @@ struct SniffedEvent_WorldText : SniffedEvent
     }
 };
 
+struct SniffedEvent_WorldStateUpdate : SniffedEvent
+{
+    SniffedEvent_WorldStateUpdate(uint32 variable, uint32 value) :
+        m_variable(variable), m_value(value) {};
+    uint32 m_variable = 0;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_WORLD_STATE_UPDATE;
+    }
+};
+
+struct SniffedEvent_WorldObjectCreate1 : SniffedEvent
+{
+    SniffedEvent_WorldObjectCreate1(ObjectGuid source, uint32 mapId, float x, float y, float z, float o) :
+        m_source(source), m_location(mapId, x, y, z, o) {};
+    ObjectGuid m_source;
+    WorldLocation m_location;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_WORLDOBJECT_CREATE1;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_WorldObjectCreate2 : SniffedEvent
+{
+    SniffedEvent_WorldObjectCreate2(ObjectGuid source, uint32 mapId, float x, float y, float z, float o) :
+        m_source(source), m_location(mapId, x, y, z, o) {};
+    ObjectGuid m_source;
+    WorldLocation m_location;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_WORLDOBJECT_CREATE2;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_WorldObjectDestroy : SniffedEvent
+{
+    SniffedEvent_WorldObjectDestroy(ObjectGuid source) : m_source(source) {};
+    ObjectGuid m_source;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_WORLDOBJECT_DESTROY;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
 struct SniffedEvent_ClientSideMovement : SniffedEvent
 {
     SniffedEvent_ClientSideMovement(ObjectGuid source, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o) :
@@ -308,64 +370,6 @@ struct SniffedEvent_ClientSideMovement : SniffedEvent
 };
 
 /*
-
-struct SniffedEvent_WorldStateUpdate : SniffedEvent
-{
-    SniffedEvent_WorldStateUpdate(uint32 variable, uint32 value, bool isInit) :
-        m_variable(variable), m_value(value), m_isInit(isInit) {};
-    uint32 m_variable = 0;
-    uint32 m_value = 0;
-    bool m_isInit = false;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_WORLD_STATE_UPDATE;
-    }
-};
-
-struct SniffedEvent_UnitCreate1 : SniffedEvent
-{
-    SniffedEvent_UnitCreate1(uint32 guid, uint32 entry, uint32 type, float x, float y, float z, float o) :
-        m_guid(guid), m_entry(entry), m_type(type), m_x(x), m_y(y), m_z(z), m_o(o) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    float m_x = 0.0f;
-    float m_y = 0.0f;
-    float m_z = 0.0f;
-    float m_o = 0.0f;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_CREATE1;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitCreate2 : SniffedEvent
-{
-    SniffedEvent_UnitCreate2(uint32 guid, uint32 entry, uint32 type, float x, float y, float z, float o) :
-        m_guid(guid), m_entry(entry), m_type(type), m_x(x), m_y(y), m_z(z), m_o(o) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    float m_x = 0.0f;
-    float m_y = 0.0f;
-    float m_z = 0.0f;
-    float m_o = 0.0f;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_CREATE2;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
 
 struct SniffedEvent_UnitDestroy : SniffedEvent
 {

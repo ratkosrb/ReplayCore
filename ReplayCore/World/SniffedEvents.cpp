@@ -13,6 +13,16 @@ void ReplayMgr::LoadSniffedEvents()
     printf("[ReplayMgr] Loading sniffed events...\n");
     LoadWeatherUpdates();
     LoadWorldText();
+    LoadWorldStateUpdates();
+    LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate1>("creature_create1_time", TYPEID_UNIT);
+    LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate2>("creature_create2_time", TYPEID_UNIT);
+    LoadWorldObjectDestroy("creature_destroy_time", TYPEID_UNIT);
+    LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate1>("player_create1_time", TYPEID_PLAYER);
+    LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate2>("player_create2_time", TYPEID_PLAYER);
+    LoadWorldObjectDestroy("player_destroy_time", TYPEID_PLAYER);
+    LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate1>("gameobject_create1_time", TYPEID_GAMEOBJECT);
+    LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate2>("gameobject_create2_time", TYPEID_GAMEOBJECT);
+    LoadWorldObjectDestroy("gameobject_destroy_time", TYPEID_GAMEOBJECT);
     LoadUnitClientSideMovement("creature_movement_client", TYPEID_UNIT);
     LoadUnitClientSideMovement("player_movement_client", TYPEID_PLAYER);
     printf(">> Loaded %u sniffed events.", (uint32)m_eventsMapBackup.size());
@@ -50,7 +60,7 @@ void ReplayMgr::PrepareClientSideMovementDataForCurrentClient()
         lastMovementInfo[itr.second.guid] = initialState;
     }
 
-    for (const auto& itr : m_eventsMap)
+    for (auto const& itr : m_eventsMap)
     {
         if (itr.second->GetType() == SE_UNIT_CLIENTSIDE_MOVEMENT)
         {
@@ -205,6 +215,136 @@ void SniffedEvent_WorldText::Execute() const
         return;
 
     sWorld.SendChatPacket(m_chatType, m_text.c_str(), m_language, 0);
+}
+
+void ReplayMgr::LoadWorldStateUpdates()
+{
+    //                                             0             1           2
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `variable`, `value` FROM `world_state_update` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 variable = fields[1].GetUInt32();
+            uint32 value = fields[2].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_WorldStateUpdate> newEvent = std::make_shared<SniffedEvent_WorldStateUpdate>(variable, value);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_WorldStateUpdate::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    sWorld.SendWorldStateUpdate(m_variable, m_value);
+}
+
+template <class T>
+void ReplayMgr::LoadWorldObjectCreate(char const* tableName, uint32 typeId)
+{
+    //                                             0             1       2      3             4             5             6
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation` FROM `%s` ORDER BY `unixtimems`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 guid = fields[1].GetUInt32();
+            ObjectGuid objectGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
+                objectGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                continue;
+            }
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 mapId = fields[2].GetUInt32();
+            float position_x = fields[3].GetFloat();
+            float position_y = fields[4].GetFloat();
+            float position_z = fields[5].GetFloat();
+            float orientation = fields[6].GetFloat();
+
+            std::shared_ptr<T> newEvent = std::make_shared<T>(objectGuid, mapId, position_x, position_y, position_z, orientation);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_WorldObjectCreate1::Execute() const
+{
+    WorldObject* pObject = sWorld.FindObject(GetSourceGuid());
+    if (!pObject)
+    {
+        printf("SniffedEvent_WorldObjectCreate1: Cannot find source object!\n");
+        return;
+    }
+
+    pObject->Relocate(m_location);
+    pObject->SetVisibility(true);
+}
+
+void SniffedEvent_WorldObjectCreate2::Execute() const
+{
+    WorldObject* pObject = sWorld.FindObject(GetSourceGuid());
+    if (!pObject)
+    {
+        printf("SniffedEvent_WorldObjectCreate2: Cannot find source object!\n");
+        return;
+    }
+
+    pObject->Relocate(m_location);
+    pObject->SetVisibility(true);
+}
+
+void ReplayMgr::LoadWorldObjectDestroy(char const* tableName, uint32 typeId)
+{
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid` FROM `%s` ORDER BY `unixtimems`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 guid = fields[1].GetUInt32();
+            ObjectGuid objectGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
+                objectGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                continue;
+            }
+
+            uint64 unixtimems = fields[0].GetUInt64();
+
+            std::shared_ptr<SniffedEvent_WorldObjectDestroy> newEvent = std::make_shared<SniffedEvent_WorldObjectDestroy>(objectGuid);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_WorldObjectDestroy::Execute() const
+{
+    WorldObject* pObject = sWorld.FindObject(GetSourceGuid());
+    if (!pObject)
+    {
+        printf("SniffedEvent_WorldObjectDestroy: Cannot find source object!\n");
+        return;
+    }
+
+    pObject->SetVisibility(false);
 }
 
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)

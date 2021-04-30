@@ -58,7 +58,7 @@ void WorldServer::SendAddonInfo(std::vector<ClientAddonData> const& clientAddons
 
     uint64 standardCRC = GetClientBuild() < CLIENT_BUILD_3_0_2 ? UINT64_C(0x1c776d01) : UINT64_C(0x4c1c776d);
 
-    for (const auto& itr : clientAddons)
+    for (auto const& itr : clientAddons)
     {
         response << (uint8)2;
 
@@ -214,7 +214,7 @@ void WorldServer::SendInitialSpells(uint8 raceId, uint8 classId)
         // spells count
         data << uint16(pInfo->spell.size());
 
-        for (const auto& spell : pInfo->spell)
+        for (auto const& spell : pInfo->spell)
         {
             if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
                 data << uint32(spell);
@@ -256,7 +256,7 @@ void WorldServer::SendActionButtons(uint8 raceId, uint8 classId)
     else
     {
         std::map<uint8, ActionButton> actionButtons;
-        for (const auto& action_itr : pInfo->action)
+        for (auto const& action_itr : pInfo->action)
         {
             uint8 button = action_itr.button;
             uint32 action = action_itr.action;
@@ -303,7 +303,7 @@ void WorldServer::SendFriendList()
         data << uint8(activePlayers.size());
 
     uint32 count = 0;
-    for (const auto& guid : activePlayers)
+    for (auto const& guid : activePlayers)
     {
         if (count >= 255)
             break;
@@ -364,7 +364,7 @@ void WorldServer::SendWhoList(uint32 levelMin, uint32 levelMax, uint32 raceMask,
     data << uint32(clientcount);                            // clientcount place holder, listed count
     data << uint32(clientcount);                            // clientcount place holder, online count
 
-    for (const auto& itr : m_players)
+    for (auto const& itr : m_players)
     {
         Player const* pPlayer = &itr.second;
 
@@ -602,7 +602,7 @@ void WorldServer::SendItemQuerySingleResponse(uint32 entry)
     data << pProto->AmmoType;
     data << pProto->RangedModRange;
 
-    for (const auto& itr : pProto->Spells)
+    for (auto const& itr : pProto->Spells)
     {
         data << itr.SpellId;
         data << itr.SpellTrigger;
@@ -819,7 +819,10 @@ void WorldServer::SendPacketsAfterAddToMap()
     m_clientPlayer->SendCreateUpdateToPlayer(m_clientPlayer.get());
 
     if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+    {
         SendTimeSyncRequest();
+        SendInitialWorldStates(sReplayMgr.GetInitialWorldStatesForCurrentTime());
+    }
 }
 
 void WorldServer::SendChatPacket(uint32 msgtype, char const* message, uint32 language /*= LANG_UNIVERSAL*/, uint32 chatTag /*= CHAT_TAG_NONE*/,
@@ -1738,4 +1741,38 @@ void WorldServer::SendWeatherForCurrentZone()
         return;
 
     SendWeather(itr2->second.type, itr2->second.grade, itr2->second.soundId, true);
+}
+
+void WorldServer::SendInitialWorldStates(std::map<uint32, uint32> worldStates)
+{
+    if (worldStates.empty())
+        return;
+
+    if (!m_clientPlayer)
+    {
+        printf("[SendInitialWorldStates] Error: Attempt to send initial world states while client is not in world!");
+        return;
+    }
+
+    WorldPacket data(GetOpcode("SMSG_INIT_WORLD_STATES"), (4 + 4 + 2 + 6));
+    data << uint32(m_clientPlayer->GetMapId());
+    data << uint32(m_clientPlayer->GetZoneId());
+    if (GetClientBuild() >= CLIENT_BUILD_2_1_0)
+        data << uint32(m_clientPlayer->GetAreaId());
+    data << uint16(worldStates.size());
+    for (auto itr : worldStates)
+    {
+        data << uint32(itr.first);
+        data << uint32(itr.second);
+    }
+    data << uint32(0) << uint32(0);     // [-ZERO] Add terminator to prevent repeating audio bug.
+    SendPacket(data);
+}
+
+void WorldServer::SendWorldStateUpdate(uint32 variable, uint32 value)
+{
+    WorldPacket data(GetOpcode("SMSG_UPDATE_WORLD_STATE"), 4 + 4);
+    data << uint32(variable);
+    data << uint32(value);
+    SendPacket(data);
 }

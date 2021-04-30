@@ -41,7 +41,7 @@ void CommandHandler::SendSysMessage(char const* str)
 
 void CommandHandler::ListAllCommands(bool console)
 {
-    for (const auto itr : m_commandHandlers)
+    for (auto const itr : m_commandHandlers)
     {
         SendSysMessage(itr.first.c_str());
     }
@@ -49,7 +49,7 @@ void CommandHandler::ListAllCommands(bool console)
 
 void CommandHandler::HandleCommand()
 {
-    for (const auto itr : m_commandHandlers)
+    for (auto const itr : m_commandHandlers)
     {
         if (itr.first == m_tokens[0])
         {
@@ -618,5 +618,11 @@ bool CommandHandler::HandleSniffPlay()
         sReplayMgr.SetPlayTime(unixtime);
 
     sReplayMgr.StartPlaying();
+    return true;
+}
+
+bool CommandHandler::HandleSniffGetTime()
+{
+    PSendSysMessage("Current sniff time is %u.", sReplayMgr.GetCurrentSniffTime());
     return true;
 }

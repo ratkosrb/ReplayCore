@@ -1223,7 +1223,7 @@ void UpdateFields::SetupUpdateFieldMaps()
 
 void UpdateFields::SetupUpdateFieldValuesMap(std::map<std::string, uint16>& valuesMap, std::vector<UpdateFieldDefinition> const& definitions)
 {
-    for (const auto& itr : definitions)
+    for (auto const& itr : definitions)
     {
         valuesMap.insert({ itr.name, itr.offset });
     }
@@ -1231,7 +1231,7 @@ void UpdateFields::SetupUpdateFieldValuesMap(std::map<std::string, uint16>& valu
 
 void UpdateFields::SetupUpdateFieldFlagsVector(uint8 objectTypeMask, std::vector<uint32>& flagsVector, std::vector<UpdateFieldDefinition> const& definitions)
 {
-    for (const auto& itr : definitions)
+    for (auto const& itr : definitions)
     {
         if ((itr.objectTypeMask & objectTypeMask) == 0)
             continue;
@@ -1276,7 +1276,7 @@ std::string UpdateFields::GetUpdateFieldName(uint16 id, uint16 build)
     if (!updateFieldsMap)
         return std::string();
 
-    for (const auto& itr : *updateFieldsMap)
+    for (auto const& itr : *updateFieldsMap)
     {
         if (itr.second == id)
             return itr.first;

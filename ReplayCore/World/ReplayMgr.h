@@ -159,6 +159,7 @@ public:
         LoadCreatures();
         LoadPlayers();
         LoadActivePlayers();
+        LoadInitialWorldStates();
         LoadSniffedEvents();
     }
 
@@ -234,6 +235,12 @@ public:
     void LoadUnitClientSideMovement(char const* tableName, uint32 typeId);
     void LoadWeatherUpdates();
     void LoadWorldText();
+    void LoadInitialWorldStates();
+    std::map<uint32, uint32> GetInitialWorldStatesForCurrentTime();
+    void LoadWorldStateUpdates();
+    template <class T>
+    void LoadWorldObjectCreate(char const* tableName, uint32 typeId);
+    void LoadWorldObjectDestroy(char const* tableName, uint32 typeId);
 
 #pragma endregion SniffedEvents
     
@@ -244,7 +251,7 @@ public:
     void StopPlaying();
     void SetPlayTime(uint32 unixtime);
     bool IsPlaying() { return m_enabled; }
-
+    bool IsInitialized() { return m_initialized; }
     void Uninitialize();
 
     uint32 GetCurrentSniffTime() { return m_currentSniffTime; }
@@ -252,6 +259,7 @@ public:
     uint32 GetStartTimeSniff() { return m_startTimeSniff; }
     uint32 GetTimeDifference() { return m_timeDifference; }
     uint32 GetFirstEventTime() { return (m_eventsMap.empty() ? 0 : uint32(m_eventsMap.begin()->first / IN_MILLISECONDS)); }
+    uint64 GetFirstEventTimeMs() { return (m_eventsMap.empty() ? 0 : m_eventsMap.begin()->first); }
 
 #pragma endregion Replay
    
@@ -264,11 +272,12 @@ private:
     uint32 m_timeDifference = 0;
     std::set<ObjectGuid> m_activePlayers;
     std::map<uint32 /*unixtime*/, ObjectGuid> m_activePlayerTimes;
-    std::map<uint32, PlayerData> m_playerSpawns;
-    std::map<uint32, CreatureData> m_creatureSpawns;
-    std::map<uint32, GameObjectData> m_gameObjectSpawns;
-    std::multimap<uint64, std::shared_ptr<SniffedEvent>> m_eventsMap;       // prepared data in the current client's format
-    std::multimap<uint64, std::shared_ptr<SniffedEvent>> m_eventsMapBackup; // stores the original data in sniff client format
+    std::map<uint32 /*guid*/, PlayerData> m_playerSpawns;
+    std::map<uint32 /*guid*/, CreatureData> m_creatureSpawns;
+    std::map<uint32 /*guid*/, GameObjectData> m_gameObjectSpawns;
+    std::map<uint64 /*unixtimems*/, std::map<uint32 /*variable*/, uint32 /*value*/>> m_initialWorldStates;
+    std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMap;       // prepared data in the current client's format
+    std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMapBackup; // stores the original data in sniff client format
 };
 
 #define sReplayMgr ReplayMgr::Instance()
