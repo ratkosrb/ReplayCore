@@ -233,6 +233,7 @@ public:
     std::string GuessMovementOpcode(MovementInfo const& oldState, MovementInfo const& newState);
     void LoadUnitClientSideMovement(char const* tableName, uint32 typeId);
     void LoadWeatherUpdates();
+    void LoadWorldText();
 
 #pragma endregion SniffedEvents
     

@@ -12,6 +12,7 @@ void ReplayMgr::LoadSniffedEvents()
 {
     printf("[ReplayMgr] Loading sniffed events...\n");
     LoadWeatherUpdates();
+    LoadWorldText();
     LoadUnitClientSideMovement("creature_movement_client", TYPEID_UNIT);
     LoadUnitClientSideMovement("player_movement_client", TYPEID_PLAYER);
     printf(">> Loaded %u sniffed events.", (uint32)m_eventsMapBackup.size());
@@ -161,9 +162,49 @@ void SniffedEvent_WeatherUpdate::Execute() const
     if (!sReplayMgr.IsPlaying())
         return;
 
+    if (!sWorld.IsClientInWorld())
+        return;
+
     if (Player* pPlayer = sWorld.GetClientPlayer())
         if (pPlayer->GetMapId() == m_mapId && pPlayer->GetZoneId() == m_zoneId)
             sWorld.SendWeather(m_type, m_grade, m_soundId, m_instant);
+}
+
+void ReplayMgr::LoadWorldText()
+{
+    //                                             0             1       2            3
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `text`, `chat_type`, `language` FROM `world_text` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            std::string text = fields[1].GetCppString();
+            uint32 chatType = fields[2].GetUInt32();
+            uint32 language = fields[3].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_WorldText> newEvent = std::make_shared<SniffedEvent_WorldText>(text, chatType, language);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_WorldText::PepareForCurrentClient()
+{
+    m_chatType = sGameDataMgr.ConvertChatType(m_chatType);
+}
+
+void SniffedEvent_WorldText::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    sWorld.SendChatPacket(m_chatType, m_text.c_str(), m_language, 0);
 }
 
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)

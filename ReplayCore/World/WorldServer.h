@@ -148,6 +148,7 @@ public:
 
         return m_sessionData.visibleObjects.find(guid) != m_sessionData.visibleObjects.end();
     }
+    bool IsClientInWorld() const { return m_sessionData.isInWorld; }
     void SetWeather(uint32 mapId, uint32 zoneId, WeatherData weatherData)
     {
         m_weather[mapId][zoneId] = weatherData;

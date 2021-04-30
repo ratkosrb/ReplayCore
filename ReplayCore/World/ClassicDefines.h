@@ -619,129 +619,93 @@ enum class ClassicSplineFlag : uint32
     Unknown10           = 0x80000000,
 };
 
-enum class ClassicChatMessageType : uint8
-{
-    System = 0,
-    Say = 1,
-    Party = 2,
-    Raid = 3,
-    Guild = 4,
-    Officer = 5,
-    Yell = 6,
-    Whisper = 7,
-    Whisper2 = 8,
-    WhisperInform = 9,
-    Emote = 10,
-    TextEmote = 11,
-    MonsterSay = 12,
-    MonsterParty = 13,
-    MonsterYell = 14,
-    MonsterWhisper = 15,
-    MonsterEmote = 16,
-    Channel = 17,
-    ChannelJoin = 18,
-    ChannelLeave = 19,
-    ChannelList = 20,
-    ChannelNotice = 21,
-    ChannelNoticeUser = 22,
-    Afk = 23,
-    Dnd = 24,
-    Ignored = 25,
-    Skill = 26,
-    Loot = 27,
-    Money = 28,
-    Opening = 29,
-    Tradeskills = 30,
-    PetInfo = 31,
-    CombatMiscInfo = 32,
-    CombatXpGain = 33,
-    CombatHonorGain = 34,
-    CombatFactionChange = 35,
-    BgSystemNeutral = 36,
-    BgSystemAlliance = 37,
-    BgSystemHorde = 38,
-    RaidLeader = 39,
-    RaidWarning = 40,
-    RaidBossEmote = 41,
-    RaidBossWhisper = 42,
-    Filtered = 43,
-    Restricted = 44,
-    //unused1 = 45,
-    Achievement = 46,
-    GuildAchievement = 47,
-    //unused2 = 48,
-    PartyLeader = 49,
-    Targeticons = 50,
-    BnWhisper = 51,
-    BnWhisperInform = 52,
-    BnConversation = 53,
-    BnConversationNotice = 54,
-    BnConversationList = 55,
-    BnInlineToastAlert = 56,
-    BnInlineToastBroadcast = 57,
-    BnInlineToastBroadcastInform = 58,
-    BnInlineToastConversation = 59,
-    BnWhisperPlayerOffline = 60,
-    CombatGuildXpGain = 61,
-    Battleground = 62,
-    BattlegroundLeader = 63,
-    PetBattleCombatLog = 64,
-    PetBattleInfo = 65,
-    InstanceChat = 66,
-    InstanceChatLeader = 67,
-};
-
 inline uint32 ConvertClassicChatTypeToVanilla(uint8 chatType)
 {
-    switch (ClassicChatMessageType(chatType))
+    switch (chatType)
     {
-        case ClassicChatMessageType::Say:
+        case Classic::CHAT_MSG_SYSTEM:
+            return Vanilla::CHAT_MSG_SYSTEM;
+        case Classic::CHAT_MSG_SAY:
             return Vanilla::CHAT_MSG_SAY;
-        case ClassicChatMessageType::Party:
+        case Classic::CHAT_MSG_PARTY:
             return Vanilla::CHAT_MSG_PARTY;
-        case ClassicChatMessageType::Raid:
+        case Classic::CHAT_MSG_RAID:
             return Vanilla::CHAT_MSG_RAID;
-        case ClassicChatMessageType::Guild:
+        case Classic::CHAT_MSG_GUILD:
             return Vanilla::CHAT_MSG_GUILD;
-        case ClassicChatMessageType::Officer:
+        case Classic::CHAT_MSG_OFFICER:
             return Vanilla::CHAT_MSG_OFFICER;
-        case ClassicChatMessageType::Yell:
+        case Classic::CHAT_MSG_YELL:
             return Vanilla::CHAT_MSG_YELL;
-        case ClassicChatMessageType::Whisper:
+        case Classic::CHAT_MSG_WHISPER:
             return Vanilla::CHAT_MSG_WHISPER;
-        case ClassicChatMessageType::Whisper2:
+        case Classic::CHAT_MSG_WHISPER_FOREIGN:
             return Vanilla::CHAT_MSG_WHISPER;
-        case ClassicChatMessageType::WhisperInform:
+        case Classic::CHAT_MSG_WHISPER_INFORM:
             return Vanilla::CHAT_MSG_WHISPER_INFORM;
-        case ClassicChatMessageType::Emote:
+        case Classic::CHAT_MSG_EMOTE:
             return Vanilla::CHAT_MSG_EMOTE;
-        case ClassicChatMessageType::TextEmote:
+        case Classic::CHAT_MSG_TEXT_EMOTE:
             return Vanilla::CHAT_MSG_TEXT_EMOTE;
-        case ClassicChatMessageType::Channel:
+        case Classic::CHAT_MSG_MONSTER_SAY:
+            return Vanilla::CHAT_MSG_MONSTER_SAY;
+        case Classic::CHAT_MSG_MONSTER_PARTY:
+            return Vanilla::CHAT_MSG_MONSTER_PARTY;
+        case Classic::CHAT_MSG_MONSTER_YELL:
+            return Vanilla::CHAT_MSG_MONSTER_YELL;
+        case Classic::CHAT_MSG_MONSTER_WHISPER:
+            return Vanilla::CHAT_MSG_MONSTER_WHISPER;
+        case Classic::CHAT_MSG_MONSTER_EMOTE:
+            return Vanilla::CHAT_MSG_MONSTER_EMOTE;
+        case Classic::CHAT_MSG_CHANNEL:
             return Vanilla::CHAT_MSG_CHANNEL;
-        case ClassicChatMessageType::BgSystemNeutral:
+        case Classic::CHAT_MSG_CHANNEL_JOIN:
+            return Vanilla::CHAT_MSG_CHANNEL_JOIN;
+        case Classic::CHAT_MSG_CHANNEL_LEAVE:
+            return Vanilla::CHAT_MSG_CHANNEL_LEAVE;
+        case Classic::CHAT_MSG_CHANNEL_LIST:
+            return Vanilla::CHAT_MSG_CHANNEL_LIST;
+        case Classic::CHAT_MSG_CHANNEL_NOTICE:
+            return Vanilla::CHAT_MSG_CHANNEL_NOTICE;
+        case Classic::CHAT_MSG_CHANNEL_NOTICE_USER:
+            return Vanilla::CHAT_MSG_CHANNEL_NOTICE_USER;
+        case Classic::CHAT_MSG_AFK:
+            return Vanilla::CHAT_MSG_AFK;
+        case Classic::CHAT_MSG_DND:
+            return Vanilla::CHAT_MSG_DND;
+        case Classic::CHAT_MSG_IGNORED:
+            return Vanilla::CHAT_MSG_IGNORED;
+        case Classic::CHAT_MSG_SKILL:
+            return Vanilla::CHAT_MSG_SKILL;
+        case Classic::CHAT_MSG_LOOT:
+            return Vanilla::CHAT_MSG_LOOT;
+        case Classic::CHAT_MSG_BG_SYSTEM_NEUTRAL:
             return Vanilla::CHAT_MSG_BG_SYSTEM_NEUTRAL;
-        case ClassicChatMessageType::BgSystemAlliance:
+        case Classic::CHAT_MSG_BG_SYSTEM_ALLIANCE:
             return Vanilla::CHAT_MSG_BG_SYSTEM_ALLIANCE;
-        case ClassicChatMessageType::BgSystemHorde:
+        case Classic::CHAT_MSG_BG_SYSTEM_HORDE:
             return Vanilla::CHAT_MSG_BG_SYSTEM_HORDE;
-        case ClassicChatMessageType::RaidLeader:
+        case Classic::CHAT_MSG_RAID_LEADER:
             return Vanilla::CHAT_MSG_RAID_LEADER;
-        case ClassicChatMessageType::RaidWarning:
+        case Classic::CHAT_MSG_RAID_WARNING:
             return Vanilla::CHAT_MSG_RAID_WARNING;
-        case ClassicChatMessageType::PartyLeader:
+        case Classic::CHAT_MSG_RAID_BOSS_EMOTE:
+            return Vanilla::CHAT_MSG_RAID_BOSS_EMOTE;
+        case Classic::CHAT_MSG_RAID_BOSS_WHISPER:
+            return Vanilla::CHAT_MSG_RAID_BOSS_WHISPER;
+        case Classic::CHAT_MSG_PARTY_LEADER:
             return Vanilla::CHAT_MSG_PARTY;
-        case ClassicChatMessageType::BnWhisper:
+        case Classic::CHAT_MSG_BN_WHISPER:
             return Vanilla::CHAT_MSG_WHISPER;
-        case ClassicChatMessageType::BnWhisperInform:
+        case Classic::CHAT_MSG_BN_WHISPER_INFORM:
             return Vanilla::CHAT_MSG_WHISPER_INFORM;
-        case ClassicChatMessageType::Battleground:
+        case Classic::CHAT_MSG_BATTLEGROUND:
             return Vanilla::CHAT_MSG_BATTLEGROUND;
-        case ClassicChatMessageType::BattlegroundLeader:
+        case Classic::CHAT_MSG_BATTLEGROUND_LEADER:
             return Vanilla::CHAT_MSG_BATTLEGROUND_LEADER;
-        case ClassicChatMessageType::InstanceChat:
+        case Classic::CHAT_MSG_INSTANCE_CHAT:
             return Vanilla::CHAT_MSG_PARTY;
-        case ClassicChatMessageType::InstanceChatLeader:
+        case Classic::CHAT_MSG_INSTANCE_CHAT_LEADER:
             return Vanilla::CHAT_MSG_PARTY;
     }
     return Vanilla::CHAT_MSG_SAY;
@@ -749,55 +713,111 @@ inline uint32 ConvertClassicChatTypeToVanilla(uint8 chatType)
 
 inline uint32 ConvertClassicChatTypeToTBC(uint8 chatType)
 {
-    switch (ClassicChatMessageType(chatType))
+    switch (chatType)
     {
-        case ClassicChatMessageType::Say:
+        case Classic::CHAT_MSG_SYSTEM:
+            return TBC::CHAT_MSG_SYSTEM;
+        case Classic::CHAT_MSG_SAY:
             return TBC::CHAT_MSG_SAY;
-        case ClassicChatMessageType::Party:
+        case Classic::CHAT_MSG_PARTY:
             return TBC::CHAT_MSG_PARTY;
-        case ClassicChatMessageType::Raid:
+        case Classic::CHAT_MSG_RAID:
             return TBC::CHAT_MSG_RAID;
-        case ClassicChatMessageType::Guild:
+        case Classic::CHAT_MSG_GUILD:
             return TBC::CHAT_MSG_GUILD;
-        case ClassicChatMessageType::Officer:
+        case Classic::CHAT_MSG_OFFICER:
             return TBC::CHAT_MSG_OFFICER;
-        case ClassicChatMessageType::Yell:
+        case Classic::CHAT_MSG_YELL:
             return TBC::CHAT_MSG_YELL;
-        case ClassicChatMessageType::Whisper:
+        case Classic::CHAT_MSG_WHISPER:
             return TBC::CHAT_MSG_WHISPER;
-        case ClassicChatMessageType::Whisper2:
+        case Classic::CHAT_MSG_WHISPER_FOREIGN:
             return TBC::CHAT_MSG_WHISPER;
-        case ClassicChatMessageType::WhisperInform:
+        case Classic::CHAT_MSG_WHISPER_INFORM:
             return TBC::CHAT_MSG_WHISPER_INFORM;
-        case ClassicChatMessageType::Emote:
+        case Classic::CHAT_MSG_EMOTE:
             return TBC::CHAT_MSG_EMOTE;
-        case ClassicChatMessageType::TextEmote:
+        case Classic::CHAT_MSG_TEXT_EMOTE:
             return TBC::CHAT_MSG_TEXT_EMOTE;
-        case ClassicChatMessageType::Channel:
+        case Classic::CHAT_MSG_MONSTER_SAY:
+            return TBC::CHAT_MSG_MONSTER_SAY;
+        case Classic::CHAT_MSG_MONSTER_PARTY:
+            return TBC::CHAT_MSG_MONSTER_PARTY;
+        case Classic::CHAT_MSG_MONSTER_YELL:
+            return TBC::CHAT_MSG_MONSTER_YELL;
+        case Classic::CHAT_MSG_MONSTER_WHISPER:
+            return TBC::CHAT_MSG_MONSTER_WHISPER;
+        case Classic::CHAT_MSG_MONSTER_EMOTE:
+            return TBC::CHAT_MSG_MONSTER_EMOTE;
+        case Classic::CHAT_MSG_CHANNEL:
             return TBC::CHAT_MSG_CHANNEL;
-        case ClassicChatMessageType::BgSystemNeutral:
+        case Classic::CHAT_MSG_CHANNEL_JOIN:
+            return TBC::CHAT_MSG_CHANNEL_JOIN;
+        case Classic::CHAT_MSG_CHANNEL_LEAVE:
+            return TBC::CHAT_MSG_CHANNEL_LEAVE;
+        case Classic::CHAT_MSG_CHANNEL_LIST:
+            return TBC::CHAT_MSG_CHANNEL_LIST;
+        case Classic::CHAT_MSG_CHANNEL_NOTICE:
+            return TBC::CHAT_MSG_CHANNEL_NOTICE;
+        case Classic::CHAT_MSG_CHANNEL_NOTICE_USER:
+            return TBC::CHAT_MSG_CHANNEL_NOTICE_USER;
+        case Classic::CHAT_MSG_AFK:
+            return TBC::CHAT_MSG_AFK;
+        case Classic::CHAT_MSG_DND:
+            return TBC::CHAT_MSG_DND;
+        case Classic::CHAT_MSG_IGNORED:
+            return TBC::CHAT_MSG_IGNORED;
+        case Classic::CHAT_MSG_SKILL:
+            return TBC::CHAT_MSG_SKILL;
+        case Classic::CHAT_MSG_LOOT:
+            return TBC::CHAT_MSG_LOOT;
+        case Classic::CHAT_MSG_MONEY:
+            return TBC::CHAT_MSG_MONEY;
+        case Classic::CHAT_MSG_OPENING:
+            return TBC::CHAT_MSG_OPENING;
+        case Classic::CHAT_MSG_TRADESKILLS:
+            return TBC::CHAT_MSG_TRADESKILLS;
+        case Classic::CHAT_MSG_PET_INFO:
+            return TBC::CHAT_MSG_PET_INFO;
+        case Classic::CHAT_MSG_COMBAT_MISC_INFO:
+            return TBC::CHAT_MSG_COMBAT_MISC_INFO;
+        case Classic::CHAT_MSG_COMBAT_XP_GAIN:
+            return TBC::CHAT_MSG_COMBAT_XP_GAIN;
+        case Classic::CHAT_MSG_COMBAT_HONOR_GAIN:
+            return TBC::CHAT_MSG_COMBAT_HONOR_GAIN;
+        case Classic::CHAT_MSG_COMBAT_FACTION_CHANGE:
+            return TBC::CHAT_MSG_COMBAT_FACTION_CHANGE;
+        case Classic::CHAT_MSG_BG_SYSTEM_NEUTRAL:
             return TBC::CHAT_MSG_BG_SYSTEM_NEUTRAL;
-        case ClassicChatMessageType::BgSystemAlliance:
+        case Classic::CHAT_MSG_BG_SYSTEM_ALLIANCE:
             return TBC::CHAT_MSG_BG_SYSTEM_ALLIANCE;
-        case ClassicChatMessageType::BgSystemHorde:
+        case Classic::CHAT_MSG_BG_SYSTEM_HORDE:
             return TBC::CHAT_MSG_BG_SYSTEM_HORDE;
-        case ClassicChatMessageType::RaidLeader:
+        case Classic::CHAT_MSG_RAID_LEADER:
             return TBC::CHAT_MSG_RAID_LEADER;
-        case ClassicChatMessageType::RaidWarning:
+        case Classic::CHAT_MSG_RAID_WARNING:
             return TBC::CHAT_MSG_RAID_WARNING;
-        case ClassicChatMessageType::PartyLeader:
+        case Classic::CHAT_MSG_RAID_BOSS_EMOTE:
+            return TBC::CHAT_MSG_RAID_BOSS_EMOTE;
+        case Classic::CHAT_MSG_RAID_BOSS_WHISPER:
+            return TBC::CHAT_MSG_RAID_BOSS_WHISPER;
+        case Classic::CHAT_MSG_FILTERED:
+            return TBC::CHAT_MSG_FILTERED;
+        case Classic::CHAT_MSG_RESTRICTED:
+            return TBC::CHAT_MSG_RESTRICTED;
+        case Classic::CHAT_MSG_PARTY_LEADER:
             return TBC::CHAT_MSG_PARTY;
-        case ClassicChatMessageType::BnWhisper:
+        case Classic::CHAT_MSG_BN_WHISPER:
             return TBC::CHAT_MSG_WHISPER;
-        case ClassicChatMessageType::BnWhisperInform:
+        case Classic::CHAT_MSG_BN_WHISPER_INFORM:
             return TBC::CHAT_MSG_WHISPER_INFORM;
-        case ClassicChatMessageType::Battleground:
+        case Classic::CHAT_MSG_BATTLEGROUND:
             return TBC::CHAT_MSG_BATTLEGROUND;
-        case ClassicChatMessageType::BattlegroundLeader:
+        case Classic::CHAT_MSG_BATTLEGROUND_LEADER:
             return TBC::CHAT_MSG_BATTLEGROUND_LEADER;
-        case ClassicChatMessageType::InstanceChat:
+        case Classic::CHAT_MSG_INSTANCE_CHAT:
             return TBC::CHAT_MSG_PARTY;
-        case ClassicChatMessageType::InstanceChatLeader:
+        case Classic::CHAT_MSG_INSTANCE_CHAT_LEADER:
             return TBC::CHAT_MSG_PARTY;
     }
     return TBC::CHAT_MSG_SAY;
@@ -805,56 +825,116 @@ inline uint32 ConvertClassicChatTypeToTBC(uint8 chatType)
 
 inline uint32 ConvertClassicChatTypeToWotLK(uint8 chatType)
 {
-    switch (ClassicChatMessageType(chatType))
+    switch (chatType)
     {
-        case ClassicChatMessageType::Say:
+        case Classic::CHAT_MSG_SYSTEM:
+            return WotLK::CHAT_MSG_SYSTEM;
+        case Classic::CHAT_MSG_SAY:
             return WotLK::CHAT_MSG_SAY;
-        case ClassicChatMessageType::Party:
+        case Classic::CHAT_MSG_PARTY:
             return WotLK::CHAT_MSG_PARTY;
-        case ClassicChatMessageType::Raid:
+        case Classic::CHAT_MSG_RAID:
             return WotLK::CHAT_MSG_RAID;
-        case ClassicChatMessageType::Guild:
+        case Classic::CHAT_MSG_GUILD:
             return WotLK::CHAT_MSG_GUILD;
-        case ClassicChatMessageType::Officer:
+        case Classic::CHAT_MSG_OFFICER:
             return WotLK::CHAT_MSG_OFFICER;
-        case ClassicChatMessageType::Yell:
+        case Classic::CHAT_MSG_YELL:
             return WotLK::CHAT_MSG_YELL;
-        case ClassicChatMessageType::Whisper:
+        case Classic::CHAT_MSG_WHISPER:
             return WotLK::CHAT_MSG_WHISPER;
-        case ClassicChatMessageType::Whisper2:
+        case Classic::CHAT_MSG_WHISPER_FOREIGN:
             return WotLK::CHAT_MSG_WHISPER;
-        case ClassicChatMessageType::WhisperInform:
+        case Classic::CHAT_MSG_WHISPER_INFORM:
             return WotLK::CHAT_MSG_WHISPER_INFORM;
-        case ClassicChatMessageType::Emote:
+        case Classic::CHAT_MSG_EMOTE:
             return WotLK::CHAT_MSG_EMOTE;
-        case ClassicChatMessageType::TextEmote:
+        case Classic::CHAT_MSG_TEXT_EMOTE:
             return WotLK::CHAT_MSG_TEXT_EMOTE;
-        case ClassicChatMessageType::Channel:
+        case Classic::CHAT_MSG_MONSTER_SAY:
+            return WotLK::CHAT_MSG_MONSTER_SAY;
+        case Classic::CHAT_MSG_MONSTER_PARTY:
+            return WotLK::CHAT_MSG_MONSTER_PARTY;
+        case Classic::CHAT_MSG_MONSTER_YELL:
+            return WotLK::CHAT_MSG_MONSTER_YELL;
+        case Classic::CHAT_MSG_MONSTER_WHISPER:
+            return WotLK::CHAT_MSG_MONSTER_WHISPER;
+        case Classic::CHAT_MSG_MONSTER_EMOTE:
+            return WotLK::CHAT_MSG_MONSTER_EMOTE;
+        case Classic::CHAT_MSG_CHANNEL:
             return WotLK::CHAT_MSG_CHANNEL;
-        case ClassicChatMessageType::BgSystemNeutral:
+        case Classic::CHAT_MSG_CHANNEL_JOIN:
+            return WotLK::CHAT_MSG_CHANNEL_JOIN;
+        case Classic::CHAT_MSG_CHANNEL_LEAVE:
+            return WotLK::CHAT_MSG_CHANNEL_LEAVE;
+        case Classic::CHAT_MSG_CHANNEL_LIST:
+            return WotLK::CHAT_MSG_CHANNEL_LIST;
+        case Classic::CHAT_MSG_CHANNEL_NOTICE:
+            return WotLK::CHAT_MSG_CHANNEL_NOTICE;
+        case Classic::CHAT_MSG_CHANNEL_NOTICE_USER:
+            return WotLK::CHAT_MSG_CHANNEL_NOTICE_USER;
+        case Classic::CHAT_MSG_AFK:
+            return WotLK::CHAT_MSG_AFK;
+        case Classic::CHAT_MSG_DND:
+            return WotLK::CHAT_MSG_DND;
+        case Classic::CHAT_MSG_IGNORED:
+            return WotLK::CHAT_MSG_IGNORED;
+        case Classic::CHAT_MSG_SKILL:
+            return WotLK::CHAT_MSG_SKILL;
+        case Classic::CHAT_MSG_LOOT:
+            return WotLK::CHAT_MSG_LOOT;
+        case Classic::CHAT_MSG_MONEY:
+            return WotLK::CHAT_MSG_MONEY;
+        case Classic::CHAT_MSG_OPENING:
+            return WotLK::CHAT_MSG_OPENING;
+        case Classic::CHAT_MSG_TRADESKILLS:
+            return WotLK::CHAT_MSG_TRADESKILLS;
+        case Classic::CHAT_MSG_PET_INFO:
+            return WotLK::CHAT_MSG_PET_INFO;
+        case Classic::CHAT_MSG_COMBAT_MISC_INFO:
+            return WotLK::CHAT_MSG_COMBAT_MISC_INFO;
+        case Classic::CHAT_MSG_COMBAT_XP_GAIN:
+            return WotLK::CHAT_MSG_COMBAT_XP_GAIN;
+        case Classic::CHAT_MSG_COMBAT_HONOR_GAIN:
+            return WotLK::CHAT_MSG_COMBAT_HONOR_GAIN;
+        case Classic::CHAT_MSG_COMBAT_FACTION_CHANGE:
+            return WotLK::CHAT_MSG_COMBAT_FACTION_CHANGE;
+        case Classic::CHAT_MSG_BG_SYSTEM_NEUTRAL:
             return WotLK::CHAT_MSG_BG_SYSTEM_NEUTRAL;
-        case ClassicChatMessageType::BgSystemAlliance:
+        case Classic::CHAT_MSG_BG_SYSTEM_ALLIANCE:
             return WotLK::CHAT_MSG_BG_SYSTEM_ALLIANCE;
-        case ClassicChatMessageType::BgSystemHorde:
+        case Classic::CHAT_MSG_BG_SYSTEM_HORDE:
             return WotLK::CHAT_MSG_BG_SYSTEM_HORDE;
-        case ClassicChatMessageType::RaidLeader:
+        case Classic::CHAT_MSG_RAID_LEADER:
             return WotLK::CHAT_MSG_RAID_LEADER;
-        case ClassicChatMessageType::RaidWarning:
+        case Classic::CHAT_MSG_RAID_WARNING:
             return WotLK::CHAT_MSG_RAID_WARNING;
-        case ClassicChatMessageType::PartyLeader:
-            return WotLK::CHAT_MSG_PARTY;
-        case ClassicChatMessageType::BnWhisper:
+        case Classic::CHAT_MSG_RAID_BOSS_EMOTE:
+            return WotLK::CHAT_MSG_RAID_BOSS_EMOTE;
+        case Classic::CHAT_MSG_RAID_BOSS_WHISPER:
+            return WotLK::CHAT_MSG_RAID_BOSS_WHISPER;
+        case Classic::CHAT_MSG_FILTERED:
+            return WotLK::CHAT_MSG_FILTERED;
+        case Classic::CHAT_MSG_RESTRICTED:
+            return WotLK::CHAT_MSG_RESTRICTED;
+        case Classic::CHAT_MSG_ACHIEVEMENT:
+            return WotLK::CHAT_MSG_ACHIEVEMENT;
+        case Classic::CHAT_MSG_GUILD_ACHIEVEMENT:
+            return WotLK::CHAT_MSG_GUILD_ACHIEVEMENT;
+        case Classic::CHAT_MSG_PARTY_LEADER:
+            return WotLK::CHAT_MSG_PARTY_LEADER;
+        case Classic::CHAT_MSG_BN_WHISPER:
             return WotLK::CHAT_MSG_WHISPER;
-        case ClassicChatMessageType::BnWhisperInform:
+        case Classic::CHAT_MSG_BN_WHISPER_INFORM:
             return WotLK::CHAT_MSG_WHISPER_INFORM;
-        case ClassicChatMessageType::Battleground:
+        case Classic::CHAT_MSG_BATTLEGROUND:
             return WotLK::CHAT_MSG_BATTLEGROUND;
-        case ClassicChatMessageType::BattlegroundLeader:
+        case Classic::CHAT_MSG_BATTLEGROUND_LEADER:
             return WotLK::CHAT_MSG_BATTLEGROUND_LEADER;
-        case ClassicChatMessageType::InstanceChat:
+        case Classic::CHAT_MSG_INSTANCE_CHAT:
             return WotLK::CHAT_MSG_PARTY;
-        case ClassicChatMessageType::InstanceChatLeader:
-            return WotLK::CHAT_MSG_PARTY;
+        case Classic::CHAT_MSG_INSTANCE_CHAT_LEADER:
+            return WotLK::CHAT_MSG_PARTY_LEADER;
     }
     return WotLK::CHAT_MSG_SAY;
 }

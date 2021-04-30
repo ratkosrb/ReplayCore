@@ -39,6 +39,7 @@ public:
     uint32 ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const;
     void ConvertWeatherStateAndGradeForVanilla(uint32& type, float& grade);
     uint32 GetWeatherSoundForVanilla(uint32 type, float grade) const;
+    uint32 ConvertChatType(uint32 chatType) const;
 
     void LoadGameTele();
     GameTele const* GetGameTele(std::string name) const;

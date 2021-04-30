@@ -270,6 +270,21 @@ struct SniffedEvent_WeatherUpdate : SniffedEvent
     }
 };
 
+struct SniffedEvent_WorldText : SniffedEvent
+{
+    SniffedEvent_WorldText(std::string text, uint32 chatType, uint32 language) :
+        m_text(text), m_chatType(chatType), m_language(language) {};
+    std::string m_text;
+    uint32 m_chatType = 0;
+    uint32 m_language = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_WORLD_TEXT;
+    }
+};
+
 struct SniffedEvent_ClientSideMovement : SniffedEvent
 {
     SniffedEvent_ClientSideMovement(ObjectGuid source, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o) :
@@ -293,18 +308,6 @@ struct SniffedEvent_ClientSideMovement : SniffedEvent
 };
 
 /*
-
-struct SniffedEvent_WorldText : SniffedEvent
-{
-    SniffedEvent_WorldText(std::string text) :
-        m_text(text) {};
-    std::string m_text;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_WORLD_TEXT;
-    }
-};
 
 struct SniffedEvent_WorldStateUpdate : SniffedEvent
 {
