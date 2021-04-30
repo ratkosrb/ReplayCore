@@ -176,7 +176,7 @@ public:
 
     bool IsWithinVisibilityDistance(WorldObject const* pObject) const;
 
-    uint32 GetZoneId() const;
+    virtual uint32 GetZoneId() const;
     uint32 GetAreaId() const;
     uint32 GetMapId() const { return m_location.mapId; }
     float GetPositionX() const { return m_location.x; }

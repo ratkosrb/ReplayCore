@@ -37,6 +37,8 @@ public:
     uint8 GetMoveSpeedsCount() const;
     uint32 ConvertMovementFlags(uint32 moveFlags) const;
     uint32 ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const;
+    void ConvertWeatherStateAndGradeForVanilla(uint32& type, float& grade);
+    uint32 GetWeatherSoundForVanilla(uint32 type, float grade) const;
 
     void LoadGameTele();
     GameTele const* GetGameTele(std::string name) const;

@@ -113,6 +113,7 @@
     <ClInclude Include="World\Geometry.h" />
     <ClInclude Include="World\ItemPrototype.h" />
     <ClInclude Include="World\MovementDefines.h" />
+    <ClInclude Include="World\MovementInfo.h" />
     <ClInclude Include="World\Object.h" />
     <ClInclude Include="World\ObjectDefines.h" />
     <ClInclude Include="World\ObjectGuid.h" />
@@ -147,6 +148,7 @@
     <ClCompile Include="World\GameData.cpp" />
     <ClCompile Include="World\GameDataMgr.cpp" />
     <ClCompile Include="World\GameObject.cpp" />
+    <ClCompile Include="World\MovementInfo.cpp" />
     <ClCompile Include="World\Object.cpp" />
     <ClCompile Include="World\ObjectGuid.cpp" />
     <ClCompile Include="World\Opcodes.cpp" />

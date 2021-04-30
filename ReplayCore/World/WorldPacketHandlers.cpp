@@ -81,6 +81,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_LFD_PLAYER_LOCK_INFO_REQUEST", &WorldServer::HandleLfdPlayerLockInfoRequest);
     SetOpcodeHandler("CMSG_CAST_SPELL", &WorldServer::HandleCastSpell);
     SetOpcodeHandler("CMSG_ATTACKSTOP", &WorldServer::HandleAttackStop);
+    SetOpcodeHandler("CMSG_ZONEUPDATE", &WorldServer::HandleZoneUpdate);
 }
 
 void WorldServer::HandleAuthSession(WorldPacket& packet)
@@ -418,7 +419,7 @@ void WorldServer::HandlePlayerLogin(WorldPacket& packet)
     packet >> guid;
 
     if (!m_worldSpawned)
-        SpawnWorldObjects();
+        ResetAndSpawnWorld();
 
     Player* pPlayer = nullptr;
     if (m_clientPlayer && m_clientPlayer->GetObjectGuid() == guid)
@@ -1044,7 +1045,7 @@ void WorldServer::HandleCastSpell(WorldPacket& packet)
 
 #ifdef WORLD_DEBUG
     printf("\n");
-    printf("[HandlePing] CMSG_CAST_SPELL data:\n");
+    printf("[HandleCastSpell] CMSG_CAST_SPELL data:\n");
     printf("Spell Id: %u\n", spellId);
     printf("Cast Count: %hhu\n", castCount);
     printf("Cast Flags: %hhu\n", castFlags);
@@ -1079,4 +1080,26 @@ void WorldServer::HandleAttackStop(WorldPacket& packet)
     }
 
     SendAttackStop(m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetGuidValue("UNIT_FIELD_TARGET"));
+}
+
+void WorldServer::HandleZoneUpdate(WorldPacket& packet)
+{
+    if (!m_clientPlayer)
+    {
+        printf("[HandleZoneUpdate] Error: Zone update received while client is not in world!");
+        return;
+    }
+
+    uint32 zoneId;
+    packet >> zoneId;
+
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[HandleZoneUpdate] CMSG_ZONEUPDATE data:\n");
+    printf("Zone Id: %s (%u)\n", sGameDataMgr.GetAreaTableEntry(zoneId)->name.c_str(), zoneId);
+    printf("\n");
+#endif
+
+    m_clientPlayer->SetCachedZoneId(zoneId);
+    SendWeatherForCurrentZone();
 }

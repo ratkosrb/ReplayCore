@@ -312,3 +312,11 @@ uint32 Player::GetQuestStatus(Quest const* pQuest) const
     }
     return Vanilla::DIALOG_STATUS_NONE;
 }
+
+uint32 Player::GetZoneId() const
+{
+    if (m_cachedZoneId)
+        return m_cachedZoneId;
+
+    return WorldObject::GetZoneId();
+}

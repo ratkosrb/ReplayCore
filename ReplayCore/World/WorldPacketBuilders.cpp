@@ -1709,3 +1709,33 @@ void WorldServer::SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid)
     data << uint32(0);
     SendPacket(data);
 }
+
+void WorldServer::SendWeather(uint32 type, float grade, uint32 soundId, bool instant)
+{
+    WorldPacket data(GetOpcode("SMSG_WEATHER"), 4 + 4 + 4 + 1);
+    data << uint32(type);
+    data << float(grade);
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+        data << uint32(soundId);
+    data << uint8(instant); // 1 = instant change, 0 = smooth change
+    SendPacket(data);
+}
+
+void WorldServer::SendWeatherForCurrentZone()
+{
+    if (!m_sessionData.isInWorld || !m_clientPlayer)
+        return;
+
+    uint32 mapId = m_clientPlayer->GetMapId();
+    uint32 zoneId = m_clientPlayer->GetZoneId();
+
+    auto itr1 = m_weather.find(mapId);
+    if (itr1 == m_weather.end())
+        return;
+
+    auto itr2 = itr1->second.find(zoneId);
+    if (itr2 == itr1->second.end())
+        return;
+
+    SendWeather(itr2->second.type, itr2->second.grade, itr2->second.soundId, true);
+}

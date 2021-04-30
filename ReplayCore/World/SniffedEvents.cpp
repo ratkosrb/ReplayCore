@@ -11,6 +11,7 @@
 void ReplayMgr::LoadSniffedEvents()
 {
     printf("[ReplayMgr] Loading sniffed events...\n");
+    LoadWeatherUpdates();
     LoadUnitClientSideMovement("creature_movement_client", TYPEID_UNIT);
     LoadUnitClientSideMovement("player_movement_client", TYPEID_PLAYER);
     printf(">> Loaded %u sniffed events.", (uint32)m_eventsMapBackup.size());
@@ -21,6 +22,11 @@ void ReplayMgr::PrepareSniffedEventDataForCurrentClient()
     m_eventsMap.clear();
     m_eventsMap = m_eventsMapBackup;
     PrepareClientSideMovementDataForCurrentClient();
+
+    for (auto& itr : m_eventsMap)
+    {
+        itr.second->PepareForCurrentClient();
+    }
 }
 
 void ReplayMgr::PrepareClientSideMovementDataForCurrentClient()
@@ -113,6 +119,51 @@ std::string ReplayMgr::GuessMovementOpcode(MovementInfo const& oldState, Movemen
             return "MSG_MOVE_SET_FACING";
     }
     return "MSG_MOVE_HEARTBEAT";
+}
+
+void ReplayMgr::LoadWeatherUpdates()
+{
+    //                                              0            1         2          3                4        5        6
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `map_id`, `zone_id`, `weather_state`, `grade`, `sound`, `instant` FROM `weather_update` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 mapId = fields[1].GetUInt32();
+            uint32 zoneId = fields[2].GetUInt32();
+            uint32 weatherState = fields[3].GetUInt32();
+            float grade = fields[4].GetFloat();
+            uint32 soundId = fields[5].GetUInt32();
+            bool instant = fields[6].GetBool();
+
+            std::shared_ptr<SniffedEvent_WeatherUpdate> newEvent = std::make_shared<SniffedEvent_WeatherUpdate>(mapId, zoneId, weatherState, grade, soundId, instant);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_WeatherUpdate::PepareForCurrentClient()
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+    {
+        sGameDataMgr.ConvertWeatherStateAndGradeForVanilla(m_type, m_grade);
+        m_soundId = sGameDataMgr.GetWeatherSoundForVanilla(m_type, m_grade);
+    }   
+}
+
+void SniffedEvent_WeatherUpdate::Execute() const
+{
+    sWorld.SetWeather(m_mapId, m_zoneId, WeatherData(m_type, m_grade, m_soundId));
+
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (Player* pPlayer = sWorld.GetClientPlayer())
+        if (pPlayer->GetMapId() == m_mapId && pPlayer->GetZoneId() == m_zoneId)
+            sWorld.SendWeather(m_type, m_grade, m_soundId, m_instant);
 }
 
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)

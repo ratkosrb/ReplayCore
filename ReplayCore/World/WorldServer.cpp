@@ -102,9 +102,10 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
         updateData.Send();
 }
 
-void WorldServer::SpawnWorldObjects()
+void WorldServer::ResetAndSpawnWorld()
 {
     sReplayMgr.Uninitialize();
+    m_weather.clear();
     m_players.clear();
     m_creatures.clear();
     m_gameObjects.clear();
@@ -184,7 +185,7 @@ void WorldServer::NetworkLoop()
 
         ResetClientData();
         if (m_lastSessionBuild && m_lastSessionBuild != m_sessionData.build)
-            SpawnWorldObjects();
+            ResetAndSpawnWorld();
 
         if (!Opcodes::GetOpcodesNamesMapForBuild(m_sessionData.build))
         {

@@ -86,6 +86,9 @@
     <ClCompile Include="World\SniffedEvents.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\MovementInfo.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -233,6 +236,9 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\SniffedEvents.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\MovementInfo.h">
       <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>

@@ -19,6 +19,54 @@ enum SniffVersion
     SNIFF_CLASSIC,
 };
 
+namespace Vanilla
+{
+    enum WeatherSounds
+    {
+        WEATHER_NOSOUND                = 0,
+        WEATHER_RAINLIGHT              = 8533,
+        WEATHER_RAINMEDIUM             = 8534,
+        WEATHER_RAINHEAVY              = 8535,
+        WEATHER_SNOWLIGHT              = 8536,
+        WEATHER_SNOWMEDIUM             = 8537,
+        WEATHER_SNOWHEAVY              = 8538,
+        WEATHER_SANDSTORMLIGHT         = 8556,
+        WEATHER_SANDSTORMMEDIUM        = 8557,
+        WEATHER_SANDSTORMHEAVY         = 8558
+    };
+
+    enum WeatherType
+    {
+        WEATHER_TYPE_FINE       = 0,
+        WEATHER_TYPE_RAIN       = 1,
+        WEATHER_TYPE_SNOW       = 2,
+        WEATHER_TYPE_STORM      = 3
+    };
+}
+
+#define MAX_WEATHER_TYPE 4
+
+namespace TBC
+{
+    enum WeatherState
+    {
+        WEATHER_STATE_FINE              = 0,
+        WEATHER_STATE_FOG               = 1,
+        WEATHER_STATE_DRIZZLE           = 2,
+        WEATHER_STATE_LIGHT_RAIN        = 3,
+        WEATHER_STATE_MEDIUM_RAIN       = 4,
+        WEATHER_STATE_HEAVY_RAIN        = 5,
+        WEATHER_STATE_LIGHT_SNOW        = 6,
+        WEATHER_STATE_MEDIUM_SNOW       = 7,
+        WEATHER_STATE_HEAVY_SNOW        = 8,
+        WEATHER_STATE_LIGHT_SANDSTORM   = 22,
+        WEATHER_STATE_MEDIUM_SANDSTORM  = 41,
+        WEATHER_STATE_HEAVY_SANDSTORM   = 42,
+        WEATHER_STATE_THUNDERS          = 86,
+        WEATHER_STATE_BLACKRAIN         = 90
+    };
+}
+
 enum FactionTemplateFlags
 {
     FACTION_TEMPLATE_FLAG_PVP               = 0x00000800,   // flagged for PvP

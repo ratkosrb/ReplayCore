@@ -123,6 +123,114 @@ uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 client
     return moveFlags;
 }
 
+void GameDataMgr::ConvertWeatherStateAndGradeForVanilla(uint32& type, float& grade)
+{
+    if (grade > 1.0f)
+        grade = 1.0f;
+
+    switch (type)
+    {
+        case TBC::WEATHER_STATE_FINE:
+            type = Vanilla::WEATHER_TYPE_FINE;
+            grade = 0.0f;
+            break;
+        case TBC::WEATHER_STATE_FOG:
+            type = Vanilla::WEATHER_TYPE_FINE;
+            break;
+        case TBC::WEATHER_STATE_DRIZZLE:
+            type = Vanilla::WEATHER_TYPE_RAIN;
+            grade = 0.25f;
+            break;
+        case TBC::WEATHER_STATE_LIGHT_RAIN:
+            type = Vanilla::WEATHER_TYPE_RAIN;
+            grade = 0.3f;
+            break;
+        case TBC::WEATHER_STATE_MEDIUM_RAIN:
+            type = Vanilla::WEATHER_TYPE_RAIN;
+            grade = 0.6f;
+            break;
+        case TBC::WEATHER_STATE_HEAVY_RAIN:
+            type = Vanilla::WEATHER_TYPE_RAIN;
+            grade = 1.0f;
+            break;
+        case TBC::WEATHER_STATE_LIGHT_SNOW:
+            type = Vanilla::WEATHER_TYPE_SNOW;
+            grade = 0.3f;
+            break;
+        case TBC::WEATHER_STATE_MEDIUM_SNOW:
+            type = Vanilla::WEATHER_TYPE_SNOW;
+            grade = 0.6f;
+            break;
+        case TBC::WEATHER_STATE_HEAVY_SNOW:
+            type = Vanilla::WEATHER_TYPE_SNOW;
+            grade = 1.0f;
+            break;
+        case TBC::WEATHER_STATE_LIGHT_SANDSTORM:
+            type = Vanilla::WEATHER_TYPE_STORM;
+            grade = 0.3f;
+            break;
+        case TBC::WEATHER_STATE_MEDIUM_SANDSTORM:
+            type = Vanilla::WEATHER_TYPE_STORM;
+            grade = 0.6f;
+            break;
+        case TBC::WEATHER_STATE_HEAVY_SANDSTORM:
+            type = Vanilla::WEATHER_TYPE_STORM;
+            grade = 1.0f;
+            break;
+        case TBC::WEATHER_STATE_THUNDERS:
+            type = Vanilla::WEATHER_TYPE_STORM;
+            grade = 0.25f;
+            break;
+        default:
+            type = Vanilla::WEATHER_TYPE_FINE;
+            grade = 0.0f;
+            break;
+    }
+}
+
+uint32 GameDataMgr::GetWeatherSoundForVanilla(uint32 type, float grade) const
+{
+    uint32 sound;
+    switch (type)
+    {
+        case Vanilla::WEATHER_TYPE_RAIN:
+            if (grade < 0.25f)
+                sound = Vanilla::WEATHER_NOSOUND;
+            else if (grade < 0.6f)
+                sound = Vanilla::WEATHER_RAINLIGHT;
+            else if (grade < 0.9f)
+                sound = Vanilla::WEATHER_RAINMEDIUM;
+            else
+                sound = Vanilla::WEATHER_RAINHEAVY;
+            break;
+        case Vanilla::WEATHER_TYPE_SNOW:
+            if (grade < 0.25f)
+                sound = Vanilla::WEATHER_NOSOUND;
+            else if (grade < 0.6f)
+                sound = Vanilla::WEATHER_SNOWLIGHT;
+            else if (grade < 0.9f)
+                sound = Vanilla::WEATHER_SNOWMEDIUM;
+            else
+                sound = Vanilla::WEATHER_SNOWHEAVY;
+            break;
+        case Vanilla::WEATHER_TYPE_STORM:
+            if (grade < 0.25f)
+                sound = Vanilla::WEATHER_NOSOUND;
+            else if (grade < 0.6f)
+                sound = Vanilla::WEATHER_SANDSTORMLIGHT;
+            else if (grade < 0.9f)
+                sound = Vanilla::WEATHER_SANDSTORMMEDIUM;
+            else
+                sound = Vanilla::WEATHER_SANDSTORMHEAVY;
+            break;
+        case Vanilla::WEATHER_TYPE_FINE:
+        default:
+            sound = Vanilla::WEATHER_NOSOUND;
+            break;
+    }
+    return sound;
+}
+
 void GameDataMgr::LoadGameTele()
 {
     printf("[GameDataMgr] Loading teleport locations...\n");

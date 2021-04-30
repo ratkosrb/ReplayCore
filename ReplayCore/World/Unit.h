@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "UnitDefines.h"
 #include "MovementDefines.h"
+#include "MovementInfo.h"
 
 struct CreatureData;
 

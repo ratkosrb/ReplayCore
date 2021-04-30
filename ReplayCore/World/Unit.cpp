@@ -11,10 +11,10 @@ float baseMoveSpeed[MAX_MOVE_TYPE_WOTLK] =
     4.5f,                                                   // MOVE_RUN_BACK
     4.722222f,                                              // MOVE_SWIM
     2.5f,                                                   // MOVE_SWIM_BACK
-    3.141594f,                                              // MOVE_TURN_RATE
+    3.141593f,                                              // MOVE_TURN_RATE
     7.0f,                                                   // MOVE_FLIGHT
     4.5f,                                                   // MOVE_FLIGHT_BACK
-    3.14f                                                   // MOVE_PITCH_RATE
+    3.141593f                                               // MOVE_PITCH_RATE
 };
 
 Unit::Unit(CreatureData const& unitData) : WorldObject(unitData.guid)

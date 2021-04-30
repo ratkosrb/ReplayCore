@@ -252,6 +252,24 @@ struct SniffedEvent
     virtual ObjectGuid GetTargetGuid() const { return ObjectGuid(); };
 };
 
+struct SniffedEvent_WeatherUpdate : SniffedEvent
+{
+    SniffedEvent_WeatherUpdate(uint32 mapId, uint32 zoneId, uint32 weatherType, float grade, uint32 soundId, bool instant) :
+        m_mapId(mapId), m_zoneId(zoneId), m_type(weatherType), m_grade(grade), m_soundId(soundId), m_instant(instant) {};
+    uint32 m_mapId = 0;
+    uint32 m_zoneId = 0;
+    uint32 m_type = 0;
+    float m_grade = 0.0f;
+    uint32 m_soundId = 0;
+    bool m_instant = false;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_WEATHER_UPDATE;
+    }
+};
+
 struct SniffedEvent_ClientSideMovement : SniffedEvent
 {
     SniffedEvent_ClientSideMovement(ObjectGuid source, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o) :
@@ -275,20 +293,6 @@ struct SniffedEvent_ClientSideMovement : SniffedEvent
 };
 
 /*
-struct SniffedEvent_WeatherUpdate : SniffedEvent
-{
-    SniffedEvent_WeatherUpdate(uint32 mapId, uint32 zoneId, uint32 weatherType, float grade) :
-        m_mapId(mapId), m_zoneId(zoneId), m_weatherType(weatherType), m_grade(grade) {};
-    uint32 m_mapId;
-    uint32 m_zoneId;
-    uint32 m_weatherType;
-    float m_grade;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_WEATHER_UPDATE;
-    }
-};
 
 struct SniffedEvent_WorldText : SniffedEvent
 {

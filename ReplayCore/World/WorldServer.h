@@ -41,6 +41,15 @@ struct ClientAddonData
     uint32 urlCRC = 0;
 };
 
+struct WeatherData
+{
+    WeatherData() = default;
+    WeatherData(uint32 type_, float grade_, uint32 soundId_) : type(type_), grade(grade_), soundId(soundId_) {}
+    uint32 type = 0;
+    float grade = 0.0f;
+    uint32 soundId = 0;
+};
+
 #define CLIENT_CHARACTER_GUID_OFFSET 50000
 
 class WorldServer
@@ -134,8 +143,16 @@ public:
     uint32 GetServerTimeMs() const { return m_msTimeSinceServerStart; }
     bool IsGuidVisibleToClient(ObjectGuid guid) const
     {
+        if (!m_sessionData.isInWorld)
+            return false;
+
         return m_sessionData.visibleObjects.find(guid) != m_sessionData.visibleObjects.end();
     }
+    void SetWeather(uint32 mapId, uint32 zoneId, WeatherData weatherData)
+    {
+        m_weather[mapId][zoneId] = weatherData;
+    }
+    void SendWeatherForCurrentZone();
 
     bool IsEnabled() const { return m_enabled; }
     void StartNetwork();
@@ -153,7 +170,7 @@ private:
 
     // World
     void WorldLoop();
-    void SpawnWorldObjects();
+    void ResetAndSpawnWorld();
     void OnClientLogout();
     template<class T>
     void BuildAndSendObjectUpdates(T& objectsMap);
@@ -161,6 +178,7 @@ private:
     std::map<ObjectGuid, Unit> m_creatures;
     std::map<ObjectGuid, Player> m_players;
     std::unique_ptr<Player> m_clientPlayer = nullptr;
+    std::map<uint32 /*map*/, std::map<uint32 /*zone*/, WeatherData>> m_weather;
 
     // Network
     WorldSessionData m_sessionData;
@@ -210,6 +228,7 @@ private:
     void HandleLfdPlayerLockInfoRequest(WorldPacket& packet);
     void HandleCastSpell(WorldPacket& packet);
     void HandleAttackStop(WorldPacket& packet);
+    void HandleZoneUpdate(WorldPacket& packet);
 public:
     // Packet Building
     void SendAuthChallenge();
@@ -268,6 +287,7 @@ public:
     void SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<ObjectGuid> const& vHitTargets, std::vector<ObjectGuid> const& vMissTargets, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
     void SendAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid);
+    void SendWeather(uint32 type, float grade, uint32 soundId, bool instant);
 };
 
 #define sWorld WorldServer::Instance()

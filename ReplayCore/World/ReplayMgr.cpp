@@ -74,12 +74,7 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     InitializeWorldObject(pUnit);
 
     pUnit->GetMovementInfo().pos = location.ToPosition();
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-        pUnit->GetMovementInfo().SetMovementFlags(ConvertClassicMovementFlagsToVanilla(movementFlags));
-    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-        pUnit->GetMovementInfo().SetMovementFlags(ConvertClassicMovementFlagsToTBC(movementFlags));
-    else
-        pUnit->GetMovementInfo().SetMovementFlags(ConvertClassicMovementFlagsToWotLK(movementFlags));
+    pUnit->GetMovementInfo().SetMovementFlags(sGameDataMgr.ConvertMovementFlags(movementFlags));
 
     pUnit->SetGuidValue("UNIT_FIELD_CHARM", charm);
     pUnit->SetGuidValue("UNIT_FIELD_SUMMON", summon);

@@ -24,8 +24,12 @@ public:
     bool CanSeeStartQuest(Quest const* pQuest) const;
     uint32 GetQuestStatus(Quest const* pQuest) const;
 
+    uint32 GetZoneId() const final;
+    void SetCachedZoneId(uint32 zoneId) { m_cachedZoneId = zoneId; }
+
 protected:
     std::string m_name;
+    uint32 m_cachedZoneId = 0;
 };
 
 #endif
