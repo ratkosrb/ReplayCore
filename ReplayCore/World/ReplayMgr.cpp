@@ -83,6 +83,17 @@ void UnitData::InitializeUnit(Unit* pUnit) const
 
     pUnit->GetMovementInfo().pos = location.ToPosition();
     pUnit->GetMovementInfo().SetMovementFlags(sGameDataMgr.ConvertMovementFlags(movementFlags));
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        pUnit->RemoveUnitMovementFlag(Vanilla::MOVEFLAG_MASK_MOVING_OR_TURN);
+    if (unitFlags & UNIT_FLAG_TAXI_FLIGHT)
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            pUnit->SetUnitMovementFlags(Vanilla::MOVEFLAG_FIXED_Z);
+        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            pUnit->SetUnitMovementFlags(TBC::MOVEFLAG_FLYING2);
+        else
+            pUnit->SetUnitMovementFlags(WotLK::MOVEFLAG_FLYING);
+    }
 
     pUnit->SetGuidValue("UNIT_FIELD_CHARM", charm);
     pUnit->SetGuidValue("UNIT_FIELD_SUMMON", summon);

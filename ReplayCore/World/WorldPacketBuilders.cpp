@@ -1776,3 +1776,13 @@ void WorldServer::SendWorldStateUpdate(uint32 variable, uint32 value)
     data << uint32(value);
     SendPacket(data);
 }
+
+void WorldServer::SendMonsterMove(Unit* pUnit)
+{
+    WorldPacket data(GetOpcode("SMSG_MONSTER_MOVE"));
+    data << pUnit->GetPackGUID();
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
+        data << uint8(0); // Toggle AnimTierInTrans
+    pUnit->m_moveSpline.WriteMove(data);
+    SendPacket(data);
+}

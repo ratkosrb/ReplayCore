@@ -25,6 +25,12 @@ void ReplayMgr::LoadSniffedEvents()
     LoadWorldObjectDestroy("gameobject_destroy_time", TYPEID_GAMEOBJECT);
     LoadUnitClientSideMovement("creature_movement_client", TYPEID_UNIT);
     LoadUnitClientSideMovement("player_movement_client", TYPEID_PLAYER);
+    LoadServerSideMovementSplines("player_movement_server_spline", m_playerMovementSplines);
+    LoadServerSideMovementSplines("creature_movement_server_spline", m_creatureMovementSplines);
+    LoadServerSideMovementSplines("creature_movement_server_combat_spline", m_creatureMovementCombatSplines);
+    LoadServerSideMovement("player_movement_server", TYPEID_PLAYER, m_playerMovementSplines);
+    LoadServerSideMovement("creature_movement_server", TYPEID_UNIT, m_creatureMovementSplines);
+    LoadServerSideMovement("creature_movement_server_combat", TYPEID_UNIT, m_creatureMovementCombatSplines);
     printf(">> Loaded %u sniffed events.", (uint32)m_eventsMapBackup.size());
 }
 
@@ -350,7 +356,7 @@ void SniffedEvent_WorldObjectDestroy::Execute() const
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
 {
     //                                                               0             1       2         3            4             5      6             7             8              9
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `map`, `position_x`, `position_y`, `position_z`, `orientation` FROM `%s`", tableName));
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `map`, `position_x`, `position_y`, `position_z`, `orientation` FROM `%s` ORDER BY `unixtimems` ASC, `move_flags` DESC", tableName));
     if (!result)
         return;
 
@@ -421,4 +427,116 @@ void SniffedEvent_ClientSideMovement::Execute() const
         return;
 
     sWorld.SendMovementPacket(pUnit, m_opcode);
+}
+
+void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap)
+{
+    if (auto result = SniffDatabase.Query("SELECT `guid`, `parent_point`, `spline_point`, `position_x`, `position_y`, `position_z` FROM `%s` ORDER BY `guid`, `parent_point`, `spline_point`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 guid = fields[0].GetUInt32();
+            uint32 parent_point = fields[1].GetUInt32();
+            //uint32 spline_point = fields[2].GetUInt32();
+            Vector3 position;
+            position.x = fields[3].GetFloat();
+            position.y = fields[4].GetFloat();
+            position.z = fields[5].GetFloat();
+
+            splinesMap[guid][parent_point].push_back(position);
+        } while (result->NextRow());
+    }
+}
+
+void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap)
+{
+    //                                             0       1        2            3               4               5                   6                   7                   8                 9                 10                11             12
+    if (auto result = SniffDatabase.Query("SELECT `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation`, `unixtimems` FROM `%s` ORDER BY `unixtimems`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 guid = fields[0].GetUInt32();
+            ObjectGuid objectGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
+                objectGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                continue;
+            }
+
+            uint32 point = fields[1].GetUInt32();
+            uint32 moveTime = fields[2].GetUInt32();
+            uint32 splineFlags = fields[3].GetUInt32();
+            uint32 splineCount = fields[4].GetUInt32();
+            Vector3 startPosition;
+            startPosition.x = fields[5].GetFloat();
+            startPosition.y = fields[6].GetFloat();
+            startPosition.z = fields[7].GetFloat();
+            Vector3 endPosition;
+            endPosition.x = fields[8].GetFloat();
+            endPosition.y = fields[9].GetFloat();
+            endPosition.z = fields[10].GetFloat();
+            float orientation = fields[11].GetFloat();
+            uint64 unixtimems = fields[12].GetUInt64();
+
+            std::vector<Vector3> const* pSplines = nullptr;
+            if (splineCount > 1)
+            {
+                auto itr1 = splinesMap.find(guid);
+                if (itr1 != splinesMap.end())
+                {
+                    auto itr2 = itr1->second.find(point);
+                    if (itr2 != itr1->second.end())
+                        pSplines = &itr2->second;
+                }
+            }
+
+            std::shared_ptr<SniffedEvent_ServerSideMovement> newEvent;
+            if (pSplines)
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(objectGuid, startPosition, moveTime, splineFlags, orientation, *pSplines);
+            else
+            {
+                std::vector<Vector3> points;
+                if (splineCount)
+                    points.push_back(endPosition);
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(objectGuid, startPosition, moveTime, splineFlags, orientation, points);
+            }
+
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_ServerSideMovement::PepareForCurrentClient()
+{
+    sGameDataMgr.ConvertMoveSplineData(m_splineType, m_splineFlags, m_cyclic, m_catmullrom, m_finalOrientation, !m_splines.empty());
+}
+
+void SniffedEvent_ServerSideMovement::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_ServerSideMovement: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->Relocate(m_startPosition.x, m_startPosition.y, m_startPosition.z);
+    pUnit->m_moveSpline.Initialize(m_startPosition, m_moveTime, m_splineType, m_splineFlags, m_finalOrientation, m_splines, m_cyclic, m_catmullrom);
+
+    if (sReplayMgr.IsPlaying())
+    {
+        if (pUnit->IsVisibleToClient())
+        {
+            sWorld.SendMonsterMove(pUnit);
+        }
+    }
+
+    if (!m_moveTime || m_splines.empty())
+        pUnit->m_moveSpline.Reset();
 }

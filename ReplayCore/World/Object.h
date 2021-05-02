@@ -219,6 +219,14 @@ public:
     {
         SetLocation(location);
     }
+    virtual void Relocate(float x, float y, float z)
+    {
+        SetPosition(x, y, z);
+    }
+    virtual void Relocate(float x, float y, float z, float o)
+    {
+        SetPosition(x, y, z, o);
+    }
     float GetDistance2D(float x, float y) const
     {
         return Geometry::GetDistance2D(m_location.x, m_location.y, x, y);

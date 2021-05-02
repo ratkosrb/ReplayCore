@@ -27,13 +27,13 @@ class DbField
         int32 GetInt32() const { return m_pData ? static_cast<int32>(atol(m_pData)) : int32(0); }        
         uint8 GetUInt8() const { return m_pData ? static_cast<uint8>(atol(m_pData)) : uint8(0); }        
         uint16 GetUInt16() const {  return m_pData ? static_cast<uint16>(atol(m_pData)) : uint16(0); }
-        uint32 GetUInt32() const { return m_pData ? static_cast<uint32>(atol(m_pData)) : uint32(0); }
+        uint32 GetUInt32() const { return m_pData ? static_cast<uint32>(strtoul(m_pData, nullptr, 10)) : uint32(0); }
         
         uint64 GetUInt64() const
         {
             if (m_pData)
             {
-                uint64 value;
+                uint64 value = 0;
                 sscanf(m_pData, "%llu", &value);
                 return value;
             }

@@ -45,6 +45,11 @@ void WorldServer::WorldLoop()
         m_msTimeSinceServerStart += diff;
         m_lastUpdateTimeMs = ms;
 
+        for (auto& itr : m_players)
+            itr.second.m_moveSpline.Update(&itr.second);
+        for (auto& itr : m_creatures)
+            itr.second.m_moveSpline.Update(&itr.second);
+
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Player>>(m_players);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatures);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, GameObject>>(m_gameObjects);
@@ -186,6 +191,23 @@ void WorldServer::NetworkLoop()
         ResetClientData();
         if (m_lastSessionBuild && m_lastSessionBuild != m_sessionData.build)
             ResetAndSpawnWorld();
+
+        if (sConfig.IsPacketLoggingEnabled())
+        {
+            std::string fileName = "packet_log_" + std::to_string(GetClientBuild()) + "_" + std::to_string(uint32(time(0))) + ".pkt";
+            m_packetLog = fopen(fileName.c_str(), "wb");
+            if (m_packetLog)
+            {
+                fwrite("PKT", 1, 3, m_packetLog);
+                uint16 sniffVersion = 0x201;
+                fwrite(&sniffVersion, sizeof(uint16), 1, m_packetLog);
+                uint16 gameBuild = GetClientBuild();
+                fwrite(&gameBuild, sizeof(uint16), 1, m_packetLog);
+                uint8 zero = 0;
+                for (int i = 0; i < 40; i++)
+                    fwrite(&zero, 1, 1, m_packetLog);
+            }
+        }
 
         if (!Opcodes::GetOpcodesNamesMapForBuild(m_sessionData.build))
         {
@@ -352,6 +374,21 @@ void  WorldServer::SendPacket(WorldPacket& packet)
 #ifdef WORLD_DEBUG
     printf("[WORLD] Sending opcode %u (%s)\n", packet.GetOpcode(), GetOpcode(packet.GetOpcode()).c_str());
 #endif
+
+    if (sConfig.IsPacketLoggingEnabled() && m_packetLog)
+    {
+        uint8 direction = 0xff;
+        fwrite(&direction, 1, 1, m_packetLog);
+        uint32 unixTime = uint32(time(nullptr));
+        fwrite(&unixTime, sizeof(uint32), 1, m_packetLog);
+        fwrite(&unixTime, sizeof(uint32), 1, m_packetLog);
+        uint32 packetSize = packet.size() + 2;
+        fwrite(&packetSize, sizeof(uint32), 1, m_packetLog);
+        uint16 opcode = packet.GetOpcode();;
+        fwrite(&opcode, sizeof(uint16), 1, m_packetLog);
+        if (packet.size())
+            fwrite(packet.contents(), sizeof(uint8), packet.size(), m_packetLog);
+    }
 
     if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
     {

@@ -3,6 +3,15 @@
 
 #include "../Defines/Common.h"
 
+enum SplineType
+{
+    SPLINE_TYPE_NORMAL        = 0,
+    SPLINE_TYPE_STOP          = 1,
+    SPLINE_TYPE_FACING_SPOT   = 2,
+    SPLINE_TYPE_FACING_TARGET = 3,
+    SPLINE_TYPE_FACING_ANGLE  = 4
+};
+
 namespace Vanilla
 {
     enum MovementFlags
@@ -52,15 +61,48 @@ namespace Vanilla
         MOVEFLAG_MASK_XZ = MOVEFLAG_FORWARD | MOVEFLAG_BACKWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT
     };
 
-    // used in SMSG_MONSTER_MOVE
     enum SplineFlags
     {
-        // Valeurs correctes et testees pour la 1.12.1
-        SPLINEFLAG_NONE           = 0x00000000,
-        SPLINEFLAG_WALKMODE       = 0x00000100,
-        SPLINEFLAG_FLYING         = 0x00000200,
+        None         = 0x00000000,
+        Done         = 0x00000001,
+        Falling      = 0x00000002,           // Affects elevation computation
+        Unknown3     = 0x00000004,
+        Unknown4     = 0x00000008,
+        Unknown5     = 0x00000010,
+        Unknown6     = 0x00000020,
+        Unknown7     = 0x00000040,
+        Unknown8     = 0x00000080,
+        Runmode      = 0x00000100,
+        Flying       = 0x00000200,           // Smooth movement(Catmullrom interpolation mode), flying animation
+        No_Spline    = 0x00000400,
+        Unknown12    = 0x00000800,
+        Unknown13    = 0x00001000,
+        Unknown14    = 0x00002000,
+        Unknown15    = 0x00004000,
+        Unknown16    = 0x00008000,
+        Final_Point  = 0x00010000,
+        Final_Target = 0x00020000,
+        Final_Angle  = 0x00040000,
+        Unknown19    = 0x00080000,           // exists, but unknown what it does
+        Cyclic       = 0x00100000,           // Movement by cycled spline
+        Enter_Cycle  = 0x00200000,           // Everytimes appears with cyclic flag in monster move packet, erases first spline vertex after first cycle done
+        Frozen       = 0x00400000,           // Will never arrive
+        Unknown23    = 0x00800000,
+        Unknown24    = 0x01000000,
+        Unknown25    = 0x02000000,          // exists, but unknown what it does
+        Unknown26    = 0x04000000,
+        Unknown27    = 0x08000000,
+        Unknown28    = 0x10000000,
+        Unknown29    = 0x20000000,
+        Unknown30    = 0x40000000,
+        Unknown31    = 0x80000000,
 
-        SPLINEFLAG_SPLINE         = 0x00002000,               // spline n*(float x,y,z)
+        // Masks
+        Mask_Final_Facing = Final_Point | Final_Target | Final_Angle,
+        // flags that shouldn't be appended into SMSG_MONSTER_MOVE\SMSG_MONSTER_MOVE_TRANSPORT packet, should be more probably
+        Mask_No_Monster_Move = Mask_Final_Facing | Done,
+        // CatmullRom interpolation mode used
+        Mask_CatmullRom = Flying,
     };
 }
 
@@ -187,6 +229,11 @@ namespace WotLK
         MOVEFLAG_SAFE_FALL          = 0x20000000,               // active rogue safe fall spell (passive)
         MOVEFLAG_HOVER              = 0x40000000,
 
+        MOVEFLAG_MASK_MOVING =
+        MOVEFLAG_FORWARD | MOVEFLAG_BACKWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT |
+        MOVEFLAG_PITCH_UP | MOVEFLAG_PITCH_DOWN | MOVEFLAG_FALLING | MOVEFLAG_FALLINGFAR |
+        MOVEFLAG_SPLINE_ELEVATION,
+        MOVEFLAG_MASK_MOVING_OR_TURN = MOVEFLAG_MASK_MOVING | MOVEFLAG_TURN_LEFT | MOVEFLAG_TURN_RIGHT,
         MOVEFLAG_MASK_MOVING_FORWARD = MOVEFLAG_FORWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT | MOVEFLAG_FALLING,
     };
 
@@ -289,6 +336,44 @@ namespace Classic
         MOVEFLAG_SAFE_FALL          = 0x08000000,
         MOVEFLAG_HOVER              = 0x10000000,
         MOVEFLAG_DISABLE_COLLISION  = 0x20000000,
+    };
+
+    enum SplineFlags
+    {
+        None = 0x00000000,
+        AnimTierSwim = 0x00000001,
+        AnimTierHover = 0x00000002,
+        AnimTierFly = 0x00000003,
+        AnimTierSubmerged = 0x00000004,
+        Unknown0 = 0x00000008,
+        FallingSlow = 0x00000010,
+        Done = 0x00000020,
+        Falling = 0x00000040,
+        NoSpline = 0x00000080,
+        Unknown1 = 0x00000100,
+        Flying = 0x00000200,
+        OrientationFixed = 0x00000400,
+        Catmullrom = 0x00000800,
+        Cyclic = 0x00001000,
+        EnterCycle = 0x00002000,
+        Frozen = 0x00004000,
+        TransportEnter = 0x00008000,
+        TransportExit = 0x00010000,
+        Unknown2 = 0x00020000,
+        Unknown3 = 0x00040000,
+        Backward = 0x00080000,
+        SmoothGroundPath = 0x00100000,
+        CanSwim = 0x00200000,
+        UncompressedPath = 0x00400000,
+        Unknown4 = 0x00800000,
+        Unknown5 = 0x01000000,
+        Animation = 0x02000000,
+        Parabolic = 0x04000000,
+        FadeObject = 0x08000000,
+        Steering = 0x10000000,
+        Unknown8 = 0x20000000,
+        Unknown9 = 0x40000000,
+        Unknown10 = 0x80000000,
     };
 }
 

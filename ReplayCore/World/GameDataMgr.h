@@ -40,6 +40,7 @@ public:
     void ConvertWeatherStateAndGradeForVanilla(uint32& type, float& grade);
     uint32 GetWeatherSoundForVanilla(uint32 type, float grade) const;
     uint32 ConvertChatType(uint32 chatType) const;
+    void ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination);
 
     void LoadGameTele();
     GameTele const* GetGameTele(std::string name) const;

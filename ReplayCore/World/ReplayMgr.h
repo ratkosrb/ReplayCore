@@ -148,6 +148,8 @@ struct PlayerData : public UnitData
     uint32 GetVisibleItemEnchant(uint32 slot) const { return visibleItemEnchants[slot]; }
 };
 
+typedef std::map<uint32 /*guid*/, std::map<uint32 /*parent_point*/, std::vector<Vector3>>> SplinesMap;
+
 class ReplayMgr
 {
 public:
@@ -241,6 +243,8 @@ public:
     template <class T>
     void LoadWorldObjectCreate(char const* tableName, uint32 typeId);
     void LoadWorldObjectDestroy(char const* tableName, uint32 typeId);
+    void LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap);
+    void LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap);
 
 #pragma endregion SniffedEvents
     
@@ -270,6 +274,9 @@ private:
     uint64 m_currentSniffTimeMs = 0;
     uint32 m_startTimeSniff = 0;
     uint32 m_timeDifference = 0;
+    SplinesMap m_playerMovementSplines;
+    SplinesMap m_creatureMovementSplines;
+    SplinesMap m_creatureMovementCombatSplines;
     std::set<ObjectGuid> m_activePlayers;
     std::map<uint32 /*unixtime*/, ObjectGuid> m_activePlayerTimes;
     std::map<uint32 /*guid*/, PlayerData> m_playerSpawns;

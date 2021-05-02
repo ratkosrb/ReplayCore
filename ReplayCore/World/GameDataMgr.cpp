@@ -245,6 +245,80 @@ uint32 GameDataMgr::ConvertChatType(uint32 chatType) const
     return chatType;
 }
 
+void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination)
+{
+    uint32 newFlags = 0;
+    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        {
+            if (splineFlags & Classic::Cyclic)
+            {
+                isCyclic = true;
+                newFlags |= Vanilla::Cyclic;
+            }  
+            if (splineFlags & Classic::Flying)
+            {
+                newFlags |= Vanilla::Flying;
+                isCatmullrom = true;
+            }
+            if (splineFlags & Classic::Falling)
+                newFlags |= Vanilla::Falling;
+            if (finalOrientation != 100)
+                splineType = SPLINE_TYPE_FACING_ANGLE;
+            else if (!hasDestination)
+                splineType = SPLINE_TYPE_STOP;
+            else
+                newFlags |= Vanilla::Runmode;
+                
+        }
+        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        {
+            if (splineFlags & Classic::Cyclic)
+            {
+                isCyclic = true;
+                newFlags |= TBC::Cyclic;
+            }
+            if (splineFlags & Classic::Flying)
+            {
+                newFlags |= TBC::Flying;
+                isCatmullrom = true;
+            }
+            if (splineFlags & Classic::Falling)
+                newFlags |= TBC::Falling;
+            if (finalOrientation != 100)
+                splineType = SPLINE_TYPE_FACING_ANGLE;
+            else if (!hasDestination)
+                splineType = SPLINE_TYPE_STOP;
+        }
+        else
+        {
+            if (splineFlags & Classic::Cyclic)
+            {
+                isCyclic = true;
+                newFlags |= WotLK::Cyclic;
+            }
+            if (splineFlags & Classic::Flying)
+            {
+                newFlags |= WotLK::Flying;
+                isCatmullrom = true;
+            }
+            if (splineFlags & Classic::Catmullrom)
+            {
+                newFlags |= WotLK::Catmullrom;
+                isCatmullrom = true;
+            }
+            if (splineFlags & Classic::Falling)
+                newFlags |= WotLK::Falling;
+            if (finalOrientation != 100)
+                splineType = SPLINE_TYPE_FACING_ANGLE;
+            else if (!hasDestination)
+                splineType = SPLINE_TYPE_STOP;
+        }
+    }
+    splineFlags = newFlags;
+}
+
 void GameDataMgr::LoadGameTele()
 {
     printf("[GameDataMgr] Loading teleport locations...\n");

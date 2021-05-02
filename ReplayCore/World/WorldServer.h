@@ -168,6 +168,7 @@ private:
     bool m_worldThreadStarted = false;
     uint64 m_lastUpdateTimeMs = 0;
     uint32 m_msTimeSinceServerStart = 0;
+    FILE* m_packetLog = nullptr;
 
     // World
     void WorldLoop();
@@ -291,6 +292,7 @@ public:
     void SendWeather(uint32 type, float grade, uint32 soundId, bool instant);
     void SendInitialWorldStates(std::map<uint32, uint32> worldStates);
     void SendWorldStateUpdate(uint32 variable, uint32 value);
+    void SendMonsterMove(Unit* pUnit);
 };
 
 #define sWorld WorldServer::Instance()

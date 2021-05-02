@@ -54,6 +54,14 @@ enum TypeMask
 #define DEFAULT_TAUREN_MALE_SCALE   1.35f                   // Tauren Male Player Scale by default
 #define DEFAULT_TAUREN_FEMALE_SCALE 1.25f                   // Tauren Female Player Scale by default
 
+struct Vector3
+{
+    Vector3() = default;
+    Vector3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+};
 struct Position
 {
     Position() = default;
@@ -66,6 +74,7 @@ struct Position
     {
         return !(x == other.x && y == other.y && z == other.z && o == other.o);
     }
+    Vector3 ToVector3() const { return Vector3(x, y, z); }
 };
 
 struct WorldLocation : public Position
@@ -76,6 +85,7 @@ struct WorldLocation : public Position
     WorldLocation(WorldLocation const& loc)
         : Position(loc.x, loc.y, loc.z, loc.o), mapId(loc.mapId) {}
     Position ToPosition() const { return Position(x, y, z, o); }
+    Vector3 ToVector3() const { return Vector3(x, y, z); }
 };
 
 #endif

@@ -15,6 +15,7 @@ public:
     uint32 GetLoginServerPort() { return m_loginServerPort; }
     uint32 GetWorldServerPort() { return m_worldServerPort; }
     std::string GetWorldServerIpAndPort() { return m_serverIp + ":" + std::to_string(m_worldServerPort); }
+    bool IsPacketLoggingEnabled() { return m_writePacketLog; }
 
     const char* GetSniffDbConnectionString() { return m_sniffDbConnectionString.c_str(); }
     const char* GetWorldDbConnectionString() { return m_worldDbConnectionString.c_str(); }
@@ -38,6 +39,7 @@ private:
     uint32 m_vmangosClientBuild = 5875;
     uint32 m_vmangosContentPatch = 10;
     uint32 m_sniffVersion = 0;
+    bool m_writePacketLog = true;
 };
 
 #define sConfig Config::Instance()

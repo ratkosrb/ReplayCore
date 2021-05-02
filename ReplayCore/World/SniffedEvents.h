@@ -369,6 +369,32 @@ struct SniffedEvent_ClientSideMovement : SniffedEvent
     }
 };
 
+struct SniffedEvent_ServerSideMovement : SniffedEvent
+{
+    SniffedEvent_ServerSideMovement(ObjectGuid source, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines) :
+        m_source(source), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines) {};
+    
+    ObjectGuid m_source;
+    Vector3 m_startPosition;
+    uint32 m_moveTime = 0;
+    uint8 m_splineType = 0;
+    uint32 m_splineFlags = 0;
+    float m_finalOrientation = 0.0f;
+    std::vector<Vector3> const m_splines;
+    bool m_cyclic = false;
+    bool m_catmullrom = false;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_SERVERSIDE_MOVEMENT;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
 /*
 
 struct SniffedEvent_UnitDestroy : SniffedEvent
