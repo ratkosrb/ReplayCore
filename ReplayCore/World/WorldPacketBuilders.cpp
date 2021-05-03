@@ -1299,7 +1299,38 @@ void WorldServer::SendGameObjectQueryResponse(uint32 entry)
     SendPacket(data);
 }
 
-static char const* const moveTypeToOpcode[MAX_MOVE_TYPE_WOTLK] =
+static char const* const moveTypeToSetSpeedOpcode[MAX_MOVE_TYPE_WOTLK] =
+{
+    "MSG_MOVE_SET_WALK_SPEED",
+    "MSG_MOVE_SET_RUN_SPEED",
+    "MSG_MOVE_SET_RUN_BACK_SPEED",
+    "MSG_MOVE_SET_SWIM_SPEED",
+    "MSG_MOVE_SET_SWIM_BACK_SPEED",
+    "MSG_MOVE_SET_TURN_RATE",
+    "MSG_MOVE_SET_FLIGHT_SPEED",
+    "MSG_MOVE_SET_FLIGHT_BACK_SPEED",
+    "MSG_MOVE_SET_PITCH_RATE",
+};
+
+void WorldServer::SendSetSpeed(Unit const* pUnit, uint32 moveType, float speed)
+{
+    if (moveType >= MAX_MOVE_TYPE_WOTLK)
+    {
+        printf("[SendSplineSetSpeed] Wrong speed type %u used!\n", moveType);
+        return;
+    }
+
+    if (uint16 opcode = GetOpcode(moveTypeToSetSpeedOpcode[moveType]))
+    {
+        WorldPacket data(opcode, 8 + 4);
+        data << pUnit->GetPackGUID();
+        data << pUnit->GetMovementInfo();
+        data << float(speed);
+        SendPacket(data);
+    }
+}
+
+static char const* const moveTypeToSplineSetSpeedOpcode[MAX_MOVE_TYPE_WOTLK] =
 {
     "SMSG_SPLINE_SET_WALK_SPEED",
     "SMSG_SPLINE_SET_RUN_SPEED",
@@ -1320,7 +1351,7 @@ void WorldServer::SendSplineSetSpeed(ObjectGuid guid, uint32 moveType, float spe
         return;
     }
 
-    if (uint16 opcode = GetOpcode(moveTypeToOpcode[moveType]))
+    if (uint16 opcode = GetOpcode(moveTypeToSplineSetSpeedOpcode[moveType]))
     {
         WorldPacket data(opcode, 8 + 4);
         data << guid.WriteAsPacked();

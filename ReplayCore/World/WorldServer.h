@@ -276,6 +276,7 @@ public:
     void SendQuestQueryResponse(uint32 entry);
     void SendCreatureQueryResponse(uint32 entry);
     void SendGameObjectQueryResponse(uint32 entry);
+    void SendSetSpeed(Unit const*, uint32 moveType, float speed);
     void SendSplineSetSpeed(ObjectGuid guid, uint32 moveType, float speed);
     void SendMovementPacket(Unit* pUnit, uint16 opcode);
     void SendMoveSetCanFly(Unit* pUnit);

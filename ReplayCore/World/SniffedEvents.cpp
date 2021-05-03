@@ -56,6 +56,8 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_main_hand_attack_time>("creature_values_update", "main_hand_attack_time", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_off_hand_attack_time>("creature_values_update", "off_hand_attack_time", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_channel_spell>("creature_values_update", "channel_spell_id", TYPEID_UNIT);
+    LoadUnitGuidValuesUpdate("creature_guid_values_update", TYPEID_UNIT);
+    LoadUnitSpeedUpdate("creature_speed_update", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_entry>("player_values_update", "entry", TYPEID_PLAYER);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_scale>("player_values_update", "scale", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_display_id>("player_values_update", "display_id", TYPEID_PLAYER);
@@ -81,6 +83,13 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_main_hand_attack_time>("player_values_update", "main_hand_attack_time", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_off_hand_attack_time>("player_values_update", "off_hand_attack_time", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_channel_spell>("player_values_update", "channel_spell_id", TYPEID_PLAYER);
+    LoadUnitGuidValuesUpdate("player_guid_values_update", TYPEID_PLAYER);
+    LoadUnitSpeedUpdate("player_speed_update", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_flags>("gameobject_values_update", "flags", TYPEID_GAMEOBJECT);
+    LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_state>("gameobject_values_update", "state", TYPEID_GAMEOBJECT);
+    LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_artkit>("gameobject_values_update", "artkit", TYPEID_GAMEOBJECT);
+    LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_dynamic_flags>("gameobject_values_update", "dynamic_flags", TYPEID_GAMEOBJECT);
+    LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_path_progress>("gameobject_values_update", "path_progress", TYPEID_GAMEOBJECT);
     printf(">> Loaded %u sniffed events.", (uint32)m_eventsMapBackup.size());
 
     // Events are loaded into the backup map, and only copied into runtime map once
@@ -318,24 +327,24 @@ void ReplayMgr::LoadWorldObjectCreate(char const* tableName, uint32 typeId)
         {
             DbField* fields = result->fetchCurrentRow();
 
-            uint32 guid = fields[1].GetUInt32();
-            ObjectGuid objectGuid;
-            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
-                objectGuid = pData->guid;
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                sourceGuid = pData->guid;
             else
             {
-                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
                 continue;
             }
-
-            uint64 unixtimems = fields[0].GetUInt64();
+            
             uint32 mapId = fields[2].GetUInt32();
             float position_x = fields[3].GetFloat();
             float position_y = fields[4].GetFloat();
             float position_z = fields[5].GetFloat();
             float orientation = fields[6].GetFloat();
 
-            std::shared_ptr<T> newEvent = std::make_shared<T>(objectGuid, mapId, position_x, position_y, position_z, orientation);
+            std::shared_ptr<T> newEvent = std::make_shared<T>(sourceGuid, mapId, position_x, position_y, position_z, orientation);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());
@@ -370,25 +379,25 @@ void SniffedEvent_WorldObjectCreate2::Execute() const
 
 void ReplayMgr::LoadWorldObjectDestroy(char const* tableName, uint32 typeId)
 {
+    //                                             0             1
     if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid` FROM `%s` ORDER BY `unixtimems`", tableName))
     {
         do
         {
             DbField* fields = result->fetchCurrentRow();
 
-            uint32 guid = fields[1].GetUInt32();
-            ObjectGuid objectGuid;
-            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
-                objectGuid = pData->guid;
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                sourceGuid = pData->guid;
             else
             {
-                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
                 continue;
             }
 
-            uint64 unixtimems = fields[0].GetUInt64();
-
-            std::shared_ptr<SniffedEvent_WorldObjectDestroy> newEvent = std::make_shared<SniffedEvent_WorldObjectDestroy>(objectGuid);
+            std::shared_ptr<SniffedEvent_WorldObjectDestroy> newEvent = std::make_shared<SniffedEvent_WorldObjectDestroy>(sourceGuid);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());
@@ -419,14 +428,13 @@ void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
         DbField* fields = result->fetchCurrentRow();
 
         uint64 unixtimems = fields[0].GetUInt64();
-
-        uint32 guid = fields[1].GetUInt32();
-        ObjectGuid objectGuid;
-        if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
-            objectGuid = pData->guid;
+        uint32 guidLow = fields[1].GetUInt32();
+        ObjectGuid sourceGuid;
+        if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+            sourceGuid = pData->guid;
         else
         {
-            printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+            printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
             continue;
         }
 
@@ -451,7 +459,7 @@ void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
         float z = fields[8].GetFloat();
         float o = fields[9].GetFloat();
 
-        std::shared_ptr<SniffedEvent_ClientSideMovement> newEvent = std::make_shared<SniffedEvent_ClientSideMovement>(objectGuid, opcodeName, moveTime, moveFlags, mapId, x, y, z, o);
+        std::shared_ptr<SniffedEvent_ClientSideMovement> newEvent = std::make_shared<SniffedEvent_ClientSideMovement>(sourceGuid, opcodeName, moveTime, moveFlags, mapId, x, y, z, o);
         m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
     } while (result->NextRow());
@@ -485,6 +493,7 @@ void SniffedEvent_ClientSideMovement::Execute() const
 
 void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap)
 {
+    //                                             0       1               2               3             4             5
     if (auto result = SniffDatabase.Query("SELECT `guid`, `parent_point`, `spline_point`, `position_x`, `position_y`, `position_z` FROM `%s` ORDER BY `guid`, `parent_point`, `spline_point`", tableName))
     {
         do
@@ -506,42 +515,42 @@ void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap&
 
 void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap)
 {
-    //                                             0       1        2            3               4               5                   6                   7                   8                 9                 10                11             12
-    if (auto result = SniffDatabase.Query("SELECT `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation`, `unixtimems` FROM `%s` ORDER BY `unixtimems`", tableName))
+    //                                             0             1       2        3            4               5               6                   7                   8                   9                 10                11                12
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation` FROM `%s` ORDER BY `unixtimems`", tableName))
     {
         do
         {
             DbField* fields = result->fetchCurrentRow();
 
-            uint32 guid = fields[0].GetUInt32();
-            ObjectGuid objectGuid;
-            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
-                objectGuid = pData->guid;
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                sourceGuid = pData->guid;
             else
             {
-                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
                 continue;
             }
 
-            uint32 point = fields[1].GetUInt32();
-            uint32 moveTime = fields[2].GetUInt32();
-            uint32 splineFlags = fields[3].GetUInt32();
-            uint32 splineCount = fields[4].GetUInt32();
+            uint32 point = fields[2].GetUInt32();
+            uint32 moveTime = fields[3].GetUInt32();
+            uint32 splineFlags = fields[4].GetUInt32();
+            uint32 splineCount = fields[5].GetUInt32();
             Vector3 startPosition;
-            startPosition.x = fields[5].GetFloat();
-            startPosition.y = fields[6].GetFloat();
-            startPosition.z = fields[7].GetFloat();
+            startPosition.x = fields[6].GetFloat();
+            startPosition.y = fields[7].GetFloat();
+            startPosition.z = fields[8].GetFloat();
             Vector3 endPosition;
-            endPosition.x = fields[8].GetFloat();
-            endPosition.y = fields[9].GetFloat();
-            endPosition.z = fields[10].GetFloat();
-            float orientation = fields[11].GetFloat();
-            uint64 unixtimems = fields[12].GetUInt64();
+            endPosition.x = fields[9].GetFloat();
+            endPosition.y = fields[10].GetFloat();
+            endPosition.z = fields[11].GetFloat();
+            float orientation = fields[12].GetFloat();
 
             std::vector<Vector3> const* pSplines = nullptr;
             if (splineCount > 1)
             {
-                auto itr1 = splinesMap.find(guid);
+                auto itr1 = splinesMap.find(guidLow);
                 if (itr1 != splinesMap.end())
                 {
                     auto itr2 = itr1->second.find(point);
@@ -552,13 +561,13 @@ void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, Spl
 
             std::shared_ptr<SniffedEvent_ServerSideMovement> newEvent;
             if (pSplines)
-                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(objectGuid, startPosition, moveTime, splineFlags, orientation, *pSplines);
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, *pSplines);
             else
             {
                 std::vector<Vector3> points;
                 if (splineCount)
                     points.push_back(endPosition);
-                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(objectGuid, startPosition, moveTime, splineFlags, orientation, points);
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, points);
             }
 
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
@@ -598,26 +607,27 @@ void SniffedEvent_ServerSideMovement::Execute() const
 template <class T>
 void ReplayMgr::LoadObjectValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId)
 {
-    if (auto result = SniffDatabase.Query("SELECT `guid`, `unixtimems`, `%s` FROM `%s` WHERE (`%s` IS NOT NULL) ORDER BY `unixtimems`", fieldName, tableName, fieldName))
+    //                                             0             1       2
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `%s` FROM `%s` WHERE (`%s` IS NOT NULL) ORDER BY `unixtimems`", fieldName, tableName, fieldName))
     {
         do
         {
             DbField* fields = result->fetchCurrentRow();
 
-            uint32 guid = fields[0].GetUInt32();;
-            ObjectGuid objectGuid;
-            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
-                objectGuid = pData->guid;
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();;
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                sourceGuid = pData->guid;
             else
             {
-                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
                 continue;
             }
 
-            uint64 unixtimems = fields[1].GetUInt64();
             uint32 value = fields[2].GetUInt32();
 
-            std::shared_ptr<T> newEvent = std::make_shared<T>(objectGuid, value);
+            std::shared_ptr<T> newEvent = std::make_shared<T>(sourceGuid, value);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());
@@ -627,26 +637,27 @@ void ReplayMgr::LoadObjectValuesUpdate(char const* tableName, char const* fieldN
 template <class T>
 void ReplayMgr::LoadObjectValuesUpdate_float(char const* tableName, char const* fieldName, uint32 typeId)
 {
-    if (auto result = SniffDatabase.Query("SELECT `guid`, `unixtimems`, `%s` FROM `%s` WHERE (`%s` IS NOT NULL) ORDER BY `unixtimems`", fieldName, tableName, fieldName))
+    //                                             0             1       2
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `%s` FROM `%s` WHERE (`%s` IS NOT NULL) ORDER BY `unixtimems`", fieldName, tableName, fieldName))
     {
         do
         {
             DbField* fields = result->fetchCurrentRow();
 
-            uint32 guid = fields[0].GetUInt32();;
-            ObjectGuid objectGuid;
-            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
-                objectGuid = pData->guid;
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();;
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                sourceGuid = pData->guid;
             else
             {
-                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
                 continue;
             }
 
-            uint64 unixtimems = fields[1].GetUInt64();
             float value = fields[2].GetFloat();
 
-            std::shared_ptr<T> newEvent = std::make_shared<T>(objectGuid, value);
+            std::shared_ptr<T> newEvent = std::make_shared<T>(sourceGuid, value);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());
@@ -1016,4 +1027,184 @@ void SniffedEvent_UnitUpdate_channel_spell::Execute() const
     }
 
     pUnit->SetChannelSpell(m_value);
+}
+
+void SniffedEvent_GameObjectUpdate_flags::Execute() const
+{
+    GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
+    if (!pGo)
+    {
+        printf("SniffedEvent_GameObjectUpdate_flags: Cannot find source unit!\n");
+        return;
+    }
+
+    pGo->SetFlags(m_value);
+}
+
+void SniffedEvent_GameObjectUpdate_state::Execute() const
+{
+    GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
+    if (!pGo)
+    {
+        printf("SniffedEvent_GameObjectUpdate_state: Cannot find source unit!\n");
+        return;
+    }
+
+    pGo->SetState(m_value);
+}
+
+void SniffedEvent_GameObjectUpdate_artkit::Execute() const
+{
+    GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
+    if (!pGo)
+    {
+        printf("SniffedEvent_GameObjectUpdate_artkit: Cannot find source unit!\n");
+        return;
+    }
+
+    pGo->SetArtKit(m_value);
+}
+
+void SniffedEvent_GameObjectUpdate_dynamic_flags::Execute() const
+{
+    GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
+    if (!pGo)
+    {
+        printf("SniffedEvent_GameObjectUpdate_dynamic_flags: Cannot find source unit!\n");
+        return;
+    }
+
+    pGo->SetDynamicFlags(m_value);
+}
+
+void SniffedEvent_GameObjectUpdate_path_progress::Execute() const
+{
+    GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
+    if (!pGo)
+    {
+        printf("SniffedEvent_GameObjectUpdate_path_progress: Cannot find source unit!\n");
+        return;
+    }
+
+    pGo->SetPathProgress(m_value);
+}
+
+void ReplayMgr::LoadUnitGuidValuesUpdate(char const* tableName, uint32 typeId)
+{
+    //                                             0             1       2             3              4            5
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `field_name`, `object_guid`, `object_id`, `object_type` FROM `%s` ORDER BY `unixtimems`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guid = fields[1].GetUInt32();
+            ObjectGuid objectGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
+                objectGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                continue;
+            }
+            
+            std::string fieldName = fields[2].GetCppString();
+            char const* fieldNameFull;
+            if (fieldName == "Charm")
+                fieldNameFull = "UNIT_FIELD_CHARM";
+            else if (fieldName == "Summon")
+                fieldNameFull = "UNIT_FIELD_SUMMON";
+            else if (fieldName == "CharmedBy")
+                fieldNameFull = "UNIT_FIELD_CHARMEDBY";
+            else if (fieldName == "SummonedBy")
+                fieldNameFull = "UNIT_FIELD_SUMMONEDBY";
+            else if (fieldName == "CreatedBy")
+                fieldNameFull = "UNIT_FIELD_CREATEDBY";
+            else if (fieldName == "Target")
+                fieldNameFull = "UNIT_FIELD_TARGET";
+            else
+                continue;
+
+            uint32 targetGuidLow = fields[3].GetUInt32();
+            uint32 targetId = fields[4].GetUInt32();
+            std::string targetType = fields[5].GetCppString();
+            ObjectGuid targetGuid = sReplayMgr.MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
+
+            std::shared_ptr<SniffedEvent_UnitUpdate_guid_value> newEvent = std::make_shared<SniffedEvent_UnitUpdate_guid_value>(objectGuid, targetGuid, fieldNameFull);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_UnitUpdate_guid_value::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_guid_value: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetGuidValue(m_updateField, GetTargetGuid());
+}
+
+void ReplayMgr::LoadUnitSpeedUpdate(char const* tableName, uint32 typeId)
+{
+    //                                             0             1       2             3
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `speed_type`, `speed_rate` FROM `%s` ORDER BY `unixtimems`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();;
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                sourceGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
+                continue;
+            }
+
+            uint32 speedType = fields[2].GetUInt32();
+            if (speedType >= MAX_MOVE_TYPE_WOTLK)
+            {
+                printf("[ReplayMgr] Unknown speed type %u in table `%s`.\n", speedType, tableName);
+                continue;
+            }
+
+            float speedRate = fields[3].GetFloat();
+
+            std::shared_ptr<SniffedEvent_UnitUpdate_speed> newEvent = std::make_shared<SniffedEvent_UnitUpdate_speed>(sourceGuid, speedType, speedRate);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_UnitUpdate_speed::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_speed: Cannot find source unit!\n");
+        return;
+    }
+    
+    pUnit->SetSpeedRate(UnitMoveType(m_speedType), m_speedRate);
+
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!pUnit->IsVisibleToClient())
+        return;
+
+    if (pUnit->IsCreature() || pUnit->m_moveSpline.m_initialized)
+        sWorld.SendSplineSetSpeed(GetSourceGuid(), m_speedType, m_speedRate * baseMoveSpeed[m_speedType]);
+    else
+        sWorld.SendSetSpeed(pUnit, m_speedType, m_speedRate * baseMoveSpeed[m_speedType]);
 }

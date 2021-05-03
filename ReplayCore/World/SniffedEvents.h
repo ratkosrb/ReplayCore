@@ -75,6 +75,8 @@ enum SniffedEventType : uint8
     SE_GAMEOBJECT_UPDATE_FLAGS,
     SE_GAMEOBJECT_UPDATE_STATE,
     SE_GAMEOBJECT_UPDATE_ARTKIT,
+    SE_GAMEOBJECT_UPDATE_DYNAMIC_FLAGS,
+    SE_GAMEOBJECT_UPDATE_PATH_PROGRESS,
     SE_PLAYER_CHAT,
     SE_PLAYER_EQUIPMENT_UPDATE,
     SE_PLAY_MUSIC,
@@ -206,6 +208,10 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "GameObject Update State";
         case SE_GAMEOBJECT_UPDATE_ARTKIT:
             return "GameObject Update ArtKit";
+        case SE_GAMEOBJECT_UPDATE_DYNAMIC_FLAGS:
+            return "GameObject Update Dynamic Flags";
+        case SE_GAMEOBJECT_UPDATE_PATH_PROGRESS:
+            return "GameObject Update Path Progress";
         case SE_PLAYER_CHAT:
             return "Player Chat";
         case SE_PLAYER_EQUIPMENT_UPDATE:
@@ -841,6 +847,131 @@ struct SniffedEvent_UnitUpdate_channel_spell : SniffedEvent
     }
 };
 
+struct SniffedEvent_UnitUpdate_guid_value : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_guid_value(ObjectGuid source, ObjectGuid target, char const* updateField) :
+        m_source(source), m_target(target), m_updateField(updateField) {};
+    ObjectGuid m_source;
+    ObjectGuid m_target;
+    char const* m_updateField;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_GUID_VALUE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_target;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_speed : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_speed(ObjectGuid source, uint32 speedType, float speedRate) :
+        m_source(source), m_speedType(speedType), m_speedRate(speedRate) {};
+    ObjectGuid m_source;
+    uint32 m_speedType = 0;
+    float m_speedRate = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_SPEED;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_GameObjectUpdate_flags : SniffedEvent
+{
+    SniffedEvent_GameObjectUpdate_flags(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_GAMEOBJECT_UPDATE_FLAGS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_GameObjectUpdate_state : SniffedEvent
+{
+    SniffedEvent_GameObjectUpdate_state(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_GAMEOBJECT_UPDATE_STATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_GameObjectUpdate_artkit : SniffedEvent
+{
+    SniffedEvent_GameObjectUpdate_artkit(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_GAMEOBJECT_UPDATE_ARTKIT;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_GameObjectUpdate_dynamic_flags : SniffedEvent
+{
+    SniffedEvent_GameObjectUpdate_dynamic_flags(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_GAMEOBJECT_UPDATE_DYNAMIC_FLAGS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_GameObjectUpdate_path_progress : SniffedEvent
+{
+    SniffedEvent_GameObjectUpdate_path_progress(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_GAMEOBJECT_UPDATE_PATH_PROGRESS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
 /*
 
 struct SniffedEvent_UnitDestroy : SniffedEvent
@@ -1042,52 +1173,6 @@ struct SniffedEvent_UnitAttackStop : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_guid_value : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_guid_value(uint32 guid, uint32 entry, uint32 type, uint32 objectGuid, uint32 objectId, uint32 objectType, uint32 updateField) :
-        m_guid(guid), m_entry(entry), m_type(type), m_objectGuid(objectGuid), m_objectId(objectId), m_objectType(objectType), m_updateField(updateField) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_objectGuid = 0;
-    uint32 m_objectId = 0;
-    uint32 m_objectType;
-    uint32 m_updateField;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_GUID_VALUE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-    KnownObject GetTargetObject() const final
-    {
-        return KnownObject(m_objectGuid, m_objectId, TypeID(m_objectType));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_speed : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_speed(uint32 guid, uint32 entry, uint32 type, uint32 speedType, float speedRate) :
-        m_guid(guid), m_entry(entry), m_type(type), m_speedType(speedType), m_speedRate(speedRate) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_speedType = 0;
-    float m_speedRate = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_SPEED;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
 struct SniffedEvent_UnitUpdate_auras : SniffedEvent
 {
     SniffedEvent_UnitUpdate_auras(uint32 guid, uint32 entry, uint32 type, uint32 updateId, uint32 slot, uint32 spellId, uint32 level, uint32 charges) :
@@ -1227,60 +1312,6 @@ struct SniffedEvent_GameObjectDestroy : SniffedEvent
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_DESTROY;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_GameObjectUpdate_flags : SniffedEvent
-{
-    SniffedEvent_GameObjectUpdate_flags(uint32 guid, uint32 entry, uint32 value) :
-        m_guid(guid), m_entry(entry), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_GAMEOBJECT_UPDATE_FLAGS;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_GameObjectUpdate_state : SniffedEvent
-{
-    SniffedEvent_GameObjectUpdate_state(uint32 guid, uint32 entry, uint32 value) :
-        m_guid(guid), m_entry(entry), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_GAMEOBJECT_UPDATE_STATE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_GameObjectUpdate_artkit : SniffedEvent
-{
-    SniffedEvent_GameObjectUpdate_artkit(uint32 guid, uint32 entry, uint32 value) :
-        m_guid(guid), m_entry(entry), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_GAMEOBJECT_UPDATE_ARTKIT;
     }
     KnownObject GetSourceObject() const final
     {

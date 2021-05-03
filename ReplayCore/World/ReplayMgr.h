@@ -249,6 +249,8 @@ public:
     void LoadObjectValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId);
     template <class T>
     void LoadObjectValuesUpdate_float(char const* tableName, char const* fieldName, uint32 typeId);
+    void LoadUnitGuidValuesUpdate(char const* tableName, uint32 typeId);
+    void LoadUnitSpeedUpdate(char const* tableName, uint32 typeId);
 
 #pragma endregion SniffedEvents
     
