@@ -52,6 +52,8 @@ enum SniffedEventType : uint8
     SE_UNIT_UPDATE_SHAPESHIFT_FORM,
     SE_UNIT_UPDATE_NPC_FLAGS,
     SE_UNIT_UPDATE_UNIT_FLAGS,
+    SE_UNIT_UPDATE_UNIT_FLAGS2,
+    SE_UNIT_UPDATE_DYNAMIC_FLAGS,
     SE_UNIT_UPDATE_CURRENT_HEALTH,
     SE_UNIT_UPDATE_MAX_HEALTH,
     SE_UNIT_UPDATE_CURRENT_MANA,
@@ -60,6 +62,7 @@ enum SniffedEventType : uint8
     SE_UNIT_UPDATE_COMBAT_REACH,
     SE_UNIT_UPDATE_MAIN_HAND_ATTACK_TIME,
     SE_UNIT_UPDATE_OFF_HAND_ATTACK_TIME,
+    SE_UNIT_UPDATE_CHANNEL_SPELL,
     SE_UNIT_UPDATE_GUID_VALUE,
     SE_UNIT_UPDATE_SPEED,
     SE_UNIT_UPDATE_AURAS,
@@ -157,6 +160,10 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Unit Update NPC Flags";
         case SE_UNIT_UPDATE_UNIT_FLAGS:
             return "Unit Update Unit Flags";
+        case SE_UNIT_UPDATE_UNIT_FLAGS2:
+            return "Unit Update Unit Flags 2";
+        case SE_UNIT_UPDATE_DYNAMIC_FLAGS:
+            return "Unit Update Dynamic Flags";
         case SE_UNIT_UPDATE_CURRENT_HEALTH:
             return "Unit Update Current Health";
         case SE_UNIT_UPDATE_MAX_HEALTH:
@@ -173,6 +180,8 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Unit Update Main Hand Speed";
         case SE_UNIT_UPDATE_OFF_HAND_ATTACK_TIME:
             return "Unit Update Off Hand Speed";
+        case SE_UNIT_UPDATE_CHANNEL_SPELL:
+            return "Unit Update Channel Spell";
         case SE_UNIT_UPDATE_GUID_VALUE:
             return "Unit Update GUID Value";
         case SE_UNIT_UPDATE_SPEED:
@@ -245,6 +254,7 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
 
 struct SniffedEvent
 {
+    bool m_disabled = false;
     virtual void Execute() const = 0;
     virtual void PepareForCurrentClient() { };
     virtual SniffedEventType GetType() const = 0;
@@ -388,6 +398,442 @@ struct SniffedEvent_ServerSideMovement : SniffedEvent
     SniffedEventType GetType() const final
     {
         return SE_UNIT_SERVERSIDE_MOVEMENT;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_entry : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_entry(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_ENTRY;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_scale : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_scale(ObjectGuid source, float value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    float m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_SCALE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_display_id : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_display_id(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_DISPLAY_ID;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_mount : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_mount(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_MOUNT;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_faction : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_faction(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_FACTION;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_level : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_level(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_LEVEL;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_aura_state : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_aura_state(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_AURA_STATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_emote_state : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_emote_state(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_EMOTE_STATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_stand_state : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_stand_state(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_STAND_STATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_vis_flags : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_vis_flags(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_VIS_FLAGS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_sheath_state : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_sheath_state(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_SHEATH_STATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_shapeshift_form : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_shapeshift_form(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_SHAPESHIFT_FORM;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_npc_flags : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_npc_flags(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_NPC_FLAGS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_unit_flags : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_unit_flags(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_UNIT_FLAGS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_unit_flags2 : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_unit_flags2(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_UNIT_FLAGS2;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_dynamic_flags : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_dynamic_flags(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_DYNAMIC_FLAGS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_current_health : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_current_health(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_CURRENT_HEALTH;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_max_health : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_max_health(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_MAX_HEALTH;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_current_mana : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_current_mana(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_CURRENT_MANA;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_max_mana : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_max_mana(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_MAX_MANA;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_bounding_radius : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_bounding_radius(ObjectGuid source, float value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    float m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_BOUNDING_RADIUS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_combat_reach : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_combat_reach(ObjectGuid source, float value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    float m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_COMBAT_REACH;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_main_hand_attack_time : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_main_hand_attack_time(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_MAIN_HAND_ATTACK_TIME;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_off_hand_attack_time : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_off_hand_attack_time(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_OFF_HAND_ATTACK_TIME;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_channel_spell : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_channel_spell(ObjectGuid source, uint32 value) :
+        m_source(source), m_value(value) {};
+    ObjectGuid m_source;
+    uint32 m_value = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_CHANNEL_SPELL;
     }
     ObjectGuid GetSourceGuid() const final
     {
@@ -593,425 +1039,6 @@ struct SniffedEvent_UnitAttackStop : SniffedEvent
     KnownObject GetTargetObject() const final
     {
         return KnownObject(m_victimGuid, m_victimId, TypeID(m_victimType));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_entry : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_entry(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_ENTRY;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_scale : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_scale(uint32 guid, uint32 entry, uint32 type, float value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    float m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_SCALE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_display_id : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_display_id(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_DISPLAY_ID;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_mount : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_mount(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_MOUNT;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_faction : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_faction(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_FACTION;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_level : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_level(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_LEVEL;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_aura_state : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_aura_state(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_AURA_STATE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-
-struct SniffedEvent_UnitUpdate_emote_state : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_emote_state(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_EMOTE_STATE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_stand_state : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_stand_state(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_STAND_STATE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_vis_flags : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_vis_flags(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_VIS_FLAGS;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_sheath_state : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_sheath_state(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_SHEATH_STATE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_shapeshift_form : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_shapeshift_form(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_SHAPESHIFT_FORM;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_npc_flags : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_npc_flags(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_NPC_FLAGS;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_unit_flags : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_unit_flags(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_UNIT_FLAGS;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_current_health : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_current_health(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_CURRENT_HEALTH;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_max_health : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_max_health(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_MAX_HEALTH;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_current_mana : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_current_mana(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_CURRENT_MANA;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_max_mana : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_max_mana(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_MAX_MANA;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_bounding_radius : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_bounding_radius(uint32 guid, uint32 entry, uint32 type, float value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    float m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_BOUNDING_RADIUS;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_combat_reach : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_combat_reach(uint32 guid, uint32 entry, uint32 type, float value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    float m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_COMBAT_REACH;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_main_hand_attack_time : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_main_hand_attack_time(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_MAIN_HAND_ATTACK_TIME;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_off_hand_attack_time : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_off_hand_attack_time(uint32 guid, uint32 entry, uint32 type, uint32 value) :
-        m_guid(guid), m_entry(entry), m_type(type), m_value(value) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_value = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_OFF_HAND_ATTACK_TIME;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
     }
 };
 

@@ -376,10 +376,12 @@ enum UnitStandStateType
     UNIT_STAND_STATE_SIT_MEDIUM_CHAIR  = 5,
     UNIT_STAND_STATE_SIT_HIGH_CHAIR    = 6,
     UNIT_STAND_STATE_DEAD              = 7,
-    UNIT_STAND_STATE_KNEEL             = 8
+    UNIT_STAND_STATE_KNEEL             = 8,
+    UNIT_STAND_STATE_CUSTOM            = 9                  // Depends on model animation. Submerge, freeze, hide, hibernate, rest
 };
 
-#define MAX_UNIT_STAND_STATE             9
+#define MAX_UNIT_STAND_STATE_VANILLA     9
+#define MAX_UNIT_STAND_STATE_TBC         10
 
 // byte value (UNIT_FIELD_BYTES_2,0)
 enum SheathState
@@ -390,6 +392,43 @@ enum SheathState
 };
 
 #define MAX_SHEATH_STATE    3
+
+enum ShapeshiftForm
+{
+    FORM_NONE               = 0x00,
+    FORM_CAT                = 0x01,
+    FORM_TREE               = 0x02,
+    FORM_TRAVEL             = 0x03,
+    FORM_AQUA               = 0x04,
+    FORM_BEAR               = 0x05,
+    FORM_AMBIENT            = 0x06,
+    FORM_GHOUL              = 0x07,
+    FORM_DIREBEAR           = 0x08,
+    FORM_STEVES_GHOUL       = 0x09,
+    FORM_THARONJA_SKELETON  = 0x0A,
+    FORM_TEST_OF_STRENGTH   = 0x0B,
+    FORM_BLB_PLAYER         = 0x0C,
+    FORM_SHADOW_DANCE       = 0x0D,
+    FORM_CREATUREBEAR       = 0x0E,
+    FORM_CREATURECAT        = 0x0F,
+    FORM_GHOSTWOLF          = 0x10,
+    FORM_BATTLESTANCE       = 0x11,
+    FORM_DEFENSIVESTANCE    = 0x12,
+    FORM_BERSERKERSTANCE    = 0x13,
+    FORM_TEST               = 0x14,
+    FORM_ZOMBIE             = 0x15,
+    FORM_METAMORPHOSIS      = 0x16,
+    FORM_UNDEAD             = 0x19,
+    FORM_FRENZY             = 0x1A,
+    FORM_FLIGHT_EPIC        = 0x1B,
+    FORM_SHADOW             = 0x1C,
+    FORM_FLIGHT             = 0x1D,
+    FORM_STEALTH            = 0x1E,
+    FORM_MOONKIN            = 0x1F,
+    FORM_SPIRITOFREDEMPTION = 0x20,
+};
+
+#define MAX_SHAPESHIFT_FORM 33
 
 enum UnitMoveType
 {
@@ -670,6 +709,46 @@ namespace WotLK
         UNIT_NPC_FLAG_GUILD_BANKER          = 0x00800000,       // cause client to send 997 opcode
         UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,       // cause client to send 1015 opcode (spell click), dynamic, set at loading and don't must be set in DB
         UNIT_NPC_FLAG_PLAYER_VEHICLE        = 0x02000000,       // players with mounts that have vehicle data should have it set
+    };
+}
+
+namespace Classic
+{
+    enum NPCFlags
+    {
+        UNIT_NPC_FLAG_GOSSIP                = 0x00000001,     // 100%
+        UNIT_NPC_FLAG_QUESTGIVER            = 0x00000002,     // 100%
+        UNIT_NPC_FLAG_UNK1                  = 0x00000004,
+        UNIT_NPC_FLAG_UNK2                  = 0x00000008,
+        UNIT_NPC_FLAG_TRAINER               = 0x00000010,     // 100%
+        UNIT_NPC_FLAG_TRAINER_CLASS         = 0x00000020,     // 100%
+        UNIT_NPC_FLAG_TRAINER_PROFESSION    = 0x00000040,     // 100%
+        UNIT_NPC_FLAG_VENDOR                = 0x00000080,     // 100%
+        UNIT_NPC_FLAG_VENDOR_AMMO           = 0x00000100,     // 100%, general goods vendor
+        UNIT_NPC_FLAG_VENDOR_FOOD           = 0x00000200,     // 100%
+        UNIT_NPC_FLAG_VENDOR_POISON         = 0x00000400,     // guessed
+        UNIT_NPC_FLAG_VENDOR_REAGENT        = 0x00000800,     // 100%
+        UNIT_NPC_FLAG_REPAIR                = 0x00001000,     // 100%
+        UNIT_NPC_FLAG_FLIGHTMASTER          = 0x00002000,     // 100%
+        UNIT_NPC_FLAG_SPIRITHEALER          = 0x00004000,     // guessed
+        UNIT_NPC_FLAG_SPIRITGUIDE           = 0x00008000,     // guessed
+        UNIT_NPC_FLAG_INNKEEPER             = 0x00010000,     // 100%
+        UNIT_NPC_FLAG_BANKER                = 0x00020000,     // 100%
+        UNIT_NPC_FLAG_PETITIONER            = 0x00040000,     // 100% 0xC0000 = guild petitions, 0x40000 = arena team petitions
+        UNIT_NPC_FLAG_TABARDDESIGNER        = 0x00080000,     // 100%
+        UNIT_NPC_FLAG_BATTLEMASTER          = 0x00100000,     // 100%
+        UNIT_NPC_FLAG_AUCTIONEER            = 0x00200000,     // 100%
+        UNIT_NPC_FLAG_STABLEMASTER          = 0x00400000,     // 100%
+        UNIT_NPC_FLAG_GUILD_BANKER          = 0x00800000,     //
+        UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,     //
+        UNIT_NPC_FLAG_PLAYER_VEHICLE        = 0x02000000,     // players with mounts that have vehicle data should have it set
+        UNIT_NPC_FLAG_MAILBOX               = 0x04000000,     // mailbox
+        UNIT_NPC_FLAG_ARTIFACT_POWER_RESPEC = 0x08000000,     // artifact powers reset
+        UNIT_NPC_FLAG_TRANSMOGRIFIER        = 0x10000000,     // transmogrification
+        UNIT_NPC_FLAG_VAULTKEEPER           = 0x20000000,     // void storage
+        UNIT_NPC_FLAG_WILD_BATTLE_PET       = 0x40000000,     // Pet that player can fight (Battle Pet)
+        UNIT_NPC_FLAG_BLACK_MARKET          = 0x80000000,     // black market
+        MAX_NPC_FLAGS                       = 32
     };
 }
 

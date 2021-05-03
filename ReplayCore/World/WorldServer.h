@@ -173,6 +173,7 @@ private:
     // World
     void WorldLoop();
     void ResetAndSpawnWorld();
+    void OnClientDisconnect();
     void OnClientLogout();
     template<class T>
     void BuildAndSendObjectUpdates(T& objectsMap);

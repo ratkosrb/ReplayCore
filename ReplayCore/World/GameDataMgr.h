@@ -29,11 +29,13 @@ public:
     void SetDataSource(GameDataSource source) { m_dataSource = source; }
 
     bool IsValidEmote(uint32 id) const;
+    bool IsValidStandState(uint32 id) const;
     bool IsValidRace(uint32 id) const;
     bool IsValidClass(uint32 id) const;
     bool IsValidUnitDisplayId(uint32 id) const;
     bool IsValidGameObjectDisplayId(uint32 id) const;
     bool IsValidGameObjectType(uint32 type) const;
+    bool IsValidSpellId(uint32 id) const;
     uint8 GetMoveSpeedsCount() const;
     uint32 ConvertMovementFlags(uint32 moveFlags) const;
     uint32 ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const;
@@ -41,6 +43,7 @@ public:
     uint32 GetWeatherSoundForVanilla(uint32 type, float grade) const;
     uint32 ConvertChatType(uint32 chatType) const;
     void ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination);
+    uint32 ConvertNpcFlags(uint32 npcFlags);
 
     void LoadGameTele();
     GameTele const* GetGameTele(std::string name) const;

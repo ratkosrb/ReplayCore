@@ -25,6 +25,14 @@ bool GameDataMgr::IsValidEmote(uint32 id) const
         return id <= MAX_EMOTE_WOTLK;
 }
 
+bool GameDataMgr::IsValidStandState(uint32 id) const
+{
+    if (sWorld.GetClientBuild() <= CLIENT_BUILD_1_12_1)
+        return id < MAX_UNIT_STAND_STATE_VANILLA;
+    else
+        return id < MAX_UNIT_STAND_STATE_TBC;
+}
+
 bool GameDataMgr::IsValidFactionTemplate(uint32 id) const
 {
     if (m_dataSource == DB_VMANGOS)
@@ -92,6 +100,16 @@ bool GameDataMgr::IsValidGameObjectType(uint32 type) const
         return type < MAX_GAMEOBJECT_TYPE_TBC;
     else
         return type < MAX_GAMEOBJECT_TYPE_WOTLK;
+}
+
+bool GameDataMgr::IsValidSpellId(uint32 id) const
+{
+    if (sWorld.GetClientBuild() <= CLIENT_BUILD_1_12_1)
+        return id <= MAX_SPELL_ID_VANILLA;
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
+        return id <= MAX_SPELL_ID_TBC;
+    else
+        return id <= MAX_SPELL_ID_WOTLK;
 }
 
 uint8 GameDataMgr::GetMoveSpeedsCount() const
@@ -317,6 +335,20 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
         }
     }
     splineFlags = newFlags;
+}
+
+uint32 GameDataMgr::ConvertNpcFlags(uint32 npcFlags)
+{
+    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            return ConvertClassicNpcFlagsToVanilla(npcFlags);
+        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            return ConvertClassicNpcFlagsToTBC(npcFlags);
+        else
+            return ConvertClassicNpcFlagsToWotLK(npcFlags);
+    }
+    return npcFlags;
 }
 
 void GameDataMgr::LoadGameTele()

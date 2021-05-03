@@ -39,7 +39,7 @@ private:
     uint32 m_vmangosClientBuild = 5875;
     uint32 m_vmangosContentPatch = 10;
     uint32 m_sniffVersion = 0;
-    bool m_writePacketLog = true;
+    bool m_writePacketLog = false;
 };
 
 #define sConfig Config::Instance()

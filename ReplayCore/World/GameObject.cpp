@@ -56,6 +56,21 @@ void GameObject::SetRotation(float const* rotation)
     }
 }
 
+void GameObject::SetCreatedByGuid(ObjectGuid guid)
+{
+    SetGuidValue("OBJECT_FIELD_CREATED_BY", guid);
+}
+
+void GameObject::SetDisplayId(uint32 displayId)
+{
+    SetUInt32Value("GAMEOBJECT_DISPLAYID", displayId);
+}
+
+void GameObject::SetFlags(uint32 flags)
+{
+    SetUInt32Value("GAMEOBJECT_FLAGS", flags);
+}
+
 void GameObject::SetState(uint8 state)
 {
     if (uint16 GAMEOBJECT_STATE = sWorld.GetUpdateField("GAMEOBJECT_STATE"))
@@ -86,6 +101,16 @@ void GameObject::SetAnimProgress(uint8 animProgress)
         SetUInt32Value(GAMEOBJECT_ANIMPROGRESS, animProgress);
     else if (uint16 GAMEOBJECT_BYTES_1 = sWorld.GetUpdateField("GAMEOBJECT_BYTES_1"))
         SetByteValue(GAMEOBJECT_BYTES_1, 3, animProgress);
+}
+
+void GameObject::SetFactionTemplate(uint32 faction)
+{
+    SetUInt32Value("GAMEOBJECT_FACTION", faction);
+}
+
+void GameObject::SetLevel(uint32 level)
+{
+    SetUInt32Value("GAMEOBJECT_LEVEL", level);
 }
 
 void GameObject::SetDynamicFlags(uint16 flags)

@@ -24,82 +24,45 @@
 #include <string>
 
 
-enum ClassicNPCFlags : uint32
-{
-    CLASSIC_UNIT_NPC_FLAG_GOSSIP                = 0x00000001,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_QUESTGIVER            = 0x00000002,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_UNK1                  = 0x00000004,
-    CLASSIC_UNIT_NPC_FLAG_UNK2                  = 0x00000008,
-    CLASSIC_UNIT_NPC_FLAG_TRAINER               = 0x00000010,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_TRAINER_CLASS         = 0x00000020,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_TRAINER_PROFESSION    = 0x00000040,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_VENDOR                = 0x00000080,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_VENDOR_AMMO           = 0x00000100,     // 100%, general goods vendor
-    CLASSIC_UNIT_NPC_FLAG_VENDOR_FOOD           = 0x00000200,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_VENDOR_POISON         = 0x00000400,     // guessed
-    CLASSIC_UNIT_NPC_FLAG_VENDOR_REAGENT        = 0x00000800,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_REPAIR                = 0x00001000,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_FLIGHTMASTER          = 0x00002000,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_SPIRITHEALER          = 0x00004000,     // guessed
-    CLASSIC_UNIT_NPC_FLAG_SPIRITGUIDE           = 0x00008000,     // guessed
-    CLASSIC_UNIT_NPC_FLAG_INNKEEPER             = 0x00010000,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_BANKER                = 0x00020000,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_PETITIONER            = 0x00040000,     // 100% 0xC0000 = guild petitions, 0x40000 = arena team petitions
-    CLASSIC_UNIT_NPC_FLAG_TABARDDESIGNER        = 0x00080000,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_BATTLEMASTER          = 0x00100000,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_AUCTIONEER            = 0x00200000,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_STABLEMASTER          = 0x00400000,     // 100%
-    CLASSIC_UNIT_NPC_FLAG_GUILD_BANKER          = 0x00800000,     //
-    CLASSIC_UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,     //
-    CLASSIC_UNIT_NPC_FLAG_PLAYER_VEHICLE        = 0x02000000,     // players with mounts that have vehicle data should have it set
-    CLASSIC_UNIT_NPC_FLAG_MAILBOX               = 0x04000000,     // mailbox
-    CLASSIC_UNIT_NPC_FLAG_ARTIFACT_POWER_RESPEC = 0x08000000,     // artifact powers reset
-    CLASSIC_UNIT_NPC_FLAG_TRANSMOGRIFIER        = 0x10000000,     // transmogrification
-    CLASSIC_UNIT_NPC_FLAG_VAULTKEEPER           = 0x20000000,     // void storage
-    CLASSIC_UNIT_NPC_FLAG_WILD_BATTLE_PET       = 0x40000000,     // Pet that player can fight (Battle Pet)
-    CLASSIC_UNIT_NPC_FLAG_BLACK_MARKET          = 0x80000000,     // black market
-    CLASSIC_MAX_NPC_FLAGS                       = 32
-};
-
 inline uint32 ConvertClassicNpcFlagToVanilla(uint32 flag)
 {
     switch (flag)
     {
-        case CLASSIC_UNIT_NPC_FLAG_GOSSIP:
+        case Classic::UNIT_NPC_FLAG_GOSSIP:
             return Vanilla::UNIT_NPC_FLAG_GOSSIP;
-        case CLASSIC_UNIT_NPC_FLAG_QUESTGIVER:
+        case Classic::UNIT_NPC_FLAG_QUESTGIVER:
             return Vanilla::UNIT_NPC_FLAG_QUESTGIVER;
-        case CLASSIC_UNIT_NPC_FLAG_TRAINER:
-        case CLASSIC_UNIT_NPC_FLAG_TRAINER_CLASS:
-        case CLASSIC_UNIT_NPC_FLAG_TRAINER_PROFESSION:
+        case Classic::UNIT_NPC_FLAG_TRAINER:
+        case Classic::UNIT_NPC_FLAG_TRAINER_CLASS:
+        case Classic::UNIT_NPC_FLAG_TRAINER_PROFESSION:
             return Vanilla::UNIT_NPC_FLAG_TRAINER;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR:
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_AMMO:
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_FOOD:
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_POISON:
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_REAGENT:
+        case Classic::UNIT_NPC_FLAG_VENDOR:
+        case Classic::UNIT_NPC_FLAG_VENDOR_AMMO:
+        case Classic::UNIT_NPC_FLAG_VENDOR_FOOD:
+        case Classic::UNIT_NPC_FLAG_VENDOR_POISON:
+        case Classic::UNIT_NPC_FLAG_VENDOR_REAGENT:
             return Vanilla::UNIT_NPC_FLAG_VENDOR;
-        case CLASSIC_UNIT_NPC_FLAG_REPAIR:
+        case Classic::UNIT_NPC_FLAG_REPAIR:
             return Vanilla::UNIT_NPC_FLAG_REPAIR;
-        case CLASSIC_UNIT_NPC_FLAG_FLIGHTMASTER:
+        case Classic::UNIT_NPC_FLAG_FLIGHTMASTER:
             return Vanilla::UNIT_NPC_FLAG_FLIGHTMASTER;
-        case CLASSIC_UNIT_NPC_FLAG_SPIRITHEALER:
+        case Classic::UNIT_NPC_FLAG_SPIRITHEALER:
             return Vanilla::UNIT_NPC_FLAG_SPIRITHEALER;
-        case CLASSIC_UNIT_NPC_FLAG_SPIRITGUIDE:
+        case Classic::UNIT_NPC_FLAG_SPIRITGUIDE:
             return Vanilla::UNIT_NPC_FLAG_SPIRITGUIDE;
-        case CLASSIC_UNIT_NPC_FLAG_INNKEEPER:
+        case Classic::UNIT_NPC_FLAG_INNKEEPER:
             return Vanilla::UNIT_NPC_FLAG_INNKEEPER;
-        case CLASSIC_UNIT_NPC_FLAG_BANKER:
+        case Classic::UNIT_NPC_FLAG_BANKER:
             return Vanilla::UNIT_NPC_FLAG_BANKER;
-        case CLASSIC_UNIT_NPC_FLAG_PETITIONER:
+        case Classic::UNIT_NPC_FLAG_PETITIONER:
             return Vanilla::UNIT_NPC_FLAG_PETITIONER;
-        case CLASSIC_UNIT_NPC_FLAG_TABARDDESIGNER:
+        case Classic::UNIT_NPC_FLAG_TABARDDESIGNER:
             return Vanilla::UNIT_NPC_FLAG_TABARDDESIGNER;
-        case CLASSIC_UNIT_NPC_FLAG_BATTLEMASTER:
+        case Classic::UNIT_NPC_FLAG_BATTLEMASTER:
             return Vanilla::UNIT_NPC_FLAG_BATTLEMASTER;
-        case CLASSIC_UNIT_NPC_FLAG_AUCTIONEER:
+        case Classic::UNIT_NPC_FLAG_AUCTIONEER:
             return Vanilla::UNIT_NPC_FLAG_AUCTIONEER;
-        case CLASSIC_UNIT_NPC_FLAG_STABLEMASTER:
+        case Classic::UNIT_NPC_FLAG_STABLEMASTER:
             return Vanilla::UNIT_NPC_FLAG_STABLEMASTER;
     }
     return 0;
@@ -109,51 +72,51 @@ inline uint32 ConvertClassicNpcFlagToTBC(uint32 flag)
 {
     switch (flag)
     {
-        case CLASSIC_UNIT_NPC_FLAG_GOSSIP:
+        case Classic::UNIT_NPC_FLAG_GOSSIP:
             return TBC::UNIT_NPC_FLAG_GOSSIP;
-        case CLASSIC_UNIT_NPC_FLAG_QUESTGIVER:
+        case Classic::UNIT_NPC_FLAG_QUESTGIVER:
             return TBC::UNIT_NPC_FLAG_QUESTGIVER;
-        case CLASSIC_UNIT_NPC_FLAG_TRAINER:
+        case Classic::UNIT_NPC_FLAG_TRAINER:
             return TBC::UNIT_NPC_FLAG_TRAINER;
-        case CLASSIC_UNIT_NPC_FLAG_TRAINER_CLASS:
+        case Classic::UNIT_NPC_FLAG_TRAINER_CLASS:
             return TBC::UNIT_NPC_FLAG_TRAINER_CLASS;
-        case CLASSIC_UNIT_NPC_FLAG_TRAINER_PROFESSION:
+        case Classic::UNIT_NPC_FLAG_TRAINER_PROFESSION:
             return TBC::UNIT_NPC_FLAG_TRAINER_PROFESSION;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR:
+        case Classic::UNIT_NPC_FLAG_VENDOR:
             return TBC::UNIT_NPC_FLAG_VENDOR;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_AMMO:
+        case Classic::UNIT_NPC_FLAG_VENDOR_AMMO:
             return TBC::UNIT_NPC_FLAG_VENDOR_AMMO;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_FOOD:
+        case Classic::UNIT_NPC_FLAG_VENDOR_FOOD:
             return TBC::UNIT_NPC_FLAG_VENDOR_FOOD;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_POISON:
+        case Classic::UNIT_NPC_FLAG_VENDOR_POISON:
             return TBC::UNIT_NPC_FLAG_VENDOR_POISON;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_REAGENT:
+        case Classic::UNIT_NPC_FLAG_VENDOR_REAGENT:
             return TBC::UNIT_NPC_FLAG_VENDOR_REAGENT;
-        case CLASSIC_UNIT_NPC_FLAG_REPAIR:
+        case Classic::UNIT_NPC_FLAG_REPAIR:
             return TBC::UNIT_NPC_FLAG_REPAIR;
-        case CLASSIC_UNIT_NPC_FLAG_FLIGHTMASTER:
+        case Classic::UNIT_NPC_FLAG_FLIGHTMASTER:
             return TBC::UNIT_NPC_FLAG_FLIGHTMASTER;
-        case CLASSIC_UNIT_NPC_FLAG_SPIRITHEALER:
+        case Classic::UNIT_NPC_FLAG_SPIRITHEALER:
             return TBC::UNIT_NPC_FLAG_SPIRITHEALER;
-        case CLASSIC_UNIT_NPC_FLAG_SPIRITGUIDE:
+        case Classic::UNIT_NPC_FLAG_SPIRITGUIDE:
             return TBC::UNIT_NPC_FLAG_SPIRITGUIDE;
-        case CLASSIC_UNIT_NPC_FLAG_INNKEEPER:
+        case Classic::UNIT_NPC_FLAG_INNKEEPER:
             return TBC::UNIT_NPC_FLAG_INNKEEPER;
-        case CLASSIC_UNIT_NPC_FLAG_BANKER:
+        case Classic::UNIT_NPC_FLAG_BANKER:
             return TBC::UNIT_NPC_FLAG_BANKER;
-        case CLASSIC_UNIT_NPC_FLAG_PETITIONER:
+        case Classic::UNIT_NPC_FLAG_PETITIONER:
             return TBC::UNIT_NPC_FLAG_PETITIONER;
-        case CLASSIC_UNIT_NPC_FLAG_TABARDDESIGNER:
+        case Classic::UNIT_NPC_FLAG_TABARDDESIGNER:
             return TBC::UNIT_NPC_FLAG_TABARDDESIGNER;
-        case CLASSIC_UNIT_NPC_FLAG_BATTLEMASTER:
+        case Classic::UNIT_NPC_FLAG_BATTLEMASTER:
             return TBC::UNIT_NPC_FLAG_BATTLEMASTER;
-        case CLASSIC_UNIT_NPC_FLAG_AUCTIONEER:
+        case Classic::UNIT_NPC_FLAG_AUCTIONEER:
             return TBC::UNIT_NPC_FLAG_AUCTIONEER;
-        case CLASSIC_UNIT_NPC_FLAG_STABLEMASTER:
+        case Classic::UNIT_NPC_FLAG_STABLEMASTER:
             return TBC::UNIT_NPC_FLAG_STABLEMASTER;
-        case CLASSIC_UNIT_NPC_FLAG_GUILD_BANKER:
+        case Classic::UNIT_NPC_FLAG_GUILD_BANKER:
             return TBC::UNIT_NPC_FLAG_GUILD_BANKER;
-        case CLASSIC_UNIT_NPC_FLAG_SPELLCLICK:
+        case Classic::UNIT_NPC_FLAG_SPELLCLICK:
             return TBC::UNIT_NPC_FLAG_SPELLCLICK;
     }
     return 0;
@@ -163,53 +126,53 @@ inline uint32 ConvertClassicNpcFlagToWotLK(uint32 flag)
 {
     switch (flag)
     {
-        case CLASSIC_UNIT_NPC_FLAG_GOSSIP:
+        case Classic::UNIT_NPC_FLAG_GOSSIP:
             return WotLK::UNIT_NPC_FLAG_GOSSIP;
-        case CLASSIC_UNIT_NPC_FLAG_QUESTGIVER:
+        case Classic::UNIT_NPC_FLAG_QUESTGIVER:
             return WotLK::UNIT_NPC_FLAG_QUESTGIVER;
-        case CLASSIC_UNIT_NPC_FLAG_TRAINER:
+        case Classic::UNIT_NPC_FLAG_TRAINER:
             return WotLK::UNIT_NPC_FLAG_TRAINER;
-        case CLASSIC_UNIT_NPC_FLAG_TRAINER_CLASS:
+        case Classic::UNIT_NPC_FLAG_TRAINER_CLASS:
             return WotLK::UNIT_NPC_FLAG_TRAINER_CLASS;
-        case CLASSIC_UNIT_NPC_FLAG_TRAINER_PROFESSION:
+        case Classic::UNIT_NPC_FLAG_TRAINER_PROFESSION:
             return WotLK::UNIT_NPC_FLAG_TRAINER_PROFESSION;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR:
+        case Classic::UNIT_NPC_FLAG_VENDOR:
             return WotLK::UNIT_NPC_FLAG_VENDOR;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_AMMO:
+        case Classic::UNIT_NPC_FLAG_VENDOR_AMMO:
             return WotLK::UNIT_NPC_FLAG_VENDOR_AMMO;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_FOOD:
+        case Classic::UNIT_NPC_FLAG_VENDOR_FOOD:
             return WotLK::UNIT_NPC_FLAG_VENDOR_FOOD;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_POISON:
+        case Classic::UNIT_NPC_FLAG_VENDOR_POISON:
             return WotLK::UNIT_NPC_FLAG_VENDOR_POISON;
-        case CLASSIC_UNIT_NPC_FLAG_VENDOR_REAGENT:
+        case Classic::UNIT_NPC_FLAG_VENDOR_REAGENT:
             return WotLK::UNIT_NPC_FLAG_VENDOR_REAGENT;
-        case CLASSIC_UNIT_NPC_FLAG_REPAIR:
+        case Classic::UNIT_NPC_FLAG_REPAIR:
             return WotLK::UNIT_NPC_FLAG_REPAIR;
-        case CLASSIC_UNIT_NPC_FLAG_FLIGHTMASTER:
+        case Classic::UNIT_NPC_FLAG_FLIGHTMASTER:
             return WotLK::UNIT_NPC_FLAG_FLIGHTMASTER;
-        case CLASSIC_UNIT_NPC_FLAG_SPIRITHEALER:
+        case Classic::UNIT_NPC_FLAG_SPIRITHEALER:
             return WotLK::UNIT_NPC_FLAG_SPIRITHEALER;
-        case CLASSIC_UNIT_NPC_FLAG_SPIRITGUIDE:
+        case Classic::UNIT_NPC_FLAG_SPIRITGUIDE:
             return WotLK::UNIT_NPC_FLAG_SPIRITGUIDE;
-        case CLASSIC_UNIT_NPC_FLAG_INNKEEPER:
+        case Classic::UNIT_NPC_FLAG_INNKEEPER:
             return WotLK::UNIT_NPC_FLAG_INNKEEPER;
-        case CLASSIC_UNIT_NPC_FLAG_BANKER:
+        case Classic::UNIT_NPC_FLAG_BANKER:
             return WotLK::UNIT_NPC_FLAG_BANKER;
-        case CLASSIC_UNIT_NPC_FLAG_PETITIONER:
+        case Classic::UNIT_NPC_FLAG_PETITIONER:
             return WotLK::UNIT_NPC_FLAG_PETITIONER;
-        case CLASSIC_UNIT_NPC_FLAG_TABARDDESIGNER:
+        case Classic::UNIT_NPC_FLAG_TABARDDESIGNER:
             return WotLK::UNIT_NPC_FLAG_TABARDDESIGNER;
-        case CLASSIC_UNIT_NPC_FLAG_BATTLEMASTER:
+        case Classic::UNIT_NPC_FLAG_BATTLEMASTER:
             return WotLK::UNIT_NPC_FLAG_BATTLEMASTER;
-        case CLASSIC_UNIT_NPC_FLAG_AUCTIONEER:
+        case Classic::UNIT_NPC_FLAG_AUCTIONEER:
             return WotLK::UNIT_NPC_FLAG_AUCTIONEER;
-        case CLASSIC_UNIT_NPC_FLAG_STABLEMASTER:
+        case Classic::UNIT_NPC_FLAG_STABLEMASTER:
             return WotLK::UNIT_NPC_FLAG_STABLEMASTER;
-        case CLASSIC_UNIT_NPC_FLAG_GUILD_BANKER:
+        case Classic::UNIT_NPC_FLAG_GUILD_BANKER:
             return WotLK::UNIT_NPC_FLAG_GUILD_BANKER;
-        case CLASSIC_UNIT_NPC_FLAG_SPELLCLICK:
+        case Classic::UNIT_NPC_FLAG_SPELLCLICK:
             return WotLK::UNIT_NPC_FLAG_SPELLCLICK;
-        case CLASSIC_UNIT_NPC_FLAG_PLAYER_VEHICLE:
+        case Classic::UNIT_NPC_FLAG_PLAYER_VEHICLE:
             return WotLK::UNIT_NPC_FLAG_PLAYER_VEHICLE;
     }
     return 0;
@@ -218,7 +181,7 @@ inline uint32 ConvertClassicNpcFlagToWotLK(uint32 flag)
 inline uint32 ConvertClassicNpcFlagsToVanilla(uint32 flags)
 {
     uint32 newFlags = 0;
-    for (uint32 i = 0; i < CLASSIC_MAX_NPC_FLAGS; i++)
+    for (uint32 i = 0; i < Classic::MAX_NPC_FLAGS; i++)
     {
         uint32 flag = (uint32)pow(2, i);
         if (flags & flag)
@@ -232,7 +195,7 @@ inline uint32 ConvertClassicNpcFlagsToVanilla(uint32 flags)
 inline uint32 ConvertClassicNpcFlagsToTBC(uint32 flags)
 {
     uint32 newFlags = 0;
-    for (uint32 i = 0; i < CLASSIC_MAX_NPC_FLAGS; i++)
+    for (uint32 i = 0; i < Classic::MAX_NPC_FLAGS; i++)
     {
         uint32 flag = (uint32)pow(2, i);
         if (flags & flag)
@@ -246,7 +209,7 @@ inline uint32 ConvertClassicNpcFlagsToTBC(uint32 flags)
 inline uint32 ConvertClassicNpcFlagsToWotLK(uint32 flags)
 {
     uint32 newFlags = 0;
-    for (uint32 i = 0; i < CLASSIC_MAX_NPC_FLAGS; i++)
+    for (uint32 i = 0; i < Classic::MAX_NPC_FLAGS; i++)
     {
         uint32 flag = (uint32)pow(2, i);
         if (flags & flag)
@@ -580,44 +543,6 @@ inline uint32 ConvertClassicMovementFlagsToWotLK(uint32 flags)
         newFlags |= WotLK::MOVEFLAG_HOVER;
     return newFlags;
 }
-
-enum class ClassicSplineFlag : uint32
-{
-    None                = 0x00000000,
-    AnimTierSwim        = 0x00000001,
-    AnimTierHover       = 0x00000002,
-    AnimTierFly         = 0x00000003,
-    AnimTierSubmerged   = 0x00000004,
-    Unknown0            = 0x00000008,
-    FallingSlow         = 0x00000010,
-    Done                = 0x00000020,
-    Falling             = 0x00000040,
-    NoSpline            = 0x00000080,
-    Unknown1            = 0x00000100,
-    Flying              = 0x00000200,
-    OrientationFixed    = 0x00000400,
-    Catmullrom          = 0x00000800,
-    Cyclic              = 0x00001000,
-    EnterCycle          = 0x00002000,
-    Frozen              = 0x00004000,
-    TransportEnter      = 0x00008000,
-    TransportExit       = 0x00010000,
-    Unknown2            = 0x00020000,
-    Unknown3            = 0x00040000,
-    Backward            = 0x00080000,
-    SmoothGroundPath    = 0x00100000,
-    CanSwim             = 0x00200000,
-    UncompressedPath    = 0x00400000,
-    Unknown4            = 0x00800000,
-    Unknown5            = 0x01000000,
-    Animation           = 0x02000000,
-    Parabolic           = 0x04000000,
-    FadeObject          = 0x08000000,
-    Steering            = 0x10000000,
-    Unknown8            = 0x20000000,
-    Unknown9            = 0x40000000,
-    Unknown10           = 0x80000000,
-};
 
 inline uint32 ConvertClassicChatTypeToVanilla(uint8 chatType)
 {

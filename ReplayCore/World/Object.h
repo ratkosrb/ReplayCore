@@ -32,12 +32,7 @@ public:
 
     uint8 GetTypeId() const { return m_objectTypeId; }
     bool IsType(TypeMask mask) const { return (mask & m_objectType) != 0; }
-    /*
-    uint32 GetEntry() const { return m_objectData.entry; }
-    void SetEntry(uint32 entry) { m_objectData.entry = entry; }
-    float GetObjectScale() const { return m_objectData.scale; }
-    void SetObjectScale(float scale) { m_objectData.scale = scale; }
-    */
+    virtual void Update() {};
 
     bool IsVisible() const { return m_isVisible; }
     void SetVisibility(bool on) { m_isVisible = on; }
@@ -69,6 +64,11 @@ public:
     void SetInt16Value(const char* index, uint8 offset, int16 value) { SetUInt16Value(index, offset, (uint16)value); }
     void SetGuidValue(const char* index, ObjectGuid const& value) { SetUInt64Value(index, value.GetRawValue()); }
     void SetObjectGuid(ObjectGuid const& value) { SetUInt64Value(OBJECT_FIELD_GUID, value.GetRawValue()); }
+
+    uint32 GetEntry() const;
+    void SetEntry(uint32 entry);
+    float GetScale() const;
+    void SetScale(float scale);
 
     bool IsUpdateFieldVisibleTo(uint16 index, Player* target) const;
     bool _SetUpdateBits(UpdateMask* updateMask, Player* target) const;

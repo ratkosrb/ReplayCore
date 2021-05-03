@@ -28,42 +28,38 @@ ReplayMgr& ReplayMgr::Instance()
 void ObjectData::InitializeObject(Object* pObject) const
 {
     pObject->SetObjectGuid(guid);
-    pObject->SetUInt32Value("OBJECT_FIELD_ENTRY", entry);
-    pObject->SetFloatValue("OBJECT_FIELD_SCALE_X", scale);
+    pObject->SetEntry(entry);
+    pObject->SetScale(scale);
 }
 
 void WorldObjectData::InitializeWorldObject(WorldObject* pObject) const
 {
     InitializeObject(pObject);
-    pObject->SetLocation(location);
+    pObject->Relocate(location);
 }
 
 void GameObjectData::InitializeGameObject(GameObject* pGo) const
 {
     InitializeWorldObject(pGo);
-    pGo->SetGuidValue("OBJECT_FIELD_CREATED_BY", createdBy);
+    pGo->SetCreatedByGuid(createdBy);
 
     GameObjectTemplate const* gInfo = sGameDataMgr.GetGameObjectTemplate(entry);
 
     if (sGameDataMgr.IsValidGameObjectDisplayId(displayId))
-        pGo->SetUInt32Value("GAMEOBJECT_DISPLAYID", displayId);
+        pGo->SetDisplayId(displayId);
     else if (gInfo && sGameDataMgr.IsValidGameObjectDisplayId(gInfo->displayId))
-        pGo->SetUInt32Value("GAMEOBJECT_DISPLAYID", gInfo->displayId);
+        pGo->SetDisplayId(gInfo->displayId);
     else
-        pGo->SetUInt32Value("GAMEOBJECT_DISPLAYID", GAMEOBJECT_DISPLAY_ID_CHEST);
+        pGo->SetDisplayId(GAMEOBJECT_DISPLAY_ID_CHEST);
 
-    pGo->SetUInt32Value("GAMEOBJECT_FLAGS", flags);
+    pGo->SetFlags(flags);
     pGo->SetRotation(rotation);
     pGo->SetState(state);
-    pGo->SetFloatValue("GAMEOBJECT_POS_X", location.x);
-    pGo->SetFloatValue("GAMEOBJECT_POS_Y", location.y);
-    pGo->SetFloatValue("GAMEOBJECT_POS_Z", location.z);
-    pGo->SetFloatValue("GAMEOBJECT_FACING", location.o);
     pGo->SetDynamicFlags(dynamicFlags);
     pGo->SetPathProgress(pathProgress);
     
     if (faction && sGameDataMgr.IsValidFactionTemplate(faction))
-        pGo->SetUInt32Value("GAMEOBJECT_FACTION", faction);
+        pGo->SetFactionTemplate(faction);
 
     if (sGameDataMgr.IsValidGameObjectType(type))
         pGo->SetType(type);
@@ -72,7 +68,7 @@ void GameObjectData::InitializeGameObject(GameObject* pGo) const
     else
         pGo->SetType(GAMEOBJECT_TYPE_GENERIC);
     
-    pGo->SetUInt32Value("GAMEOBJECT_LEVEL", level);
+    pGo->SetLevel(level);
     pGo->SetArtKit(artKit);
     pGo->SetAnimProgress(animProgress);
 }
@@ -95,101 +91,79 @@ void UnitData::InitializeUnit(Unit* pUnit) const
             pUnit->SetUnitMovementFlags(WotLK::MOVEFLAG_FLYING);
     }
 
-    pUnit->SetGuidValue("UNIT_FIELD_CHARM", charm);
-    pUnit->SetGuidValue("UNIT_FIELD_SUMMON", summon);
-    pUnit->SetGuidValue("UNIT_FIELD_CHARMEDBY", charmedBy);
-    pUnit->SetGuidValue("UNIT_FIELD_SUMMONEDBY", summonedBy);
-    pUnit->SetGuidValue("UNIT_FIELD_CREATEDBY", createdBy);
-    pUnit->SetGuidValue("UNIT_FIELD_TARGET", target);
-    pUnit->SetUInt32Value("UNIT_FIELD_HEALTH", currentHealth);
-    pUnit->SetUInt32Value("UNIT_FIELD_MAXHEALTH", maxHealth);
-    pUnit->SetUInt32Value("UNIT_FIELD_BASE_HEALTH", maxHealth);
-    pUnit->SetUInt32Value("UNIT_FIELD_POWER1", currentPowers[POWER_MANA]);
-    pUnit->SetUInt32Value("UNIT_FIELD_POWER2", currentPowers[POWER_RAGE]);
-    pUnit->SetUInt32Value("UNIT_FIELD_POWER3", currentPowers[POWER_FOCUS]);
-    pUnit->SetUInt32Value("UNIT_FIELD_POWER4", currentPowers[POWER_ENERGY]);
-    pUnit->SetUInt32Value("UNIT_FIELD_POWER5", currentPowers[POWER_HAPPINESS]);
-    pUnit->SetUInt32Value("UNIT_FIELD_BASE_MANA", maxPowers[POWER_MANA]);
-    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER1", maxPowers[POWER_MANA]);
-    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER2", maxPowers[POWER_RAGE]);
-    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER3", maxPowers[POWER_FOCUS]);
-    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER4", maxPowers[POWER_ENERGY]);
-    pUnit->SetUInt32Value("UNIT_FIELD_MAXPOWER5", maxPowers[POWER_HAPPINESS]);
-
-    pUnit->SetUInt32Value("UNIT_FIELD_LEVEL", level);
-
-    if (sGameDataMgr.IsValidFactionTemplate(faction))
-        pUnit->SetUInt32Value("UNIT_FIELD_FACTIONTEMPLATE", faction);
-    else
-        pUnit->SetUInt32Value("UNIT_FIELD_FACTIONTEMPLATE", 35);
-
-    if (sGameDataMgr.IsValidRace(raceId))
-        pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 0, raceId);
-    else
-        pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 0, RACE_HUMAN);
-
-    if (sGameDataMgr.IsValidClass(classId))
-        pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 1, classId);
-    else
-        pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 1, CLASS_WARRIOR);
-
-    pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 2, gender);
-    pUnit->SetByteValue("UNIT_FIELD_BYTES_0", 3, powerType);
+    pUnit->SetCharmGuid(charm);
+    pUnit->SetSummonGuid(summon);
+    pUnit->SetCharmedByGuid(charmedBy);
+    pUnit->SetSummonedByGuid(summonedBy);
+    pUnit->SetCreatedByGuid(createdBy);
+    pUnit->SetTargetGuid(target);
+    pUnit->SetHealth(currentHealth);
+    pUnit->SetMaxHealth(maxHealth);
+    pUnit->SetBaseHealth(maxHealth);
+    pUnit->SetPower(POWER_MANA, currentPowers[POWER_MANA]);
+    pUnit->SetPower(POWER_RAGE, currentPowers[POWER_RAGE]);
+    pUnit->SetPower(POWER_FOCUS, currentPowers[POWER_FOCUS]);
+    pUnit->SetPower(POWER_ENERGY, currentPowers[POWER_ENERGY]);
+    pUnit->SetPower(POWER_HAPPINESS, currentPowers[POWER_HAPPINESS]);
+    pUnit->SetBaseMana(maxPowers[POWER_MANA]);
+    pUnit->SetMaxPower(POWER_MANA, maxPowers[POWER_MANA]);
+    pUnit->SetMaxPower(POWER_RAGE, maxPowers[POWER_RAGE]);
+    pUnit->SetMaxPower(POWER_FOCUS, maxPowers[POWER_FOCUS]);
+    pUnit->SetMaxPower(POWER_ENERGY, maxPowers[POWER_ENERGY]);
+    pUnit->SetMaxPower(POWER_HAPPINESS, maxPowers[POWER_HAPPINESS]);
+    pUnit->SetLevel(level);
+    pUnit->SetFactionTemplate(sGameDataMgr.IsValidFactionTemplate(faction) ? faction : 35);
+    pUnit->SetRace(sGameDataMgr.IsValidRace(raceId) ? raceId : RACE_HUMAN);
+    pUnit->SetClass(sGameDataMgr.IsValidClass(classId) ? classId : CLASS_WARRIOR);
+    pUnit->SetGender(gender);
+    pUnit->SetPowerType(powerType);
 
     for (uint8 i = 0; i < MAX_VIRTUAL_ITEM_SLOT; i++)
         pUnit->SetVirtualItem(i, virtualItems[i]);
 
-    pUnit->SetUInt32Value("UNIT_FIELD_AURASTATE", auraState);
+    pUnit->SetAuraState(auraState);
     pUnit->SetAttackTime(BASE_ATTACK, mainHandAttackTime);
     pUnit->SetAttackTime(OFF_ATTACK, offHandAttackTime);
-    pUnit->SetFloatValue("UNIT_FIELD_BOUNDINGRADIUS", boundingRadius);
-    pUnit->SetFloatValue("UNIT_FIELD_COMBATREACH", combatReach);
+    pUnit->SetBoundingRadius(boundingRadius);
+    pUnit->SetCombatReach(combatReach);
 
     if (sGameDataMgr.IsValidUnitDisplayId(displayId))
     {
-        pUnit->SetUInt32Value("UNIT_FIELD_DISPLAYID", displayId);
+        pUnit->SetDisplayId(displayId);
         if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            pUnit->SetFloatValue("OBJECT_FIELD_SCALE_X", scale * sGameDataMgr.GetCreatureDisplayScale(displayId));
+            pUnit->SetScale(scale * sGameDataMgr.GetCreatureDisplayScale(displayId));
     }
     else
-        pUnit->SetUInt32Value("UNIT_FIELD_DISPLAYID", UNIT_DISPLAY_ID_BOX);
+        pUnit->SetDisplayId(UNIT_DISPLAY_ID_BOX);
 
-    if (sGameDataMgr.IsValidUnitDisplayId(displayId))
-        pUnit->SetUInt32Value("UNIT_FIELD_NATIVEDISPLAYID", nativeDisplayId);
+    if (sGameDataMgr.IsValidUnitDisplayId(nativeDisplayId))
+        pUnit->SetNativeDisplayId(nativeDisplayId);
     else
-        pUnit->SetUInt32Value("UNIT_FIELD_NATIVEDISPLAYID", UNIT_DISPLAY_ID_BOX);
+        pUnit->SetNativeDisplayId(UNIT_DISPLAY_ID_BOX);
 
-    if (sGameDataMgr.IsValidUnitDisplayId(displayId))
-        pUnit->SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", mountDisplayId);
+    if (sGameDataMgr.IsValidUnitDisplayId(mountDisplayId))
+        pUnit->SetMountDisplayId(mountDisplayId);
     
-    pUnit->SetByteValue("UNIT_FIELD_BYTES_1", 0, standState);
-    pUnit->SetByteValue("UNIT_FIELD_BYTES_2", 0, sheathState);
-    
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-        pUnit->SetByteValue("UNIT_FIELD_BYTES_1", 2, shapeShiftForm);
-    else
-        pUnit->SetByteValue("UNIT_FIELD_BYTES_2", 3, shapeShiftForm);
+    if (sGameDataMgr.IsValidStandState(standState))
+        pUnit->SetStandState(standState);
 
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-        pUnit->SetByteValue("UNIT_FIELD_BYTES_1", 3, visFlags);
-    else
-        pUnit->SetByteValue("UNIT_FIELD_BYTES_1", 2, visFlags);
+    pUnit->SetSheathState(sheathState);
+    pUnit->SetShapeShiftForm(shapeShiftForm);
+    pUnit->SetVisFlags(visFlags);
+    pUnit->SetNpcFlags(sGameDataMgr.ConvertNpcFlags(npcFlags));
 
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-        pUnit->SetUInt32Value("UNIT_NPC_FLAGS", ConvertClassicNpcFlagsToVanilla(npcFlags));
-    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-        pUnit->SetUInt32Value("UNIT_NPC_FLAGS", ConvertClassicNpcFlagsToTBC(npcFlags));
-    else
-        pUnit->SetUInt32Value("UNIT_NPC_FLAGS", ConvertClassicNpcFlagsToWotLK(npcFlags));
+    pUnit->SetUnitFlags(unitFlags);
+    pUnit->SetUnitFlags2(unitFlags2);
+    pUnit->SetDynamicFlags(dynamicFlags);
 
-    pUnit->SetUInt32Value("UNIT_FIELD_FLAGS", unitFlags);
-    pUnit->SetUInt32Value("UNIT_FIELD_FLAGS_2", unitFlags2);
-    pUnit->SetUInt32Value("UNIT_DYNAMIC_FLAGS", dynamicFlags);
-    pUnit->SetUInt32Value("UNIT_CHANNEL_SPELL", channelSpell);
-    pUnit->SetUInt32Value("UNIT_CREATED_BY_SPELL", createdBySpell);
+    if (sGameDataMgr.IsValidSpellId(channelSpell))
+        pUnit->SetChannelSpell(channelSpell);
+
+    if (sGameDataMgr.IsValidSpellId(createdBySpell))
+        pUnit->SetCreatedBySpell(createdBySpell);
 
     if (sGameDataMgr.IsValidEmote(emoteState))
-        pUnit->SetUInt32Value("UNIT_NPC_EMOTESTATE", emoteState);
+        pUnit->SetEmoteState(emoteState);
 
     pUnit->SetSpeedRate(MOVE_WALK, speedRate[MOVE_WALK]);
     pUnit->SetSpeedRate(MOVE_RUN, speedRate[MOVE_RUN]);
@@ -219,9 +193,9 @@ void PlayerData::InitializePlayer(Player* pPlayer) const
 {
     InitializeUnit(pPlayer);
     pPlayer->SetName(name);
-    pPlayer->SetUInt32Value("PLAYER_BYTES", bytes1);
-    pPlayer->SetUInt32Value("PLAYER_BYTES_2", bytes2);
-    pPlayer->SetUInt32Value("PLAYER_FLAGS", flags);
+    pPlayer->SetPlayerBytes(bytes1);
+    pPlayer->SetPlayerBytes2(bytes2);
+    pPlayer->SetPlayerFlags(flags);
 
     for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
         pPlayer->SetVisibleItemSlot(i, visibleItems[i], visibleItemEnchants[i]);
@@ -561,7 +535,7 @@ void ReplayMgr::LoadCreatures()
             data.emoteState = 0;
         }
 
-        if (data.standState >= MAX_UNIT_STAND_STATE)
+        if (data.standState >= MAX_UNIT_STAND_STATE_TBC)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid stand state for creature (GUID %u, Entry %u)\n", guid, entry);
             data.standState = UNIT_STAND_STATE_STAND;
@@ -571,6 +545,12 @@ void ReplayMgr::LoadCreatures()
         {
             printf("[ReplayMgr] LoadPlayers: Invalid sheath state for creature (GUID %u, Entry %u)\n", guid, entry);
             data.sheathState = SHEATH_STATE_UNARMED;
+        }
+
+        if (data.shapeShiftForm >= MAX_SHAPESHIFT_FORM)
+        {
+            printf("[ReplayMgr] LoadPlayers: Invalid shapeshift form for creature (GUID %u, Entry %u)\n", guid, entry);
+            data.shapeShiftForm = FORM_NONE;
         }
 
     } while (result->NextRow());
@@ -758,7 +738,7 @@ void ReplayMgr::LoadPlayers()
         }
 
         playerData.standState = fields[29].GetUInt8();
-        if (playerData.standState >= MAX_UNIT_STAND_STATE)
+        if (playerData.standState >= MAX_UNIT_STAND_STATE_TBC)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid stand state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.standState = UNIT_STAND_STATE_STAND;
@@ -773,6 +753,12 @@ void ReplayMgr::LoadPlayers()
         }
 
         playerData.shapeShiftForm = fields[33].GetUInt8();
+        if (playerData.shapeShiftForm >= MAX_SHAPESHIFT_FORM)
+        {
+            printf("[ReplayMgr] LoadPlayers: Invalid shapeshift form for character %s (GUID %u)\n", playerData.name.c_str(), guid);
+            playerData.shapeShiftForm = FORM_NONE;
+        }
+
         playerData.movementFlags = fields[34].GetUInt32();
         playerData.speedRate[MOVE_WALK] = fields[35].GetFloat();
         playerData.speedRate[MOVE_RUN] = fields[36].GetFloat();
@@ -884,6 +870,9 @@ void ReplayMgr::Update(uint32 const diff)
 
         if (itr.first > m_currentSniffTimeMs)
             return;
+
+        if (itr.second->m_disabled)
+            continue;
 
         itr.second->Execute();
     }

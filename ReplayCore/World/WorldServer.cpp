@@ -45,11 +45,6 @@ void WorldServer::WorldLoop()
         m_msTimeSinceServerStart += diff;
         m_lastUpdateTimeMs = ms;
 
-        for (auto& itr : m_players)
-            itr.second.m_moveSpline.Update(&itr.second);
-        for (auto& itr : m_creatures)
-            itr.second.m_moveSpline.Update(&itr.second);
-
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Player>>(m_players);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatures);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, GameObject>>(m_gameObjects);
@@ -69,6 +64,8 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
 
     for (auto& itr : objectsMap)
     {
+        itr.second.Update();
+
         bool visible = m_clientPlayer->IsWithinVisibilityDistance(&itr.second);
 
         if (visible)
@@ -170,6 +167,17 @@ void WorldServer::ResetClientData()
     m_sessionData.sessionKey = sAuth.GetSessionKey();
 }
 
+void WorldServer::OnClientDisconnect()
+{
+    m_sessionData.connected = false;
+    OnClientLogout();
+    if (m_packetLog)
+    {
+        fclose(m_packetLog);
+        m_packetLog = nullptr;
+    }
+}
+
 void WorldServer::OnClientLogout()
 {
     m_sessionData.isInWorld = false;
@@ -229,16 +237,14 @@ void WorldServer::NetworkLoop()
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());;
-                m_sessionData.connected = false;
-                OnClientLogout();
+                OnClientDisconnect();
                 break;
             }
 
             if (result == 0)
             {
                 printf("[WORLD] Connection closed.\n");
-                m_sessionData.connected = false;
-                OnClientLogout();
+                OnClientDisconnect();
                 break;
             }
 
@@ -260,8 +266,7 @@ void WorldServer::NetworkLoop()
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());
-                m_sessionData.connected = false;
-                OnClientLogout();
+                OnClientDisconnect();
                 delete[] buffer;
                 break;
             }
@@ -269,8 +274,7 @@ void WorldServer::NetworkLoop()
             if (result == 0)
             {
                 printf("[WORLD] Connection closed.\n");
-                m_sessionData.connected = false;
-                OnClientLogout();
+                OnClientDisconnect();
                 delete[] buffer;
                 break;
             }

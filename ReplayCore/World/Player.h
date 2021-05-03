@@ -15,8 +15,14 @@ public:
     Player(ObjectGuid guid, std::string name, Player const& otherPlayer);
 
     void InitializeDefaultPlayerValues();
+
     char const* GetName() const { return m_name.c_str(); }
     void SetName(std::string name) { m_name = name; }
+
+    void SetPlayerBytes(uint32 bytes1);
+    void SetPlayerBytes2(uint32 bytes2);
+    void SetPlayerFlags(uint32 flags);
+
     void SetVisibleItemSlot(uint8 slot, uint32 itemId, uint32 enchantId);
     uint32 GetVisibleItemId(uint8 slot) const;
     uint32 GetVisibleItemEnchant(uint8 slot) const;

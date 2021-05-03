@@ -31,7 +31,61 @@ void ReplayMgr::LoadSniffedEvents()
     LoadServerSideMovement("player_movement_server", TYPEID_PLAYER, m_playerMovementSplines);
     LoadServerSideMovement("creature_movement_server", TYPEID_UNIT, m_creatureMovementSplines);
     LoadServerSideMovement("creature_movement_server_combat", TYPEID_UNIT, m_creatureMovementCombatSplines);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_entry>("creature_values_update", "entry", TYPEID_UNIT);
+    LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_scale>("creature_values_update", "scale", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_display_id>("creature_values_update", "display_id", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_mount>("creature_values_update", "mount_display_id", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_faction>("creature_values_update", "faction", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_level>("creature_values_update", "level", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_aura_state>("creature_values_update", "aura_state", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_emote_state>("creature_values_update", "emote_state", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_stand_state>("creature_values_update", "stand_state", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_vis_flags>("creature_values_update", "vis_flags", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_sheath_state>("creature_values_update", "sheath_state", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_shapeshift_form>("creature_values_update", "shapeshift_form", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_npc_flags>("creature_values_update", "npc_flags", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_unit_flags>("creature_values_update", "unit_flags", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_unit_flags2>("creature_values_update", "unit_flags2", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_dynamic_flags>("creature_values_update", "dynamic_flags", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_health>("creature_values_update", "max_health", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_health>("creature_values_update", "current_health", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_mana>("creature_values_update", "max_mana", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_mana>("creature_values_update", "current_mana", TYPEID_UNIT);
+    LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_bounding_radius>("creature_values_update", "bounding_radius", TYPEID_UNIT);
+    LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_combat_reach>("creature_values_update", "combat_reach", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_main_hand_attack_time>("creature_values_update", "main_hand_attack_time", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_off_hand_attack_time>("creature_values_update", "off_hand_attack_time", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_channel_spell>("creature_values_update", "channel_spell_id", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_entry>("player_values_update", "entry", TYPEID_PLAYER);
+    LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_scale>("player_values_update", "scale", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_display_id>("player_values_update", "display_id", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_mount>("player_values_update", "mount_display_id", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_faction>("player_values_update", "faction", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_level>("player_values_update", "level", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_aura_state>("player_values_update", "aura_state", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_emote_state>("player_values_update", "emote_state", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_stand_state>("player_values_update", "stand_state", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_vis_flags>("player_values_update", "vis_flags", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_sheath_state>("player_values_update", "sheath_state", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_shapeshift_form>("player_values_update", "shapeshift_form", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_npc_flags>("player_values_update", "npc_flags", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_unit_flags>("player_values_update", "unit_flags", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_unit_flags2>("player_values_update", "unit_flags2", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_dynamic_flags>("player_values_update", "dynamic_flags", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_health>("player_values_update", "max_health", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_health>("player_values_update", "current_health", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_mana>("player_values_update", "max_mana", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_mana>("player_values_update", "current_mana", TYPEID_PLAYER);
+    LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_bounding_radius>("player_values_update", "bounding_radius", TYPEID_PLAYER);
+    LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_combat_reach>("player_values_update", "combat_reach", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_main_hand_attack_time>("player_values_update", "main_hand_attack_time", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_off_hand_attack_time>("player_values_update", "off_hand_attack_time", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_channel_spell>("player_values_update", "channel_spell_id", TYPEID_PLAYER);
     printf(">> Loaded %u sniffed events.", (uint32)m_eventsMapBackup.size());
+
+    // Events are loaded into the backup map, and only copied into runtime map once
+    // the data has been checked for compatibility with the current client version.
+    assert(m_eventsMap.empty());
 }
 
 void ReplayMgr::PrepareSniffedEventDataForCurrentClient()
@@ -539,4 +593,427 @@ void SniffedEvent_ServerSideMovement::Execute() const
 
     if (!m_moveTime || m_splines.empty())
         pUnit->m_moveSpline.Reset();
+}
+
+template <class T>
+void ReplayMgr::LoadObjectValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId)
+{
+    if (auto result = SniffDatabase.Query("SELECT `guid`, `unixtimems`, `%s` FROM `%s` WHERE (`%s` IS NOT NULL) ORDER BY `unixtimems`", fieldName, tableName, fieldName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 guid = fields[0].GetUInt32();;
+            ObjectGuid objectGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
+                objectGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                continue;
+            }
+
+            uint64 unixtimems = fields[1].GetUInt64();
+            uint32 value = fields[2].GetUInt32();
+
+            std::shared_ptr<T> newEvent = std::make_shared<T>(objectGuid, value);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+template <class T>
+void ReplayMgr::LoadObjectValuesUpdate_float(char const* tableName, char const* fieldName, uint32 typeId)
+{
+    if (auto result = SniffDatabase.Query("SELECT `guid`, `unixtimems`, `%s` FROM `%s` WHERE (`%s` IS NOT NULL) ORDER BY `unixtimems`", fieldName, tableName, fieldName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 guid = fields[0].GetUInt32();;
+            ObjectGuid objectGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guid, typeId))
+                objectGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                continue;
+            }
+
+            uint64 unixtimems = fields[1].GetUInt64();
+            float value = fields[2].GetFloat();
+
+            std::shared_ptr<T> newEvent = std::make_shared<T>(objectGuid, value);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_UnitUpdate_entry::PepareForCurrentClient()
+{
+    if (!sGameDataMgr.GetCreatureTemplate(m_value))
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_entry::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_entry: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetEntry(m_value);
+}
+
+void SniffedEvent_UnitUpdate_scale::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_scale: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetScale(m_value);
+}
+
+void SniffedEvent_UnitUpdate_display_id::PepareForCurrentClient()
+{
+    if (!sGameDataMgr.IsValidUnitDisplayId(m_value))
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_display_id::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_display_id: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetDisplayId(m_value);
+}
+
+void SniffedEvent_UnitUpdate_mount::PepareForCurrentClient()
+{
+    if (m_value && !sGameDataMgr.IsValidUnitDisplayId(m_value))
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_mount::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_mount: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetMountDisplayId(m_value);
+}
+
+void SniffedEvent_UnitUpdate_faction::PepareForCurrentClient()
+{
+    if (!sGameDataMgr.IsValidFactionTemplate(m_value))
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_faction::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_faction: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetFactionTemplate(m_value);
+}
+
+void SniffedEvent_UnitUpdate_level::PepareForCurrentClient()
+{
+    if (m_source.IsPlayer() && m_value > 255)
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_level::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_level: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetLevel(m_value);
+}
+
+void SniffedEvent_UnitUpdate_aura_state::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_aura_state: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetAuraState(m_value);
+}
+
+void SniffedEvent_UnitUpdate_emote_state::PepareForCurrentClient()
+{
+    if (!sGameDataMgr.IsValidEmote(m_value))
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_emote_state::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_emote_state: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetEmoteState(m_value);
+}
+
+void SniffedEvent_UnitUpdate_stand_state::PepareForCurrentClient()
+{
+    if (!sGameDataMgr.IsValidStandState(m_value))
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_stand_state::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_stand_state: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetStandState(m_value);
+}
+
+void SniffedEvent_UnitUpdate_vis_flags::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_vis_flags: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetVisFlags(m_value);
+}
+
+void SniffedEvent_UnitUpdate_sheath_state::PepareForCurrentClient()
+{
+    if (m_value >= MAX_SHEATH_STATE)
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_sheath_state::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_sheath_state: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetSheathState(m_value);
+}
+
+void SniffedEvent_UnitUpdate_shapeshift_form::PepareForCurrentClient()
+{
+    if (m_value >= MAX_SHAPESHIFT_FORM)
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_shapeshift_form::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_shapeshift_form: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetShapeShiftForm(m_value);
+}
+
+void SniffedEvent_UnitUpdate_npc_flags::PepareForCurrentClient()
+{
+    m_value = sGameDataMgr.ConvertNpcFlags(m_value);
+}
+
+void SniffedEvent_UnitUpdate_npc_flags::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_npc_flags: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetNpcFlags(m_value);
+}
+
+void SniffedEvent_UnitUpdate_unit_flags::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_unit_flags: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetUnitFlags(m_value);
+}
+
+void SniffedEvent_UnitUpdate_unit_flags2::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_unit_flags2: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetUnitFlags2(m_value);
+}
+
+void SniffedEvent_UnitUpdate_dynamic_flags::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_dynamic_flags: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetDynamicFlags(m_value);
+}
+
+void SniffedEvent_UnitUpdate_current_health::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_current_health: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetHealth(m_value);
+}
+
+void SniffedEvent_UnitUpdate_max_health::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_max_health: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetMaxHealth(m_value);
+}
+
+void SniffedEvent_UnitUpdate_current_mana::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_current_mana: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetPower(POWER_MANA, m_value);
+}
+
+void SniffedEvent_UnitUpdate_max_mana::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_max_mana: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetMaxPower(POWER_MANA, m_value);
+}
+
+void SniffedEvent_UnitUpdate_bounding_radius::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_bounding_radius: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetBoundingRadius(m_value);
+}
+
+void SniffedEvent_UnitUpdate_combat_reach::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_combat_reach: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetCombatReach(m_value);
+}
+
+void SniffedEvent_UnitUpdate_main_hand_attack_time::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_main_hand_attack_time: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetAttackTime(BASE_ATTACK, m_value);
+}
+
+void SniffedEvent_UnitUpdate_off_hand_attack_time::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_off_hand_attack_time: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetAttackTime(OFF_ATTACK, m_value);
+}
+
+void SniffedEvent_UnitUpdate_channel_spell::PepareForCurrentClient()
+{
+    if (m_value && !sGameDataMgr.IsValidSpellId(m_value))
+        m_value = 0;
+}
+
+void SniffedEvent_UnitUpdate_channel_spell::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_channel_spell: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetChannelSpell(m_value);
 }

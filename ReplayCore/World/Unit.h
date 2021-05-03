@@ -55,6 +55,7 @@ public :
     }
     Unit(CreatureData const& unitData);
 
+    void Update() override;
     void AddUnitMovementFlag(uint32 f) { m_movementInfo.moveFlags |= f; }
     void RemoveUnitMovementFlag(uint32 f) { m_movementInfo.moveFlags &= ~f; }
     bool HasUnitMovementFlag(uint32 f) const { return (m_movementInfo.moveFlags & f) == f; }
@@ -95,17 +96,78 @@ public :
         m_movementInfo.pos.o = o;
     }
 
-    uint8 GetRace() const { return GetByteValue("UNIT_FIELD_BYTES_0", 0); }
+    ObjectGuid GetCharmGuid() const;
+    void SetCharmGuid(ObjectGuid guid);
+    ObjectGuid GetSummonGuid() const;
+    void SetSummonGuid(ObjectGuid guid);
+    ObjectGuid GetCharmedByGuid() const;
+    void SetCharmedByGuid(ObjectGuid guid);
+    ObjectGuid GetSummonedByGuid() const;
+    void SetSummonedByGuid(ObjectGuid guid);
+    ObjectGuid GetCreatedByGuid() const;
+    void SetCreatedByGuid(ObjectGuid guid);
+    ObjectGuid GetTargetGuid() const;
+    void SetTargetGuid(ObjectGuid guid);
+    uint32 GetHealth() const;
+    void SetHealth(uint32 health);
+    uint32 GetMaxHealth() const;
+    void SetMaxHealth(uint32 maxHealth);
+    uint32 GetBaseHealth() const;
+    void SetBaseHealth(uint32 baseHealth);
+    uint32 GetBaseMana() const;
+    void SetBaseMana(uint32 baseMana);
+    uint32 GetPower(Powers power) const;
+    void SetPower(Powers power, uint32 value);
+    uint32 GetMaxPower(Powers power) const;
+    void SetMaxPower(Powers power, uint32 value);
+    uint32 GetLevel() const;
+    void SetLevel(uint32 level);
+    uint32 GetFactionTemplate() const;
+    void SetFactionTemplate(uint32 faction);
+    uint8 GetRace() const;
     uint32 GetRaceMask() const { return GetRace() ? 1 << (GetRace() - 1) : 0x0; }
-    uint8 GetClass() const { return GetByteValue("UNIT_FIELD_BYTES_0", 1); }
+    void SetRace(uint8 raceId);
+    uint8 GetClass() const;
     uint32 GetClassMask() const { return GetClass() ? 1 << (GetClass() - 1) : 0x0; }
-    uint8 GetGender() const { return GetByteValue("UNIT_FIELD_BYTES_0", 2); }
-    uint32 GetLevel() const { return GetUInt32Value("UNIT_FIELD_LEVEL"); }
-
-    uint8 GetStandState() const { return GetByteValue("UNIT_FIELD_BYTES_1", 0); }
-    void SetStandState(uint8 standState) { SetByteValue("UNIT_FIELD_BYTES_1", 0, standState); }
-    uint8 GetSheathState() const { return GetByteValue("UNIT_FIELD_BYTES_2", 0); }
-    void SetSheathState(uint8 sheathState) { SetByteValue("UNIT_FIELD_BYTES_2", 0, sheathState); }
+    void SetClass(uint8 classId);
+    uint8 GetGender() const;
+    void SetGender(uint8 gender);
+    uint8 GetPowerType() const;
+    void SetPowerType(uint8 powerType);
+    uint32 GetAuraState() const;
+    void SetAuraState(uint32 auraState);
+    float GetBoundingRadius() const;
+    void SetBoundingRadius(float boundingRadius);
+    float GetCombatReach() const;
+    void SetCombatReach(float combatReach);
+    uint32 GetDisplayId() const;
+    void SetDisplayId(uint32 displayId);
+    uint32 GetNativeDisplayId() const;
+    void SetNativeDisplayId(uint32 nativeDisplayId);
+    uint32 GetMountDisplayId() const;
+    void SetMountDisplayId(uint32 mountDisplayId);
+    uint8 GetStandState() const;
+    void SetStandState(uint8 standState);
+    uint8 GetSheathState() const;
+    void SetSheathState(uint8 sheathState);
+    uint8 GetVisFlags() const;
+    void SetVisFlags(uint8 visFlags);
+    uint8 GetShapeShiftForm() const;
+    void SetShapeShiftForm(uint8 shapeShiftForm);
+    uint32 GetNpcFlags() const;
+    void SetNpcFlags(uint32 npcFlags);
+    uint32 GetUnitFlags() const;
+    void SetUnitFlags(uint32 unitFlags);
+    uint32 GetUnitFlags2() const;
+    void SetUnitFlags2(uint32 unitFlags2);
+    uint32 GetDynamicFlags() const;
+    void SetDynamicFlags(uint32 dynamicFlags);
+    uint32 GetChannelSpell() const;
+    void SetChannelSpell(uint32 channelSpell);
+    uint32 GetCreatedBySpell() const;
+    void SetCreatedBySpell(uint32 createdBySpell);
+    uint32 GetEmoteState() const;
+    void SetEmoteState(uint32 emoteState);
 
     void SetVirtualItem(uint8 slot, uint32 item_id);
     uint32 GetAttackTime(WeaponAttackType att) const;

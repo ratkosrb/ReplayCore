@@ -245,6 +245,10 @@ public:
     void LoadWorldObjectDestroy(char const* tableName, uint32 typeId);
     void LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap);
     void LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap);
+    template <class T>
+    void LoadObjectValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId);
+    template <class T>
+    void LoadObjectValuesUpdate_float(char const* tableName, char const* fieldName, uint32 typeId);
 
 #pragma endregion SniffedEvents
     

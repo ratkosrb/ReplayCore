@@ -241,6 +241,26 @@ void Object::SetUInt16Value(uint16 index, uint8 offset, uint16 value)
     }
 }
 
+uint32 Object::GetEntry() const
+{
+    return GetUInt32Value("OBJECT_FIELD_ENTRY");;
+}
+
+void Object::SetEntry(uint32 entry)
+{
+    SetUInt32Value("OBJECT_FIELD_ENTRY", entry);
+}
+
+float Object::GetScale() const
+{
+    return GetFloatValue("OBJECT_FIELD_SCALE_X");
+}
+
+void Object::SetScale(float scale)
+{
+    SetFloatValue("OBJECT_FIELD_SCALE_X", scale);
+}
+
 bool Object::IsUpdateFieldVisibleTo(uint16 index, Player* target) const
 {
     assert(index < m_valuesCount);

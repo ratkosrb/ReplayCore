@@ -195,6 +195,11 @@ void MoveSpline::Update(Unit* pUnit)
     }
 }
 
+void Unit::Update()
+{
+    m_moveSpline.Update(this);
+}
+
 Unit::Unit(CreatureData const& unitData) : WorldObject(unitData.guid)
 {
     m_objectType |= TYPEMASK_UNIT;
@@ -243,6 +248,374 @@ void Unit::InitializeMoveSpeeds()
 {
     for (int i = 0; i < MAX_MOVE_TYPE_WOTLK; i++)
         m_speedRate[i] = 1.0f;
+}
+
+ObjectGuid Unit::GetCharmGuid() const
+{
+    return GetGuidValue("UNIT_FIELD_CHARM");
+}
+
+void Unit::SetCharmGuid(ObjectGuid guid)
+{
+    SetGuidValue("UNIT_FIELD_CHARM", guid);
+}
+
+ObjectGuid Unit::GetSummonGuid() const
+{
+    return GetGuidValue("UNIT_FIELD_SUMMON");
+}
+
+void Unit::SetSummonGuid(ObjectGuid guid)
+{
+    SetGuidValue("UNIT_FIELD_SUMMON", guid);
+}
+
+ObjectGuid Unit::GetCharmedByGuid() const
+{
+    return GetGuidValue("UNIT_FIELD_CHARMEDBY");;
+}
+
+void Unit::SetCharmedByGuid(ObjectGuid guid)
+{
+    SetGuidValue("UNIT_FIELD_CHARMEDBY", guid);
+}
+
+ObjectGuid Unit::GetSummonedByGuid() const
+{
+    return GetGuidValue("UNIT_FIELD_SUMMONEDBY");
+}
+
+void Unit::SetSummonedByGuid(ObjectGuid guid)
+{
+    SetGuidValue("UNIT_FIELD_SUMMONEDBY", guid);
+}
+
+ObjectGuid Unit::GetCreatedByGuid() const
+{
+    return GetGuidValue("UNIT_FIELD_CREATEDBY");
+}
+
+void Unit::SetCreatedByGuid(ObjectGuid guid)
+{
+    SetGuidValue("UNIT_FIELD_CREATEDBY", guid);
+}
+
+ObjectGuid Unit::GetTargetGuid() const
+{
+    return GetGuidValue("UNIT_FIELD_TARGET");
+}
+
+void Unit::SetTargetGuid(ObjectGuid guid)
+{
+    SetGuidValue("UNIT_FIELD_TARGET", guid);
+}
+
+uint32 Unit::GetHealth() const
+{
+    return GetUInt32Value("UNIT_FIELD_HEALTH");
+}
+
+void Unit::SetHealth(uint32 health)
+{
+    SetUInt32Value("UNIT_FIELD_HEALTH", health);
+}
+
+uint32 Unit::GetMaxHealth() const
+{
+    return GetUInt32Value("UNIT_FIELD_MAXHEALTH");
+}
+
+void Unit::SetMaxHealth(uint32 maxHealth)
+{
+    SetUInt32Value("UNIT_FIELD_MAXHEALTH", maxHealth);
+}
+
+uint32 Unit::GetBaseHealth() const
+{
+    return GetUInt32Value("UNIT_FIELD_BASE_HEALTH");
+}
+
+void Unit::SetBaseHealth(uint32 baseHealth)
+{
+    SetUInt32Value("UNIT_FIELD_BASE_HEALTH", baseHealth);
+}
+
+uint32 Unit::GetBaseMana() const
+{
+    return GetUInt32Value("UNIT_FIELD_BASE_MANA");
+}
+
+void Unit::SetBaseMana(uint32 baseMana)
+{
+    SetUInt32Value("UNIT_FIELD_BASE_MANA", baseMana);
+}
+
+uint32 Unit::GetPower(Powers power) const
+{
+    if (uint16 uf = sWorld.GetUpdateField("UNIT_FIELD_POWER1"))
+        return GetUInt32Value(uf + power);
+    return 0;
+}
+
+void Unit::SetPower(Powers power, uint32 value)
+{
+    if (uint16 uf = sWorld.GetUpdateField("UNIT_FIELD_POWER1"))
+        SetUInt32Value(uf + power, value);
+}
+
+uint32 Unit::GetMaxPower(Powers power) const
+{
+    if (uint16 uf = sWorld.GetUpdateField("UNIT_FIELD_MAXPOWER1"))
+        return GetUInt32Value(uf + power);
+    return 0;
+}
+
+void Unit::SetMaxPower(Powers power, uint32 value)
+{
+    if (uint16 uf = sWorld.GetUpdateField("UNIT_FIELD_MAXPOWER1"))
+        SetUInt32Value(uf + power, value);
+}
+
+uint32 Unit::GetLevel() const
+{
+    return GetUInt32Value("UNIT_FIELD_LEVEL");
+}
+
+void Unit::SetLevel(uint32 level)
+{
+    SetUInt32Value("UNIT_FIELD_LEVEL", level);
+}
+
+uint32 Unit::GetFactionTemplate() const
+{
+    return GetUInt32Value("UNIT_FIELD_FACTIONTEMPLATE");
+}
+
+void Unit::SetFactionTemplate(uint32 faction)
+{
+    SetUInt32Value("UNIT_FIELD_FACTIONTEMPLATE", faction);
+}
+
+uint8 Unit::GetRace() const
+{
+    return GetByteValue("UNIT_FIELD_BYTES_0", 0);
+}
+
+void Unit::SetRace(uint8 raceId)
+{
+    SetByteValue("UNIT_FIELD_BYTES_0", 0, raceId);
+}
+
+uint8 Unit::GetClass() const
+{
+    return GetByteValue("UNIT_FIELD_BYTES_0", 1);;
+}
+
+void Unit::SetClass(uint8 classId)
+{
+    SetByteValue("UNIT_FIELD_BYTES_0", 1, classId);
+}
+
+uint8 Unit::GetGender() const
+{
+    return GetByteValue("UNIT_FIELD_BYTES_0", 2);;
+}
+
+void Unit::SetGender(uint8 gender)
+{
+    SetByteValue("UNIT_FIELD_BYTES_0", 2, gender);
+}
+
+uint8 Unit::GetPowerType() const
+{
+    return GetByteValue("UNIT_FIELD_BYTES_0", 3);;
+}
+
+void Unit::SetPowerType(uint8 powerType)
+{
+    SetByteValue("UNIT_FIELD_BYTES_0", 3, powerType);
+}
+
+uint32 Unit::GetAuraState() const
+{
+    return GetUInt32Value("UNIT_FIELD_AURASTATE");;
+}
+
+void Unit::SetAuraState(uint32 auraState)
+{
+    SetUInt32Value("UNIT_FIELD_AURASTATE", auraState);
+}
+
+float Unit::GetBoundingRadius() const
+{
+    return GetFloatValue("UNIT_FIELD_BOUNDINGRADIUS");
+}
+
+void Unit::SetBoundingRadius(float boundingRadius)
+{
+    SetFloatValue("UNIT_FIELD_BOUNDINGRADIUS", boundingRadius);
+}
+
+float Unit::GetCombatReach() const
+{
+    return GetFloatValue("UNIT_FIELD_COMBATREACH");
+}
+
+void Unit::SetCombatReach(float combatReach)
+{
+    SetFloatValue("UNIT_FIELD_COMBATREACH", combatReach);
+}
+
+uint32 Unit::GetDisplayId() const
+{
+    return GetUInt32Value("UNIT_FIELD_DISPLAYID");
+}
+
+void Unit::SetDisplayId(uint32 displayId)
+{
+    SetUInt32Value("UNIT_FIELD_DISPLAYID", displayId);
+}
+
+uint32 Unit::GetNativeDisplayId() const
+{
+    return GetUInt32Value("UNIT_FIELD_NATIVEDISPLAYID");
+}
+
+void Unit::SetNativeDisplayId(uint32 nativeDisplayId)
+{
+    SetUInt32Value("UNIT_FIELD_NATIVEDISPLAYID", nativeDisplayId);
+}
+
+uint32 Unit::GetMountDisplayId() const
+{
+    return GetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID");;
+}
+
+void Unit::SetMountDisplayId(uint32 mountDisplayId)
+{
+    SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", mountDisplayId);
+}
+
+uint8 Unit::GetStandState() const
+{
+    return GetByteValue("UNIT_FIELD_BYTES_1", 0);
+}
+
+void Unit::SetStandState(uint8 standState)
+{
+    SetByteValue("UNIT_FIELD_BYTES_1", 0, standState);
+}
+
+uint8 Unit::GetSheathState() const
+{
+    return GetByteValue("UNIT_FIELD_BYTES_2", 0);
+}
+
+void Unit::SetSheathState(uint8 sheathState)
+{
+    SetByteValue("UNIT_FIELD_BYTES_2", 0, sheathState);
+}
+
+uint8 Unit::GetVisFlags() const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return GetByteValue("UNIT_FIELD_BYTES_1", 3);
+
+    return GetByteValue("UNIT_FIELD_BYTES_1", 2);
+}
+
+void Unit::SetVisFlags(uint8 visFlags)
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        SetByteValue("UNIT_FIELD_BYTES_1", 3, visFlags);
+    else
+        SetByteValue("UNIT_FIELD_BYTES_1", 2, visFlags);
+}
+
+uint8 Unit::GetShapeShiftForm() const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        return GetByteValue("UNIT_FIELD_BYTES_1", 2);
+
+    return GetByteValue("UNIT_FIELD_BYTES_2", 3);
+}
+
+void Unit::SetShapeShiftForm(uint8 shapeShiftForm)
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        SetByteValue("UNIT_FIELD_BYTES_1", 2, shapeShiftForm);
+    else
+        SetByteValue("UNIT_FIELD_BYTES_2", 3, shapeShiftForm);
+}
+
+uint32 Unit::GetNpcFlags() const
+{
+    return GetUInt32Value("UNIT_NPC_FLAGS");
+}
+
+void Unit::SetNpcFlags(uint32 npcFlags)
+{
+    SetUInt32Value("UNIT_NPC_FLAGS", npcFlags);
+}
+
+uint32 Unit::GetUnitFlags() const
+{
+    return GetUInt32Value("UNIT_FIELD_FLAGS");
+}
+
+void Unit::SetUnitFlags(uint32 unitFlags)
+{
+    SetUInt32Value("UNIT_FIELD_FLAGS", unitFlags);
+}
+
+uint32 Unit::GetUnitFlags2() const
+{
+    return GetUInt32Value("UNIT_FIELD_FLAGS_2");
+}
+
+void Unit::SetUnitFlags2(uint32 unitFlags2)
+{
+    SetUInt32Value("UNIT_FIELD_FLAGS_2", unitFlags2);
+}
+
+uint32 Unit::GetDynamicFlags() const
+{
+    return GetUInt32Value("UNIT_DYNAMIC_FLAGS");
+}
+
+void Unit::SetDynamicFlags(uint32 dynamicFlags)
+{
+    SetUInt32Value("UNIT_DYNAMIC_FLAGS", dynamicFlags);
+}
+
+uint32 Unit::GetChannelSpell() const
+{
+    return GetUInt32Value("UNIT_CHANNEL_SPELL");
+}
+
+void Unit::SetChannelSpell(uint32 channelSpell)
+{
+    SetUInt32Value("UNIT_CHANNEL_SPELL", channelSpell);
+}
+
+uint32 Unit::GetCreatedBySpell() const
+{
+    return GetUInt32Value("UNIT_CREATED_BY_SPELL");
+}
+
+void Unit::SetCreatedBySpell(uint32 createdBySpell)
+{
+    SetUInt32Value("UNIT_CREATED_BY_SPELL", createdBySpell);
+}
+
+uint32 Unit::GetEmoteState() const
+{
+    return GetUInt32Value("UNIT_NPC_EMOTESTATE");
+}
+
+void Unit::SetEmoteState(uint32 emoteState)
+{
+    SetUInt32Value("UNIT_NPC_EMOTESTATE", emoteState);
 }
 
 void Unit::SetVirtualItem(uint8 slot, uint32 item_id)

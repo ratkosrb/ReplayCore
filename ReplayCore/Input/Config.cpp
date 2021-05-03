@@ -22,6 +22,7 @@ bool Config::LoadConfig()
     m_serverIp = reader.Get("Server", "Address", "127.0.0.1");
     m_loginServerPort = reader.GetInteger("Server", "LoginPort", 3724);
     m_worldServerPort = reader.GetInteger("Server", "WorldPort", 8085);
+    m_writePacketLog = reader.GetBoolean("Server", "PacketLog", false);
 
     std::string sniffDbHost = reader.Get("SniffDatabase", "Host", "127.0.0.1");
     std::string sniffDbPort = reader.Get("SniffDatabase", "Port", "3306");
