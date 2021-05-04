@@ -61,6 +61,7 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
     uint8 updatesCount = 0;
     uint8 outOfRangeCount = 0;
     UpdateData updateData;
+    std::vector<Unit const*> unitsWithAuras;
 
     for (auto& itr : objectsMap)
     {
@@ -77,6 +78,16 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
                     itr.second.BuildCreateUpdateBlockForPlayer(&updateData, m_clientPlayer.get());
                     m_sessionData.visibleObjects.insert(itr.first);
                     updatesCount++;
+
+                    // Send aura updates if needed.
+                    if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2)
+                    {
+                        if (Unit const* pUnit = itr.second.ToUnit())
+                        {
+                            if (pUnit->HasAuras())
+                                unitsWithAuras.push_back(pUnit);
+                        }
+                    }
                 }
                 else if (itr.second.IsMarkedForClientUpdate())
                 {
@@ -102,6 +113,9 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
 
     if (updatesCount || outOfRangeCount)
         updateData.Send();
+
+    for (auto const& pUnit : unitsWithAuras)
+        pUnit->SendAllAurasUpdate();
 }
 
 void WorldServer::ResetAndSpawnWorld()

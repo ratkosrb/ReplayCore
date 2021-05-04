@@ -58,6 +58,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_channel_spell>("creature_values_update", "channel_spell_id", TYPEID_UNIT);
     LoadUnitGuidValuesUpdate("creature_guid_values_update", TYPEID_UNIT);
     LoadUnitSpeedUpdate("creature_speed_update", TYPEID_UNIT);
+    LoadUnitAurasUpdate("creature_auras_update", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_entry>("player_values_update", "entry", TYPEID_PLAYER);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_scale>("player_values_update", "scale", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_display_id>("player_values_update", "display_id", TYPEID_PLAYER);
@@ -85,6 +86,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_channel_spell>("player_values_update", "channel_spell_id", TYPEID_PLAYER);
     LoadUnitGuidValuesUpdate("player_guid_values_update", TYPEID_PLAYER);
     LoadUnitSpeedUpdate("player_speed_update", TYPEID_PLAYER);
+    LoadUnitAurasUpdate("player_auras_update", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_flags>("gameobject_values_update", "flags", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_state>("gameobject_values_update", "state", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_artkit>("gameobject_values_update", "artkit", TYPEID_GAMEOBJECT);
@@ -1186,6 +1188,12 @@ void ReplayMgr::LoadUnitSpeedUpdate(char const* tableName, uint32 typeId)
     }
 }
 
+void SniffedEvent_UnitUpdate_speed::PepareForCurrentClient()
+{
+    if (m_speedType >= sGameDataMgr.GetMoveSpeedsCount())
+        m_disabled = true;
+}
+
 void SniffedEvent_UnitUpdate_speed::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1207,4 +1215,73 @@ void SniffedEvent_UnitUpdate_speed::Execute() const
         sWorld.SendSplineSetSpeed(GetSourceGuid(), m_speedType, m_speedRate * baseMoveSpeed[m_speedType]);
     else
         sWorld.SendSetSpeed(pUnit, m_speedType, m_speedRate * baseMoveSpeed[m_speedType]);
+}
+
+void ReplayMgr::LoadUnitAurasUpdate(char const* tableName, uint32 typeId)
+{
+    //                                             0             1       2       3           4             5               6        7          8           9               10             11           12
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `slot`, `spell_id`, `aura_flags`, `active_flags`, `level`, `charges`, `duration`, `max_duration`, `caster_guid`, `caster_id`, `caster_type` FROM `%s` ORDER BY `unixtimems`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                sourceGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
+                continue;
+            }
+
+            uint32 slot = fields[2].GetUInt32();
+
+            if (slot >= MAX_AURA_SLOTS)
+                continue;
+
+            Aura aura;
+            aura.spellId = fields[3].GetUInt32();
+            aura.auraFlags = fields[4].GetUInt32();
+            aura.activeFlags = fields[5].GetUInt32();
+            aura.level = fields[6].GetUInt32();
+            aura.stacks = fields[7].GetUInt32();
+            aura.duration = fields[8].GetUInt32();
+            aura.durationMax = fields[9].GetUInt32();
+
+            uint32 casterGuidLow = fields[10].GetUInt32();
+            uint32 casterId = fields[11].GetUInt32();
+            std::string casterType = fields[12].GetCppString();
+            aura.casterGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
+
+            if (aura.spellId && aura.spellId > MAX_SPELL_ID_WOTLK)
+                continue;
+
+            std::shared_ptr<SniffedEvent_UnitUpdate_auras> newEvent = std::make_shared<SniffedEvent_UnitUpdate_auras>(sourceGuid, slot, aura);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_UnitUpdate_auras::PepareForCurrentClient()
+{
+    if (m_aura.spellId && !sGameDataMgr.IsValidSpellId(m_aura.spellId))
+        m_disabled = true;
+
+    m_aura.auraFlags = sGameDataMgr.ConvertAuraFlags(m_aura.auraFlags, m_aura.activeFlags);
+}
+
+void SniffedEvent_UnitUpdate_auras::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_auras: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetAura(m_slot, m_aura, sReplayMgr.IsPlaying() && pUnit->IsVisibleToClient());
 }

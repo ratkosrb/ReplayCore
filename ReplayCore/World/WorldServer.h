@@ -295,6 +295,8 @@ public:
     void SendInitialWorldStates(std::map<uint32, uint32> worldStates);
     void SendWorldStateUpdate(uint32 variable, uint32 value);
     void SendMonsterMove(Unit* pUnit);
+    void SendAuraUpdate(ObjectGuid targetGuid, uint8 slot, Aura const& aura);
+    void SendAllAurasUpdate(ObjectGuid targetGuid, Aura const auras[MAX_AURA_SLOTS]);
 };
 
 #define sWorld WorldServer::Instance()

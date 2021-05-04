@@ -56,6 +56,17 @@ enum SpellMissInfo
 
 namespace Vanilla
 {
+    enum AuraFlags
+    {
+        AFLAG_NONE                  = 0x00,
+        AFLAG_CANCELABLE            = 0x01,
+        ALFAG_UNK2                  = 0x02,
+        AFLAG_POSITIVE              = 0x04,
+        AFLAG_NEGATIVE              = 0x08,
+
+        AFLAG_MASK_ALL              = 0x0F
+    };
+
     enum SpellCastResult
     {
         SPELL_FAILED_AFFECTING_COMBAT               = 0x00, // You are in combat
@@ -212,6 +223,19 @@ namespace Vanilla
 
 namespace TBC
 {
+    enum AuraFlags
+    {
+        AFLAG_NONE                  = 0x00,
+        AFLAG_POSITIVE              = 0x01,
+        AFLAG_NEGATIVE              = 0x02,
+        AFLAG_PASSIVE_DEPRECATED    = 0x04,     // Pre-WotLK: debuffs can't be queried using this flag. Unused in UI since 1.10.0, new meaning unknown (still the same?)
+        AFLAG_UNK4                  = 0x08,     // Pre-WotLK: unused in UI
+        AFLAG_CANCELABLE            = 0x10,
+        AFLAG_NOT_CANCELABLE        = 0x20,
+
+        AFLAG_MASK_ALL              = 0xFF
+    };
+
     enum SpellCastResult
     {
         SPELL_FAILED_AFFECTING_COMBAT               = 0x00,
@@ -391,6 +415,19 @@ namespace TBC
 
 namespace WotLK
 {
+    enum AuraFlags
+    {
+        AFLAG_NONE              = 0x00,
+        AFLAG_EFF_INDEX_0       = 0x01,
+        AFLAG_EFF_INDEX_1       = 0x02,
+        AFLAG_EFF_INDEX_2       = 0x04,
+        AFLAG_NO_CASTER         = 0x08,
+        AFLAG_POSITIVE          = 0x10,
+        AFLAG_DURATION          = 0x20,
+        AFLAG_UNK2              = 0x40,
+        AFLAG_NEGATIVE          = 0x80
+    };
+
     enum SpellCastResult
     {
         SPELL_FAILED_SUCCESS = 0,
@@ -584,6 +621,23 @@ namespace WotLK
 
         SPELL_NOT_FOUND = 254,                                  // custom value, don't must be send to client
         SPELL_CAST_OK = 255
+    };
+}
+
+namespace Classic
+{
+    enum AURA_FLAGS
+    {
+        AFLAG_NONE                   = 0x0000,
+        AFLAG_NO_CASTER              = 0x0001,
+        AFLAG_POSITIVE               = 0x0002,
+        AFLAG_DURATION               = 0x0004,
+        AFLAG_SCALABLE               = 0x0008,
+        AFLAG_NEGATIVE               = 0x0010,
+        AFLAG_UNK20                  = 0x0020,
+        AFLAG_UNK40                  = 0x0040,
+        AFLAG_UNK80                  = 0x0080,
+        AFLAG_MAW_POWER              = 0x0100,
     };
 }
 

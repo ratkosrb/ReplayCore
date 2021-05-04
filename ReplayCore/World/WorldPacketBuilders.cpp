@@ -8,6 +8,7 @@
 #include "ChatDefines.h"
 #include "SpellCastTargets.h"
 #include "SpellDefines.h"
+#include "Aura.h"
 
 void WorldServer::SendAuthChallenge()
 {
@@ -1815,5 +1816,37 @@ void WorldServer::SendMonsterMove(Unit* pUnit)
     if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
         data << uint8(0); // Toggle AnimTierInTrans
     pUnit->m_moveSpline.WriteMove(data);
+    SendPacket(data);
+}
+
+void WorldServer::SendAuraUpdate(ObjectGuid targetGuid, uint8 slot, Aura const& aura)
+{
+    WorldPacket data(GetOpcode("SMSG_AURA_UPDATE"));
+    data << targetGuid.WriteAsPacked();
+    if (aura.spellId)
+    {
+        data << uint8(slot);
+        data << aura;
+    }
+    else
+    {
+        data << uint8(slot);
+        data << uint32(0);
+    }
+    SendPacket(data);
+}
+
+void WorldServer::SendAllAurasUpdate(ObjectGuid targetGuid, Aura const auras[MAX_AURA_SLOTS])
+{
+    WorldPacket data(GetOpcode("SMSG_AURA_UPDATE_ALL"));
+    data << targetGuid.WriteAsPacked();
+    for (uint8 i = 0; i < MAX_AURA_SLOTS; i++)
+    {
+        if (auras[i].spellId)
+        {
+            data << uint8(i);
+            data << auras[i];
+        }
+    }
     SendPacket(data);
 }

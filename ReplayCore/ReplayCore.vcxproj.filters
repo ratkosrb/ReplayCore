@@ -92,6 +92,9 @@
     <ClCompile Include="World\MoveSpline.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\Aura.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -245,6 +248,9 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\MoveSpline.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Aura.h">
       <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>

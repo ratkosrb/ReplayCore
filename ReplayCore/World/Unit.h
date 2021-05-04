@@ -6,6 +6,8 @@
 #include "MovementDefines.h"
 #include "MovementInfo.h"
 #include "MoveSpline.h"
+#include "SpellDefines.h"
+#include "Aura.h"
 
 struct CreatureData;
 
@@ -140,6 +142,14 @@ public :
     uint32 GetAttackTime(WeaponAttackType att) const;
     void SetAttackTime(WeaponAttackType att, uint32 val);
 
+    bool HasAuras() const;
+    void SetAura(uint8 slot, Aura aura, bool sendUpdate);
+    void SetAuraFlag(uint32 slot, uint32 flags);
+    void SetAuraLevel(uint32 slot, uint32 level);
+    void SetAuraCharges(uint32 slot, uint32 charges);
+    void SendAllAurasUpdate() const;
+    void SetDebuffLimit(uint8 slots);
+
     void InitializePlaceholderUnitFields();
     void InitializeMoveSpeeds();
     void SetSpeedRate(UnitMoveType moveType, float rate)
@@ -167,6 +177,7 @@ protected:
     ObjectGuid m_meleeVictim;
     MovementInfo m_movementInfo;
     float m_speedRate[MAX_MOVE_TYPE_WOTLK] = {};
+    Aura m_auras[MAX_AURA_SLOTS] = {};
 };
 
 #endif

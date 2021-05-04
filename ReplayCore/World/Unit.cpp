@@ -50,6 +50,10 @@ Unit::Unit(CreatureData const& unitData) : WorldObject(unitData.guid)
 
 void Unit::InitializePlaceholderUnitFields()
 {
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1 &&
+        sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
+        SetDebuffLimit(16);
+
     SetUInt32Value("UNIT_FIELD_MAXPOWER2", 1000);
     SetUInt32Value("UNIT_FIELD_MAXPOWER3", 100);
     SetUInt32Value("UNIT_FIELD_MAXPOWER4", 100);
@@ -538,4 +542,96 @@ Unit* Unit::GetTarget() const
         return sWorld.GetClientPlayer();
 
     return sWorld.FindUnit(guid);
+}
+
+bool Unit::HasAuras() const
+{
+    for (uint8 i = 0; i < MAX_AURA_SLOTS; i++)
+        if (m_auras[i].spellId)
+            return true;
+    return false;
+}
+
+void Unit::SendAllAurasUpdate() const
+{
+    sWorld.SendAllAurasUpdate(GetObjectGuid(), m_auras);
+}
+
+void Unit::SetAura(uint8 slot, Aura aura, bool sendUpdate)
+{
+    m_auras[slot] = aura;
+
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        if (uint32 uf = sWorld.GetUpdateField("UNIT_FIELD_AURA"))
+        {
+            SetUInt32Value(uf + slot, aura.spellId);
+            SetAuraFlag(slot, aura.auraFlags);
+            SetAuraLevel(slot, aura.level);
+            SetAuraCharges(slot, aura.stacks);
+        }
+    }
+    else if (sendUpdate)
+    {
+        sWorld.SendAuraUpdate(m_guid, slot, aura);
+    }
+}
+
+void Unit::SetAuraFlag(uint32 slot, uint32 flags)
+{
+    if (uint32 uf = sWorld.GetUpdateField("UNIT_FIELD_AURAFLAGS"))
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        {
+            uint32 index = slot >> 3;
+            uint32 byte = (slot & 7) << 2;
+            uint32 val = GetUInt32Value(uf + index);
+            val &= ~(uint32(Vanilla::AFLAG_MASK_ALL) << byte);
+            if (flags)
+                val |= (flags << byte);
+            SetUInt32Value(uf + index, val);
+        }
+        else
+        {
+            uint32 index = slot / 4;
+            uint32 byte = (slot % 4) * 8;
+            uint32 val = GetUInt32Value(uf + index);
+            val &= ~(uint32(TBC::AFLAG_MASK_ALL) << byte);
+            if (flags)
+                val |= (flags << byte);
+            SetUInt32Value(uf + index, val);
+        }
+    }
+}
+
+void Unit::SetAuraLevel(uint32 slot, uint32 level)
+{
+    if (uint32 uf = sWorld.GetUpdateField("UNIT_FIELD_AURALEVELS"))
+    {
+        uint32 index = slot / 4;
+        uint32 byte = (slot % 4) * 8;
+        uint32 val = GetUInt32Value(uf + index);
+        val &= ~(0xFF << byte);
+        val |= (level << byte);
+        SetUInt32Value(uf + index, val);
+    }
+}
+
+void Unit::SetAuraCharges(uint32 slot, uint32 charges)
+{
+    if (uint32 uf = sWorld.GetUpdateField("UNIT_FIELD_AURAAPPLICATIONS"))
+    {
+        uint32 index = slot / 4;
+        uint32 byte = (slot % 4) * 8;
+        uint32 val = GetUInt32Value(uf + index);
+        val &= ~(0xFF << byte);
+        // field expect count-1 for proper amount show, also prevent overflow at client side
+        val |= ((uint8(charges <= 255 ? charges - 1 : 255 - 1)) << byte);
+        SetUInt32Value(uf + index, val);
+    }
+}
+
+void Unit::SetDebuffLimit(uint8 slots)
+{
+    SetByteValue("UNIT_FIELD_BYTES_2", 1, slots);
 }

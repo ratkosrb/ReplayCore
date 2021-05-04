@@ -23,6 +23,47 @@
 #include "ChatDefines.h"
 #include <string>
 
+inline uint8 ConvertClassicAuraFlagsToVanilla(uint8 auraFlags)
+{
+    uint8 newFlags = 0;
+    if (auraFlags & Classic::AFLAG_POSITIVE)
+        newFlags |= Vanilla::AFLAG_CANCELABLE | Vanilla::AFLAG_POSITIVE;
+    if (auraFlags & Classic::AFLAG_NEGATIVE)
+        newFlags |= Vanilla::AFLAG_NEGATIVE;
+    return newFlags;
+}
+
+inline uint8 ConvertClassicAuraFlagsToTBC(uint8 auraFlags)
+{
+    uint8 newFlags = 0;
+    if (auraFlags & Classic::AFLAG_POSITIVE)
+        newFlags |= TBC::AFLAG_CANCELABLE | TBC::AFLAG_POSITIVE;
+    if (auraFlags & Classic::AFLAG_NEGATIVE)
+        newFlags |= TBC::AFLAG_NOT_CANCELABLE | TBC::AFLAG_NEGATIVE;
+    if (auraFlags & Classic::AFLAG_NO_CASTER)
+        newFlags |= TBC::AFLAG_PASSIVE_DEPRECATED;
+    return newFlags;
+}
+
+inline uint8 ConvertClassicAuraFlagsToWotLK(uint8 auraFlags, uint8 activeFlags)
+{
+    uint8 newFlags = 0;
+    if (auraFlags & Classic::AFLAG_POSITIVE)
+        newFlags |= WotLK::AFLAG_POSITIVE;
+    if (auraFlags & Classic::AFLAG_NEGATIVE)
+        newFlags |= WotLK::AFLAG_NEGATIVE;
+    if (auraFlags & Classic::AFLAG_NO_CASTER)
+        newFlags |= WotLK::AFLAG_NO_CASTER;
+    if (auraFlags & Classic::AFLAG_DURATION)
+        newFlags |= WotLK::AFLAG_DURATION;
+    if (activeFlags & 1)
+        newFlags |= WotLK::AFLAG_EFF_INDEX_0;
+    if (activeFlags & 2)
+        newFlags |= WotLK::AFLAG_EFF_INDEX_1;
+    if (activeFlags & 4)
+        newFlags |= WotLK::AFLAG_EFF_INDEX_2;
+    return newFlags;
+}
 
 inline uint32 ConvertClassicNpcFlagToVanilla(uint32 flag)
 {

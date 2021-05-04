@@ -19,6 +19,7 @@
 
 #include "../Defines/Common.h"
 #include "ObjectGuid.h"
+#include "Aura.h"
 #include <string>
 
 enum SniffedEventType : uint8
@@ -877,9 +878,29 @@ struct SniffedEvent_UnitUpdate_speed : SniffedEvent
     uint32 m_speedType = 0;
     float m_speedRate = 0;
     void Execute() const final;
+    void PepareForCurrentClient() final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_SPEED;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_auras : SniffedEvent
+{
+    SniffedEvent_UnitUpdate_auras(ObjectGuid source, uint32 slot, Aura aura) :
+        m_source(source), m_slot(slot), m_aura(aura) {};
+    ObjectGuid m_source;
+    uint32 m_slot = 0;
+    Aura m_aura;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_AURAS;
     }
     ObjectGuid GetSourceGuid() const final
     {
@@ -1170,29 +1191,6 @@ struct SniffedEvent_UnitAttackStop : SniffedEvent
     KnownObject GetTargetObject() const final
     {
         return KnownObject(m_victimGuid, m_victimId, TypeID(m_victimType));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_auras : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_auras(uint32 guid, uint32 entry, uint32 type, uint32 updateId, uint32 slot, uint32 spellId, uint32 level, uint32 charges) :
-        m_guid(guid), m_entry(entry), m_type(type), m_updateId(updateId), m_slot(slot), m_spellId(spellId), m_level(level), m_charges(charges) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_updateId = 0;
-    uint32 m_slot = 0;
-    uint32 m_spellId = 0;
-    uint32 m_level = 0;
-    uint32 m_charges = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_AURAS;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
     }
 };
 

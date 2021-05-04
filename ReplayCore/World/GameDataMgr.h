@@ -44,6 +44,7 @@ public:
     uint32 ConvertChatType(uint32 chatType) const;
     void ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination);
     uint32 ConvertNpcFlags(uint32 npcFlags);
+    uint8 ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags);
 
     void LoadGameTele();
     GameTele const* GetGameTele(std::string name) const;
