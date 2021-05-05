@@ -993,6 +993,120 @@ struct SniffedEvent_GameObjectUpdate_path_progress : SniffedEvent
     }
 };
 
+struct SniffedEvent_SpellCastFailed : SniffedEvent
+{
+    SniffedEvent_SpellCastFailed(ObjectGuid source, uint32 spellId, uint32 reason) :
+        m_source(source), m_spellId(spellId), m_reason(reason) {};
+    ObjectGuid m_source;
+    uint32 m_spellId = 0;
+    uint32 m_reason = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_SPELL_CAST_FAILED;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_SpellCastStart : SniffedEvent
+{
+    SniffedEvent_SpellCastStart(ObjectGuid casterGuid, ObjectGuid casterUnitGuid, ObjectGuid targetGuid, uint32 spellId, uint32 castTime, uint32 castFlags, uint32 ammoDisplayId, uint32 ammoInventoryType) :
+        m_casterGuid(casterGuid), m_casterUnitGuid(casterUnitGuid), m_targetGuid(targetGuid), m_spellId(spellId), m_castTime(castTime), m_castFlags(castFlags), m_ammoDisplayId(ammoDisplayId), m_ammoInventoryType(ammoInventoryType) {};
+    ObjectGuid m_casterGuid;
+    ObjectGuid m_casterUnitGuid;
+    ObjectGuid m_targetGuid;
+    uint32 m_spellId = 0;
+    uint32 m_castTime = 0;
+    uint32 m_castFlags = 0;
+    uint32 m_ammoDisplayId = 0;
+    uint32 m_ammoInventoryType = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_SPELL_CAST_START;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_casterGuid;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_targetGuid;
+    }
+};
+
+struct SniffedEvent_SpellCastGo : SniffedEvent
+{
+    SniffedEvent_SpellCastGo(ObjectGuid casterGuid, ObjectGuid casterUnitGuid, uint32 spellId, uint32 castFlags, uint32 ammoDisplayId, uint32 ammoInventoryType, ObjectGuid mainTargetGuid, std::vector<ObjectGuid> hitTargets, std::vector<ObjectGuid> missTargets, std::unique_ptr<Vector3> sourcePosition, std::unique_ptr<Vector3> destinationPosition) :
+        m_casterGuid(casterGuid), m_casterUnitGuid(casterUnitGuid), m_spellId(spellId), m_castFlags(castFlags), m_ammoDisplayId(ammoDisplayId), m_ammoInventoryType(ammoInventoryType), m_mainTargetGuid(mainTargetGuid), m_hitTargets(hitTargets), m_missTargets(missTargets), m_sourcePosition(std::move(sourcePosition)), m_destinationPosition(std::move(destinationPosition)) {};
+    uint32 m_spellId = 0;
+    uint32 m_castFlags = 0;
+    uint32 m_ammoDisplayId = 0;
+    uint32 m_ammoInventoryType = 0;
+    ObjectGuid m_casterGuid;
+    ObjectGuid m_casterUnitGuid;
+    ObjectGuid m_mainTargetGuid;
+    std::vector<ObjectGuid> m_hitTargets;
+    std::vector<ObjectGuid> m_missTargets;
+    std::unique_ptr<Vector3> m_sourcePosition;
+    std::unique_ptr<Vector3> m_destinationPosition;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_SPELL_CAST_GO;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_casterGuid;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_mainTargetGuid;
+    }
+};
+
+struct SniffedEvent_SpellChannelStart : SniffedEvent
+{
+    SniffedEvent_SpellChannelStart(ObjectGuid casterGuid, uint32 spellId, int32 duration) :
+        m_casterGuid(casterGuid), m_spellId(spellId), m_duration(duration) {};
+    ObjectGuid m_casterGuid;
+    uint32 m_spellId = 0;
+    int32 m_duration = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_SPELL_CHANNEL_START;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_casterGuid;
+    }
+};
+
+struct SniffedEvent_SpellChannelUpdate : SniffedEvent
+{
+    SniffedEvent_SpellChannelUpdate(ObjectGuid casterGuid, int32 duration) :
+        m_casterGuid(casterGuid), m_duration(duration) {};
+    ObjectGuid m_casterGuid;
+    int32 m_duration = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_SPELL_CHANNEL_UPDATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_casterGuid;
+    }
+};
+
 /*
 
 struct SniffedEvent_UnitDestroy : SniffedEvent
@@ -1314,129 +1428,6 @@ struct SniffedEvent_GameObjectDestroy : SniffedEvent
     KnownObject GetSourceObject() const final
     {
         return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_SpellCastFailed : SniffedEvent
-{
-    SniffedEvent_SpellCastFailed(uint32 spellId, uint32 casterGuid, uint32 casterId, uint32 casterType) :
-        m_spellId(spellId), m_casterGuid(casterGuid), m_casterId(casterId), m_casterType(casterType) {};
-    uint32 m_spellId = 0;
-    uint32 m_casterGuid = 0;
-    uint32 m_casterId = 0;
-    uint32 m_casterType = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_SPELL_CAST_FAILED;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_casterGuid, m_casterId, TypeID(m_casterType));
-    }
-};
-
-struct SniffedEvent_SpellCastStart : SniffedEvent
-{
-    SniffedEvent_SpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, uint32 ammoDisplayId, uint32 ammoInventoryType, uint32 casterGuid, uint32 casterId, uint32 casterType, uint32 targetGuid, uint32 targetId, uint32 targetType) :
-        m_spellId(spellId), m_castTime(castTime), m_castFlags(castFlags), m_ammoDisplayId(ammoDisplayId), m_ammoInventoryType(ammoInventoryType), m_casterGuid(casterGuid), m_casterId(casterId), m_casterType(casterType), m_targetGuid(targetGuid), m_targetId(targetId), m_targetType(targetType) {};
-    uint32 m_spellId = 0;
-    uint32 m_castTime = 0;
-    uint32 m_castFlags = 0;
-    uint32 m_ammoDisplayId = 0;
-    uint32 m_ammoInventoryType = 0;
-    uint32 m_casterGuid = 0;
-    uint32 m_casterId = 0;
-    uint32 m_casterType = 0;
-    uint32 m_targetGuid = 0;
-    uint32 m_targetId = 0;
-    uint32 m_targetType = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_SPELL_CAST_START;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_casterGuid, m_casterId, TypeID(m_casterType));
-    }
-    KnownObject GetTargetObject() const final
-    {
-        return KnownObject(m_targetGuid, m_targetId, TypeID(m_targetType));
-    }
-};
-
-struct SniffedEvent_SpellCastGo : SniffedEvent
-{
-    SniffedEvent_SpellCastGo(uint32 spellId, uint32 castFlags, uint32 ammoDisplayId, uint32 ammoInventoryType, uint32 casterGuid, uint32 casterId, uint32 casterType, uint32 targetGuid, uint32 targetId, uint32 targetType, uint32 hitTargetsCount, uint32 hitTargetsListId, uint32 missTargetsCount, uint32 missTargetsListId, uint32 srcPositionId, uint32 dstPositionId) :
-        m_spellId(spellId), m_castFlags(castFlags), m_ammoDisplayId(ammoDisplayId), m_ammoInventoryType(ammoInventoryType), m_casterGuid(casterGuid), m_casterId(casterId), m_casterType(casterType), m_targetGuid(targetGuid), m_targetId(targetId), m_targetType(targetType), m_hitTargetsCount(hitTargetsCount), m_hitTargetsListId(hitTargetsListId), m_missTargetsCount(missTargetsCount), m_missTargetsListId(missTargetsListId), m_srcPositionId(srcPositionId), m_dstPositionId(dstPositionId) {};
-    uint32 m_spellId = 0;
-    uint32 m_castFlags = 0;
-    uint32 m_ammoDisplayId = 0;
-    uint32 m_ammoInventoryType = 0;
-    uint32 m_casterGuid = 0;
-    uint32 m_casterId = 0;
-    uint32 m_casterType = 0;
-    uint32 m_targetGuid = 0;
-    uint32 m_targetId = 0;
-    uint32 m_targetType = 0;
-    uint32 m_hitTargetsCount = 0;
-    uint32 m_hitTargetsListId = 0;
-    uint32 m_missTargetsCount = 0;
-    uint32 m_missTargetsListId = 0;
-    uint32 m_srcPositionId = 0;
-    uint32 m_dstPositionId = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_SPELL_CAST_GO;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_casterGuid, m_casterId, TypeID(m_casterType));
-    }
-    KnownObject GetTargetObject() const final
-    {
-        return KnownObject(m_targetGuid, m_targetId, TypeID(m_targetType));
-    }
-};
-
-struct SniffedEvent_SpellChannelStart : SniffedEvent
-{
-    SniffedEvent_SpellChannelStart(uint32 spellId, int32 duration, uint32 casterGuid, uint32 casterId, uint32 casterType) :
-        m_spellId(spellId), m_duration(duration), m_casterGuid(casterGuid), m_casterId(casterId), m_casterType(casterType) {};
-    uint32 m_spellId = 0;
-    int32 m_duration = 0;
-    uint32 m_casterGuid = 0;
-    uint32 m_casterId = 0;
-    uint32 m_casterType = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_SPELL_CHANNEL_START;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_casterGuid, m_casterId, TypeID(m_casterType));
-    }
-};
-
-struct SniffedEvent_SpellChannelUpdate : SniffedEvent
-{
-    SniffedEvent_SpellChannelUpdate(int32 duration, uint32 casterGuid, uint32 casterId, uint32 casterType) :
-        m_duration(duration), m_casterGuid(casterGuid), m_casterId(casterId), m_casterType(casterType) {};
-    int32 m_duration = 0;
-    uint32 m_casterGuid = 0;
-    uint32 m_casterId = 0;
-    uint32 m_casterType = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_SPELL_CHANNEL_UPDATE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_casterGuid, m_casterId, TypeID(m_casterType));
     }
 };
 

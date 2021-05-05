@@ -7,6 +7,7 @@
 #include "../Defines/Utility.h"
 #include "../Defines/Databases.h"
 #include "../Defines//ClientVersions.h"
+#include <map>
 
 void ReplayMgr::LoadSniffedEvents()
 {
@@ -92,6 +93,11 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_artkit>("gameobject_values_update", "artkit", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_dynamic_flags>("gameobject_values_update", "dynamic_flags", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_path_progress>("gameobject_values_update", "path_progress", TYPEID_GAMEOBJECT);
+    LoadSpellCastFailed();
+    LoadSpellCastStart();
+    LoadSpellCastGo();
+    LoadSpellChannelStart();
+    LoadSpellChannelUpdate();
     printf(">> Loaded %u sniffed events.", (uint32)m_eventsMapBackup.size());
 
     // Events are loaded into the backup map, and only copied into runtime map once
@@ -1256,7 +1262,7 @@ void ReplayMgr::LoadUnitAurasUpdate(char const* tableName, uint32 typeId)
             std::string casterType = fields[12].GetCppString();
             aura.casterGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
 
-            if (aura.spellId && aura.spellId > MAX_SPELL_ID_WOTLK)
+            if (aura.spellId > MAX_SPELL_ID_WOTLK)
                 continue;
 
             std::shared_ptr<SniffedEvent_UnitUpdate_auras> newEvent = std::make_shared<SniffedEvent_UnitUpdate_auras>(sourceGuid, slot, aura);
@@ -1284,4 +1290,361 @@ void SniffedEvent_UnitUpdate_auras::Execute() const
     }
 
     pUnit->SetAura(m_slot, m_aura, sReplayMgr.IsPlaying() && pUnit->IsVisibleToClient());
+}
+
+void ReplayMgr::LoadSpellCastFailed()
+{
+    //                                             0             1              2            3              4           5
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `caster_guid`, `caster_id`, `caster_type`, `spell_id`, `reason` FROM `spell_cast_failed` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 casterGuidLow = fields[1].GetUInt32();
+            uint32 casterId = fields[2].GetUInt32();
+            std::string casterType = fields[3].GetCppString();
+            ObjectGuid sourceGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
+            if (sourceGuid.IsEmpty())
+                continue;
+
+            uint32 spellId = fields[4].GetUInt32();
+
+            if (spellId > MAX_SPELL_ID_WOTLK)
+                continue;
+
+            uint32 reason = fields[5].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_SpellCastFailed> newEvent = std::make_shared<SniffedEvent_SpellCastFailed>(sourceGuid, spellId, reason);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_SpellCastFailed::PepareForCurrentClient()
+{
+    if (!sGameDataMgr.IsValidSpellId(m_spellId))
+        m_disabled = true;
+}
+
+void SniffedEvent_SpellCastFailed::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    sWorld.SendSpellFailedOther(GetSourceGuid(), m_spellId, m_reason);
+}
+
+void ReplayMgr::LoadSpellCastStart()
+{
+    //                                             0             1              2            3              4                   5                 6                   7           9            10            11                 12                     13             14           15
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `caster_guid`, `caster_id`, `caster_type`, `caster_unit_guid`, `caster_unit_id`, `caster_unit_type`, `spell_id`, `cast_time`, `cast_flags`, `ammo_display_id`, `ammo_inventory_type`, `target_guid`, `target_id`, `target_type` FROM `spell_cast_start` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+
+            uint32 casterGuidLow = fields[1].GetUInt32();
+            uint32 casterId = fields[2].GetUInt32();
+            std::string casterType = fields[3].GetCppString();
+            
+            uint32 casterUnitGuidLow = fields[4].GetUInt32();
+            uint32 casterUnitId = fields[5].GetUInt32();
+            std::string casterUnitType = fields[6].GetCppString();
+
+            if (casterType == "Item" && casterUnitType.length() > 1)
+            {
+                casterGuidLow = casterUnitGuidLow;
+                casterId = casterUnitId;
+                casterType = casterUnitType;
+            }
+
+            ObjectGuid casterGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
+            if (casterGuid.IsEmpty())
+                continue;
+            ObjectGuid casterUnitGuid = MakeObjectGuidFromSniffData(casterUnitGuidLow, casterUnitId, casterUnitType);
+
+            uint32 spellId = fields[7].GetUInt32();
+            if (spellId > MAX_SPELL_ID_WOTLK)
+                continue;
+
+            uint32 castTime = fields[8].GetUInt32();
+            uint32 castFlags = fields[9].GetUInt32();
+            uint32 ammoDisplayId = fields[10].GetUInt32();
+            uint32 ammoInventoryType = fields[11].GetUInt32();
+
+            uint32 targetGuidLow = fields[12].GetUInt32();
+            uint32 targetId = fields[13].GetUInt32();
+            std::string targetType = fields[14].GetCppString();
+            ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
+
+            std::shared_ptr<SniffedEvent_SpellCastStart> newEvent = std::make_shared<SniffedEvent_SpellCastStart>(casterGuid, casterUnitGuid, targetGuid, spellId, castTime, castFlags, ammoDisplayId, ammoInventoryType);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_SpellCastStart::PepareForCurrentClient()
+{
+    if (!sGameDataMgr.IsValidSpellId(m_spellId))
+        m_disabled = true;
+}
+
+void SniffedEvent_SpellCastStart::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    SpellCastTargets targets;
+    if (WorldObject* pTarget = m_targetGuid.IsEmpty() ? nullptr : sWorld.FindObject(m_targetGuid))
+    {
+        if (Unit const* pUnit = pTarget->ToUnit())
+            targets.setUnitTarget(pUnit);
+        else if (GameObject const* pGo = pTarget->ToGameObject())
+            targets.setGOTarget(pGo);
+    }
+    
+    sWorld.SendSpellCastStart(m_spellId, m_castTime, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_ammoDisplayId, m_ammoInventoryType);
+}
+
+void ReplayMgr::LoadSpellCastGo()
+{
+    std::map<uint32, Vector3> castGoPositions;
+    //                                             0     1             2             3
+    if (auto result = SniffDatabase.Query("SELECT `id`, `position_x`, `position_y`, `position_z` FROM `spell_cast_go_position`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 id = fields[0].GetUInt32();
+            Vector3& position = castGoPositions[id];
+            position.x = fields[1].GetFloat();
+            position.y = fields[2].GetFloat();
+            position.z = fields[3].GetFloat();
+
+        } while (result->NextRow());
+    }
+
+    std::map<uint32, std::vector<ObjectGuid>> castGoTargets;
+    //                                             0          1              2            3
+    if (auto result = SniffDatabase.Query("SELECT `list_id`, `target_guid`, `target_id`, `target_type` FROM `spell_cast_go_target`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 id = fields[0].GetUInt32();
+            uint32 targetGuidLow = fields[1].GetUInt32();
+            uint32 targetId = fields[2].GetUInt32();
+            std::string targetType = fields[3].GetCppString();
+            ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
+            if (targetGuid.IsEmpty())
+                continue;
+            castGoTargets[id].push_back(targetGuid);
+
+        } while (result->NextRow());
+    }
+
+    //                                             0             1              2            3              4                   5                 6                   7           8             9                  10                     11                  12                13                  14                   15                     16                    17                      18                 19
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `caster_guid`, `caster_id`, `caster_type`, `caster_unit_guid`, `caster_unit_id`, `caster_unit_type`, `spell_id`, `cast_flags`, `ammo_display_id`, `ammo_inventory_type`, `main_target_guid`, `main_target_id`, `main_target_type`, `hit_targets_count`, `hit_targets_list_id`, `miss_targets_count`, `miss_targets_list_id`, `src_position_id`, `dst_position_id` FROM `spell_cast_go` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+
+            uint32 casterGuidLow = fields[1].GetUInt32();
+            uint32 casterId = fields[2].GetUInt32();
+            std::string casterType = fields[3].GetCppString();
+
+            uint32 casterUnitGuidLow = fields[4].GetUInt32();
+            uint32 casterUnitId = fields[5].GetUInt32();
+            std::string casterUnitType = fields[6].GetCppString();
+            if (casterType == "Item" && casterUnitType.length() > 1)
+            {
+                casterGuidLow = casterUnitGuidLow;
+                casterId = casterUnitId;
+                casterType = casterUnitType;
+            }
+            
+            ObjectGuid casterGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
+            if (casterGuid.IsEmpty())
+                continue;
+            ObjectGuid casterUnitGuid = MakeObjectGuidFromSniffData(casterUnitGuidLow, casterUnitId, casterUnitType);
+
+            uint32 spellId = fields[7].GetUInt32();
+            if (spellId > MAX_SPELL_ID_WOTLK)
+                continue;
+
+            uint32 castFlags = fields[8].GetUInt32();
+            uint32 ammoDisplayId = fields[9].GetUInt32();
+            uint32 ammoInventoryType = fields[10].GetUInt32();
+
+            uint32 targetGuidLow = fields[11].GetUInt32();
+            uint32 targetId = fields[12].GetUInt32();
+            std::string targetType = fields[13].GetCppString();
+            ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
+
+            //uint32 hitTargetsCount = fields[14].GetUInt32();
+            uint32 hitTargetsListId = fields[15].GetUInt32();
+
+            //uint32 missTargetsCount = fields[16].GetUInt32();
+            uint32 missTargetsListId = fields[17].GetUInt32();
+
+            std::unique_ptr<Vector3> pSrcPosition;
+            uint32 srcPositionId = fields[18].GetUInt32();
+            if (srcPositionId)
+            {
+                auto itr = castGoPositions.find(srcPositionId);
+                if (itr != castGoPositions.end())
+                    pSrcPosition = std::make_unique<Vector3>(itr->second);
+            }
+
+            std::unique_ptr<Vector3> pDstPosition;
+            uint32 dstPositionId = fields[19].GetUInt32();
+            if (dstPositionId)
+            {
+                auto itr = castGoPositions.find(dstPositionId);
+                if (itr != castGoPositions.end())
+                    pDstPosition = std::make_unique<Vector3>(itr->second);
+            }
+
+            std::shared_ptr<SniffedEvent_SpellCastGo> newEvent = std::make_shared<SniffedEvent_SpellCastGo>(casterGuid, casterUnitGuid, spellId, castFlags, ammoDisplayId, ammoInventoryType, targetGuid, castGoTargets[hitTargetsListId], castGoTargets[missTargetsListId], std::move(pSrcPosition), std::move(pDstPosition));
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_SpellCastGo::PepareForCurrentClient()
+{
+    if (!sGameDataMgr.IsValidSpellId(m_spellId))
+        m_disabled = true;
+}
+
+void SniffedEvent_SpellCastGo::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    SpellCastTargets targets;
+    if (WorldObject* pTarget = m_mainTargetGuid.IsEmpty() ? nullptr : sWorld.FindObject(m_mainTargetGuid))
+    {
+        if (Unit const* pUnit = pTarget->ToUnit())
+            targets.setUnitTarget(pUnit);
+        else if (GameObject const* pGo = pTarget->ToGameObject())
+            targets.setGOTarget(pGo);
+    }
+
+    if (m_sourcePosition)
+        targets.setSource(m_sourcePosition->x, m_sourcePosition->y, m_sourcePosition->z);
+
+    if (m_destinationPosition)
+        targets.setDestination(m_destinationPosition->x, m_destinationPosition->y, m_destinationPosition->z);
+
+    sWorld.SendSpellCastGo(m_spellId, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_hitTargets, m_missTargets, m_ammoDisplayId, m_ammoInventoryType);
+}
+
+void ReplayMgr::LoadSpellChannelStart()
+{
+    //                                             0             1              2            3              4           5
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `caster_guid`, `caster_id`, `caster_type`, `spell_id`, `duration` FROM `spell_channel_start` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 casterGuidLow = fields[1].GetUInt32();
+            uint32 casterId = fields[2].GetUInt32();
+            std::string casterType = fields[3].GetCppString();
+            ObjectGuid casterGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
+            if (casterGuid.IsEmpty())
+                continue;
+
+            uint32 spellId = fields[4].GetUInt32();
+            if (spellId > MAX_SPELL_ID_WOTLK)
+                continue;
+
+            int32 duration = fields[5].GetInt32();
+
+            std::shared_ptr<SniffedEvent_SpellChannelStart> newEvent = std::make_shared<SniffedEvent_SpellChannelStart>(casterGuid, spellId, duration);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_SpellChannelStart::PepareForCurrentClient()
+{
+    if (!sGameDataMgr.IsValidSpellId(m_spellId))
+        m_disabled = true;
+}
+
+void SniffedEvent_SpellChannelStart::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    // In vanilla MSG_CHANNEL_START is only sent to the caster itself.
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        sWorld.SendSpellChannelStart(m_casterGuid, m_spellId, m_duration);
+}
+
+void ReplayMgr::LoadSpellChannelUpdate()
+{
+    //                                             0             1              2            3              4
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `caster_guid`, `caster_id`, `caster_type`, `duration` FROM `spell_channel_update` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 casterGuidLow = fields[1].GetUInt32();
+            uint32 casterId = fields[2].GetUInt32();
+            std::string casterType = fields[3].GetCppString();
+            ObjectGuid casterGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
+            if (casterGuid.IsEmpty())
+                continue;
+
+            int32 duration = fields[4].GetInt32();
+
+            std::shared_ptr<SniffedEvent_SpellChannelUpdate> newEvent = std::make_shared<SniffedEvent_SpellChannelUpdate>(casterGuid, duration);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_SpellChannelUpdate::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    // In vanilla MSG_CHANNEL_UPDATE is only sent to the caster itself.
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        sWorld.SendSpellChannelUpdate(m_casterGuid, m_duration);
 }

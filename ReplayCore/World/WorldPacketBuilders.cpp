@@ -1850,3 +1850,37 @@ void WorldServer::SendAllAurasUpdate(ObjectGuid targetGuid, Aura const auras[MAX
     }
     SendPacket(data);
 }
+
+void WorldServer::SendSpellFailedOther(ObjectGuid casterGuid, uint32 spellId, uint32 reason)
+{
+    WorldPacket data(GetOpcode("SMSG_SPELL_FAILED_OTHER"), (8 + 4));
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+        data << casterGuid;
+    else
+        data << casterGuid.WriteAsPacked();
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        data << uint8(0); // cast count
+    data << uint32(spellId);
+    if (GetClientBuild() > CLIENT_BUILD_3_0_2)
+        data << uint8(reason);
+    SendPacket(data);
+}
+
+void WorldServer::SendSpellChannelStart(ObjectGuid casterGuid, uint32 spellId, int32 duration)
+{
+    WorldPacket data(GetOpcode("MSG_CHANNEL_START"), (8 + 4 + 4));
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        data << casterGuid.WriteAsPacked();
+    data << uint32(spellId);
+    data << int32(duration);
+    SendPacket(data);
+}
+
+void WorldServer::SendSpellChannelUpdate(ObjectGuid casterGuid, int32 duration)
+{
+    WorldPacket data(GetOpcode("MSG_CHANNEL_UPDATE"), 8 + 4);
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        data << casterGuid.WriteAsPacked();
+    data << int32(duration);
+    SendPacket(data);
+}

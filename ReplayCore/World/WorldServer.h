@@ -297,6 +297,9 @@ public:
     void SendMonsterMove(Unit* pUnit);
     void SendAuraUpdate(ObjectGuid targetGuid, uint8 slot, Aura const& aura);
     void SendAllAurasUpdate(ObjectGuid targetGuid, Aura const auras[MAX_AURA_SLOTS]);
+    void SendSpellFailedOther(ObjectGuid casterGuid, uint32 spellId, uint32 reason);
+    void SendSpellChannelStart(ObjectGuid casterGuid, uint32 spellId, int32 duration);
+    void SendSpellChannelUpdate(ObjectGuid casterGuid, int32 duration);
 };
 
 #define sWorld WorldServer::Instance()

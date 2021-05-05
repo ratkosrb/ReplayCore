@@ -168,6 +168,7 @@ public:
 #pragma region WorldObjects
 
     ObjectGuid MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std::string type);
+    ObjectGuid MakeObjectGuidFromSniffData(ObjectGuid guid, uint32 entry, std::string type); // trap for wrong arguments
     ObjectData* GetObjectSpawnData(uint32 guid, uint32 typeId)
     {
         switch (typeId)
@@ -252,6 +253,11 @@ public:
     void LoadUnitGuidValuesUpdate(char const* tableName, uint32 typeId);
     void LoadUnitSpeedUpdate(char const* tableName, uint32 typeId);
     void LoadUnitAurasUpdate(char const* tableName, uint32 typeId);
+    void LoadSpellCastFailed();
+    void LoadSpellCastStart();
+    void LoadSpellCastGo();
+    void LoadSpellChannelStart();
+    void LoadSpellChannelUpdate();
 
 #pragma endregion SniffedEvents
     
