@@ -107,6 +107,7 @@
     <ClInclude Include="World\Aura.h" />
     <ClInclude Include="World\ChatDefines.h" />
     <ClInclude Include="World\ClassicDefines.h" />
+    <ClInclude Include="World\DynamicObject.h" />
     <ClInclude Include="World\GameDataDefines.h" />
     <ClInclude Include="World\GameDataMgr.h" />
     <ClInclude Include="World\GameObject.h" />
@@ -148,6 +149,7 @@
     <ClCompile Include="Input\Config.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="World\Aura.cpp" />
+    <ClCompile Include="World\DynamicObject.cpp" />
     <ClCompile Include="World\GameData.cpp" />
     <ClCompile Include="World\GameDataMgr.cpp" />
     <ClCompile Include="World\GameObject.cpp" />

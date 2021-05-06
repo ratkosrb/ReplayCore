@@ -6,6 +6,7 @@
 #include "..\Crypto\AuthCrypt.h"
 #include "Player.h"
 #include "GameObject.h"
+#include "DynamicObject.h"
 #include "SpellCastTargets.h"
 
 #include "winsock2.h"
@@ -81,6 +82,14 @@ public:
         return &itr->second;
     }
 
+    DynamicObject* FindDynamicObject(ObjectGuid guid)
+    {
+        auto itr = m_dynamicObjects.find(guid);
+        if (itr == m_dynamicObjects.end())
+            return nullptr;
+        return &itr->second;
+    }
+
     WorldObject* FindObject(ObjectGuid guid)
     {
         if (guid.GetTypeId() == TYPEID_PLAYER)
@@ -89,6 +98,8 @@ public:
             return FindCreature(guid);
         else if (guid.GetTypeId() == TYPEID_GAMEOBJECT)
             return FindGameObject(guid);
+        else if (guid.GetTypeId() == TYPEID_DYNAMICOBJECT)
+            return FindDynamicObject(guid);
         return nullptr;
     }
 
@@ -116,6 +127,11 @@ public:
         return m_gameObjects;
     }
 
+    std::map<ObjectGuid, DynamicObject> const& GetDynamicObjectsMap()
+    {
+        return m_dynamicObjects;
+    }
+
     void MakeNewPlayer(ObjectGuid const& guid, PlayerData const& playerData)
     {
         m_players.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(playerData));
@@ -126,9 +142,14 @@ public:
         m_creatures.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(creatureData));
     }
 
-    void MakeNewGameObject(ObjectGuid const& guid, GameObjectData const& goData)
+    void MakeNewGameObject(ObjectGuid const& guid, GameObjectData const& gameObjectData)
     {
-        m_gameObjects.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(goData));
+        m_gameObjects.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(gameObjectData));
+    }
+
+    void MakeNewDynamicObject(ObjectGuid const& guid, DynamicObjectData const& dynamicObjectData)
+    {
+        m_dynamicObjects.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(dynamicObjectData));
     }
 
     void SendPacket(WorldPacket& packet);
@@ -178,6 +199,7 @@ private:
     template<class T>
     void BuildAndSendObjectUpdates(T& objectsMap);
     std::map<ObjectGuid, GameObject> m_gameObjects;
+    std::map<ObjectGuid, DynamicObject> m_dynamicObjects;
     std::map<ObjectGuid, Unit> m_creatures;
     std::map<ObjectGuid, Player> m_players;
     std::unique_ptr<Player> m_clientPlayer = nullptr;
@@ -291,6 +313,7 @@ public:
     void SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<ObjectGuid> const& vHitTargets, std::vector<ObjectGuid> const& vMissTargets, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
     void SendAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid);
+    void SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, uint32 originalDamage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage);
     void SendWeather(uint32 type, float grade, uint32 soundId, bool instant);
     void SendInitialWorldStates(std::map<uint32, uint32> worldStates);
     void SendWorldStateUpdate(uint32 variable, uint32 value);

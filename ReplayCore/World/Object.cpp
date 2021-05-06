@@ -1,5 +1,6 @@
 #include "Object.h"
 #include "GameObject.h"
+#include "DynamicObject.h"
 #include "WorldServer.h"
 #include "ReplayMgr.h"
 #include "UpdateData.h"
@@ -17,7 +18,7 @@ bool Object::IsVisibleToClient() const
 
 bool WorldObject::IsWithinVisibilityDistance(WorldObject const* pObject) const
 {
-    if (sReplayMgr.IsInitialized() && !pObject->IsVisible())
+    if ((sReplayMgr.IsInitialized() || pObject->IsDynamicObject()) && !pObject->IsVisible())
         return false;
 
     if (GetMapId() != pObject->GetMapId())
@@ -446,6 +447,23 @@ GameObject const* Object::ToGameObject() const
 
     return nullptr;
 }
+
+DynamicObject* Object::ToDynamicObject()
+{
+    if (IsDynamicObject())
+        return static_cast<DynamicObject*>(this);
+
+    return nullptr;
+}
+
+DynamicObject const* Object::ToDynamicObject() const
+{
+    if (IsDynamicObject())
+        return static_cast<DynamicObject const*>(this);
+
+    return nullptr;
+}
+
 
 Unit* Object::ToUnit()
 {

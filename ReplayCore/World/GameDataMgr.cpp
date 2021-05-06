@@ -365,6 +365,20 @@ uint8 GameDataMgr::ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags)
     return auraFlags;
 }
 
+uint32 GameDataMgr::ConvertHitInfoFlags(uint32 hitInfo)
+{
+    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            return ConvertClassicHitInfoFlagsToVanilla(hitInfo);
+        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            return ConvertClassicHitInfoFlagsToTBC(hitInfo);
+        else
+            return ConvertClassicHitInfoFlagsToWotLK(hitInfo);
+    }
+    return hitInfo;
+}
+
 void GameDataMgr::LoadGameTele()
 {
     printf("[GameDataMgr] Loading teleport locations...\n");

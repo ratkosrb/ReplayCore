@@ -50,8 +50,7 @@ Unit::Unit(CreatureData const& unitData) : WorldObject(unitData.guid)
 
 void Unit::InitializePlaceholderUnitFields()
 {
-    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1 &&
-        sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1)
         SetDebuffLimit(16);
 
     SetUInt32Value("UNIT_FIELD_MAXPOWER2", 1000);

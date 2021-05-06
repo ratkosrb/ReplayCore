@@ -261,66 +261,35 @@ inline uint32 ConvertClassicNpcFlagsToWotLK(uint32 flags)
     return newFlags;
 }
 
-enum ClassicSpellHitInfo
-{
-    CLASSIC_HITINFO_UNK0 = 0x00000001, // unused - debug flag, probably debugging visuals, no effect in non-ptr client
-    CLASSIC_HITINFO_AFFECTS_VICTIM = 0x00000002,
-    CLASSIC_HITINFO_OFFHAND = 0x00000004,
-    CLASSIC_HITINFO_UNK3 = 0x00000008, // unused (3.3.5a)
-    CLASSIC_HITINFO_MISS = 0x00000010,
-    CLASSIC_HITINFO_FULL_ABSORB = 0x00000020,
-    CLASSIC_HITINFO_PARTIAL_ABSORB = 0x00000040,
-    CLASSIC_HITINFO_FULL_RESIST = 0x00000080,
-    CLASSIC_HITINFO_PARTIAL_RESIST = 0x00000100,
-    CLASSIC_HITINFO_CRITICALHIT = 0x00000200,
-    CLASSIC_HITINFO_UNK10 = 0x00000400,
-    CLASSIC_HITINFO_UNK11 = 0x00000800,
-    CLASSIC_HITINFO_UNK12 = 0x00001000,
-    CLASSIC_HITINFO_BLOCK = 0x00002000,
-    CLASSIC_HITINFO_UNK14 = 0x00004000, // set only if meleespellid is present//  no world text when victim is hit for 0 dmg(HideWorldTextForNoDamage?)
-    CLASSIC_HITINFO_UNK15 = 0x00008000, // player victim?// something related to blod sprut visual (BloodSpurtInBack?)
-    CLASSIC_HITINFO_GLANCING = 0x00010000,
-    CLASSIC_HITINFO_CRUSHING = 0x00020000,
-    CLASSIC_HITINFO_NO_ANIMATION = 0x00040000, // set always for melee spells and when no hit animation should be displayed
-    CLASSIC_HITINFO_UNK19 = 0x00080000,
-    CLASSIC_HITINFO_UNK20 = 0x00100000,
-    CLASSIC_HITINFO_UNK21 = 0x00200000, // unused (3.3.5a)
-    CLASSIC_HITINFO_UNK22 = 0x00400000,
-    CLASSIC_HITINFO_RAGE_GAIN = 0x00800000,
-    CLASSIC_HITINFO_FAKE_DAMAGE = 0x01000000, // enables damage animation even if no damage done, set only if no damage
-    CLASSIC_HITINFO_UNK25 = 0x02000000,
-    CLASSIC_HITINFO_UNK26 = 0x04000000
-};
-
 inline uint32 ConvertClassicHitInfoFlagToVanilla(uint32 flag)
 {
     switch (flag)
     {
-        case CLASSIC_HITINFO_UNK0:
+        case Classic::HITINFO_UNK0:
             return Vanilla::HITINFO_UNK0;
-        case CLASSIC_HITINFO_AFFECTS_VICTIM:
+        case Classic::HITINFO_AFFECTS_VICTIM:
             return Vanilla::HITINFO_AFFECTS_VICTIM;
-        case CLASSIC_HITINFO_OFFHAND:
+        case Classic::HITINFO_OFFHAND:
             return Vanilla::HITINFO_LEFTSWING;
-        case CLASSIC_HITINFO_UNK3:
+        case Classic::HITINFO_UNK3:
             return Vanilla::HITINFO_UNK3;
-        case CLASSIC_HITINFO_MISS:
+        case Classic::HITINFO_MISS:
             return Vanilla::HITINFO_MISS;
-        case CLASSIC_HITINFO_FULL_ABSORB:
+        case Classic::HITINFO_FULL_ABSORB:
             return Vanilla::HITINFO_ABSORB;
-        case CLASSIC_HITINFO_PARTIAL_ABSORB:
+        case Classic::HITINFO_PARTIAL_ABSORB:
             return Vanilla::HITINFO_ABSORB;
-        case CLASSIC_HITINFO_FULL_RESIST:
+        case Classic::HITINFO_FULL_RESIST:
             return Vanilla::HITINFO_RESIST;
-        case CLASSIC_HITINFO_PARTIAL_RESIST:
+        case Classic::HITINFO_PARTIAL_RESIST:
             return Vanilla::HITINFO_RESIST;
-        case CLASSIC_HITINFO_CRITICALHIT:
+        case Classic::HITINFO_CRITICALHIT:
             return Vanilla::HITINFO_CRITICALHIT;
-        case CLASSIC_HITINFO_GLANCING:
+        case Classic::HITINFO_GLANCING:
             return Vanilla::HITINFO_GLANCING;
-        case CLASSIC_HITINFO_CRUSHING:
+        case Classic::HITINFO_CRUSHING:
             return Vanilla::HITINFO_CRUSHING;
-        case CLASSIC_HITINFO_NO_ANIMATION:
+        case Classic::HITINFO_NO_ANIMATION:
             return Vanilla::HITINFO_NOACTION;
     }
 
@@ -331,31 +300,31 @@ inline uint32 ConvertClassicHitInfoFlagToTBC(uint32 flag)
 {
     switch (flag)
     {
-        case CLASSIC_HITINFO_UNK0:
+        case Classic::HITINFO_UNK0:
             return TBC::HITINFO_UNK0;
-        case CLASSIC_HITINFO_AFFECTS_VICTIM:
+        case Classic::HITINFO_AFFECTS_VICTIM:
             return TBC::HITINFO_AFFECTS_VICTIM;
-        case CLASSIC_HITINFO_OFFHAND:
+        case Classic::HITINFO_OFFHAND:
             return TBC::HITINFO_LEFTSWING;
-        case CLASSIC_HITINFO_UNK3:
+        case Classic::HITINFO_UNK3:
             return TBC::HITINFO_UNK3;
-        case CLASSIC_HITINFO_MISS:
+        case Classic::HITINFO_MISS:
             return TBC::HITINFO_MISS;
-        case CLASSIC_HITINFO_FULL_ABSORB:
+        case Classic::HITINFO_FULL_ABSORB:
             return TBC::HITINFO_ABSORB;
-        case CLASSIC_HITINFO_PARTIAL_ABSORB:
+        case Classic::HITINFO_PARTIAL_ABSORB:
             return TBC::HITINFO_ABSORB;
-        case CLASSIC_HITINFO_FULL_RESIST:
+        case Classic::HITINFO_FULL_RESIST:
             return TBC::HITINFO_RESIST;
-        case CLASSIC_HITINFO_PARTIAL_RESIST:
+        case Classic::HITINFO_PARTIAL_RESIST:
             return TBC::HITINFO_RESIST;
-        case CLASSIC_HITINFO_CRITICALHIT:
+        case Classic::HITINFO_CRITICALHIT:
             return TBC::HITINFO_CRITICALHIT;
-        case CLASSIC_HITINFO_GLANCING:
+        case Classic::HITINFO_GLANCING:
             return TBC::HITINFO_GLANCING;
-        case CLASSIC_HITINFO_CRUSHING:
+        case Classic::HITINFO_CRUSHING:
             return TBC::HITINFO_CRUSHING;
-        case CLASSIC_HITINFO_NO_ANIMATION:
+        case Classic::HITINFO_NO_ANIMATION:
             return TBC::HITINFO_NOACTION;
     }
 
@@ -366,31 +335,31 @@ inline uint32 ConvertClassicHitInfoFlagToWotLK(uint32 flag)
 {
     switch (flag)
     {
-        case CLASSIC_HITINFO_UNK0:
+        case Classic::HITINFO_UNK0:
             return WotLK::HITINFO_UNK0;
-        case CLASSIC_HITINFO_AFFECTS_VICTIM:
+        case Classic::HITINFO_AFFECTS_VICTIM:
             return WotLK::HITINFO_AFFECTS_VICTIM;
-        case CLASSIC_HITINFO_OFFHAND:
+        case Classic::HITINFO_OFFHAND:
             return WotLK::HITINFO_LEFTSWING;
-        case CLASSIC_HITINFO_UNK3:
+        case Classic::HITINFO_UNK3:
             return WotLK::HITINFO_UNK3;
-        case CLASSIC_HITINFO_MISS:
+        case Classic::HITINFO_MISS:
             return WotLK::HITINFO_MISS;
-        case CLASSIC_HITINFO_FULL_ABSORB:
+        case Classic::HITINFO_FULL_ABSORB:
             return WotLK::HITINFO_ABSORB;
-        case CLASSIC_HITINFO_PARTIAL_ABSORB:
+        case Classic::HITINFO_PARTIAL_ABSORB:
             return WotLK::HITINFO_ABSORB2;
-        case CLASSIC_HITINFO_FULL_RESIST:
+        case Classic::HITINFO_FULL_RESIST:
             return WotLK::HITINFO_RESIST;
-        case CLASSIC_HITINFO_PARTIAL_RESIST:
+        case Classic::HITINFO_PARTIAL_RESIST:
             return WotLK::HITINFO_RESIST2;
-        case CLASSIC_HITINFO_CRITICALHIT:
+        case Classic::HITINFO_CRITICALHIT:
             return WotLK::HITINFO_CRITICALHIT;
-        case CLASSIC_HITINFO_GLANCING:
+        case Classic::HITINFO_GLANCING:
             return WotLK::HITINFO_GLANCING;
-        case CLASSIC_HITINFO_CRUSHING:
+        case Classic::HITINFO_CRUSHING:
             return WotLK::HITINFO_CRUSHING;
-        case CLASSIC_HITINFO_NO_ANIMATION:
+        case Classic::HITINFO_NO_ANIMATION:
             return WotLK::HITINFO_NOACTION;
     }
 

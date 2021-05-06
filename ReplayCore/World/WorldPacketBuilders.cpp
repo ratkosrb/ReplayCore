@@ -1745,6 +1745,50 @@ void WorldServer::SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid)
     SendPacket(data);
 }
 
+void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, uint32 originalDamage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage)
+{
+    WorldPacket data(GetOpcode("SMSG_ATTACKERSTATEUPDATE"), (16 + 45));
+    data << uint32(hitInfo);
+    data << attackerGuid.WriteAsPacked();
+    data << victimGuid.WriteAsPacked();
+    data << uint32(originalDamage);
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_3)
+        data << int32(overkillDamage);
+
+    uint8 subDamageCount = 1;
+    data << uint8(subDamageCount);
+    for (uint8 i = 0; i < subDamageCount; i++)
+    {
+        if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+            data << uint32(damageSchoolMask);
+        else
+            data << uint32(GetFirstSchoolInMask(SpellSchoolMask(damageSchoolMask)));
+
+        // Float coefficient of sub damage
+        data << ((originalDamage != 0) ? (float(damage) / float(originalDamage)) : 0);
+        data << uint32(damage);
+
+        if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_ABSORB | WotLK::HITINFO_ABSORB2)))
+            data << uint32(absorbedDamage);
+        if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_RESIST | WotLK::HITINFO_RESIST2)))
+            data << int32(resistedDamage);
+    }
+
+    if (GetClientBuild() < CLIENT_BUILD_3_0_3)
+        data << uint32(victimState);
+    else
+        data << uint8(victimState);
+
+    data << int32(attackerState);
+    data << uint32(spellId);
+
+    if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_BLOCK)))
+        data << uint32(blockedDamage);
+
+    SendPacket(data);
+}
+
 void WorldServer::SendWeather(uint32 type, float grade, uint32 soundId, bool instant)
 {
     WorldPacket data(GetOpcode("SMSG_WEATHER"), 4 + 4 + 4 + 1);

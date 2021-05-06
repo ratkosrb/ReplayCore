@@ -171,6 +171,10 @@ public :
     {
         return m_meleeVictim;
     }
+    void SetMeleeVictimGuid(ObjectGuid guid)
+    {
+        m_meleeVictim = guid;
+    }
 
     MoveSpline m_moveSpline;
 protected:

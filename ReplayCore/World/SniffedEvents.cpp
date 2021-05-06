@@ -24,6 +24,15 @@ void ReplayMgr::LoadSniffedEvents()
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate1>("gameobject_create1_time", TYPEID_GAMEOBJECT);
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate2>("gameobject_create2_time", TYPEID_GAMEOBJECT);
     LoadWorldObjectDestroy("gameobject_destroy_time", TYPEID_GAMEOBJECT);
+    LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate1>("dynamicobject_create1_time", TYPEID_DYNAMICOBJECT);
+    LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate2>("dynamicobject_create2_time", TYPEID_DYNAMICOBJECT);
+    LoadWorldObjectDestroy("dynamicobject_destroy_time", TYPEID_DYNAMICOBJECT);
+    LoadUnitAttackToggle<SniffedEvent_UnitAttackStart>("creature_attack_start", TYPEID_UNIT);
+    LoadUnitAttackToggle<SniffedEvent_UnitAttackStop>("creature_attack_stop", TYPEID_UNIT);
+    LoadUnitAttackToggle<SniffedEvent_UnitAttackStart>("player_attack_start", TYPEID_PLAYER);
+    LoadUnitAttackToggle<SniffedEvent_UnitAttackStop>("player_attack_stop", TYPEID_PLAYER);
+    LoadUnitAttackLog("creature_attack_log", TYPEID_UNIT);
+    LoadUnitAttackLog("player_attack_log", TYPEID_PLAYER);
     LoadUnitClientSideMovement("creature_movement_client", TYPEID_UNIT);
     LoadUnitClientSideMovement("player_movement_client", TYPEID_PLAYER);
     LoadServerSideMovementSplines("player_movement_server_spline", m_playerMovementSplines);
@@ -369,6 +378,7 @@ void SniffedEvent_WorldObjectCreate1::Execute() const
     }
 
     pObject->Relocate(m_location);
+    pObject->SetIsNewObject(false);
     pObject->SetVisibility(true);
 }
 
@@ -422,6 +432,148 @@ void SniffedEvent_WorldObjectDestroy::Execute() const
     }
 
     pObject->SetVisibility(false);
+}
+
+template <class T>
+void ReplayMgr::LoadUnitAttackToggle(char const* tableName, uint32 typeId)
+{
+    //                                             0             1       2              3            4
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `victim_guid`, `victim_id`, `victim_type` FROM `%s` ORDER BY `unixtimems`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid attackerGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                attackerGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
+                continue;
+            }
+
+            uint32 victimGuidLow = fields[2].GetUInt32();
+            uint32 victimId = fields[3].GetUInt32();
+            std::string victimType = fields[4].GetCppString();
+            ObjectGuid victimGuid = MakeObjectGuidFromSniffData(victimGuidLow, victimId, victimType);
+
+            std::shared_ptr<T> newEvent = std::make_shared<T>(attackerGuid, victimGuid);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_UnitAttackStart::Execute() const
+{
+    Unit* pAttacker = sWorld.FindUnit(GetSourceGuid());
+    if (!pAttacker)
+    {
+        printf("SniffedEvent_UnitAttackStart: Cannot find source unit!\n");
+        return;
+    }
+
+    pAttacker->SetMeleeVictimGuid(GetTargetGuid());
+
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!pAttacker->IsVisibleToClient())
+        return;
+
+    sWorld.SendAttackStart(GetSourceGuid(), GetTargetGuid());
+}
+
+void SniffedEvent_UnitAttackStop::Execute() const
+{
+    Unit* pAttacker = sWorld.FindUnit(GetSourceGuid());
+    if (!pAttacker)
+    {
+        printf("SniffedEvent_UnitAttackStop: Cannot find source unit!\n");
+        return;
+    }
+
+    if (pAttacker->GetMeleeVictimGuid() == GetTargetGuid())
+        pAttacker->SetMeleeVictimGuid(ObjectGuid());
+
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!pAttacker->IsVisibleToClient())
+        return;
+
+    sWorld.SendAttackStop(GetSourceGuid(), GetTargetGuid());
+}
+
+void ReplayMgr::LoadUnitAttackLog(char const* tableName, uint32 typeId)
+{
+    //                                             0             1       2              3            4              5           6         7                  8                  9                   10                   11                       12                       13                14              15                16
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `victim_guid`, `victim_id`, `victim_type`, `hit_info`, `damage`, `original_damage`, `overkill_damage`, `sub_damage_count`, `total_school_mask`, `total_absorbed_damage`, `total_resisted_damage`, `blocked_damage`, `victim_state`, `attacker_state`, `spell_id` FROM `%s` ORDER BY `unixtimems`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid attackerGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                attackerGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
+                continue;
+            }
+
+            uint32 victimGuidLow = fields[2].GetUInt32();
+            uint32 victimId = fields[3].GetUInt32();
+            std::string victimType = fields[4].GetCppString();
+            ObjectGuid victimGuid = MakeObjectGuidFromSniffData(victimGuidLow, victimId, victimType);
+
+            uint32 hitInfo = fields[5].GetUInt32();
+            uint32 damage = fields[6].GetUInt32();
+            uint32 originalDamage = fields[7].GetUInt32();
+            int32 overkillDamage = fields[8].GetInt32();
+            //uint32 subDamageCount = fields[9].GetInt32();
+            uint32 totalSchoolMask = fields[10].GetInt32();
+            uint32 totalAbsorbedDamage = fields[11].GetInt32();
+            uint32 totalResistedDamage = fields[12].GetInt32();
+            int32 blockedDamage = fields[13].GetInt32();
+            uint32 victimState = fields[14].GetUInt32();
+            int32 attackerState = fields[15].GetInt32();
+            uint32 spellId = fields[16].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_UnitAttackLog> newEvent = std::make_shared<SniffedEvent_UnitAttackLog>(attackerGuid, victimGuid, hitInfo, damage, originalDamage, overkillDamage, totalSchoolMask, totalAbsorbedDamage, totalResistedDamage, blockedDamage, victimState, attackerState, spellId);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_UnitAttackLog::PepareForCurrentClient()
+{
+    m_hitInfo = sGameDataMgr.ConvertHitInfoFlags(m_hitInfo);
+}
+
+void SniffedEvent_UnitAttackLog::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Unit* pAttacker = sWorld.FindUnit(GetSourceGuid());
+    if (!pAttacker)
+    {
+        printf("SniffedEvent_UnitAttackStart: Cannot find source unit!\n");
+        return;
+    }
+
+    if (!pAttacker->IsVisibleToClient())
+        return;
+
+    sWorld.SendAttackerStateUpdate(m_hitInfo, m_attackerGuid, m_victimGuid, m_damage, m_originalDamage, m_overkillDamage, m_totalSchoolMask, m_totalAbsorbedDamage, m_totalResistedDamage, m_victimState, m_attackerState, m_spellId, m_blockedDamage);
 }
 
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)

@@ -2,6 +2,7 @@
 #include "ReplayMgr.h"
 #include "Player.h"
 #include "GameObject.h"
+#include "DynamicObject.h"
 #include "GameDataMgr.h"
 #include "MovementDefines.h"
 #include "WorldServer.h"
@@ -71,6 +72,20 @@ void GameObjectData::InitializeGameObject(GameObject* pGo) const
     pGo->SetLevel(level);
     pGo->SetArtKit(artKit);
     pGo->SetAnimProgress(animProgress);
+}
+
+void DynamicObjectData::InitializeDynamicObject(DynamicObject* pDynObject) const
+{
+    InitializeWorldObject(pDynObject);
+
+    pDynObject->SetCasterGuid(caster);
+    pDynObject->SetSpellId(spellId);
+    pDynObject->SetRadius(radius);
+
+    if (type == 0)
+        pDynObject->SetBytes(DYNAMIC_OBJECT_AREA_SPELL);
+    else
+        pDynObject->SetBytes(DYNAMIC_OBJECT_FARSIGHT_FOCUS);
 }
 
 void UnitData::InitializeUnit(Unit* pUnit) const
@@ -220,6 +235,13 @@ void ReplayMgr::SpawnGameObjects()
     printf("[ReplayMgr] Spawning gameobjects...\n");
     for (auto const& itr : m_gameObjectSpawns)
         sWorld.MakeNewGameObject(itr.second.guid, itr.second);
+}
+
+void ReplayMgr::SpawnDynamicObjects()
+{
+    printf("[ReplayMgr] Spawning dynamicobjects...\n");
+    for (auto const& itr : m_dynamicObjectSpawns)
+        sWorld.MakeNewDynamicObject(itr.second.guid, itr.second);
 }
 
 ObjectGuid ReplayMgr::MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std::string type)
@@ -417,6 +439,49 @@ void ReplayMgr::LoadGameObjects()
     } while (result->NextRow());
 
    printf(">> Loaded %u gameobject spawns.\n", (uint32)m_gameObjectSpawns.size());
+}
+
+void ReplayMgr::LoadDynamicObjects()
+{
+    printf("[ReplayMgr] Loading dynamicobject spawns...\n");
+    //                                                               0       1      2             3             4             5              6              7            8              9           10           11        12
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `caster_guid`, `caster_id`, `caster_type`, `spell_id`, `visual_id`, `radius`, `type` FROM `dynamicobject`"));
+
+    if (!result)
+    {
+        printf(">> Loaded 0 dynamicobject, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 guid = fields[0].GetUInt32();
+
+        DynamicObjectData& data = m_dynamicObjectSpawns[guid];
+        ObjectGuid objectGuid = ObjectGuid(HIGHGUID_DYNAMICOBJECT, 0, guid);
+
+        data.guid = objectGuid;
+        data.location.mapId = fields[1].GetUInt32();
+        data.location.x = fields[2].GetFloat();
+        data.location.y = fields[3].GetFloat();
+        data.location.z = fields[4].GetFloat();
+        data.location.o = fields[5].GetFloat();
+
+        uint32 casterGuidLow = fields[6].GetUInt32();
+        uint32 casterId = fields[7].GetUInt32();
+        std::string casterType = fields[8].GetCppString();
+        data.caster = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
+
+        data.spellId = fields[9].GetUInt32();
+        data.visualId = fields[10].GetUInt32();
+        data.radius = fields[11].GetFloat();
+        data.type = fields[12].GetUInt32();
+
+    } while (result->NextRow());
+
+    printf(">> Loaded %u dynamicobject spawns.\n", (uint32)m_dynamicObjectSpawns.size());
 }
 
 void ReplayMgr::LoadCreatures()

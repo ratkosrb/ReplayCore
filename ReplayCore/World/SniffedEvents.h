@@ -29,12 +29,12 @@ enum SniffedEventType : uint8
     SE_WORLD_STATE_UPDATE,
     SE_CREATURE_TEXT,
     SE_CREATURE_EQUIPMENT_UPDATE,
-    SE_UNIT_ATTACK_LOG,
-    SE_UNIT_ATTACK_START,
-    SE_UNIT_ATTACK_STOP,
     SE_WORLDOBJECT_CREATE1,
     SE_WORLDOBJECT_CREATE2,
     SE_WORLDOBJECT_DESTROY,
+    SE_UNIT_ATTACK_LOG,
+    SE_UNIT_ATTACK_START,
+    SE_UNIT_ATTACK_STOP,
     SE_UNIT_EMOTE,
     SE_UNIT_CLIENTSIDE_MOVEMENT,
     SE_UNIT_SERVERSIDE_MOVEMENT,
@@ -120,15 +120,15 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
         case SE_CREATURE_TEXT:
             return "Creature Text";
         case SE_CREATURE_EQUIPMENT_UPDATE:
-            return "Creature Equipment Update";
-        case SE_UNIT_EMOTE:
-            return "Unit Emote";
+            return "Creature Equipment Update";  
         case SE_UNIT_ATTACK_LOG:
             return "Unit Attack Log";
         case SE_UNIT_ATTACK_START:
             return "Unit Attack Start";
         case SE_UNIT_ATTACK_STOP:
             return "Unit Attack Stop";
+        case SE_UNIT_EMOTE:
+            return "Unit Emote";
         case SE_UNIT_CLIENTSIDE_MOVEMENT:
             return "Unit Client Movement";
         case SE_UNIT_SERVERSIDE_MOVEMENT:
@@ -361,6 +361,81 @@ struct SniffedEvent_WorldObjectDestroy : SniffedEvent
     ObjectGuid GetSourceGuid() const final
     {
         return m_source;
+    }
+};
+
+struct SniffedEvent_UnitAttackStart : SniffedEvent
+{
+    SniffedEvent_UnitAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid) :
+        m_attackerGuid(attackerGuid), m_victimGuid(victimGuid) {};
+    ObjectGuid m_attackerGuid;
+    ObjectGuid m_victimGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_ATTACK_START;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_attackerGuid;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_victimGuid;
+    }
+};
+
+struct SniffedEvent_UnitAttackStop : SniffedEvent
+{
+    SniffedEvent_UnitAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid) :
+        m_attackerGuid(attackerGuid), m_victimGuid(victimGuid) {};
+    ObjectGuid m_attackerGuid;
+    ObjectGuid m_victimGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_ATTACK_STOP;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_attackerGuid;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_victimGuid;
+    }
+};
+
+struct SniffedEvent_UnitAttackLog : SniffedEvent
+{
+    SniffedEvent_UnitAttackLog(ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 hitInfo, uint32 damage, uint32 originalDamage, int32 overkillDamage, uint32 totalSchoolMask, uint32 totalAbsorbedDamage, uint32 totalResistedDamage, int32 blockedDamage, uint32 victimState, int32 attackerState, uint32 spellId) :
+        m_attackerGuid(attackerGuid), m_victimGuid(victimGuid), m_hitInfo(hitInfo), m_damage(damage), m_originalDamage(originalDamage), m_overkillDamage(overkillDamage), m_totalSchoolMask(totalSchoolMask), m_totalAbsorbedDamage(totalAbsorbedDamage), m_totalResistedDamage(totalResistedDamage), m_blockedDamage(blockedDamage), m_victimState(victimState), m_attackerState(attackerState), m_spellId(spellId) {};
+    ObjectGuid m_attackerGuid;
+    ObjectGuid m_victimGuid;
+    uint32 m_hitInfo = 0;
+    uint32 m_damage = 0;
+    uint32 m_originalDamage = 0;
+    int32 m_overkillDamage = 0;
+    uint32 m_totalSchoolMask = 0;
+    uint32 m_totalAbsorbedDamage = 0;
+    uint32 m_totalResistedDamage = 0;
+    int32 m_blockedDamage = 0;
+    uint32 m_victimState = 0;
+    int32 m_attackerState = 0;
+    uint32 m_spellId = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_ATTACK_LOG;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_attackerGuid;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_victimGuid;
     }
 };
 
@@ -1224,87 +1299,6 @@ struct SniffedEvent_UnitEmote : SniffedEvent
     KnownObject GetSourceObject() const final
     {
         return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_UnitAttackLog : SniffedEvent
-{
-    SniffedEvent_UnitAttackLog(uint32 guid, uint32 entry, uint32 type, uint32 victimGuid, uint32 victimId, uint32 victimType, uint32 hitInfo, uint32 damage, int32 blockedDamage, uint32 victimState, int32 attackerState, uint32 spellId) :
-        m_guid(guid), m_entry(entry), m_type(type), m_victimGuid(victimGuid), m_victimId(victimId), m_victimType(victimType), m_hitInfo(hitInfo), m_damage(damage), m_blockedDamage(blockedDamage), m_victimState(victimState), m_attackerState(attackerState), m_spellId(spellId) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_victimGuid = 0;
-    uint32 m_victimId = 0;
-    uint32 m_victimType = 0;
-    uint32 m_hitInfo = 0;
-    uint32 m_damage = 0;
-    int32 m_blockedDamage = 0;
-    uint32 m_victimState = 0;
-    int32 m_attackerState = 0;
-    uint32 m_spellId = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_ATTACK_START;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-    KnownObject GetTargetObject() const final
-    {
-        return KnownObject(m_victimGuid, m_victimId, TypeID(m_victimType));
-    }
-};
-
-struct SniffedEvent_UnitAttackStart : SniffedEvent
-{
-    SniffedEvent_UnitAttackStart(uint32 guid, uint32 entry, uint32 type, uint32 victimGuid, uint32 victimId, uint32 victimType) :
-        m_guid(guid), m_entry(entry), m_type(type), m_victimGuid(victimGuid), m_victimId(victimId), m_victimType(victimType) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_victimGuid = 0;
-    uint32 m_victimId = 0;
-    uint32 m_victimType = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_ATTACK_START;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-    KnownObject GetTargetObject() const final
-    {
-        return KnownObject(m_victimGuid, m_victimId, TypeID(m_victimType));
-    }
-};
-
-struct SniffedEvent_UnitAttackStop : SniffedEvent
-{
-    SniffedEvent_UnitAttackStop(uint32 guid, uint32 entry, uint32 type, uint32 victimGuid, uint32 victimId, uint32 victimType) :
-        m_guid(guid), m_entry(entry), m_type(type), m_victimGuid(victimGuid), m_victimId(victimId), m_victimType(victimType) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_victimGuid = 0;
-    uint32 m_victimId = 0;
-    uint32 m_victimType;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_ATTACK_STOP;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-    KnownObject GetTargetObject() const final
-    {
-        return KnownObject(m_victimGuid, m_victimId, TypeID(m_victimType));
     }
 };
 

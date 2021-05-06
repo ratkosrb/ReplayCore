@@ -14,6 +14,7 @@ class UpdateMask;
 class Player;
 class Unit;
 class GameObject;
+class DynamicObject;
 
 class Object
 {
@@ -37,6 +38,7 @@ public:
     bool IsVisible() const { return m_isVisible; }
     void SetVisibility(bool on) { m_isVisible = on; }
     bool IsVisibleToClient() const;
+    void SetIsNewObject(bool isNew) { m_isNewObject = isNew; }
 
     void MarkForClientUpdate();
     void ClearUpdateMask();
@@ -89,6 +91,10 @@ public:
     inline bool IsGameObject() const { return GetTypeId() == TYPEID_GAMEOBJECT; }
     GameObject* ToGameObject();
     GameObject const* ToGameObject() const;
+
+    inline bool IsDynamicObject() const { return GetTypeId() == TYPEID_DYNAMICOBJECT; }
+    DynamicObject* ToDynamicObject();
+    DynamicObject const* ToDynamicObject() const;
 
     inline bool IsPlayer() const { return GetTypeId() == TYPEID_PLAYER; }
     Player* ToPlayer();

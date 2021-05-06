@@ -95,6 +95,9 @@
     <ClCompile Include="World\Aura.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\DynamicObject.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -251,6 +254,9 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\Aura.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\DynamicObject.h">
       <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,7 +3,7 @@
 #include "ReplayMgr.h"
 #include "../Defines//ClientVersions.h"
 
-GameObject::GameObject(GameObjectData const& goData) : WorldObject(goData.guid)
+GameObject::GameObject(GameObjectData const& gameObjectData) : WorldObject(gameObjectData.guid)
 {
     m_objectType |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
@@ -16,7 +16,7 @@ GameObject::GameObject(GameObjectData const& goData) : WorldObject(goData.guid)
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
     SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
-    goData.InitializeGameObject(this);
+    gameObjectData.InitializeGameObject(this);
     m_uint32Values_mirror = new uint32[m_valuesCount];
     memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }

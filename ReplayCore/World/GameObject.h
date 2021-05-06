@@ -7,9 +7,8 @@ struct GameObjectData;
 
 class GameObject : public WorldObject
 {
-    friend class Object;
 public:
-    GameObject(GameObjectData const& unitData);
+    GameObject(GameObjectData const& gameObjectData);
 
     void Relocate(WorldLocation const& location) final
     {

@@ -15,6 +15,7 @@ class WorldObject;
 class Unit;
 class Player;
 class GameObject;
+class DynamicObject;
 class MovementInfo;
 
 // Only the mutable update fields.
@@ -61,6 +62,17 @@ struct GameObjectData : public WorldObjectData
     uint32 animProgress = 100;
 
     void InitializeGameObject(GameObject* pGo) const;
+};
+
+struct DynamicObjectData : public WorldObjectData
+{
+    ObjectGuid caster;
+    uint32 type = 0;
+    uint32 spellId = 0;
+    uint32 visualId = 0;
+    float radius = 0.0f;
+
+    void InitializeDynamicObject(DynamicObject* pDynObject) const;
 };
 
 struct UnitData : public WorldObjectData
@@ -158,6 +170,7 @@ public:
     void LoadEverything()
     {
         LoadGameObjects();
+        LoadDynamicObjects();
         LoadCreatures();
         LoadPlayers();
         LoadActivePlayers();
@@ -175,6 +188,8 @@ public:
         {
             case TYPEID_GAMEOBJECT:
                 return GetGameObjectSpawnData(guid);
+            case TYPEID_DYNAMICOBJECT:
+                return GetDynamicObjectSpawnData(guid);
             case TYPEID_UNIT:
                 return GetCreatureSpawnData(guid);
             case TYPEID_PLAYER:
@@ -189,6 +204,19 @@ public:
     {
         auto itr = m_gameObjectSpawns.find(guid);
         if (itr == m_gameObjectSpawns.end())
+            return nullptr;
+
+        assert(guid == itr->second.guid.GetCounter());
+
+        return &itr->second;
+    }
+
+    void LoadDynamicObjects();
+    void SpawnDynamicObjects();
+    DynamicObjectData* GetDynamicObjectSpawnData(uint32 guid)
+    {
+        auto itr = m_dynamicObjectSpawns.find(guid);
+        if (itr == m_dynamicObjectSpawns.end())
             return nullptr;
 
         assert(guid == itr->second.guid.GetCounter());
@@ -244,6 +272,9 @@ public:
     template <class T>
     void LoadWorldObjectCreate(char const* tableName, uint32 typeId);
     void LoadWorldObjectDestroy(char const* tableName, uint32 typeId);
+    template <class T>
+    void LoadUnitAttackToggle(char const* tableName, uint32 typeId);
+    void LoadUnitAttackLog(char const* tableName, uint32 typeId);
     void LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap);
     void LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap);
     template <class T>
@@ -295,6 +326,7 @@ private:
     std::map<uint32 /*guid*/, PlayerData> m_playerSpawns;
     std::map<uint32 /*guid*/, CreatureData> m_creatureSpawns;
     std::map<uint32 /*guid*/, GameObjectData> m_gameObjectSpawns;
+    std::map<uint32 /*guid*/, DynamicObjectData> m_dynamicObjectSpawns;
     std::map<uint64 /*unixtimems*/, std::map<uint32 /*variable*/, uint32 /*value*/>> m_initialWorldStates;
     std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMap;       // prepared data in the current client's format
     std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMapBackup; // stores the original data in sniff client format

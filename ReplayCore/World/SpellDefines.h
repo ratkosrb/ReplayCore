@@ -54,6 +54,66 @@ enum SpellMissInfo
     SPELL_MISS_REFLECT                 = 11
 };
 
+enum SpellSchools
+{
+    SPELL_SCHOOL_NORMAL                 = 0,            // Physical, Armor
+    SPELL_SCHOOL_HOLY                   = 1,
+    SPELL_SCHOOL_FIRE                   = 2,
+    SPELL_SCHOOL_NATURE                 = 3,
+    SPELL_SCHOOL_FROST                  = 4,
+    SPELL_SCHOOL_SHADOW                 = 5,
+    SPELL_SCHOOL_ARCANE                 = 6
+};
+
+#define MAX_SPELL_SCHOOL                  7
+
+/**
+ * A bitmask of the available SpellSchools. Used for convenience
+ */
+enum SpellSchoolMask
+{
+    SPELL_SCHOOL_MASK_NONE    = 0x00,                       // not exist
+    SPELL_SCHOOL_MASK_NORMAL  = (1 << SPELL_SCHOOL_NORMAL), // PHYSICAL (Armor)
+    SPELL_SCHOOL_MASK_HOLY    = (1 << SPELL_SCHOOL_HOLY  ),
+    SPELL_SCHOOL_MASK_FIRE    = (1 << SPELL_SCHOOL_FIRE  ),
+    SPELL_SCHOOL_MASK_NATURE  = (1 << SPELL_SCHOOL_NATURE),
+    SPELL_SCHOOL_MASK_FROST   = (1 << SPELL_SCHOOL_FROST ),
+    SPELL_SCHOOL_MASK_SHADOW  = (1 << SPELL_SCHOOL_SHADOW),
+    SPELL_SCHOOL_MASK_ARCANE  = (1 << SPELL_SCHOOL_ARCANE),
+
+    // unions
+
+    // 124, not include normal and holy damage
+    SPELL_SCHOOL_MASK_SPELL   = ( SPELL_SCHOOL_MASK_FIRE   |
+                                  SPELL_SCHOOL_MASK_NATURE | SPELL_SCHOOL_MASK_FROST  |
+                                  SPELL_SCHOOL_MASK_SHADOW | SPELL_SCHOOL_MASK_ARCANE ),
+    // 126
+    SPELL_SCHOOL_MASK_MAGIC   = ( SPELL_SCHOOL_MASK_HOLY | SPELL_SCHOOL_MASK_SPELL ),
+
+    // 127
+    SPELL_SCHOOL_MASK_ALL     = ( SPELL_SCHOOL_MASK_NORMAL | SPELL_SCHOOL_MASK_MAGIC )
+};
+
+#define SPELL_SCHOOL_MASK_MAGIC                            \
+    ( SPELL_SCHOOL_MASK_HOLY | SPELL_SCHOOL_MASK_FIRE | SPELL_SCHOOL_MASK_NATURE |  \
+      SPELL_SCHOOL_MASK_FROST | SPELL_SCHOOL_MASK_SHADOW | \
+      SPELL_SCHOOL_MASK_ARCANE )
+
+// converts school value into schoolmask missing in 1.12 dbc
+inline SpellSchoolMask GetSchoolMask(uint32 school)
+{
+    return SpellSchoolMask(1 << school);
+}
+
+inline SpellSchools GetFirstSchoolInMask(SpellSchoolMask mask)
+{
+    for(int i = 0; i < MAX_SPELL_SCHOOL; ++i)
+        if (mask & (1 << i))
+            return SpellSchools(i);
+
+    return SPELL_SCHOOL_NORMAL;
+}
+
 namespace Vanilla
 {
     enum AuraFlags
