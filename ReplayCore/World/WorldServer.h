@@ -270,6 +270,7 @@ public:
     void SendTutorialFlags();
     void SendInitialSpells(uint8 raceId, uint8 classId);
     void SendActionButtons(uint8 raceId, uint8 classId);
+    void SendNameQueryResponse(ObjectGuid guid, char const* name, uint32 raceId, uint32 gender, uint32 classId);
     void SendFriendList();
     void SendIgnoreList();
     void SendWhoList(uint32 levelMin, uint32 levelMax, uint32 raceMask, uint32 classMask, std::string playerName, std::string guildName, std::vector<uint32> zones, std::vector<std::string> names);

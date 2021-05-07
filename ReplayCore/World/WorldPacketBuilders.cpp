@@ -280,6 +280,39 @@ void WorldServer::SendActionButtons(uint8 raceId, uint8 classId)
     SendPacket(data);
 }
 
+void WorldServer::SendNameQueryResponse(ObjectGuid guid, char const* name, uint32 raceId, uint32 gender, uint32 classId)
+{
+    WorldPacket data(GetOpcode("SMSG_NAME_QUERY_RESPONSE"), (8 + 25 + 1 + 4 + 4 + 4));   // guess size
+
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
+    {
+        data << guid.WriteAsPacked();
+        data << uint8(0); // has result
+    }
+    else
+        data << guid;
+
+    data << name;                                           // CString(48): played name
+    data << uint8(0);                                       // CString(256): realm name for cross realm BG usage
+
+    if (GetClientBuild() > CLIENT_BUILD_3_1_0)
+    {
+        data << uint8(raceId);
+        data << uint8(gender);
+        data << uint8(classId);
+    }
+    else
+    {
+        data << uint32(raceId);
+        data << uint32(gender);
+        data << uint32(classId);
+    }
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        data << uint8(0); // name declined
+
+    SendPacket(data);
+}
 
 void WorldServer::SendFriendList()
 {

@@ -160,6 +160,15 @@ struct PlayerData : public UnitData
     uint32 GetVisibleItemEnchant(uint32 slot) const { return visibleItemEnchants[slot]; }
 };
 
+struct CreatureText
+{
+    uint32 creatureId = 0;
+    uint32 groupId = 0;
+    std::string text;
+    uint32 chatType = 0;
+    uint32 language = 0;
+};
+
 typedef std::map<uint32 /*guid*/, std::map<uint32 /*parent_point*/, std::vector<Vector3>>> SplinesMap;
 
 class ReplayMgr
@@ -238,6 +247,15 @@ public:
 
         return &itr->second;
     }
+    CreatureText const* GetCreatureTextTemplate(uint32 creatureId, uint32 groupId)
+    {
+        for (auto const& itr : m_creatureTextTemplates)
+        {
+            if (itr.creatureId == creatureId && itr.groupId == groupId)
+                return &itr;
+        }
+        return nullptr;
+    }
     
     void SpawnPlayers();
     void LoadPlayers();
@@ -254,6 +272,15 @@ public:
 
         return &itr->second;
     }
+    std::string GetPlayerChatName(ObjectGuid guid)
+    {
+        auto itr = m_playerChatNames.find(guid);
+        if (itr == m_playerChatNames.end())
+            return std::string();
+
+        return itr->second;
+    }
+    ObjectGuid GetOrCreatePlayerChatGuid(std::string name);
 
 #pragma endregion WorldObjects
 
@@ -284,6 +311,11 @@ public:
     void LoadUnitGuidValuesUpdate(char const* tableName, uint32 typeId);
     void LoadUnitSpeedUpdate(char const* tableName, uint32 typeId);
     void LoadUnitAurasUpdate(char const* tableName, uint32 typeId);
+    void LoadCreatureTextTemplate();
+    void LoadCreatureText();
+    void LoadCreatureEquipmentUpdate();
+    void LoadPlayerChat();
+    void LoadPlayerEquipmentUpdate();
     void LoadSpellCastFailed();
     void LoadSpellCastStart();
     void LoadSpellCastGo();
@@ -323,11 +355,13 @@ private:
     SplinesMap m_creatureMovementCombatSplines;
     std::set<ObjectGuid> m_activePlayers;
     std::map<uint32 /*unixtime*/, ObjectGuid> m_activePlayerTimes;
+    std::map<ObjectGuid, std::string> m_playerChatNames; // players that have never been seen but wrote in a chat channel
     std::map<uint32 /*guid*/, PlayerData> m_playerSpawns;
     std::map<uint32 /*guid*/, CreatureData> m_creatureSpawns;
     std::map<uint32 /*guid*/, GameObjectData> m_gameObjectSpawns;
     std::map<uint32 /*guid*/, DynamicObjectData> m_dynamicObjectSpawns;
     std::map<uint64 /*unixtimems*/, std::map<uint32 /*variable*/, uint32 /*value*/>> m_initialWorldStates;
+    std::vector<CreatureText> m_creatureTextTemplates;
     std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMap;       // prepared data in the current client's format
     std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMapBackup; // stores the original data in sniff client format
 };

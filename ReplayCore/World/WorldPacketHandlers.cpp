@@ -471,42 +471,20 @@ void WorldServer::HandlePlayerNameQuery(WorldPacket& packet)
     if (!pPlayer && m_clientPlayer && m_clientPlayer->GetObjectGuid() == guid)
         pPlayer = m_clientPlayer.get();
 
-    if (!pPlayer)
+    if (pPlayer)
     {
-        printf("[HandlePlayerNameQuery] Error: Received name query for unknown guid %s!\n", guid.GetString().c_str());
+        SendNameQueryResponse(pPlayer->GetObjectGuid(), pPlayer->GetName(), pPlayer->GetRace(), pPlayer->GetGender(), pPlayer->GetClass());
+        return;
+    }
+    
+    std::string senderName = sReplayMgr.GetPlayerChatName(guid);
+    if (!senderName.empty())
+    {
+        SendNameQueryResponse(guid, senderName.c_str(), RACE_HUMAN, GENDER_MALE, CLASS_WARRIOR);
         return;
     }
 
-    WorldPacket response(GetOpcode("SMSG_NAME_QUERY_RESPONSE"), (8 + 25 + 1 + 4 + 4 + 4));   // guess size
-
-    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
-    {
-        response << pPlayer->GetPackGUID();
-        response << uint8(0); // has result
-    }
-    else
-        response << pPlayer->GetObjectGuid();
-
-    response << pPlayer->GetName();                             // CString(48): played name
-    response << uint8(0);                                       // CString(256): realm name for cross realm BG usage
-
-    if (GetClientBuild() > CLIENT_BUILD_3_1_0)
-    {
-        response << uint8(pPlayer->GetRace());
-        response << uint8(pPlayer->GetGender());
-        response << uint8(pPlayer->GetClass());
-    }
-    else
-    {
-        response << uint32(pPlayer->GetRace());
-        response << uint32(pPlayer->GetGender());
-        response << uint32(pPlayer->GetClass());
-    }
-
-    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
-        response << uint8(0); // name declined
-
-    SendPacket(response);
+    printf("[HandlePlayerNameQuery] Error: Received name query for unknown guid %s!\n", guid.GetString().c_str());
 }
 
 void WorldServer::HandleTimeQuery(WorldPacket& packet)
@@ -887,12 +865,16 @@ void WorldServer::HandleMessageChat(WorldPacket& packet)
                 packet >> msg;
                 break;
             default:
-                printf("[HandleMessageChat] Error: unknown message type %u, lang: %u", type, lang);
+                printf("[HandleMessageChat] Error: unknown message type %u, lang: %u\n", type, lang);
                 break;
         }
     }
 
     if (msg.empty())
+        return;
+
+    // addon stuff
+    if (msg[0] == '/')
         return;
 
     if (msg[0] == '.' && msg.length() > 1)

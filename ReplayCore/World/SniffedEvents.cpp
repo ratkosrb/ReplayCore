@@ -97,6 +97,11 @@ void ReplayMgr::LoadSniffedEvents()
     LoadUnitGuidValuesUpdate("player_guid_values_update", TYPEID_PLAYER);
     LoadUnitSpeedUpdate("player_speed_update", TYPEID_PLAYER);
     LoadUnitAurasUpdate("player_auras_update", TYPEID_PLAYER);
+    LoadCreatureTextTemplate();
+    LoadCreatureText();
+    LoadCreatureEquipmentUpdate();
+    LoadPlayerChat();
+    LoadPlayerEquipmentUpdate();
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_flags>("gameobject_values_update", "flags", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_state>("gameobject_values_update", "state", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_artkit>("gameobject_values_update", "artkit", TYPEID_GAMEOBJECT);
@@ -114,12 +119,24 @@ void ReplayMgr::LoadSniffedEvents()
     assert(m_eventsMap.empty());
 }
 
+#include <typeinfo>
+
 void ReplayMgr::PrepareSniffedEventDataForCurrentClient()
 {
     m_eventsMap.clear();
-    m_eventsMap = m_eventsMapBackup;
+
+    // we make a fresh copy of the original events data map when starting replay
+    // this is so we don't need to reload from db when switching client versions
+    for (auto const& itr : m_eventsMapBackup)
+    {
+        m_eventsMap.insert({ itr.first, itr.second->clone() });
+    }
+
+    // movement data is corrected separately from other events, because we need
+    // to track the previous movement info state of the unit to determine opcode
     PrepareClientSideMovementDataForCurrentClient();
 
+    // correct all the other data so it displays correctly in the current client
     for (auto& itr : m_eventsMap)
     {
         itr.second->PepareForCurrentClient();
@@ -158,8 +175,6 @@ void ReplayMgr::PrepareClientSideMovementDataForCurrentClient()
             newState.pos = moveEvent->m_location.ToPosition();
 
             if (uint16 opcode = sWorld.GetOpcode(moveEvent->m_opcodeName))
-                moveEvent->m_opcode = opcode;
-            else if (uint16 opcode = sWorld.GetOpcode(ReplaceString(moveEvent->m_opcodeName, "CMSG_MOVE", "MSG_MOVE")))
                 moveEvent->m_opcode = opcode;
             else if (uint16 opcode = sWorld.GetOpcode(GuessMovementOpcode(lastMovementInfo[moveEvent->m_source], newState)))
                 moveEvent->m_opcode = opcode;
@@ -566,7 +581,7 @@ void SniffedEvent_UnitAttackLog::Execute() const
     Unit* pAttacker = sWorld.FindUnit(GetSourceGuid());
     if (!pAttacker)
     {
-        printf("SniffedEvent_UnitAttackStart: Cannot find source unit!\n");
+        printf("SniffedEvent_UnitAttackLog: Cannot find source unit!\n");
         return;
     }
 
@@ -1444,6 +1459,224 @@ void SniffedEvent_UnitUpdate_auras::Execute() const
     pUnit->SetAura(m_slot, m_aura, sReplayMgr.IsPlaying() && pUnit->IsVisibleToClient());
 }
 
+void ReplayMgr::LoadCreatureTextTemplate()
+{
+    //                                             0        1           2       3            4
+    if (auto result = SniffDatabase.Query("SELECT `entry`, `group_id`, `text`, `chat_type`, `language` FROM `creature_text_template`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            CreatureText textEntry;
+            textEntry.creatureId = fields[0].GetUInt32();
+            textEntry.groupId = fields[1].GetUInt32();
+            textEntry.text = fields[2].GetCppString();
+            textEntry.chatType = fields[3].GetUInt32();
+            textEntry.language = fields[4].GetUInt32();
+
+            m_creatureTextTemplates.emplace_back(std::move(textEntry));
+        } while (result->NextRow());
+    }
+}
+
+void ReplayMgr::LoadCreatureText()
+{
+    //                                             0             1       2        3
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `entry`, `group_id` FROM `creature_text` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 creatureGuidLow = fields[1].GetUInt32();
+            uint32 creatureId = fields[2].GetUInt32();
+            ObjectGuid sourceGuid = ObjectGuid(HIGHGUID_UNIT, creatureId, creatureGuidLow);
+            uint32 groupId = fields[3].GetUInt32();
+
+            CreatureTemplate const* pCreatureTemplate = sGameDataMgr.GetCreatureTemplate(creatureId);
+            if (!pCreatureTemplate)
+            {
+                printf("[ReplayMgr] Error: Unknown creature id %u in table `creature_text`!\n", creatureId);
+                continue;
+            }
+
+            CreatureText const* pTextEntry = GetCreatureTextTemplate(creatureId, groupId);
+            if (!pTextEntry)
+            {
+                printf("[ReplayMgr] Error: Unknown text index %u for creature %u!\n", groupId, creatureId);
+                continue;
+            }
+
+            std::shared_ptr<SniffedEvent_CreatureText> newEvent = std::make_shared<SniffedEvent_CreatureText>(sourceGuid, pCreatureTemplate->name, pTextEntry->text, pTextEntry->chatType, pTextEntry->language);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_CreatureText::PepareForCurrentClient()
+{
+    m_chatType = sGameDataMgr.ConvertChatType(m_chatType);
+}
+
+void SniffedEvent_CreatureText::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    sWorld.SendChatPacket(m_chatType, m_text.c_str(), m_language, 0, GetSourceGuid(), m_creatureName.c_str());
+}
+
+void ReplayMgr::LoadCreatureEquipmentUpdate()
+{
+    //                                             0             1       2       3
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `slot`, `item_id` FROM `creature_equipment_values_update` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, TYPEID_UNIT))
+                sourceGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `creature_equipment_values_update`.\n", guidLow);
+                continue;
+            }
+
+            uint32 slot = fields[2].GetUInt32();
+            if (slot > VIRTUAL_ITEM_SLOT_2)
+                continue;
+
+            uint32 itemId = fields[3].GetUInt32();
+            if (itemId && !sGameDataMgr.GetItemPrototype(itemId))
+                continue;
+
+            std::shared_ptr<SniffedEvent_CreatureEquipmentUpdate> newEvent = std::make_shared<SniffedEvent_CreatureEquipmentUpdate>(sourceGuid, slot, itemId);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_CreatureEquipmentUpdate::Execute() const
+{
+    Unit* pCreature = sWorld.FindCreature(GetSourceGuid());
+    if (!pCreature)
+    {
+        printf("SniffedEvent_CreatureEquipmentUpdate: Cannot find source creature!\n");
+        return;
+    }
+
+    pCreature->SetVirtualItem(m_slot, m_itemId);
+}
+
+void ReplayMgr::LoadPlayerChat()
+{
+    //                                             0             1       2              3       4            5
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `sender_name`, `text`, `chat_type`, `channel_name` FROM `player_chat` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            std::string senderName = fields[2].GetCppString();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, TYPEID_PLAYER))
+                sourceGuid = pData->guid;
+            else if (!senderName.empty())
+                sourceGuid = GetOrCreatePlayerChatGuid(senderName);
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `player_chat`.\n", guidLow);
+                continue;
+            }
+            
+            std::string text = fields[3].GetCppString();
+            uint8 chatType = fields[4].GetUInt8();
+            std::string channelName = fields[5].GetCppString();
+
+            std::shared_ptr<SniffedEvent_PlayerChat> newEvent = std::make_shared<SniffedEvent_PlayerChat>(sourceGuid, senderName, text, chatType, channelName);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_PlayerChat::PepareForCurrentClient()
+{
+    m_chatType = sGameDataMgr.ConvertChatType(m_chatType);
+}
+
+void SniffedEvent_PlayerChat::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    sWorld.SendChatPacket(m_chatType, m_text.c_str(), 0, 0, GetSourceGuid(), m_senderName.c_str(), ObjectGuid(), "", m_channelName.c_str());
+}
+
+void ReplayMgr::LoadPlayerEquipmentUpdate()
+{
+    //                                             0             1       2       3
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `slot`, `item_id` FROM `player_equipment_values_update` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, TYPEID_PLAYER))
+                sourceGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `player_equipment_values_update`.\n", guidLow);
+                continue;
+            }
+            
+            uint32 slot = fields[2].GetUInt32();
+            if (slot >= EQUIPMENT_SLOT_END)
+                continue;
+
+            uint32 itemId = fields[3].GetUInt32();
+            if (itemId && !sGameDataMgr.GetItemPrototype(itemId))
+                continue;
+
+            std::shared_ptr<SniffedEvent_PlayerEquipmentUpdate> newEvent = std::make_shared<SniffedEvent_PlayerEquipmentUpdate>(sourceGuid, slot, itemId);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_PlayerEquipmentUpdate::Execute() const
+{
+    Player* pPlayer = sWorld.FindPlayer(GetSourceGuid());
+    if (!pPlayer)
+    {
+        printf("SniffedEvent_PlayerEquipmentUpdate: Cannot find source player!\n");
+        return;
+    }
+
+    pPlayer->SetVisibleItemSlot(m_slot, m_itemId, 0);
+}
+
+
 void ReplayMgr::LoadSpellCastFailed()
 {
     //                                             0             1              2            3              4           5
@@ -1486,7 +1719,14 @@ void SniffedEvent_SpellCastFailed::Execute() const
     if (!sReplayMgr.IsPlaying())
         return;
 
-    if (!sWorld.IsClientInWorld())
+    WorldObject* pSource = sWorld.FindObject(GetSourceGuid());
+    if (!pSource)
+    {
+        printf("SniffedEvent_SpellCastFailed: Cannot find source object!\n");
+        return;
+    }
+
+    if (!pSource->IsVisibleToClient())
         return;
 
     sWorld.SendSpellFailedOther(GetSourceGuid(), m_spellId, m_reason);
@@ -1555,7 +1795,14 @@ void SniffedEvent_SpellCastStart::Execute() const
     if (!sReplayMgr.IsPlaying())
         return;
 
-    if (!sWorld.IsClientInWorld())
+    WorldObject* pSource = sWorld.FindObject(GetSourceGuid());
+    if (!pSource)
+    {
+        printf("SniffedEvent_SpellCastStart: Cannot find source object!\n");
+        return;
+    }
+
+    if (!pSource->IsVisibleToClient())
         return;
 
     SpellCastTargets targets;
@@ -1656,25 +1903,25 @@ void ReplayMgr::LoadSpellCastGo()
             //uint32 missTargetsCount = fields[16].GetUInt32();
             uint32 missTargetsListId = fields[17].GetUInt32();
 
-            std::unique_ptr<Vector3> pSrcPosition;
+            Vector3 srcPosition;
             uint32 srcPositionId = fields[18].GetUInt32();
             if (srcPositionId)
             {
                 auto itr = castGoPositions.find(srcPositionId);
                 if (itr != castGoPositions.end())
-                    pSrcPosition = std::make_unique<Vector3>(itr->second);
+                    srcPosition = itr->second;
             }
 
-            std::unique_ptr<Vector3> pDstPosition;
+            Vector3 dstPosition;
             uint32 dstPositionId = fields[19].GetUInt32();
             if (dstPositionId)
             {
                 auto itr = castGoPositions.find(dstPositionId);
                 if (itr != castGoPositions.end())
-                    pDstPosition = std::make_unique<Vector3>(itr->second);
+                    dstPosition = itr->second;
             }
 
-            std::shared_ptr<SniffedEvent_SpellCastGo> newEvent = std::make_shared<SniffedEvent_SpellCastGo>(casterGuid, casterUnitGuid, spellId, castFlags, ammoDisplayId, ammoInventoryType, targetGuid, castGoTargets[hitTargetsListId], castGoTargets[missTargetsListId], std::move(pSrcPosition), std::move(pDstPosition));
+            std::shared_ptr<SniffedEvent_SpellCastGo> newEvent = std::make_shared<SniffedEvent_SpellCastGo>(casterGuid, casterUnitGuid, spellId, castFlags, ammoDisplayId, ammoInventoryType, targetGuid, castGoTargets[hitTargetsListId], castGoTargets[missTargetsListId], srcPosition, dstPosition);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());
@@ -1692,7 +1939,14 @@ void SniffedEvent_SpellCastGo::Execute() const
     if (!sReplayMgr.IsPlaying())
         return;
 
-    if (!sWorld.IsClientInWorld())
+    WorldObject* pSource = sWorld.FindObject(GetSourceGuid());
+    if (!pSource)
+    {
+        printf("SniffedEvent_SpellCastGo: Cannot find source object!\n");
+        return;
+    }
+
+    if (!pSource->IsVisibleToClient())
         return;
 
     SpellCastTargets targets;
@@ -1704,11 +1958,11 @@ void SniffedEvent_SpellCastGo::Execute() const
             targets.setGOTarget(pGo);
     }
 
-    if (m_sourcePosition)
-        targets.setSource(m_sourcePosition->x, m_sourcePosition->y, m_sourcePosition->z);
+    if (!m_sourcePosition.IsEmpty())
+        targets.setSource(m_sourcePosition.x, m_sourcePosition.y, m_sourcePosition.z);
 
-    if (m_destinationPosition)
-        targets.setDestination(m_destinationPosition->x, m_destinationPosition->y, m_destinationPosition->z);
+    if (!m_destinationPosition.IsEmpty())
+        targets.setDestination(m_destinationPosition.x, m_destinationPosition.y, m_destinationPosition.z);
 
     sWorld.SendSpellCastGo(m_spellId, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_hitTargets, m_missTargets, m_ammoDisplayId, m_ammoInventoryType);
 }
@@ -1754,7 +2008,14 @@ void SniffedEvent_SpellChannelStart::Execute() const
     if (!sReplayMgr.IsPlaying())
         return;
 
-    if (!sWorld.IsClientInWorld())
+    WorldObject* pSource = sWorld.FindObject(GetSourceGuid());
+    if (!pSource)
+    {
+        printf("SniffedEvent_SpellChannelStart: Cannot find source object!\n");
+        return;
+    }
+
+    if (!pSource->IsVisibleToClient())
         return;
 
     // In vanilla MSG_CHANNEL_START is only sent to the caster itself.
@@ -1793,7 +2054,14 @@ void SniffedEvent_SpellChannelUpdate::Execute() const
     if (!sReplayMgr.IsPlaying())
         return;
 
-    if (!sWorld.IsClientInWorld())
+    WorldObject* pSource = sWorld.FindObject(GetSourceGuid());
+    if (!pSource)
+    {
+        printf("SniffedEvent_SpellChannelUpdate: Cannot find source object!\n");
+        return;
+    }
+
+    if (!pSource->IsVisibleToClient())
         return;
 
     // In vanilla MSG_CHANNEL_UPDATE is only sent to the caster itself.

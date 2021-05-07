@@ -61,6 +61,7 @@ struct Vector3
     float x = 0.0f;
     float y = 0.0f;
     float z = 0.0f;
+    bool IsEmpty() const { return x == 0.0f && y == 0.0f && z == 0.0f; }
 };
 struct Position
 {
@@ -85,7 +86,6 @@ struct WorldLocation : public Position
     WorldLocation(WorldLocation const& loc)
         : Position(loc.x, loc.y, loc.z, loc.o), mapId(loc.mapId) {}
     Position ToPosition() const { return Position(x, y, z, o); }
-    Vector3 ToVector3() const { return Vector3(x, y, z); }
 };
 
 #endif

@@ -27,8 +27,6 @@ enum SniffedEventType : uint8
     SE_WEATHER_UPDATE,
     SE_WORLD_TEXT,
     SE_WORLD_STATE_UPDATE,
-    SE_CREATURE_TEXT,
-    SE_CREATURE_EQUIPMENT_UPDATE,
     SE_WORLDOBJECT_CREATE1,
     SE_WORLDOBJECT_CREATE2,
     SE_WORLDOBJECT_DESTROY,
@@ -67,9 +65,11 @@ enum SniffedEventType : uint8
     SE_UNIT_UPDATE_GUID_VALUE,
     SE_UNIT_UPDATE_SPEED,
     SE_UNIT_UPDATE_AURAS,
+    SE_CREATURE_TEXT,
+    SE_CREATURE_EQUIPMENT_UPDATE,
+    SE_PLAYER_CHAT,
+    SE_PLAYER_EQUIPMENT_UPDATE,
     SE_DYNAMICOBJECT_CREATE,
-    SE_GAMEOBJECT_CREATE1,
-    SE_GAMEOBJECT_CREATE2,
     SE_GAMEOBJECT_CUSTOM_ANIM,
     SE_GAMEOBJECT_DESPAWN_ANIM,
     SE_GAMEOBJECT_DESTROY,
@@ -78,8 +78,6 @@ enum SniffedEventType : uint8
     SE_GAMEOBJECT_UPDATE_ARTKIT,
     SE_GAMEOBJECT_UPDATE_DYNAMIC_FLAGS,
     SE_GAMEOBJECT_UPDATE_PATH_PROGRESS,
-    SE_PLAYER_CHAT,
-    SE_PLAYER_EQUIPMENT_UPDATE,
     SE_PLAY_MUSIC,
     SE_PLAY_SOUND,
     SE_PLAY_SPELL_VISUAL_KIT,
@@ -117,10 +115,6 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "WorldObject Create 2";
         case SE_WORLDOBJECT_DESTROY:
             return "WorldObject Destroy";
-        case SE_CREATURE_TEXT:
-            return "Creature Text";
-        case SE_CREATURE_EQUIPMENT_UPDATE:
-            return "Creature Equipment Update";  
         case SE_UNIT_ATTACK_LOG:
             return "Unit Attack Log";
         case SE_UNIT_ATTACK_START:
@@ -191,12 +185,16 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Unit Update Speed";
         case SE_UNIT_UPDATE_AURAS:
             return "Unit Update Auras";
+        case SE_CREATURE_TEXT:
+            return "Creature Text";
+        case SE_CREATURE_EQUIPMENT_UPDATE:
+            return "Creature Equipment Update";
+        case SE_PLAYER_CHAT:
+            return "Player Chat";
+        case SE_PLAYER_EQUIPMENT_UPDATE:
+            return "Player Equipment Update";
         case SE_DYNAMICOBJECT_CREATE:
             return "DynamicObject Create";
-        case SE_GAMEOBJECT_CREATE1:
-            return "GameObject Create 1";
-        case SE_GAMEOBJECT_CREATE2:
-            return "GameObject Create 2";
         case SE_GAMEOBJECT_CUSTOM_ANIM:
             return "GameObject Custom Anim";
         case SE_GAMEOBJECT_DESPAWN_ANIM:
@@ -213,10 +211,6 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "GameObject Update Dynamic Flags";
         case SE_GAMEOBJECT_UPDATE_PATH_PROGRESS:
             return "GameObject Update Path Progress";
-        case SE_PLAYER_CHAT:
-            return "Player Chat";
-        case SE_PLAYER_EQUIPMENT_UPDATE:
-            return "Player Equipment Update";
         case SE_PLAY_MUSIC:
             return "Play Music";
         case SE_PLAY_SOUND:
@@ -267,9 +261,19 @@ struct SniffedEvent
     virtual SniffedEventType GetType() const = 0;
     virtual ObjectGuid GetSourceGuid() const { return ObjectGuid(); };
     virtual ObjectGuid GetTargetGuid() const { return ObjectGuid(); };
+    virtual std::shared_ptr<SniffedEvent> clone() const = 0;
 };
 
-struct SniffedEvent_WeatherUpdate : SniffedEvent
+template <class Derived>
+struct SniffedEventCRTP : SniffedEvent
+{
+    virtual std::shared_ptr<SniffedEvent> clone() const
+    {
+        return std::make_shared<Derived>(static_cast<const Derived&>(*this));
+    }
+};
+
+struct SniffedEvent_WeatherUpdate : SniffedEventCRTP<SniffedEvent_WeatherUpdate>
 {
     SniffedEvent_WeatherUpdate(uint32 mapId, uint32 zoneId, uint32 weatherType, float grade, uint32 soundId, bool instant) :
         m_mapId(mapId), m_zoneId(zoneId), m_type(weatherType), m_grade(grade), m_soundId(soundId), m_instant(instant) {};
@@ -287,7 +291,7 @@ struct SniffedEvent_WeatherUpdate : SniffedEvent
     }
 };
 
-struct SniffedEvent_WorldText : SniffedEvent
+struct SniffedEvent_WorldText : SniffedEventCRTP<SniffedEvent_WorldText>
 {
     SniffedEvent_WorldText(std::string text, uint32 chatType, uint32 language) :
         m_text(text), m_chatType(chatType), m_language(language) {};
@@ -302,7 +306,7 @@ struct SniffedEvent_WorldText : SniffedEvent
     }
 };
 
-struct SniffedEvent_WorldStateUpdate : SniffedEvent
+struct SniffedEvent_WorldStateUpdate : SniffedEventCRTP<SniffedEvent_WorldStateUpdate>
 {
     SniffedEvent_WorldStateUpdate(uint32 variable, uint32 value) :
         m_variable(variable), m_value(value) {};
@@ -315,7 +319,7 @@ struct SniffedEvent_WorldStateUpdate : SniffedEvent
     }
 };
 
-struct SniffedEvent_WorldObjectCreate1 : SniffedEvent
+struct SniffedEvent_WorldObjectCreate1 : SniffedEventCRTP<SniffedEvent_WorldObjectCreate1>
 {
     SniffedEvent_WorldObjectCreate1(ObjectGuid source, uint32 mapId, float x, float y, float z, float o) :
         m_source(source), m_location(mapId, x, y, z, o) {};
@@ -332,7 +336,7 @@ struct SniffedEvent_WorldObjectCreate1 : SniffedEvent
     }
 };
 
-struct SniffedEvent_WorldObjectCreate2 : SniffedEvent
+struct SniffedEvent_WorldObjectCreate2 : SniffedEventCRTP<SniffedEvent_WorldObjectCreate2>
 {
     SniffedEvent_WorldObjectCreate2(ObjectGuid source, uint32 mapId, float x, float y, float z, float o) :
         m_source(source), m_location(mapId, x, y, z, o) {};
@@ -349,7 +353,7 @@ struct SniffedEvent_WorldObjectCreate2 : SniffedEvent
     }
 };
 
-struct SniffedEvent_WorldObjectDestroy : SniffedEvent
+struct SniffedEvent_WorldObjectDestroy : SniffedEventCRTP<SniffedEvent_WorldObjectDestroy>
 {
     SniffedEvent_WorldObjectDestroy(ObjectGuid source) : m_source(source) {};
     ObjectGuid m_source;
@@ -364,7 +368,7 @@ struct SniffedEvent_WorldObjectDestroy : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitAttackStart : SniffedEvent
+struct SniffedEvent_UnitAttackStart : SniffedEventCRTP<SniffedEvent_UnitAttackStart>
 {
     SniffedEvent_UnitAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid) :
         m_attackerGuid(attackerGuid), m_victimGuid(victimGuid) {};
@@ -385,7 +389,7 @@ struct SniffedEvent_UnitAttackStart : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitAttackStop : SniffedEvent
+struct SniffedEvent_UnitAttackStop : SniffedEventCRTP<SniffedEvent_UnitAttackStop>
 {
     SniffedEvent_UnitAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid) :
         m_attackerGuid(attackerGuid), m_victimGuid(victimGuid) {};
@@ -406,7 +410,7 @@ struct SniffedEvent_UnitAttackStop : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitAttackLog : SniffedEvent
+struct SniffedEvent_UnitAttackLog : SniffedEventCRTP<SniffedEvent_UnitAttackLog>
 {
     SniffedEvent_UnitAttackLog(ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 hitInfo, uint32 damage, uint32 originalDamage, int32 overkillDamage, uint32 totalSchoolMask, uint32 totalAbsorbedDamage, uint32 totalResistedDamage, int32 blockedDamage, uint32 victimState, int32 attackerState, uint32 spellId) :
         m_attackerGuid(attackerGuid), m_victimGuid(victimGuid), m_hitInfo(hitInfo), m_damage(damage), m_originalDamage(originalDamage), m_overkillDamage(overkillDamage), m_totalSchoolMask(totalSchoolMask), m_totalAbsorbedDamage(totalAbsorbedDamage), m_totalResistedDamage(totalResistedDamage), m_blockedDamage(blockedDamage), m_victimState(victimState), m_attackerState(attackerState), m_spellId(spellId) {};
@@ -439,7 +443,7 @@ struct SniffedEvent_UnitAttackLog : SniffedEvent
     }
 };
 
-struct SniffedEvent_ClientSideMovement : SniffedEvent
+struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSideMovement>
 {
     SniffedEvent_ClientSideMovement(ObjectGuid source, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o) :
         m_source(source), m_opcodeName(opcodeName), m_moveTime(moveTime), m_moveFlags(moveFlags), m_location(mapId, x, y, z, o) {};
@@ -461,7 +465,7 @@ struct SniffedEvent_ClientSideMovement : SniffedEvent
     }
 };
 
-struct SniffedEvent_ServerSideMovement : SniffedEvent
+struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSideMovement>
 {
     SniffedEvent_ServerSideMovement(ObjectGuid source, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines) :
         m_source(source), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines) {};
@@ -487,7 +491,7 @@ struct SniffedEvent_ServerSideMovement : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_entry : SniffedEvent
+struct SniffedEvent_UnitUpdate_entry : SniffedEventCRTP<SniffedEvent_UnitUpdate_entry>
 {
     SniffedEvent_UnitUpdate_entry(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -505,7 +509,7 @@ struct SniffedEvent_UnitUpdate_entry : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_scale : SniffedEvent
+struct SniffedEvent_UnitUpdate_scale : SniffedEventCRTP<SniffedEvent_UnitUpdate_scale>
 {
     SniffedEvent_UnitUpdate_scale(ObjectGuid source, float value) :
         m_source(source), m_value(value) {};
@@ -522,7 +526,7 @@ struct SniffedEvent_UnitUpdate_scale : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_display_id : SniffedEvent
+struct SniffedEvent_UnitUpdate_display_id : SniffedEventCRTP<SniffedEvent_UnitUpdate_display_id>
 {
     SniffedEvent_UnitUpdate_display_id(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -540,7 +544,7 @@ struct SniffedEvent_UnitUpdate_display_id : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_mount : SniffedEvent
+struct SniffedEvent_UnitUpdate_mount : SniffedEventCRTP<SniffedEvent_UnitUpdate_mount>
 {
     SniffedEvent_UnitUpdate_mount(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -558,7 +562,7 @@ struct SniffedEvent_UnitUpdate_mount : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_faction : SniffedEvent
+struct SniffedEvent_UnitUpdate_faction : SniffedEventCRTP<SniffedEvent_UnitUpdate_faction>
 {
     SniffedEvent_UnitUpdate_faction(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -576,7 +580,7 @@ struct SniffedEvent_UnitUpdate_faction : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_level : SniffedEvent
+struct SniffedEvent_UnitUpdate_level : SniffedEventCRTP<SniffedEvent_UnitUpdate_level>
 {
     SniffedEvent_UnitUpdate_level(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -594,7 +598,7 @@ struct SniffedEvent_UnitUpdate_level : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_aura_state : SniffedEvent
+struct SniffedEvent_UnitUpdate_aura_state : SniffedEventCRTP<SniffedEvent_UnitUpdate_aura_state>
 {
     SniffedEvent_UnitUpdate_aura_state(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -611,7 +615,7 @@ struct SniffedEvent_UnitUpdate_aura_state : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_emote_state : SniffedEvent
+struct SniffedEvent_UnitUpdate_emote_state : SniffedEventCRTP<SniffedEvent_UnitUpdate_emote_state>
 {
     SniffedEvent_UnitUpdate_emote_state(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -629,7 +633,7 @@ struct SniffedEvent_UnitUpdate_emote_state : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_stand_state : SniffedEvent
+struct SniffedEvent_UnitUpdate_stand_state : SniffedEventCRTP<SniffedEvent_UnitUpdate_stand_state>
 {
     SniffedEvent_UnitUpdate_stand_state(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -647,7 +651,7 @@ struct SniffedEvent_UnitUpdate_stand_state : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_vis_flags : SniffedEvent
+struct SniffedEvent_UnitUpdate_vis_flags : SniffedEventCRTP<SniffedEvent_UnitUpdate_vis_flags>
 {
     SniffedEvent_UnitUpdate_vis_flags(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -664,7 +668,7 @@ struct SniffedEvent_UnitUpdate_vis_flags : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_sheath_state : SniffedEvent
+struct SniffedEvent_UnitUpdate_sheath_state : SniffedEventCRTP<SniffedEvent_UnitUpdate_sheath_state>
 {
     SniffedEvent_UnitUpdate_sheath_state(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -682,7 +686,7 @@ struct SniffedEvent_UnitUpdate_sheath_state : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_shapeshift_form : SniffedEvent
+struct SniffedEvent_UnitUpdate_shapeshift_form : SniffedEventCRTP<SniffedEvent_UnitUpdate_shapeshift_form>
 {
     SniffedEvent_UnitUpdate_shapeshift_form(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -700,7 +704,7 @@ struct SniffedEvent_UnitUpdate_shapeshift_form : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_npc_flags : SniffedEvent
+struct SniffedEvent_UnitUpdate_npc_flags : SniffedEventCRTP<SniffedEvent_UnitUpdate_npc_flags>
 {
     SniffedEvent_UnitUpdate_npc_flags(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -718,7 +722,7 @@ struct SniffedEvent_UnitUpdate_npc_flags : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_unit_flags : SniffedEvent
+struct SniffedEvent_UnitUpdate_unit_flags : SniffedEventCRTP<SniffedEvent_UnitUpdate_unit_flags>
 {
     SniffedEvent_UnitUpdate_unit_flags(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -735,7 +739,7 @@ struct SniffedEvent_UnitUpdate_unit_flags : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_unit_flags2 : SniffedEvent
+struct SniffedEvent_UnitUpdate_unit_flags2 : SniffedEventCRTP<SniffedEvent_UnitUpdate_unit_flags2>
 {
     SniffedEvent_UnitUpdate_unit_flags2(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -752,7 +756,7 @@ struct SniffedEvent_UnitUpdate_unit_flags2 : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_dynamic_flags : SniffedEvent
+struct SniffedEvent_UnitUpdate_dynamic_flags : SniffedEventCRTP<SniffedEvent_UnitUpdate_dynamic_flags>
 {
     SniffedEvent_UnitUpdate_dynamic_flags(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -769,7 +773,7 @@ struct SniffedEvent_UnitUpdate_dynamic_flags : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_current_health : SniffedEvent
+struct SniffedEvent_UnitUpdate_current_health : SniffedEventCRTP<SniffedEvent_UnitUpdate_current_health>
 {
     SniffedEvent_UnitUpdate_current_health(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -786,7 +790,7 @@ struct SniffedEvent_UnitUpdate_current_health : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_max_health : SniffedEvent
+struct SniffedEvent_UnitUpdate_max_health : SniffedEventCRTP<SniffedEvent_UnitUpdate_max_health>
 {
     SniffedEvent_UnitUpdate_max_health(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -803,7 +807,7 @@ struct SniffedEvent_UnitUpdate_max_health : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_current_mana : SniffedEvent
+struct SniffedEvent_UnitUpdate_current_mana : SniffedEventCRTP<SniffedEvent_UnitUpdate_current_mana>
 {
     SniffedEvent_UnitUpdate_current_mana(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -820,7 +824,7 @@ struct SniffedEvent_UnitUpdate_current_mana : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_max_mana : SniffedEvent
+struct SniffedEvent_UnitUpdate_max_mana : SniffedEventCRTP<SniffedEvent_UnitUpdate_max_mana>
 {
     SniffedEvent_UnitUpdate_max_mana(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -837,7 +841,7 @@ struct SniffedEvent_UnitUpdate_max_mana : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_bounding_radius : SniffedEvent
+struct SniffedEvent_UnitUpdate_bounding_radius : SniffedEventCRTP<SniffedEvent_UnitUpdate_bounding_radius>
 {
     SniffedEvent_UnitUpdate_bounding_radius(ObjectGuid source, float value) :
         m_source(source), m_value(value) {};
@@ -854,7 +858,7 @@ struct SniffedEvent_UnitUpdate_bounding_radius : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_combat_reach : SniffedEvent
+struct SniffedEvent_UnitUpdate_combat_reach : SniffedEventCRTP<SniffedEvent_UnitUpdate_combat_reach>
 {
     SniffedEvent_UnitUpdate_combat_reach(ObjectGuid source, float value) :
         m_source(source), m_value(value) {};
@@ -871,7 +875,7 @@ struct SniffedEvent_UnitUpdate_combat_reach : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_main_hand_attack_time : SniffedEvent
+struct SniffedEvent_UnitUpdate_main_hand_attack_time : SniffedEventCRTP<SniffedEvent_UnitUpdate_main_hand_attack_time>
 {
     SniffedEvent_UnitUpdate_main_hand_attack_time(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -888,7 +892,7 @@ struct SniffedEvent_UnitUpdate_main_hand_attack_time : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_off_hand_attack_time : SniffedEvent
+struct SniffedEvent_UnitUpdate_off_hand_attack_time : SniffedEventCRTP<SniffedEvent_UnitUpdate_off_hand_attack_time>
 {
     SniffedEvent_UnitUpdate_off_hand_attack_time(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -905,7 +909,7 @@ struct SniffedEvent_UnitUpdate_off_hand_attack_time : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_channel_spell : SniffedEvent
+struct SniffedEvent_UnitUpdate_channel_spell : SniffedEventCRTP<SniffedEvent_UnitUpdate_channel_spell>
 {
     SniffedEvent_UnitUpdate_channel_spell(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -923,7 +927,7 @@ struct SniffedEvent_UnitUpdate_channel_spell : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_guid_value : SniffedEvent
+struct SniffedEvent_UnitUpdate_guid_value : SniffedEventCRTP<SniffedEvent_UnitUpdate_guid_value>
 {
     SniffedEvent_UnitUpdate_guid_value(ObjectGuid source, ObjectGuid target, char const* updateField) :
         m_source(source), m_target(target), m_updateField(updateField) {};
@@ -945,7 +949,7 @@ struct SniffedEvent_UnitUpdate_guid_value : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_speed : SniffedEvent
+struct SniffedEvent_UnitUpdate_speed : SniffedEventCRTP<SniffedEvent_UnitUpdate_speed>
 {
     SniffedEvent_UnitUpdate_speed(ObjectGuid source, uint32 speedType, float speedRate) :
         m_source(source), m_speedType(speedType), m_speedRate(speedRate) {};
@@ -964,7 +968,7 @@ struct SniffedEvent_UnitUpdate_speed : SniffedEvent
     }
 };
 
-struct SniffedEvent_UnitUpdate_auras : SniffedEvent
+struct SniffedEvent_UnitUpdate_auras : SniffedEventCRTP<SniffedEvent_UnitUpdate_auras>
 {
     SniffedEvent_UnitUpdate_auras(ObjectGuid source, uint32 slot, Aura aura) :
         m_source(source), m_slot(slot), m_aura(aura) {};
@@ -983,7 +987,85 @@ struct SniffedEvent_UnitUpdate_auras : SniffedEvent
     }
 };
 
-struct SniffedEvent_GameObjectUpdate_flags : SniffedEvent
+struct SniffedEvent_CreatureText : SniffedEventCRTP<SniffedEvent_CreatureText>
+{
+    SniffedEvent_CreatureText(ObjectGuid source, std::string creatureName, std::string text, uint32 chatType, uint32 language) :
+        m_source(source), m_creatureName(creatureName), m_text(text), m_chatType(chatType), m_language(language) {};
+    ObjectGuid m_source;
+    std::string m_creatureName;
+    std::string m_text;
+    uint32 m_chatType = 0;
+    uint32 m_language = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CREATURE_TEXT;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_CreatureEquipmentUpdate : SniffedEventCRTP<SniffedEvent_CreatureEquipmentUpdate>
+{
+    SniffedEvent_CreatureEquipmentUpdate(ObjectGuid source, uint32 slot, uint32 itemId) :
+        m_source(source), m_slot(slot), m_itemId(itemId) {};
+    ObjectGuid m_source;
+    uint32 m_slot = 0;
+    uint32 m_itemId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CREATURE_EQUIPMENT_UPDATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_PlayerChat : SniffedEventCRTP<SniffedEvent_PlayerChat>
+{
+    SniffedEvent_PlayerChat(ObjectGuid senderGuid, std::string senderName, std::string text, uint8 chatType, std::string channelName) :
+        m_senderGuid(senderGuid), m_senderName(senderName), m_text(text), m_chatType(chatType), m_channelName(channelName) {};
+    ObjectGuid m_senderGuid;
+    std::string m_senderName;
+    std::string m_text;
+    uint8 m_chatType = 0;
+    std::string m_channelName;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_PLAYER_CHAT;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_senderGuid;
+    }
+};
+
+struct SniffedEvent_PlayerEquipmentUpdate : SniffedEventCRTP<SniffedEvent_PlayerEquipmentUpdate>
+{
+    SniffedEvent_PlayerEquipmentUpdate(ObjectGuid source, uint32 slot, uint32 itemId) :
+        m_source(source), m_slot(slot), m_itemId(itemId) {};
+    ObjectGuid m_source;
+    uint32 m_slot = 0;
+    uint32 m_itemId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_PLAYER_EQUIPMENT_UPDATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_source;
+    }
+};
+
+struct SniffedEvent_GameObjectUpdate_flags : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_flags>
 {
     SniffedEvent_GameObjectUpdate_flags(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -1000,7 +1082,7 @@ struct SniffedEvent_GameObjectUpdate_flags : SniffedEvent
     }
 };
 
-struct SniffedEvent_GameObjectUpdate_state : SniffedEvent
+struct SniffedEvent_GameObjectUpdate_state : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_state>
 {
     SniffedEvent_GameObjectUpdate_state(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -1017,7 +1099,7 @@ struct SniffedEvent_GameObjectUpdate_state : SniffedEvent
     }
 };
 
-struct SniffedEvent_GameObjectUpdate_artkit : SniffedEvent
+struct SniffedEvent_GameObjectUpdate_artkit : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_artkit>
 {
     SniffedEvent_GameObjectUpdate_artkit(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -1034,7 +1116,7 @@ struct SniffedEvent_GameObjectUpdate_artkit : SniffedEvent
     }
 };
 
-struct SniffedEvent_GameObjectUpdate_dynamic_flags : SniffedEvent
+struct SniffedEvent_GameObjectUpdate_dynamic_flags : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_dynamic_flags>
 {
     SniffedEvent_GameObjectUpdate_dynamic_flags(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -1051,7 +1133,7 @@ struct SniffedEvent_GameObjectUpdate_dynamic_flags : SniffedEvent
     }
 };
 
-struct SniffedEvent_GameObjectUpdate_path_progress : SniffedEvent
+struct SniffedEvent_GameObjectUpdate_path_progress : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_path_progress>
 {
     SniffedEvent_GameObjectUpdate_path_progress(ObjectGuid source, uint32 value) :
         m_source(source), m_value(value) {};
@@ -1068,7 +1150,7 @@ struct SniffedEvent_GameObjectUpdate_path_progress : SniffedEvent
     }
 };
 
-struct SniffedEvent_SpellCastFailed : SniffedEvent
+struct SniffedEvent_SpellCastFailed : SniffedEventCRTP<SniffedEvent_SpellCastFailed>
 {
     SniffedEvent_SpellCastFailed(ObjectGuid source, uint32 spellId, uint32 reason) :
         m_source(source), m_spellId(spellId), m_reason(reason) {};
@@ -1087,7 +1169,7 @@ struct SniffedEvent_SpellCastFailed : SniffedEvent
     }
 };
 
-struct SniffedEvent_SpellCastStart : SniffedEvent
+struct SniffedEvent_SpellCastStart : SniffedEventCRTP<SniffedEvent_SpellCastStart>
 {
     SniffedEvent_SpellCastStart(ObjectGuid casterGuid, ObjectGuid casterUnitGuid, ObjectGuid targetGuid, uint32 spellId, uint32 castTime, uint32 castFlags, uint32 ammoDisplayId, uint32 ammoInventoryType) :
         m_casterGuid(casterGuid), m_casterUnitGuid(casterUnitGuid), m_targetGuid(targetGuid), m_spellId(spellId), m_castTime(castTime), m_castFlags(castFlags), m_ammoDisplayId(ammoDisplayId), m_ammoInventoryType(ammoInventoryType) {};
@@ -1115,10 +1197,10 @@ struct SniffedEvent_SpellCastStart : SniffedEvent
     }
 };
 
-struct SniffedEvent_SpellCastGo : SniffedEvent
+struct SniffedEvent_SpellCastGo : SniffedEventCRTP<SniffedEvent_SpellCastGo>
 {
-    SniffedEvent_SpellCastGo(ObjectGuid casterGuid, ObjectGuid casterUnitGuid, uint32 spellId, uint32 castFlags, uint32 ammoDisplayId, uint32 ammoInventoryType, ObjectGuid mainTargetGuid, std::vector<ObjectGuid> hitTargets, std::vector<ObjectGuid> missTargets, std::unique_ptr<Vector3> sourcePosition, std::unique_ptr<Vector3> destinationPosition) :
-        m_casterGuid(casterGuid), m_casterUnitGuid(casterUnitGuid), m_spellId(spellId), m_castFlags(castFlags), m_ammoDisplayId(ammoDisplayId), m_ammoInventoryType(ammoInventoryType), m_mainTargetGuid(mainTargetGuid), m_hitTargets(hitTargets), m_missTargets(missTargets), m_sourcePosition(std::move(sourcePosition)), m_destinationPosition(std::move(destinationPosition)) {};
+    SniffedEvent_SpellCastGo(ObjectGuid casterGuid, ObjectGuid casterUnitGuid, uint32 spellId, uint32 castFlags, uint32 ammoDisplayId, uint32 ammoInventoryType, ObjectGuid mainTargetGuid, std::vector<ObjectGuid> hitTargets, std::vector<ObjectGuid> missTargets, Vector3 sourcePosition, Vector3 destinationPosition) :
+        m_casterGuid(casterGuid), m_casterUnitGuid(casterUnitGuid), m_spellId(spellId), m_castFlags(castFlags), m_ammoDisplayId(ammoDisplayId), m_ammoInventoryType(ammoInventoryType), m_mainTargetGuid(mainTargetGuid), m_hitTargets(hitTargets), m_missTargets(missTargets), m_sourcePosition(sourcePosition), m_destinationPosition(destinationPosition) {};
     uint32 m_spellId = 0;
     uint32 m_castFlags = 0;
     uint32 m_ammoDisplayId = 0;
@@ -1128,8 +1210,8 @@ struct SniffedEvent_SpellCastGo : SniffedEvent
     ObjectGuid m_mainTargetGuid;
     std::vector<ObjectGuid> m_hitTargets;
     std::vector<ObjectGuid> m_missTargets;
-    std::unique_ptr<Vector3> m_sourcePosition;
-    std::unique_ptr<Vector3> m_destinationPosition;
+    Vector3 m_sourcePosition;
+    Vector3 m_destinationPosition;
     void Execute() const final;
     void PepareForCurrentClient() final;
     SniffedEventType GetType() const final
@@ -1146,7 +1228,7 @@ struct SniffedEvent_SpellCastGo : SniffedEvent
     }
 };
 
-struct SniffedEvent_SpellChannelStart : SniffedEvent
+struct SniffedEvent_SpellChannelStart : SniffedEventCRTP<SniffedEvent_SpellChannelStart>
 {
     SniffedEvent_SpellChannelStart(ObjectGuid casterGuid, uint32 spellId, int32 duration) :
         m_casterGuid(casterGuid), m_spellId(spellId), m_duration(duration) {};
@@ -1165,7 +1247,7 @@ struct SniffedEvent_SpellChannelStart : SniffedEvent
     }
 };
 
-struct SniffedEvent_SpellChannelUpdate : SniffedEvent
+struct SniffedEvent_SpellChannelUpdate : SniffedEventCRTP<SniffedEvent_SpellChannelUpdate>
 {
     SniffedEvent_SpellChannelUpdate(ObjectGuid casterGuid, int32 duration) :
         m_casterGuid(casterGuid), m_duration(duration) {};
@@ -1242,44 +1324,6 @@ struct SniffedEvent_UnitUpdate_orientation : SniffedEvent
     KnownObject GetSourceObject() const final
     {
         return KnownObject(m_guid, m_entry, TypeID(m_typeId));
-    }
-};
-
-struct SniffedEvent_CreatureText : SniffedEvent
-{
-    SniffedEvent_CreatureText(uint32 guid, uint32 entry, std::string text, uint32 chatType) : 
-        m_guid(guid), m_entry(entry), m_chatType(chatType), m_text(text) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_chatType = 0;
-    std::string m_text;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_CREATURE_TEXT;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_UNIT);
-    }
-};
-
-struct SniffedEvent_CreatureEquipmentUpdate : SniffedEvent
-{
-    SniffedEvent_CreatureEquipmentUpdate(uint32 guid, uint32 entry, uint32 slot, uint32 itemId) :
-        m_guid(guid), m_entry(entry), m_slot(slot), m_itemId(itemId) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_slot = 0;
-    uint32 m_itemId = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_CREATURE_EQUIPMENT_UPDATE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_UNIT);
     }
 };
 
@@ -1422,44 +1466,6 @@ struct SniffedEvent_GameObjectDestroy : SniffedEvent
     KnownObject GetSourceObject() const final
     {
         return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_PlayerChat : SniffedEvent
-{
-    SniffedEvent_PlayerChat(uint32 guid, std::string senderName, std::string text, uint8 chatType, std::string channelName) :
-        m_guid(guid), m_senderName(senderName), m_text(text), m_chatType(chatType), m_channelName(channelName) {};
-    uint32 m_guid = 0;
-    std::string m_senderName;
-    std::string m_text;
-    uint8 m_chatType = 0;
-    std::string m_channelName;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_PLAYER_CHAT;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, 0, TYPEID_PLAYER);
-    }
-};
-
-struct SniffedEvent_PlayerEquipmentUpdate : SniffedEvent
-{
-    SniffedEvent_PlayerEquipmentUpdate(uint32 guid, uint32 slot, uint32 itemId) :
-        m_guid(guid), m_slot(slot), m_itemId(itemId) {};
-    uint32 m_guid = 0;
-    uint32 m_slot = 0;
-    uint32 m_itemId = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_PLAYER_EQUIPMENT_UPDATE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, 0, TYPEID_PLAYER);
     }
 };
 

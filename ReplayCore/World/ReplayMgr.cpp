@@ -258,6 +258,27 @@ ObjectGuid ReplayMgr::MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std
     return ObjectGuid();
 }
 
+ObjectGuid ReplayMgr::GetOrCreatePlayerChatGuid(std::string name)
+{
+    for (auto const& itr : m_playerChatNames)
+    {
+        if (itr.second == name)
+            return itr.first;
+    }
+
+    uint32 lowGuid;
+    if (!m_playerChatNames.empty())
+        lowGuid = m_playerChatNames.rbegin()->first.GetCounter() + 1;
+    else if (!m_playerSpawns.empty())
+        lowGuid = m_playerSpawns.rbegin()->first + 1;
+    else
+        lowGuid = 111111;
+
+    ObjectGuid guid = ObjectGuid(HIGHGUID_PLAYER, lowGuid);
+    m_playerChatNames[guid] = name;
+    return guid;
+}
+
 void ReplayMgr::LoadInitialWorldStates()
 {
     printf("[ReplayMgr] Loading initial world states...\n");
@@ -405,7 +426,7 @@ void ReplayMgr::LoadGameObjects()
         if (data.displayId > MAX_GAMEOBJECT_DISPLAY_ID_WOTLK)
         {
             printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `displayId` (%u) value.\n", guid, entry, data.displayId);
-            data.displayId = gInfo->displayId;
+            data.displayId = gInfo ? gInfo->displayId : GAMEOBJECT_DISPLAY_ID_CHEST;
         }
 
         data.level = fields[16].GetInt32();
