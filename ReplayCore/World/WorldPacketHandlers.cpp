@@ -873,7 +873,7 @@ void WorldServer::HandleMessageChat(WorldPacket& packet)
     if (msg.empty())
         return;
 
-    // addon stuff
+    // ignore addon stuff
     if (msg[0] == '/')
         return;
 

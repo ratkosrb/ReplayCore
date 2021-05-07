@@ -119,8 +119,6 @@ void ReplayMgr::LoadSniffedEvents()
     assert(m_eventsMap.empty());
 }
 
-#include <typeinfo>
-
 void ReplayMgr::PrepareSniffedEventDataForCurrentClient()
 {
     m_eventsMap.clear();
@@ -128,9 +126,7 @@ void ReplayMgr::PrepareSniffedEventDataForCurrentClient()
     // we make a fresh copy of the original events data map when starting replay
     // this is so we don't need to reload from db when switching client versions
     for (auto const& itr : m_eventsMapBackup)
-    {
         m_eventsMap.insert({ itr.first, itr.second->clone() });
-    }
 
     // movement data is corrected separately from other events, because we need
     // to track the previous movement info state of the unit to determine opcode
@@ -138,9 +134,7 @@ void ReplayMgr::PrepareSniffedEventDataForCurrentClient()
 
     // correct all the other data so it displays correctly in the current client
     for (auto& itr : m_eventsMap)
-    {
         itr.second->PepareForCurrentClient();
-    }
 }
 
 void ReplayMgr::PrepareClientSideMovementDataForCurrentClient()
