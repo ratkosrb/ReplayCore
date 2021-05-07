@@ -29,6 +29,7 @@ public:
     bool HandleNearCreatures();
     bool HandleNearGameObjects();
     bool HandleTargetGuid();
+    bool HandleGoName();
     bool HandleGoTarget();
     bool HandleGoCreature();
     bool HandleGoGameObject();
@@ -48,16 +49,17 @@ public:
     bool HandleSniffPlay();
     bool HandleSniffGetTime();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[25] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[26] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
-        { "gps", &CommandHandler::HandleGPS },
-        { "go", &CommandHandler::HandleTeleportToCoordinates },
-        { "tele", &CommandHandler::HandleTeleportToLocation },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
         { "nearcreatures", &CommandHandler::HandleNearCreatures },
         { "neargobjects", &CommandHandler::HandleNearGameObjects },
+        { "tele", &CommandHandler::HandleTeleportToLocation },
         { "guid", &CommandHandler::HandleTargetGuid },
+        { "gps", &CommandHandler::HandleGPS },
+        { "go", &CommandHandler::HandleTeleportToCoordinates },
+        { "goname", &CommandHandler::HandleGoName },
         { "gotarget", &CommandHandler::HandleGoTarget },
         { "gocreature", &CommandHandler::HandleGoCreature },
         { "gogobject", &CommandHandler::HandleGoGameObject },

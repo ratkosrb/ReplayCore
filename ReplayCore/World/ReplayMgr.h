@@ -316,6 +316,8 @@ public:
     void LoadCreatureEquipmentUpdate();
     void LoadPlayerChat();
     void LoadPlayerEquipmentUpdate();
+    void LoadGameObjectCustomAnim();
+    void LoadGameObjectDespawnAnim();
     void LoadSpellCastFailed();
     void LoadSpellCastStart();
     void LoadSpellCastGo();

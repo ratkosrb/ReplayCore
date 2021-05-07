@@ -72,7 +72,6 @@ enum SniffedEventType : uint8
     SE_DYNAMICOBJECT_CREATE,
     SE_GAMEOBJECT_CUSTOM_ANIM,
     SE_GAMEOBJECT_DESPAWN_ANIM,
-    SE_GAMEOBJECT_DESTROY,
     SE_GAMEOBJECT_UPDATE_FLAGS,
     SE_GAMEOBJECT_UPDATE_STATE,
     SE_GAMEOBJECT_UPDATE_ARTKIT,
@@ -199,8 +198,6 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "GameObject Custom Anim";
         case SE_GAMEOBJECT_DESPAWN_ANIM:
             return "GameObject Despawn Anim";
-        case SE_GAMEOBJECT_DESTROY:
-            return "GameObject Destroy";
         case SE_GAMEOBJECT_UPDATE_FLAGS:
             return "GameObject Update Flags";
         case SE_GAMEOBJECT_UPDATE_STATE:
@@ -321,9 +318,9 @@ struct SniffedEvent_WorldStateUpdate : SniffedEventCRTP<SniffedEvent_WorldStateU
 
 struct SniffedEvent_WorldObjectCreate1 : SniffedEventCRTP<SniffedEvent_WorldObjectCreate1>
 {
-    SniffedEvent_WorldObjectCreate1(ObjectGuid source, uint32 mapId, float x, float y, float z, float o) :
-        m_source(source), m_location(mapId, x, y, z, o) {};
-    ObjectGuid m_source;
+    SniffedEvent_WorldObjectCreate1(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o) :
+        m_objectGuid(objectGuid), m_location(mapId, x, y, z, o) {};
+    ObjectGuid m_objectGuid;
     WorldLocation m_location;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -332,15 +329,15 @@ struct SniffedEvent_WorldObjectCreate1 : SniffedEventCRTP<SniffedEvent_WorldObje
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_WorldObjectCreate2 : SniffedEventCRTP<SniffedEvent_WorldObjectCreate2>
 {
-    SniffedEvent_WorldObjectCreate2(ObjectGuid source, uint32 mapId, float x, float y, float z, float o) :
-        m_source(source), m_location(mapId, x, y, z, o) {};
-    ObjectGuid m_source;
+    SniffedEvent_WorldObjectCreate2(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o) :
+        m_objectGuid(objectGuid), m_location(mapId, x, y, z, o) {};
+    ObjectGuid m_objectGuid;
     WorldLocation m_location;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -349,14 +346,15 @@ struct SniffedEvent_WorldObjectCreate2 : SniffedEventCRTP<SniffedEvent_WorldObje
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_WorldObjectDestroy : SniffedEventCRTP<SniffedEvent_WorldObjectDestroy>
 {
-    SniffedEvent_WorldObjectDestroy(ObjectGuid source) : m_source(source) {};
-    ObjectGuid m_source;
+    SniffedEvent_WorldObjectDestroy(ObjectGuid objectGuid) :
+        m_objectGuid(objectGuid) {};
+    ObjectGuid m_objectGuid;
     void Execute() const final;
     SniffedEventType GetType() const final
     {
@@ -364,7 +362,7 @@ struct SniffedEvent_WorldObjectDestroy : SniffedEventCRTP<SniffedEvent_WorldObje
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
@@ -445,10 +443,10 @@ struct SniffedEvent_UnitAttackLog : SniffedEventCRTP<SniffedEvent_UnitAttackLog>
 
 struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSideMovement>
 {
-    SniffedEvent_ClientSideMovement(ObjectGuid source, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o) :
-        m_source(source), m_opcodeName(opcodeName), m_moveTime(moveTime), m_moveFlags(moveFlags), m_location(mapId, x, y, z, o) {};
+    SniffedEvent_ClientSideMovement(ObjectGuid moverGuid, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o) :
+        m_moverGuid(moverGuid), m_opcodeName(opcodeName), m_moveTime(moveTime), m_moveFlags(moveFlags), m_location(mapId, x, y, z, o) {};
 
-    ObjectGuid m_source;
+    ObjectGuid m_moverGuid;
     uint32 m_opcode = 0;
     std::string m_opcodeName;
     uint32 m_moveTime = 0;
@@ -461,16 +459,16 @@ struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSid
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_moverGuid;
     }
 };
 
 struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSideMovement>
 {
-    SniffedEvent_ServerSideMovement(ObjectGuid source, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines) :
-        m_source(source), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines) {};
+    SniffedEvent_ServerSideMovement(ObjectGuid moverGuid, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines) :
+        m_moverGuid(moverGuid), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines) {};
     
-    ObjectGuid m_source;
+    ObjectGuid m_moverGuid;
     Vector3 m_startPosition;
     uint32 m_moveTime = 0;
     uint8 m_splineType = 0;
@@ -487,15 +485,15 @@ struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSid
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_moverGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_entry : SniffedEventCRTP<SniffedEvent_UnitUpdate_entry>
 {
-    SniffedEvent_UnitUpdate_entry(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_entry(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -505,15 +503,15 @@ struct SniffedEvent_UnitUpdate_entry : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_scale : SniffedEventCRTP<SniffedEvent_UnitUpdate_scale>
 {
-    SniffedEvent_UnitUpdate_scale(ObjectGuid source, float value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_scale(ObjectGuid objectGuid, float value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     float m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -522,15 +520,15 @@ struct SniffedEvent_UnitUpdate_scale : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_display_id : SniffedEventCRTP<SniffedEvent_UnitUpdate_display_id>
 {
-    SniffedEvent_UnitUpdate_display_id(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_display_id(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -540,15 +538,15 @@ struct SniffedEvent_UnitUpdate_display_id : SniffedEventCRTP<SniffedEvent_UnitUp
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_mount : SniffedEventCRTP<SniffedEvent_UnitUpdate_mount>
 {
-    SniffedEvent_UnitUpdate_mount(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_mount(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -558,15 +556,15 @@ struct SniffedEvent_UnitUpdate_mount : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_faction : SniffedEventCRTP<SniffedEvent_UnitUpdate_faction>
 {
-    SniffedEvent_UnitUpdate_faction(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_faction(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -576,15 +574,15 @@ struct SniffedEvent_UnitUpdate_faction : SniffedEventCRTP<SniffedEvent_UnitUpdat
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_level : SniffedEventCRTP<SniffedEvent_UnitUpdate_level>
 {
-    SniffedEvent_UnitUpdate_level(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_level(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -594,15 +592,15 @@ struct SniffedEvent_UnitUpdate_level : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_aura_state : SniffedEventCRTP<SniffedEvent_UnitUpdate_aura_state>
 {
-    SniffedEvent_UnitUpdate_aura_state(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_aura_state(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -611,15 +609,15 @@ struct SniffedEvent_UnitUpdate_aura_state : SniffedEventCRTP<SniffedEvent_UnitUp
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_emote_state : SniffedEventCRTP<SniffedEvent_UnitUpdate_emote_state>
 {
-    SniffedEvent_UnitUpdate_emote_state(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_emote_state(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -629,15 +627,15 @@ struct SniffedEvent_UnitUpdate_emote_state : SniffedEventCRTP<SniffedEvent_UnitU
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_stand_state : SniffedEventCRTP<SniffedEvent_UnitUpdate_stand_state>
 {
-    SniffedEvent_UnitUpdate_stand_state(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_stand_state(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -647,15 +645,15 @@ struct SniffedEvent_UnitUpdate_stand_state : SniffedEventCRTP<SniffedEvent_UnitU
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_vis_flags : SniffedEventCRTP<SniffedEvent_UnitUpdate_vis_flags>
 {
-    SniffedEvent_UnitUpdate_vis_flags(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_vis_flags(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -664,15 +662,15 @@ struct SniffedEvent_UnitUpdate_vis_flags : SniffedEventCRTP<SniffedEvent_UnitUpd
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_sheath_state : SniffedEventCRTP<SniffedEvent_UnitUpdate_sheath_state>
 {
-    SniffedEvent_UnitUpdate_sheath_state(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_sheath_state(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -682,15 +680,15 @@ struct SniffedEvent_UnitUpdate_sheath_state : SniffedEventCRTP<SniffedEvent_Unit
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_shapeshift_form : SniffedEventCRTP<SniffedEvent_UnitUpdate_shapeshift_form>
 {
-    SniffedEvent_UnitUpdate_shapeshift_form(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_shapeshift_form(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -700,15 +698,15 @@ struct SniffedEvent_UnitUpdate_shapeshift_form : SniffedEventCRTP<SniffedEvent_U
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_npc_flags : SniffedEventCRTP<SniffedEvent_UnitUpdate_npc_flags>
 {
-    SniffedEvent_UnitUpdate_npc_flags(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_npc_flags(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -718,15 +716,15 @@ struct SniffedEvent_UnitUpdate_npc_flags : SniffedEventCRTP<SniffedEvent_UnitUpd
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_unit_flags : SniffedEventCRTP<SniffedEvent_UnitUpdate_unit_flags>
 {
-    SniffedEvent_UnitUpdate_unit_flags(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_unit_flags(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -735,15 +733,15 @@ struct SniffedEvent_UnitUpdate_unit_flags : SniffedEventCRTP<SniffedEvent_UnitUp
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_unit_flags2 : SniffedEventCRTP<SniffedEvent_UnitUpdate_unit_flags2>
 {
-    SniffedEvent_UnitUpdate_unit_flags2(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_unit_flags2(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -752,15 +750,15 @@ struct SniffedEvent_UnitUpdate_unit_flags2 : SniffedEventCRTP<SniffedEvent_UnitU
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_dynamic_flags : SniffedEventCRTP<SniffedEvent_UnitUpdate_dynamic_flags>
 {
-    SniffedEvent_UnitUpdate_dynamic_flags(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_dynamic_flags(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -769,15 +767,15 @@ struct SniffedEvent_UnitUpdate_dynamic_flags : SniffedEventCRTP<SniffedEvent_Uni
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_current_health : SniffedEventCRTP<SniffedEvent_UnitUpdate_current_health>
 {
-    SniffedEvent_UnitUpdate_current_health(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_current_health(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -786,15 +784,15 @@ struct SniffedEvent_UnitUpdate_current_health : SniffedEventCRTP<SniffedEvent_Un
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_max_health : SniffedEventCRTP<SniffedEvent_UnitUpdate_max_health>
 {
-    SniffedEvent_UnitUpdate_max_health(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_max_health(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -803,15 +801,15 @@ struct SniffedEvent_UnitUpdate_max_health : SniffedEventCRTP<SniffedEvent_UnitUp
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_current_mana : SniffedEventCRTP<SniffedEvent_UnitUpdate_current_mana>
 {
-    SniffedEvent_UnitUpdate_current_mana(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_current_mana(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -820,15 +818,15 @@ struct SniffedEvent_UnitUpdate_current_mana : SniffedEventCRTP<SniffedEvent_Unit
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_max_mana : SniffedEventCRTP<SniffedEvent_UnitUpdate_max_mana>
 {
-    SniffedEvent_UnitUpdate_max_mana(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_max_mana(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -837,15 +835,15 @@ struct SniffedEvent_UnitUpdate_max_mana : SniffedEventCRTP<SniffedEvent_UnitUpda
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_bounding_radius : SniffedEventCRTP<SniffedEvent_UnitUpdate_bounding_radius>
 {
-    SniffedEvent_UnitUpdate_bounding_radius(ObjectGuid source, float value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_bounding_radius(ObjectGuid objectGuid, float value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     float m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -854,15 +852,15 @@ struct SniffedEvent_UnitUpdate_bounding_radius : SniffedEventCRTP<SniffedEvent_U
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_combat_reach : SniffedEventCRTP<SniffedEvent_UnitUpdate_combat_reach>
 {
-    SniffedEvent_UnitUpdate_combat_reach(ObjectGuid source, float value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_combat_reach(ObjectGuid objectGuid, float value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     float m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -871,15 +869,15 @@ struct SniffedEvent_UnitUpdate_combat_reach : SniffedEventCRTP<SniffedEvent_Unit
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_main_hand_attack_time : SniffedEventCRTP<SniffedEvent_UnitUpdate_main_hand_attack_time>
 {
-    SniffedEvent_UnitUpdate_main_hand_attack_time(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_main_hand_attack_time(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -888,15 +886,15 @@ struct SniffedEvent_UnitUpdate_main_hand_attack_time : SniffedEventCRTP<SniffedE
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_off_hand_attack_time : SniffedEventCRTP<SniffedEvent_UnitUpdate_off_hand_attack_time>
 {
-    SniffedEvent_UnitUpdate_off_hand_attack_time(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_off_hand_attack_time(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -905,15 +903,15 @@ struct SniffedEvent_UnitUpdate_off_hand_attack_time : SniffedEventCRTP<SniffedEv
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_channel_spell : SniffedEventCRTP<SniffedEvent_UnitUpdate_channel_spell>
 {
-    SniffedEvent_UnitUpdate_channel_spell(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_channel_spell(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
@@ -923,16 +921,16 @@ struct SniffedEvent_UnitUpdate_channel_spell : SniffedEventCRTP<SniffedEvent_Uni
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_guid_value : SniffedEventCRTP<SniffedEvent_UnitUpdate_guid_value>
 {
-    SniffedEvent_UnitUpdate_guid_value(ObjectGuid source, ObjectGuid target, char const* updateField) :
-        m_source(source), m_target(target), m_updateField(updateField) {};
-    ObjectGuid m_source;
-    ObjectGuid m_target;
+    SniffedEvent_UnitUpdate_guid_value(ObjectGuid sourceGuid, ObjectGuid targetGuid, char const* updateField) :
+        m_sourceGuid(sourceGuid), m_targetGuid(targetGuid), m_updateField(updateField) {};
+    ObjectGuid m_sourceGuid;
+    ObjectGuid m_targetGuid;
     char const* m_updateField;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -941,19 +939,19 @@ struct SniffedEvent_UnitUpdate_guid_value : SniffedEventCRTP<SniffedEvent_UnitUp
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_sourceGuid;
     }
     ObjectGuid GetTargetGuid() const final
     {
-        return m_target;
+        return m_targetGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_speed : SniffedEventCRTP<SniffedEvent_UnitUpdate_speed>
 {
-    SniffedEvent_UnitUpdate_speed(ObjectGuid source, uint32 speedType, float speedRate) :
-        m_source(source), m_speedType(speedType), m_speedRate(speedRate) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_speed(ObjectGuid objectGuid, uint32 speedType, float speedRate) :
+        m_objectGuid(objectGuid), m_speedType(speedType), m_speedRate(speedRate) {};
+    ObjectGuid m_objectGuid;
     uint32 m_speedType = 0;
     float m_speedRate = 0;
     void Execute() const final;
@@ -964,15 +962,15 @@ struct SniffedEvent_UnitUpdate_speed : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_UnitUpdate_auras : SniffedEventCRTP<SniffedEvent_UnitUpdate_auras>
 {
-    SniffedEvent_UnitUpdate_auras(ObjectGuid source, uint32 slot, Aura aura) :
-        m_source(source), m_slot(slot), m_aura(aura) {};
-    ObjectGuid m_source;
+    SniffedEvent_UnitUpdate_auras(ObjectGuid objectGuid, uint32 slot, Aura aura) :
+        m_objectGuid(objectGuid), m_slot(slot), m_aura(aura) {};
+    ObjectGuid m_objectGuid;
     uint32 m_slot = 0;
     Aura m_aura;
     void Execute() const final;
@@ -983,15 +981,15 @@ struct SniffedEvent_UnitUpdate_auras : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_CreatureText : SniffedEventCRTP<SniffedEvent_CreatureText>
 {
-    SniffedEvent_CreatureText(ObjectGuid source, std::string creatureName, std::string text, uint32 chatType, uint32 language) :
-        m_source(source), m_creatureName(creatureName), m_text(text), m_chatType(chatType), m_language(language) {};
-    ObjectGuid m_source;
+    SniffedEvent_CreatureText(ObjectGuid senderGuid, std::string creatureName, std::string text, uint32 chatType, uint32 language) :
+        m_senderGuid(senderGuid), m_creatureName(creatureName), m_text(text), m_chatType(chatType), m_language(language) {};
+    ObjectGuid m_senderGuid;
     std::string m_creatureName;
     std::string m_text;
     uint32 m_chatType = 0;
@@ -1004,15 +1002,15 @@ struct SniffedEvent_CreatureText : SniffedEventCRTP<SniffedEvent_CreatureText>
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_senderGuid;
     }
 };
 
 struct SniffedEvent_CreatureEquipmentUpdate : SniffedEventCRTP<SniffedEvent_CreatureEquipmentUpdate>
 {
-    SniffedEvent_CreatureEquipmentUpdate(ObjectGuid source, uint32 slot, uint32 itemId) :
-        m_source(source), m_slot(slot), m_itemId(itemId) {};
-    ObjectGuid m_source;
+    SniffedEvent_CreatureEquipmentUpdate(ObjectGuid objectGuid, uint32 slot, uint32 itemId) :
+        m_objectGuid(objectGuid), m_slot(slot), m_itemId(itemId) {};
+    ObjectGuid m_objectGuid;
     uint32 m_slot = 0;
     uint32 m_itemId = 0;
     void Execute() const final;
@@ -1022,7 +1020,7 @@ struct SniffedEvent_CreatureEquipmentUpdate : SniffedEventCRTP<SniffedEvent_Crea
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
@@ -1049,9 +1047,9 @@ struct SniffedEvent_PlayerChat : SniffedEventCRTP<SniffedEvent_PlayerChat>
 
 struct SniffedEvent_PlayerEquipmentUpdate : SniffedEventCRTP<SniffedEvent_PlayerEquipmentUpdate>
 {
-    SniffedEvent_PlayerEquipmentUpdate(ObjectGuid source, uint32 slot, uint32 itemId) :
-        m_source(source), m_slot(slot), m_itemId(itemId) {};
-    ObjectGuid m_source;
+    SniffedEvent_PlayerEquipmentUpdate(ObjectGuid objectGuid, uint32 slot, uint32 itemId) :
+        m_objectGuid(objectGuid), m_slot(slot), m_itemId(itemId) {};
+    ObjectGuid m_objectGuid;
     uint32 m_slot = 0;
     uint32 m_itemId = 0;
     void Execute() const final;
@@ -1061,15 +1059,48 @@ struct SniffedEvent_PlayerEquipmentUpdate : SniffedEventCRTP<SniffedEvent_Player
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
+    }
+};
+
+struct SniffedEvent_GameObjectCustomAnim : SniffedEventCRTP<SniffedEvent_GameObjectCustomAnim>
+{
+    SniffedEvent_GameObjectCustomAnim(ObjectGuid objectGuid, uint32 animId) :
+        m_objectGuid(objectGuid), m_animId(animId) {};
+    ObjectGuid m_objectGuid;
+    uint32 m_animId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_GAMEOBJECT_CUSTOM_ANIM;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_objectGuid;
+    }
+};
+
+struct SniffedEvent_GameObjectDespawnAnim : SniffedEventCRTP<SniffedEvent_GameObjectDespawnAnim>
+{
+    SniffedEvent_GameObjectDespawnAnim(ObjectGuid objectGuid) :
+        m_objectGuid(objectGuid) {};
+    ObjectGuid m_objectGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_GAMEOBJECT_DESPAWN_ANIM;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_GameObjectUpdate_flags : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_flags>
 {
-    SniffedEvent_GameObjectUpdate_flags(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_GameObjectUpdate_flags(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -1078,15 +1109,15 @@ struct SniffedEvent_GameObjectUpdate_flags : SniffedEventCRTP<SniffedEvent_GameO
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_GameObjectUpdate_state : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_state>
 {
-    SniffedEvent_GameObjectUpdate_state(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_GameObjectUpdate_state(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -1095,15 +1126,15 @@ struct SniffedEvent_GameObjectUpdate_state : SniffedEventCRTP<SniffedEvent_GameO
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_GameObjectUpdate_artkit : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_artkit>
 {
-    SniffedEvent_GameObjectUpdate_artkit(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_GameObjectUpdate_artkit(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -1112,15 +1143,15 @@ struct SniffedEvent_GameObjectUpdate_artkit : SniffedEventCRTP<SniffedEvent_Game
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_GameObjectUpdate_dynamic_flags : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_dynamic_flags>
 {
-    SniffedEvent_GameObjectUpdate_dynamic_flags(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_GameObjectUpdate_dynamic_flags(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -1129,15 +1160,15 @@ struct SniffedEvent_GameObjectUpdate_dynamic_flags : SniffedEventCRTP<SniffedEve
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_GameObjectUpdate_path_progress : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_path_progress>
 {
-    SniffedEvent_GameObjectUpdate_path_progress(ObjectGuid source, uint32 value) :
-        m_source(source), m_value(value) {};
-    ObjectGuid m_source;
+    SniffedEvent_GameObjectUpdate_path_progress(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
@@ -1146,15 +1177,15 @@ struct SniffedEvent_GameObjectUpdate_path_progress : SniffedEventCRTP<SniffedEve
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_objectGuid;
     }
 };
 
 struct SniffedEvent_SpellCastFailed : SniffedEventCRTP<SniffedEvent_SpellCastFailed>
 {
-    SniffedEvent_SpellCastFailed(ObjectGuid source, uint32 spellId, uint32 reason) :
-        m_source(source), m_spellId(spellId), m_reason(reason) {};
-    ObjectGuid m_source;
+    SniffedEvent_SpellCastFailed(ObjectGuid casterGuid, uint32 spellId, uint32 reason) :
+        m_casterGuid(casterGuid), m_spellId(spellId), m_reason(reason) {};
+    ObjectGuid m_casterGuid;
     uint32 m_spellId = 0;
     uint32 m_reason = 0;
     void Execute() const final;
@@ -1165,7 +1196,7 @@ struct SniffedEvent_SpellCastFailed : SniffedEventCRTP<SniffedEvent_SpellCastFai
     }
     ObjectGuid GetSourceGuid() const final
     {
-        return m_source;
+        return m_casterGuid;
     }
 };
 
@@ -1413,39 +1444,6 @@ struct SniffedEvent_GameObjectCreate2 : SniffedEvent
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_CREATE2;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_GameObjectCustomAnim : SniffedEvent
-{
-    SniffedEvent_GameObjectCustomAnim(uint32 guid, uint32 entry, uint32 animId) : m_guid(guid), m_entry(entry), m_animId(animId) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_animId = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_GAMEOBJECT_CUSTOM_ANIM;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_GameObjectDespawnAnim : SniffedEvent
-{
-    SniffedEvent_GameObjectDespawnAnim(uint32 guid, uint32 entry) : m_guid(guid), m_entry(entry) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_GAMEOBJECT_DESPAWN_ANIM;
     }
     KnownObject GetSourceObject() const final
     {

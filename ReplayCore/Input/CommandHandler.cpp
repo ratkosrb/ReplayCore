@@ -378,6 +378,38 @@ bool CommandHandler::HandleTargetGuid()
     return true;
 }
 
+bool CommandHandler::HandleGoName()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    std::string name;
+    if (!ExtractString(name))
+        return false;
+
+    std::string tmpName;
+    for (auto const& itr : sWorld.GetPlayersMap())
+    {
+        tmpName = itr.second.GetName();
+        std::for_each(tmpName.begin(), tmpName.end(), [](char & c) {
+            c = ::tolower(c);
+        });
+
+        if (name == tmpName)
+        {
+            sWorld.TeleportClient(itr.second.GetLocation());
+            return true;
+        }
+    }
+
+    SendSysMessage("Player not found.");
+    return true;
+}
+
 bool CommandHandler::HandleGoTarget()
 {
     Player* pPlayer = sWorld.GetClientPlayer();

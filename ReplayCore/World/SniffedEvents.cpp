@@ -17,16 +17,12 @@ void ReplayMgr::LoadSniffedEvents()
     LoadWorldStateUpdates();
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate1>("creature_create1_time", TYPEID_UNIT);
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate2>("creature_create2_time", TYPEID_UNIT);
-    LoadWorldObjectDestroy("creature_destroy_time", TYPEID_UNIT);
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate1>("player_create1_time", TYPEID_PLAYER);
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate2>("player_create2_time", TYPEID_PLAYER);
-    LoadWorldObjectDestroy("player_destroy_time", TYPEID_PLAYER);
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate1>("gameobject_create1_time", TYPEID_GAMEOBJECT);
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate2>("gameobject_create2_time", TYPEID_GAMEOBJECT);
-    LoadWorldObjectDestroy("gameobject_destroy_time", TYPEID_GAMEOBJECT);
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate1>("dynamicobject_create1_time", TYPEID_DYNAMICOBJECT);
     LoadWorldObjectCreate<SniffedEvent_WorldObjectCreate2>("dynamicobject_create2_time", TYPEID_DYNAMICOBJECT);
-    LoadWorldObjectDestroy("dynamicobject_destroy_time", TYPEID_DYNAMICOBJECT);
     LoadUnitAttackToggle<SniffedEvent_UnitAttackStart>("creature_attack_start", TYPEID_UNIT);
     LoadUnitAttackToggle<SniffedEvent_UnitAttackStop>("creature_attack_stop", TYPEID_UNIT);
     LoadUnitAttackToggle<SniffedEvent_UnitAttackStart>("player_attack_start", TYPEID_PLAYER);
@@ -102,6 +98,8 @@ void ReplayMgr::LoadSniffedEvents()
     LoadCreatureEquipmentUpdate();
     LoadPlayerChat();
     LoadPlayerEquipmentUpdate();
+    LoadGameObjectCustomAnim();
+    LoadGameObjectDespawnAnim();
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_flags>("gameobject_values_update", "flags", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_state>("gameobject_values_update", "state", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_artkit>("gameobject_values_update", "artkit", TYPEID_GAMEOBJECT);
@@ -112,6 +110,10 @@ void ReplayMgr::LoadSniffedEvents()
     LoadSpellCastGo();
     LoadSpellChannelStart();
     LoadSpellChannelUpdate();
+    LoadWorldObjectDestroy("creature_destroy_time", TYPEID_UNIT);
+    LoadWorldObjectDestroy("player_destroy_time", TYPEID_PLAYER);
+    LoadWorldObjectDestroy("gameobject_destroy_time", TYPEID_GAMEOBJECT);
+    LoadWorldObjectDestroy("dynamicobject_destroy_time", TYPEID_DYNAMICOBJECT);
     printf(">> Loaded %u sniffed events.", (uint32)m_eventsMapBackup.size());
 
     // Events are loaded into the backup map, and only copied into runtime map once
@@ -170,11 +172,11 @@ void ReplayMgr::PrepareClientSideMovementDataForCurrentClient()
 
             if (uint16 opcode = sWorld.GetOpcode(moveEvent->m_opcodeName))
                 moveEvent->m_opcode = opcode;
-            else if (uint16 opcode = sWorld.GetOpcode(GuessMovementOpcode(lastMovementInfo[moveEvent->m_source], newState)))
+            else if (uint16 opcode = sWorld.GetOpcode(GuessMovementOpcode(lastMovementInfo[moveEvent->m_moverGuid], newState)))
                 moveEvent->m_opcode = opcode;
 
             moveEvent->m_moveFlags = sGameDataMgr.ConvertMovementFlags(moveEvent->m_moveFlags);
-            lastMovementInfo[moveEvent->m_source] = newState;
+            lastMovementInfo[moveEvent->m_moverGuid] = newState;
         }
     }
 }
@@ -919,7 +921,7 @@ void SniffedEvent_UnitUpdate_faction::Execute() const
 
 void SniffedEvent_UnitUpdate_level::PepareForCurrentClient()
 {
-    if (m_source.IsPlayer() && m_value > 255)
+    if (GetSourceGuid().IsPlayer() && m_value > 255)
         m_disabled = true;
 }
 
@@ -1670,6 +1672,97 @@ void SniffedEvent_PlayerEquipmentUpdate::Execute() const
     pPlayer->SetVisibleItemSlot(m_slot, m_itemId, 0);
 }
 
+void ReplayMgr::LoadGameObjectCustomAnim()
+{
+    //                                             0             1       2
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `anim_id` FROM `gameobject_custom_anim` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, TYPEID_GAMEOBJECT))
+                sourceGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `gameobject_custom_anim`.\n", guidLow);
+                continue;
+            }
+
+            uint32 animId = fields[2].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_GameObjectCustomAnim> newEvent = std::make_shared<SniffedEvent_GameObjectCustomAnim>(sourceGuid, animId);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_GameObjectCustomAnim::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
+    if (!pGo)
+    {
+        printf("SniffedEvent_GameObjectCustomAnim: Cannot find source gameobject!\n");
+        return;
+    }
+
+    if (!pGo->IsVisibleToClient())
+        return;
+
+    sWorld.SendGameObjectCustomAnim(GetSourceGuid(), m_animId);
+}
+
+void ReplayMgr::LoadGameObjectDespawnAnim()
+{
+    //                                             0             1
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid` FROM `gameobject_despawn_anim` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, TYPEID_GAMEOBJECT))
+                sourceGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `gameobject_despawn_anim`.\n", guidLow);
+                continue;
+            }
+
+            std::shared_ptr<SniffedEvent_GameObjectDespawnAnim> newEvent = std::make_shared<SniffedEvent_GameObjectDespawnAnim>(sourceGuid);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_GameObjectDespawnAnim::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
+    if (!pGo)
+    {
+        printf("SniffedEvent_GameObjectDespawnAnim: Cannot find source gameobject!\n");
+        return;
+    }
+
+    if (!pGo->IsVisibleToClient())
+        return;
+
+    sWorld.SendGameObjectDespawnAnim(GetSourceGuid());
+}
 
 void ReplayMgr::LoadSpellCastFailed()
 {

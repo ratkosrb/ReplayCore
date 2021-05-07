@@ -1961,3 +1961,18 @@ void WorldServer::SendSpellChannelUpdate(ObjectGuid casterGuid, int32 duration)
     data << int32(duration);
     SendPacket(data);
 }
+
+void WorldServer::SendGameObjectDespawnAnim(ObjectGuid guid)
+{
+    WorldPacket data(GetOpcode("SMSG_GAMEOBJECT_DESPAWN_ANIM"), 8);
+    data << ObjectGuid(guid);
+    SendPacket(data);
+}
+
+void WorldServer::SendGameObjectCustomAnim(ObjectGuid guid, uint32 animId)
+{
+    WorldPacket data(GetOpcode("SMSG_GAMEOBJECT_CUSTOM_ANIM"), 8 + 4);
+    data << ObjectGuid(guid);
+    data << uint32(animId);
+    SendPacket(data);
+}

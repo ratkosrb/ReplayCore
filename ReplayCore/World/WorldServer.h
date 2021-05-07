@@ -324,6 +324,8 @@ public:
     void SendSpellFailedOther(ObjectGuid casterGuid, uint32 spellId, uint32 reason);
     void SendSpellChannelStart(ObjectGuid casterGuid, uint32 spellId, int32 duration);
     void SendSpellChannelUpdate(ObjectGuid casterGuid, int32 duration);
+    void SendGameObjectDespawnAnim(ObjectGuid guid);
+    void SendGameObjectCustomAnim(ObjectGuid guid, uint32 animId);
 };
 
 #define sWorld WorldServer::Instance()
