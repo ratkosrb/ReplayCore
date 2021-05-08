@@ -315,6 +315,7 @@ public:
     void SendAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, uint32 originalDamage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage);
+    void SendEmote(ObjectGuid guid, uint32 emoteId);
     void SendWeather(uint32 type, float grade, uint32 soundId, bool instant);
     void SendInitialWorldStates(std::map<uint32, uint32> worldStates);
     void SendWorldStateUpdate(uint32 variable, uint32 value);
@@ -326,6 +327,10 @@ public:
     void SendSpellChannelUpdate(ObjectGuid casterGuid, int32 duration);
     void SendGameObjectDespawnAnim(ObjectGuid guid);
     void SendGameObjectCustomAnim(ObjectGuid guid, uint32 animId);
+    void SendPlayMusic(uint32 musicId);
+    void SendPlaySound(uint32 soundId);
+    void SendPlayObjectSound(uint32 soundId, ObjectGuid guid);
+    void SendPlaySpellVisual(ObjectGuid guid, uint32 kitId);
 };
 
 #define sWorld WorldServer::Instance()

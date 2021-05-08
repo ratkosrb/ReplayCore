@@ -441,6 +441,24 @@ struct SniffedEvent_UnitAttackLog : SniffedEventCRTP<SniffedEvent_UnitAttackLog>
     }
 };
 
+struct SniffedEvent_UnitEmote : SniffedEventCRTP<SniffedEvent_UnitEmote>
+{
+    SniffedEvent_UnitEmote(ObjectGuid objectGuid, uint32 emoteId) :
+        m_objectGuid(objectGuid), m_emoteId(emoteId) {};
+    ObjectGuid m_objectGuid;
+    uint32 m_emoteId = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_EMOTE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_objectGuid;
+    }
+};
+
 struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSideMovement>
 {
     SniffedEvent_ClientSideMovement(ObjectGuid moverGuid, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o) :
@@ -1181,6 +1199,52 @@ struct SniffedEvent_GameObjectUpdate_path_progress : SniffedEventCRTP<SniffedEve
     }
 };
 
+struct SniffedEvent_PlayMusic : SniffedEventCRTP<SniffedEvent_PlayMusic>
+{
+    SniffedEvent_PlayMusic(uint32 musicId) :
+        m_musicId(musicId) {};
+    uint32 m_musicId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_PLAY_MUSIC;
+    }
+};
+
+struct SniffedEvent_PlaySound : SniffedEventCRTP<SniffedEvent_PlaySound>
+{
+    SniffedEvent_PlaySound(ObjectGuid sourceGuid, uint32 soundId) :
+        m_sourceGuid(sourceGuid), m_soundId(soundId) {};
+    ObjectGuid m_sourceGuid;
+    uint32 m_soundId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_PLAY_SOUND;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_sourceGuid;
+    }
+};
+
+struct SniffedEvent_PlaySpellVisualKit : SniffedEventCRTP<SniffedEvent_PlaySpellVisualKit>
+{
+    SniffedEvent_PlaySpellVisualKit(ObjectGuid casterGuid, uint32 kitId) :
+        m_casterGuid(casterGuid), m_kitId(kitId) {};
+    ObjectGuid m_casterGuid;
+    uint32 m_kitId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_PLAY_SPELL_VISUAL_KIT;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_casterGuid;
+    }
+};
+
 struct SniffedEvent_SpellCastFailed : SniffedEventCRTP<SniffedEvent_SpellCastFailed>
 {
     SniffedEvent_SpellCastFailed(ObjectGuid casterGuid, uint32 spellId, uint32 reason) :
@@ -1295,6 +1359,89 @@ struct SniffedEvent_SpellChannelUpdate : SniffedEventCRTP<SniffedEvent_SpellChan
     }
 };
 
+struct SniffedEvent_Client_QuestAccept : SniffedEventCRTP<SniffedEvent_Client_QuestAccept>
+{
+    SniffedEvent_Client_QuestAccept(uint32 questId, ObjectGuid questStarterGuid) :
+        m_questId(questId), m_questStarterGuid(questStarterGuid) {};
+    uint32 m_questId = 0;
+    ObjectGuid m_questStarterGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CLIENT_QUEST_ACCEPT;
+    }
+};
+
+struct SniffedEvent_Client_QuestComplete : SniffedEventCRTP<SniffedEvent_Client_QuestComplete>
+{
+    SniffedEvent_Client_QuestComplete(uint32 questId, ObjectGuid questEnderGuid) :
+        m_questId(questId), m_questEnderGuid(questEnderGuid) {};
+    uint32 m_questId = 0;
+    ObjectGuid m_questEnderGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CLIENT_QUEST_COMPLETE;
+    }
+};
+
+struct SniffedEvent_Client_CreatureInteract : SniffedEventCRTP<SniffedEvent_Client_CreatureInteract>
+{
+    SniffedEvent_Client_CreatureInteract(ObjectGuid creatureGuid) :
+        m_creatureGuid(creatureGuid) {};
+    ObjectGuid m_creatureGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CLIENT_CREATURE_INTERACT;
+    }
+};
+
+struct SniffedEvent_Client_GameObjectUse : SniffedEventCRTP<SniffedEvent_Client_GameObjectUse>
+{
+    SniffedEvent_Client_GameObjectUse(ObjectGuid objectGuid) :
+        m_objectGuid(objectGuid) {};
+    ObjectGuid m_objectGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CLIENT_GAMEOBJECT_USE;
+    }
+};
+
+struct SniffedEvent_Client_ItemUse : SniffedEventCRTP<SniffedEvent_Client_ItemUse>
+{
+    SniffedEvent_Client_ItemUse(uint32 itemId) :
+        m_itemId(itemId) {};
+    uint32 m_itemId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CLIENT_ITEM_USE;
+    }
+};
+
+struct SniffedEvent_Client_ReclaimCorpse : SniffedEventCRTP<SniffedEvent_Client_ReclaimCorpse>
+{
+    SniffedEvent_Client_ReclaimCorpse() {};
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CLIENT_RECLAIM_CORPSE;
+    }
+};
+
+struct SniffedEvent_Client_ReleaseSpirit : SniffedEventCRTP<SniffedEvent_Client_ReleaseSpirit>
+{
+    SniffedEvent_Client_ReleaseSpirit() {};
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CLIENT_RELEASE_SPIRIT;
+    }
+};
+
+
 /*
 
 struct SniffedEvent_UnitDestroy : SniffedEvent
@@ -1355,25 +1502,6 @@ struct SniffedEvent_UnitUpdate_orientation : SniffedEvent
     KnownObject GetSourceObject() const final
     {
         return KnownObject(m_guid, m_entry, TypeID(m_typeId));
-    }
-};
-
-struct SniffedEvent_UnitEmote : SniffedEvent
-{
-    SniffedEvent_UnitEmote(uint32 guid, uint32 entry, uint32 type, uint32 emoteId) : 
-        m_guid(guid), m_entry(entry), m_type(type), m_emoteId(emoteId) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    uint32 m_emoteId = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_EMOTE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
     }
 };
 
@@ -1464,144 +1592,6 @@ struct SniffedEvent_GameObjectDestroy : SniffedEvent
     KnownObject GetSourceObject() const final
     {
         return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_PlayMusic : SniffedEvent
-{
-    SniffedEvent_PlayMusic(uint32 music) :
-        m_music(music) {};
-    uint32 m_music = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_PLAY_MUSIC;
-    }
-};
-
-struct SniffedEvent_PlaySound : SniffedEvent
-{
-    SniffedEvent_PlaySound(uint32 sound, uint32 sourceGuid, uint32 sourceId, uint32 sourceType) :
-        m_sound(sound), m_sourceGuid(sourceGuid), m_sourceId(sourceId), m_sourceType(sourceType) {};
-    uint32 m_sound = 0;
-    uint32 m_sourceGuid = 0;
-    uint32 m_sourceId = 0;
-    uint32 m_sourceType = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_PLAY_SOUND;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_sourceGuid, m_sourceId, TypeID(m_sourceType));
-    }
-};
-
-struct SniffedEvent_PlaySpellVisualKit : SniffedEvent
-{
-    SniffedEvent_PlaySpellVisualKit(uint32 kitId, uint32 casterGuid, uint32 casterId, uint32 casterType) :
-        m_kitId(kitId), m_casterGuid(casterGuid), m_casterId(casterId), m_casterType(casterType) {};
-    uint32 m_kitId = 0;
-    uint32 m_casterGuid = 0;
-    uint32 m_casterId = 0;
-    uint32 m_casterType;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_PLAY_SPELL_VISUAL_KIT;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_casterGuid, m_casterId, TypeID(m_casterType));
-    }
-};
-
-struct SniffedEvent_QuestAccept : SniffedEvent
-{
-    SniffedEvent_QuestAccept(uint32 questId, uint32 objectGuid, uint32 objectId, std::string objectType) :
-        m_questId(questId), m_objectGuid(objectGuid), m_objectId(objectId), m_objectType(objectType) {};
-    uint32 m_questId = 0;
-    uint32 m_objectGuid = 0;
-    uint32 m_objectId = 0;
-    std::string m_objectType;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_CLIENT_QUEST_ACCEPT;
-    }
-};
-
-struct SniffedEvent_QuestComplete : SniffedEvent
-{
-    SniffedEvent_QuestComplete(uint32 questId, uint32 objectGuid, uint32 objectId, std::string objectType) :
-        m_questId(questId), m_objectGuid(objectGuid), m_objectId(objectId), m_objectType(objectType) {};
-    uint32 m_questId = 0;
-    uint32 m_objectGuid = 0;
-    uint32 m_objectId = 0;
-    std::string m_objectType;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_CLIENT_QUEST_COMPLETE;
-    }
-};
-
-struct SniffedEvent_CreatureInteract : SniffedEvent
-{
-    SniffedEvent_CreatureInteract(uint32 guid, uint32 entry) :
-        m_guid(guid), m_entry(entry) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_CLIENT_CREATURE_INTERACT;
-    }
-};
-
-struct SniffedEvent_GameObjectUse : SniffedEvent
-{
-    SniffedEvent_GameObjectUse(uint32 guid, uint32 entry) :
-        m_guid(guid), m_entry(entry) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_CLIENT_GAMEOBJECT_USE;
-    }
-};
-
-struct SniffedEvent_ItemUse : SniffedEvent
-{
-    SniffedEvent_ItemUse(uint32 itemId) :
-        m_itemId(itemId) {};
-    uint32 m_itemId = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_CLIENT_ITEM_USE;
-    }
-};
-
-struct SniffedEvent_ReclaimCorpse : SniffedEvent
-{
-    SniffedEvent_ReclaimCorpse() {};
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_CLIENT_RECLAIM_CORPSE;
-    }
-};
-
-struct SniffedEvent_ReleaseSpirit : SniffedEvent
-{
-    SniffedEvent_ReleaseSpirit() {};
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_CLIENT_RELEASE_SPIRIT;
     }
 };
 

@@ -1822,6 +1822,14 @@ void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGui
     SendPacket(data);
 }
 
+void WorldServer::SendEmote(ObjectGuid guid, uint32 emoteId)
+{
+    WorldPacket data(GetOpcode("SMSG_EMOTE"), 4 + 8);
+    data << uint32(emoteId);
+    data << guid;
+    SendPacket(data);
+}
+
 void WorldServer::SendWeather(uint32 type, float grade, uint32 soundId, bool instant)
 {
     WorldPacket data(GetOpcode("SMSG_WEATHER"), 4 + 4 + 4 + 1);
@@ -1974,5 +1982,35 @@ void WorldServer::SendGameObjectCustomAnim(ObjectGuid guid, uint32 animId)
     WorldPacket data(GetOpcode("SMSG_GAMEOBJECT_CUSTOM_ANIM"), 8 + 4);
     data << ObjectGuid(guid);
     data << uint32(animId);
+    SendPacket(data);
+}
+
+void WorldServer::SendPlayMusic(uint32 musicId)
+{
+    WorldPacket data(GetOpcode("SMSG_PLAY_MUSIC"), 4);
+    data << uint32(musicId);
+    SendPacket(data);
+}
+
+void WorldServer::SendPlaySound(uint32 soundId)
+{
+    WorldPacket data(GetOpcode("SMSG_PLAY_SOUND"), 4);
+    data << uint32(soundId);
+    SendPacket(data);
+}
+
+void WorldServer::SendPlayObjectSound(uint32 soundId, ObjectGuid guid)
+{
+    WorldPacket data(GetOpcode("SMSG_PLAY_OBJECT_SOUND"), 4 + 8);
+    data << uint32(soundId);
+    data << guid;
+    SendPacket(data);
+}
+
+void WorldServer::SendPlaySpellVisual(ObjectGuid guid, uint32 kitId)
+{
+    WorldPacket data(GetOpcode("SMSG_PLAY_SPELL_VISUAL"), 8 + 4);
+    data << guid;
+    data << uint32(kitId);
     SendPacket(data);
 }

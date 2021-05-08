@@ -302,6 +302,7 @@ public:
     template <class T>
     void LoadUnitAttackToggle(char const* tableName, uint32 typeId);
     void LoadUnitAttackLog(char const* tableName, uint32 typeId);
+    void LoadUnitEmote(char const* tableName, uint32 typeId);
     void LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap);
     void LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap);
     template <class T>
@@ -318,11 +319,21 @@ public:
     void LoadPlayerEquipmentUpdate();
     void LoadGameObjectCustomAnim();
     void LoadGameObjectDespawnAnim();
+    void LoadPlayMusic();
+    void LoadPlaySound();
+    void LoadPlaySpellVisualKit();
     void LoadSpellCastFailed();
     void LoadSpellCastStart();
     void LoadSpellCastGo();
     void LoadSpellChannelStart();
     void LoadSpellChannelUpdate();
+    void LoadClientQuestAccept();
+    void LoadClientQuestComplete();
+    void LoadClientCreatureInteract();
+    void LoadClientGameObjectUse();
+    void LoadClientItemUse();
+    void LoadClientReclaimCorpse();
+    void LoadClientReleaseSpirit();
 
 #pragma endregion SniffedEvents
     

@@ -42,6 +42,7 @@ public:
     void ConvertWeatherStateAndGradeForVanilla(uint32& type, float& grade);
     uint32 GetWeatherSoundForVanilla(uint32 type, float grade) const;
     uint32 ConvertChatType(uint32 chatType) const;
+    uint32 ConvertClassicChatType(uint32 chatType) const;
     void ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination);
     uint32 ConvertNpcFlags(uint32 npcFlags);
     uint8 ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags);

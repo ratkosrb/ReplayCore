@@ -252,15 +252,19 @@ uint32 GameDataMgr::GetWeatherSoundForVanilla(uint32 type, float grade) const
 uint32 GameDataMgr::ConvertChatType(uint32 chatType) const
 {
     if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
-    {
-        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            return ConvertClassicChatTypeToVanilla(chatType);
-        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            return ConvertClassicChatTypeToTBC(chatType);
-        else
-            return ConvertClassicChatTypeToWotLK(chatType);
-    }
+        return ConvertClassicChatType(chatType);
+
     return chatType;
+}
+
+uint32 GameDataMgr::ConvertClassicChatType(uint32 chatType) const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        return ConvertClassicChatTypeToVanilla(chatType);
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return ConvertClassicChatTypeToTBC(chatType);
+    else
+        return ConvertClassicChatTypeToWotLK(chatType);
 }
 
 void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination)
