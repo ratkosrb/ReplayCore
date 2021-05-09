@@ -452,7 +452,7 @@ void ReplayMgr::LoadGameObjects()
         if (data.type >= MAX_GAMEOBJECT_TYPE_WOTLK)
         {
             printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `type` (%u) value.\n", guid, entry, data.state);
-            data.type = gInfo->type;
+            data.type = gInfo ? gInfo->type : GAMEOBJECT_TYPE_GENERIC;
         }
 
         data.artKit = fields[23].GetUInt32();
