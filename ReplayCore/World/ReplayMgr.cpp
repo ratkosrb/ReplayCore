@@ -970,6 +970,73 @@ void ReplayMgr::Update(uint32 const diff)
     }
 }
 
+void ReplayMgr::ChangeTime(uint32 unixtime)
+{
+    if (unixtime == GetCurrentSniffTime())
+    {
+        printf("[ReplayMgr] Attempt to change time to current time.\n");
+        return;
+    }
+
+    if (!m_initialized)
+    {
+        PrepareSniffedEventDataForCurrentClient();
+        m_initialized = true;
+    }
+
+    bool const isPlaying = IsPlaying();
+    m_enabled = false;
+    uint64 const newSniffTimeMs = uint64(unixtime) * IN_MILLISECONDS;
+
+    if (unixtime > GetCurrentSniffTime())
+    {
+        sWorld.HideAllObjectsFromClient();
+        uint64 const oldSniffTimeMs = GetCurrentSniffTimeMs();
+
+        for (auto const& itr : m_eventsMap)
+        {
+            if (itr.first <= oldSniffTimeMs)
+                continue;
+
+            if (itr.first > newSniffTimeMs)
+                break;
+
+            if (itr.second->m_disabled)
+                continue;
+
+            m_currentSniffTime = itr.first / IN_MILLISECONDS;
+            m_currentSniffTimeMs = itr.first;
+
+            itr.second->Execute();
+        }
+    }
+    else // going back in time
+    {
+        sWorld.HideAllObjectsFromClient();
+        sWorld.DestroyAllObjects();
+        SpawnAllObjects();
+
+        for (auto const& itr : m_eventsMap)
+        {
+            if (itr.first > newSniffTimeMs)
+                break;
+
+            if (itr.second->m_disabled)
+                continue;
+
+            m_currentSniffTime = itr.first / IN_MILLISECONDS;
+            m_currentSniffTimeMs = itr.first;
+
+            itr.second->Execute();
+        }
+    }
+
+    SetPlayTime(unixtime);
+    sWorld.SendWeatherForCurrentZone();
+    sWorld.SendInitialWorldStates(GetInitialWorldStatesForCurrentTime());
+    m_enabled = isPlaying;
+}
+
 void ReplayMgr::SetPlayTime(uint32 unixtime)
 {
     uint32 const currentTime = uint32(time(nullptr));

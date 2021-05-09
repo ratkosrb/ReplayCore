@@ -20,6 +20,8 @@
  */
 
 #include "ObjectGuid.h"
+#include "GameDataMgr.h"
+#include "WorldServer.h"
 #include <sstream>
 
 char const* ObjectGuid::GetTypeName(HighGuid high)
@@ -49,14 +51,39 @@ char const* ObjectGuid::GetTypeName(HighGuid high)
     }
 }
 
-std::string ObjectGuid::GetString() const
+std::string ObjectGuid::GetString(bool includeName) const
 {
     std::ostringstream str;
     str << GetTypeName();
 
+    if (includeName)
+    {
+        switch (GetTypeId())
+        {
+            case TYPEID_UNIT:
+            {
+                if (CreatureTemplate const* pTemplate = sGameDataMgr.GetCreatureTemplate(GetEntry()))
+                    str << " " << pTemplate->name;
+                break;
+            }
+            case TYPEID_GAMEOBJECT:
+            {
+                if (GameObjectTemplate const* pTemplate = sGameDataMgr.GetGameObjectTemplate(GetEntry()))
+                    str << " " << pTemplate->name;
+                break;
+            }
+            case TYPEID_PLAYER:
+            {
+                std::string name = sWorld.GetPlayerName(*this);
+                if (!name.empty())
+                    str << " " << name;
+            }
+        }
+    }
+
     str << " (";
     if (HasEntry())
-        str << (IsPet() ? "Petnumber: " : "Entry: ") << GetEntry() << " ";
+        str << "Entry: " << GetEntry() << " ";
     str << "Guid: " << GetCounter() << ")";
     return str.str();
 }

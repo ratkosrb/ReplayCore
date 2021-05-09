@@ -320,12 +320,7 @@ bool CommandHandler::HandleNearCreatures()
 
         float distance = creature.GetDistance3D(pPlayer);
         if (distance <= radius)
-        {
-            const char* name = "";
-            if (CreatureTemplate const* pTemplate = sGameDataMgr.GetCreatureTemplate(itr.first.GetEntry()))
-                name = pTemplate->name.c_str();
-            PSendSysMessage("- %s (GUID: %u, Entry: %u) (%g yards)", name, itr.first.GetCounter(), itr.first.GetEntry(), distance);
-        }
+            PSendSysMessage("- %s", creature.GetGuidStr(true).c_str());
     }
 
     return true;
@@ -353,12 +348,7 @@ bool CommandHandler::HandleNearGameObjects()
 
         float distance = gobject.GetDistance3D(pPlayer);
         if (distance <= radius)
-        {
-            const char* name = "";
-            if (GameObjectTemplate const* pTemplate = sGameDataMgr.GetGameObjectTemplate(itr.first.GetEntry()))
-                name = pTemplate->name.c_str();
-            PSendSysMessage("- %s (GUID: %u, Entry: %u) (%g yards)", name, itr.first.GetCounter(), itr.first.GetEntry(), distance);
-        }
+            PSendSysMessage("- %s", gobject.GetGuidStr(true));
     }
 
     return true;
@@ -374,7 +364,7 @@ bool CommandHandler::HandleTargetGuid()
     }
 
     ObjectGuid guid = pPlayer->GetGuidValue("UNIT_FIELD_TARGET");
-    PSendSysMessage("Your current target is:\n%s", guid.GetString().c_str());
+    PSendSysMessage("Your current target is:\n%s", guid.GetString(true).c_str());
     return true;
 }
 
@@ -498,6 +488,50 @@ bool CommandHandler::HandleGoToClient()
     }
 
     SendSysMessage("Cannot find active player.\n");
+    return true;
+}
+
+bool CommandHandler::HandleGoForward()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    float distance;
+    if (!ExtractFloat(distance))
+        return false;
+
+    WorldLocation location = pPlayer->GetLocation();
+    pPlayer->GetRelativePositions(distance, 0.0f, 0.0f, location.x, location.y, location.z);
+    pPlayer->Relocate(location);
+    pPlayer->GetMovementInfo().UpdateTime(sWorld.GetServerTimeMs());
+    sWorld.SendMovementPacket(pPlayer, sWorld.GetOpcode("MSG_MOVE_HEARTBEAT"));
+
+    return true;
+}
+
+bool CommandHandler::HandleGoUp()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    float distance;
+    if (!ExtractFloat(distance))
+        return false;
+
+    WorldLocation location = pPlayer->GetLocation();
+    location.z += distance;
+    pPlayer->Relocate(location);
+    pPlayer->GetMovementInfo().UpdateTime(sWorld.GetServerTimeMs());
+    sWorld.SendMovementPacket(pPlayer, sWorld.GetOpcode("MSG_MOVE_HEARTBEAT"));
+
     return true;
 }
 
@@ -647,14 +681,48 @@ bool CommandHandler::HandleSniffPlay()
 
     uint32 unixtime;
     if (ExtractUInt32(unixtime))
-        sReplayMgr.SetPlayTime(unixtime);
+        sReplayMgr.ChangeTime(unixtime);
 
     sReplayMgr.StartPlaying();
+    return true;
+}
+
+bool CommandHandler::HandleSniffStop()
+{
+    if (!sWorld.GetClientPlayer())
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    if (!sReplayMgr.IsPlaying())
+    {
+        SendSysMessage("Sniff replay is already stopped!");
+        return true;
+    }
+
+    sReplayMgr.StopPlaying();
     return true;
 }
 
 bool CommandHandler::HandleSniffGetTime()
 {
     PSendSysMessage("Current sniff time is %u.", sReplayMgr.GetCurrentSniffTime());
+    return true;
+}
+
+bool CommandHandler::HandleSniffSetTime()
+{
+    if (!sWorld.GetClientPlayer())
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    uint32 unixtime;
+    if (!ExtractUInt32(unixtime))
+        return false;
+
+    sReplayMgr.ChangeTime(unixtime);
     return true;
 }

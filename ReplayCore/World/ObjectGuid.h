@@ -180,7 +180,7 @@ class ObjectGuid
     public:                                                 // accessors - for debug
         static char const* GetTypeName(HighGuid high);
         char const* GetTypeName() const { return !IsEmpty() ? GetTypeName(GetHigh()) : "None"; }
-        std::string GetString() const;
+        std::string GetString(bool includeName = false) const;
 
     private:                                                // internal functions
         static bool HasEntry(HighGuid high)

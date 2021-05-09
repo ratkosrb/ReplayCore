@@ -1441,6 +1441,62 @@ struct SniffedEvent_Client_ReleaseSpirit : SniffedEventCRTP<SniffedEvent_Client_
     }
 };
 
+struct SniffedEvent_QuestUpdateComplete : SniffedEventCRTP<SniffedEvent_QuestUpdateComplete>
+{
+    SniffedEvent_QuestUpdateComplete(uint32 questId) : m_questId(questId) {};
+    uint32 m_questId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_QUEST_UPDATE_COMPLETE;
+    }
+};
+
+struct SniffedEvent_QuestUpdateFailed : SniffedEventCRTP<SniffedEvent_QuestUpdateFailed>
+{
+    SniffedEvent_QuestUpdateFailed(uint32 questId) : m_questId(questId) {};
+    uint32 m_questId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_QUEST_UPDATE_FAILED;
+    }
+};
+
+struct SniffedEvent_XPGainLog : SniffedEventCRTP<SniffedEvent_XPGainLog>
+{
+    SniffedEvent_XPGainLog(ObjectGuid victimGuid, uint32 originalAmount, uint32 amount, float groupBonus, bool rafBonus) :
+        m_victimGuid(victimGuid), m_originalAmount(originalAmount), m_amount(amount), m_groupBonus(groupBonus), m_rafBonus(rafBonus) {};
+    ObjectGuid m_victimGuid;
+    uint32 m_originalAmount = 0;
+    uint32 m_amount = 0;
+    float m_groupBonus = 0.0f;
+    bool m_rafBonus = false;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_XP_GAIN_LOG;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_victimGuid;
+    }
+};
+
+struct SniffedEvent_FactionStandingUpdate : SniffedEventCRTP<SniffedEvent_FactionStandingUpdate>
+{
+    SniffedEvent_FactionStandingUpdate(uint32 reputationListId, uint32 standing, float rafBonus, bool showVisual) :
+        m_reputationListId(reputationListId), m_standing(standing), m_rafBonus(rafBonus), m_showVisual(showVisual) {};
+    uint32 m_reputationListId = 0;
+    uint32 m_standing = 0;
+    float m_rafBonus = 0.0f;
+    bool m_showVisual = false;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_FACTION_STANDING_UPDATE;
+    }
+};
 
 /*
 
@@ -1592,62 +1648,6 @@ struct SniffedEvent_GameObjectDestroy : SniffedEvent
     KnownObject GetSourceObject() const final
     {
         return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_QuestUpdateComplete : SniffedEvent
-{
-    SniffedEvent_QuestUpdateComplete(uint32 questId) : m_questId(questId) {};
-    uint32 m_questId = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_QUEST_UPDATE_COMPLETE;
-    }
-};
-
-struct SniffedEvent_QuestUpdateFailed : SniffedEvent
-{
-    SniffedEvent_QuestUpdateFailed(uint32 questId) : m_questId(questId) {};
-    uint32 m_questId = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_QUEST_UPDATE_FAILED;
-    }
-};
-
-struct SniffedEvent_XPGainLog : SniffedEvent
-{
-    SniffedEvent_XPGainLog(uint32 victimGuid, uint32 victimId, uint32 victimType, uint32 originalAmount, uint32 amount, float groupBonus) :
-        m_victimGuid(victimGuid), m_victimId(victimId), m_victimType(victimType), m_originalAmount(originalAmount), m_amount(amount), m_groupBonus(groupBonus) {};
-    uint32 m_victimGuid = 0;
-    uint32 m_victimId = 0;
-    uint32 m_victimType = 0;
-    uint32 m_originalAmount = 0;
-    uint32 m_amount = 0;
-    float m_groupBonus = 0.0f;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_XP_GAIN_LOG;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_victimGuid, m_victimId, TypeID(m_victimType));
-    }
-};
-
-struct SniffedEvent_FactionStandingUpdate : SniffedEvent
-{
-    SniffedEvent_FactionStandingUpdate(uint32 reputationListId, uint32 standing) :
-        m_reputationListId(reputationListId), m_standing(standing) {};
-    uint32 m_reputationListId = 0;
-    uint32 m_standing = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_FACTION_STANDING_UPDATE;
     }
 };
 

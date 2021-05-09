@@ -51,7 +51,7 @@ public:
     uint8 GetByteValue(const char* index, uint8 offset) const;
     uint16 GetUInt16Value(const char* index, uint8 offset) const;
     ObjectGuid GetGuidValue(const char* index) const { return GetUInt64Value(index); }
-    std::string GetGuidStr() const { return GetObjectGuid().GetString(); }
+    std::string GetGuidStr(bool includeName = false) const { return GetObjectGuid().GetString(includeName); }
     uint64 const& GetGUID() const { return GetUInt64Value(OBJECT_FIELD_GUID); }
     ObjectGuid const& GetObjectGuid() const { return m_guid; }
     uint32 GetGUIDLow() const { return GetObjectGuid().GetCounter(); }
@@ -193,6 +193,7 @@ public:
     Position const& GetPosition() const { return m_location; }
     WorldLocation& GetLocation() { return m_location; }
     WorldLocation const& GetLocation() const { return m_location; }
+    void GetRelativePositions(float fForwardBackward, float fLeftRight, float fUpDown, float &x, float &y, float &z);
     void SetPosition(float x, float y, float z)
     {
         m_location.x = x;
@@ -263,8 +264,17 @@ public:
     {
         return GetAngle(pObject->GetPositionX(), pObject->GetPositionY());
     }
+    uint32 GetLastPositionUpdate() const
+    {
+        return m_lastPositionUpdate;
+    }
+    void SetLastPositionUpdate(uint32 moveTime)
+    {
+        m_lastPositionUpdate = moveTime;
+    }
 protected:
     WorldLocation m_location;
+    uint32 m_lastPositionUpdate = 0;
 };
 
 

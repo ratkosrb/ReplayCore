@@ -40,6 +40,21 @@ uint32 WorldObject::GetAreaId() const
     return sGameDataMgr.GetAreaIdFromCoordinates(GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ());
 }
 
+void WorldObject::GetRelativePositions(float fForwardBackward, float fLeftRight, float fUpDown, float &x, float &y, float &z)
+{
+    float orientation = GetOrientation() + M_PI_F / 2.0f;
+
+    float x_coef = cos(orientation);
+    float y_coef = sin(orientation);
+
+    float x_range_add = cos(GetOrientation()) * fForwardBackward;
+    float y_range_add = sin(GetOrientation()) * fForwardBackward;
+
+    x = GetPositionX() + x_coef * fLeftRight + x_range_add;
+    y = GetPositionY() + y_coef * fLeftRight + y_range_add;
+    z = GetPositionZ() + fUpDown;
+}
+
 void Object::MarkForClientUpdate()
 {
     if (!m_isVisible)

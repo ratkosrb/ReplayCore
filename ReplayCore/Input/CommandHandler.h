@@ -34,6 +34,8 @@ public:
     bool HandleGoCreature();
     bool HandleGoGameObject();
     bool HandleGoToClient();
+    bool HandleGoForward();
+    bool HandleGoUp();
     bool SetSpeedCommandsHelper(UnitMoveType moveType);
     bool HandleSetAllSpeeds();
     bool HandleSetRunSpeed();
@@ -47,9 +49,11 @@ public:
     bool HandleSetPitchSpeed();
     bool HandleSetFlyMode();
     bool HandleSniffPlay();
+    bool HandleSniffStop();
     bool HandleSniffGetTime();
+    bool HandleSniffSetTime();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[26] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[30] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -64,6 +68,8 @@ private:
         { "gocreature", &CommandHandler::HandleGoCreature },
         { "gogobject", &CommandHandler::HandleGoGameObject },
         { "gotoclient", &CommandHandler::HandleGoToClient },
+        { "goforward", &CommandHandler::HandleGoForward },
+        { "goup", &CommandHandler::HandleGoUp },
         { "aspeed", &CommandHandler::HandleSetAllSpeeds },
         { "speed", &CommandHandler::HandleSetRunSpeed },
         { "backspeed", &CommandHandler::HandleSetRunBackSpeed },
@@ -76,7 +82,9 @@ private:
         { "pitchspeed", &CommandHandler::HandleSetPitchSpeed },
         { "fly", &CommandHandler::HandleSetFlyMode },
         { "play", &CommandHandler::HandleSniffPlay },
+        { "stop", &CommandHandler::HandleSniffStop },
         { "gettime", &CommandHandler::HandleSniffGetTime },
+        { "settime", &CommandHandler::HandleSniffSetTime },
     };
 
     bool m_console = true;

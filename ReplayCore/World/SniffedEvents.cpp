@@ -122,6 +122,10 @@ void ReplayMgr::LoadSniffedEvents()
     LoadClientItemUse();
     LoadClientReclaimCorpse();
     LoadClientReleaseSpirit();
+    LoadQuestUpdateComplete();
+    LoadQuestUpdateFailed();
+    LoadXPGainLog();
+    LoadFactionStandingUpdates();
     LoadWorldObjectDestroy("creature_destroy_time", TYPEID_UNIT);
     LoadWorldObjectDestroy("player_destroy_time", TYPEID_PLAYER);
     LoadWorldObjectDestroy("gameobject_destroy_time", TYPEID_GAMEOBJECT);
@@ -401,6 +405,7 @@ void SniffedEvent_WorldObjectCreate1::Execute() const
     }
 
     pObject->Relocate(m_location);
+    pObject->SetLastPositionUpdate(sReplayMgr.GetCurrentSniffTime());
     pObject->SetIsNewObject(false);
     pObject->SetVisibility(true);
 }
@@ -415,6 +420,7 @@ void SniffedEvent_WorldObjectCreate2::Execute() const
     }
 
     pObject->Relocate(m_location);
+    pObject->SetLastPositionUpdate(sReplayMgr.GetCurrentSniffTime());
     pObject->SetVisibility(true);
 }
 
@@ -655,7 +661,7 @@ void SniffedEvent_UnitEmote::Execute() const
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
 {
     //                                                               0             1       2         3            4             5      6             7             8              9
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `map`, `position_x`, `position_y`, `position_z`, `orientation` FROM `%s` ORDER BY `unixtimems` ASC, `move_flags` DESC", tableName));
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `map`, `position_x`, `position_y`, `position_z`, `orientation` FROM `%s` ORDER BY `unixtimems` ASC, `move_time` ASC, `move_flags` DESC", tableName));
     if (!result)
         return;
 
@@ -712,6 +718,7 @@ void SniffedEvent_ClientSideMovement::Execute() const
 
     uint32 oldMapId = pUnit->GetMapId();
     pUnit->Relocate(m_location);
+    pUnit->SetLastPositionUpdate(sReplayMgr.GetCurrentSniffTime());
     pUnit->SetUnitMovementFlags(m_moveFlags);
     pUnit->GetMovementInfo().UpdateTime(m_moveTime);
 
@@ -826,6 +833,7 @@ void SniffedEvent_ServerSideMovement::Execute() const
     }
 
     pUnit->Relocate(m_startPosition.x, m_startPosition.y, m_startPosition.z);
+    pUnit->SetLastPositionUpdate(sReplayMgr.GetCurrentSniffTime());
     pUnit->m_moveSpline.Initialize(m_startPosition, m_moveTime, m_splineType, m_splineFlags, m_finalOrientation, m_splines, m_cyclic, m_catmullrom);
 
     if (sReplayMgr.IsPlaying())
@@ -2414,7 +2422,7 @@ void SniffedEvent_Client_QuestAccept::Execute() const
     if (m_questStarterGuid.IsEmpty())
         txt = "Client accepts quest " + questName + " (" + std::to_string(m_questId) + ").";
     else
-        txt = "Client accepts quest " + questName + " (" + std::to_string(m_questId) + ") from " + m_questStarterGuid.GetString() + ".";
+        txt = "Client accepts quest " + questName + " (" + std::to_string(m_questId) + ") from " + m_questStarterGuid.GetString(true) + ".";
 
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
     sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
@@ -2468,7 +2476,7 @@ void SniffedEvent_Client_QuestComplete::Execute() const
     if (m_questEnderGuid.IsEmpty())
         txt = "Client turns in quest " + questName + " (" + std::to_string(m_questId) + ").";
     else
-        txt = "Client turns in quest " + questName + " (" + std::to_string(m_questId) + ") to " + m_questEnderGuid.GetString() + ".";
+        txt = "Client turns in quest " + questName + " (" + std::to_string(m_questId) + ") to " + m_questEnderGuid.GetString(true) + ".";
 
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
     sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
@@ -2516,7 +2524,7 @@ void SniffedEvent_Client_CreatureInteract::Execute() const
     if (!pPlayer->IsVisibleToClient())
         return;
     
-    std::string txt = "Client interacts with " + m_creatureGuid.GetString() + ".";
+    std::string txt = "Client interacts with " + m_creatureGuid.GetString(true) + ".";
 
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
     sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
@@ -2564,7 +2572,7 @@ void SniffedEvent_Client_GameObjectUse::Execute() const
     if (!pPlayer->IsVisibleToClient())
         return;
 
-    std::string txt = "Client uses " + m_objectGuid.GetString() + ".";
+    std::string txt = "Client uses " + m_objectGuid.GetString(true) + ".";
 
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
     sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
@@ -2688,4 +2696,168 @@ void SniffedEvent_Client_ReleaseSpirit::Execute() const
 
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
     sWorld.SendChatPacket(say, "Client releases spirit.", 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+
+void ReplayMgr::LoadQuestUpdateComplete()
+{
+    //                                             0             1
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `quest_id` FROM `quest_update_complete` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 questId = fields[1].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_QuestUpdateComplete> newEvent = std::make_shared<SniffedEvent_QuestUpdateComplete>(questId);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_QuestUpdateComplete::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Player* pPlayer = sReplayMgr.GetActivePlayer();
+    if (!pPlayer)
+    {
+        printf("SniffedEvent_QuestUpdateComplete: Cannot find active player!\n");
+        return;
+    }
+
+    if (!pPlayer->IsVisibleToClient())
+        return;
+
+    std::string questName;
+    if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(m_questId))
+        questName = pQuest->GetTitle();
+    else
+        questName = "UNKNOWN";
+
+    std::string txt = "Player has completed quest " + questName + " (" + std::to_string(m_questId) + ").";
+
+    uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
+    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+void ReplayMgr::LoadQuestUpdateFailed()
+{
+    //                                             0             1
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `quest_id` FROM `quest_update_failed` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 questId = fields[1].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_QuestUpdateFailed> newEvent = std::make_shared<SniffedEvent_QuestUpdateFailed>(questId);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_QuestUpdateFailed::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Player* pPlayer = sReplayMgr.GetActivePlayer();
+    if (!pPlayer)
+    {
+        printf("SniffedEvent_QuestUpdateFailed: Cannot find active player!\n");
+        return;
+    }
+
+    if (!pPlayer->IsVisibleToClient())
+        return;
+
+    std::string questName;
+    if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(m_questId))
+        questName = pQuest->GetTitle();
+    else
+        questName = "UNKNOWN";
+
+    std::string txt = "Player has failed quest " + questName + " (" + std::to_string(m_questId) + ").";
+
+    uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
+    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+void ReplayMgr::LoadXPGainLog()
+{
+    //                                             0             1              2            3              4                  5         6              7
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `victim_guid`, `victim_id`, `victim_type`, `original_amount`, `amount`, `group_bonus`, `raf_bonus` FROM `xp_gain_log` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 victimGuidLow = fields[1].GetUInt32();
+            uint32 victimId = fields[2].GetUInt32();
+            std::string victimType = fields[3].GetCppString();
+            ObjectGuid victimGuid = MakeObjectGuidFromSniffData(victimGuidLow, victimId, victimType);
+
+            uint32 originalAmount = fields[4].GetUInt32();
+            uint32 amount = fields[5].GetUInt32();
+            float groupBonus = fields[6].GetFloat();
+            bool rafBonus = fields[7].GetBool();
+
+            std::shared_ptr<SniffedEvent_XPGainLog> newEvent = std::make_shared<SniffedEvent_XPGainLog>(victimGuid, originalAmount, amount, groupBonus, rafBonus);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_XPGainLog::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    sWorld.SendLogXPGain(m_victimGuid, m_originalAmount, m_amount, m_groupBonus, m_rafBonus);
+}
+
+void ReplayMgr::LoadFactionStandingUpdates()
+{
+    //                                             0             1                     2           3            4
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `reputation_list_id`, `standing`, `raf_bonus`, `show_visual` FROM `faction_standing_update` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 reputatonListId = fields[1].GetUInt32();
+            uint32 standing = fields[2].GetUInt32();
+            float rafBonus = fields[3].GetFloat();
+            bool showVisual = fields[4].GetBool();
+
+            std::shared_ptr<SniffedEvent_FactionStandingUpdate> newEvent = std::make_shared<SniffedEvent_FactionStandingUpdate>(reputatonListId, standing, rafBonus, showVisual);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_FactionStandingUpdate::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    sWorld.SendSetFactionStanding(m_rafBonus, m_showVisual, m_reputationListId, m_standing);
 }

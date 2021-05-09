@@ -538,9 +538,10 @@ void WorldServer::SendJoinedChannelNotify(std::string channelName, uint32 channe
 
 void WorldServer::SendMotd()
 {
+    static std::string motd = std::string("Sniff Replay Core v1: Compiled ") + std::string(__DATE__);
     WorldPacket data(GetOpcode("SMSG_MOTD"), 50);
     data << uint32(1); // line count
-    data << "Sniff Replay Core v0.0";
+    data << motd;
     SendPacket(data);
 }
 
@@ -2012,5 +2013,34 @@ void WorldServer::SendPlaySpellVisual(ObjectGuid guid, uint32 kitId)
     WorldPacket data(GetOpcode("SMSG_PLAY_SPELL_VISUAL"), 8 + 4);
     data << guid;
     data << uint32(kitId);
+    SendPacket(data);
+}
+
+void WorldServer::SendLogXPGain(ObjectGuid victimGuid, uint32 totalXP, uint32 killXP, float groupBonus, bool rafBonus)
+{
+    WorldPacket data(GetOpcode("SMSG_LOG_XPGAIN"), 21);
+    data << (victimGuid.IsEmpty() ? ObjectGuid() : victimGuid);// guid
+    data << uint32(totalXP);
+    data << uint8(victimGuid.IsEmpty() ? 1 : 0); // 0 = kill, 1 = other
+    if (!victimGuid.IsEmpty())
+    {
+        data << uint32(killXP);
+        data << float(groupBonus);
+    }
+    if (GetClientBuild() >= CLIENT_BUILD_2_4_0)
+        data << uint8(rafBonus);
+    SendPacket(data);
+}
+
+void WorldServer::SendSetFactionStanding(float rafBonus, bool showVisual, int32 reputationListId, int32 standing)
+{
+    WorldPacket data(GetOpcode("SMSG_SET_FACTION_STANDING"), 16);
+    if (GetClientBuild() >= CLIENT_BUILD_2_4_0)
+        data << float(rafBonus);
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        data << uint8(showVisual);
+    data << uint32(1); // count
+    data << int32(reputationListId);
+    data << int32(standing);
     SendPacket(data);
 }

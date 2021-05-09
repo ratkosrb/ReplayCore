@@ -119,19 +119,21 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
         pUnit->SendAllAurasUpdate();
 }
 
-void WorldServer::ResetAndSpawnWorld()
+void WorldServer::DestroyAllObjects()
 {
-    sReplayMgr.Uninitialize();
     m_weather.clear();
     m_players.clear();
     m_creatures.clear();
     m_gameObjects.clear();
     m_dynamicObjects.clear();
+}
+
+void WorldServer::ResetAndSpawnWorld()
+{
+    sReplayMgr.Uninitialize();
+    DestroyAllObjects();
     m_clientPlayer.reset();
-    sReplayMgr.SpawnPlayers();
-    sReplayMgr.SpawnCreatures();
-    sReplayMgr.SpawnGameObjects();
-    sReplayMgr.SpawnDynamicObjects();
+    sReplayMgr.SpawnAllObjects();
     m_worldSpawned = true;
 }
 
@@ -442,5 +444,28 @@ void  WorldServer::SendPacket(WorldPacket& packet)
         if (!packet.empty())
             memcpy(buffer.data() + sizeof(header), packet.contents(), packet.size());
         send(m_worldSocket, (char*)buffer.data(), buffer.size(), 0);
+    }
+}
+
+std::string WorldServer::GetPlayerName(ObjectGuid guid)
+{
+    if (m_clientPlayer && m_clientPlayer->GetObjectGuid() == guid)
+        return m_clientPlayer->GetName();
+
+    if (Player const* pPlayer = FindPlayer(guid))
+        return pPlayer->GetName();
+
+    return sReplayMgr.GetPlayerChatName(guid);
+}
+
+void WorldServer::HideAllObjectsFromClient()
+{
+    if (!m_sessionData.visibleObjects.empty())
+    {
+        UpdateData updateData;
+        for (auto const& itr : m_sessionData.visibleObjects)
+            updateData.AddOutOfRangeGUID(itr);
+        updateData.Send();
+        m_sessionData.visibleObjects.clear();
     }
 }

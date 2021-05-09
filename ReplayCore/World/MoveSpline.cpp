@@ -131,15 +131,9 @@ void MoveSpline::Update(Unit* pUnit)
     if (!m_initialized || m_cyclic || !m_moveTimeMs)
         return;
 
-    if (sReplayMgr.GetCurrentSniffTimeMs() < m_startTimeMs)
+    if ((pUnit->GetLastPositionUpdate() > (m_startTimeMs / IN_MILLISECONDS)) ||
+        (sReplayMgr.GetCurrentSniffTimeMs() < m_startTimeMs))
     {
-        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            pUnit->RemoveUnitMovementFlag(Vanilla::MOVEFLAG_MASK_MOVING_OR_TURN | Vanilla::MOVEFLAG_SPLINE_ENABLED);
-        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            pUnit->RemoveUnitMovementFlag(TBC::MOVEFLAG_MASK_MOVING_OR_TURN | TBC::MOVEFLAG_SPLINE_ENABLED);
-        else
-            pUnit->RemoveUnitMovementFlag(WotLK::MOVEFLAG_MASK_MOVING_OR_TURN | WotLK::MOVEFLAG_SPLINE_ENABLED);
-
         Reset();
         return;
     }
@@ -153,14 +147,7 @@ void MoveSpline::Update(Unit* pUnit)
         if (m_finalOrientation != 100)
             pUnit->Relocate(m_destinationPoints[0].x, m_destinationPoints[0].y, m_destinationPoints[0].z, m_finalOrientation);
         else
-            pUnit->Relocate(m_destinationPoints[0].x, m_destinationPoints[0].y, m_destinationPoints[0].z);
-
-        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            pUnit->RemoveUnitMovementFlag(Vanilla::MOVEFLAG_MASK_MOVING_OR_TURN | Vanilla::MOVEFLAG_SPLINE_ENABLED);
-        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            pUnit->RemoveUnitMovementFlag(TBC::MOVEFLAG_MASK_MOVING_OR_TURN | TBC::MOVEFLAG_SPLINE_ENABLED);
-        else
-            pUnit->RemoveUnitMovementFlag(WotLK::MOVEFLAG_MASK_MOVING_OR_TURN | WotLK::MOVEFLAG_SPLINE_ENABLED);
+            pUnit->Relocate(m_destinationPoints[0].x, m_destinationPoints[0].y, m_destinationPoints[0].z); 
 
         Reset();
         return;

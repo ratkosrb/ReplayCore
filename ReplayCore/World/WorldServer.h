@@ -58,6 +58,7 @@ class WorldServer
 public:
     static WorldServer& Instance();
 
+    std::string GetPlayerName(ObjectGuid guid);
     Player* FindPlayer(ObjectGuid guid)
     {
         auto itr = m_players.find(guid);
@@ -169,6 +170,8 @@ public:
 
         return m_sessionData.visibleObjects.find(guid) != m_sessionData.visibleObjects.end();
     }
+    void HideAllObjectsFromClient();
+    void DestroyAllObjects();
     bool IsClientInWorld() const { return m_sessionData.isInWorld; }
     void SetWeather(uint32 mapId, uint32 zoneId, WeatherData weatherData)
     {
@@ -331,6 +334,8 @@ public:
     void SendPlaySound(uint32 soundId);
     void SendPlayObjectSound(uint32 soundId, ObjectGuid guid);
     void SendPlaySpellVisual(ObjectGuid guid, uint32 kitId);
+    void SendLogXPGain(ObjectGuid victimGuid, uint32 totalXP, uint32 killXP, float groupBonus, bool rafBonus);
+    void SendSetFactionStanding(float rafBonus, bool showVisual, int32 reputationListId, int32 standing);
 };
 
 #define sWorld WorldServer::Instance()

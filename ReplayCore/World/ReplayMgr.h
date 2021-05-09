@@ -207,6 +207,14 @@ public:
         return nullptr;
     }
 
+    void SpawnAllObjects()
+    {
+        SpawnPlayers();
+        SpawnCreatures();
+        SpawnGameObjects();
+        SpawnDynamicObjects();
+    }
+
     void LoadGameObjects();
     void SpawnGameObjects();
     GameObjectData* GetGameObjectSpawnData(uint32 guid)
@@ -334,6 +342,10 @@ public:
     void LoadClientItemUse();
     void LoadClientReclaimCorpse();
     void LoadClientReleaseSpirit();
+    void LoadQuestUpdateComplete();
+    void LoadQuestUpdateFailed();
+    void LoadXPGainLog();
+    void LoadFactionStandingUpdates();
 
 #pragma endregion SniffedEvents
     
@@ -343,6 +355,7 @@ public:
     void StartPlaying();
     void StopPlaying();
     void SetPlayTime(uint32 unixtime);
+    void ChangeTime(uint32 unixtime);
     bool IsPlaying() { return m_enabled; }
     bool IsInitialized() { return m_initialized; }
     void Uninitialize();
