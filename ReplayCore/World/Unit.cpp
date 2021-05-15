@@ -533,7 +533,7 @@ void Unit::SetAttackTime(WeaponAttackType att, uint32 val)
 
 Unit* Unit::GetTarget() const
 {
-    ObjectGuid guid =GetGuidValue("UNIT_FIELD_TARGET");
+    ObjectGuid guid = GetTargetGuid();
     if (guid.IsEmpty())
         return nullptr;
 

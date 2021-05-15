@@ -4,6 +4,7 @@
 #include "../World/GameDataMgr.h"
 #include "../World/ReplayMgr.h"
 #include "../Defines/ClientVersions.h"
+#include "../Defines//Utility.h"
 #include <sstream>
 
 CommandHandler::CommandHandler(std::string const& text, bool console) : m_console(console)
@@ -13,10 +14,7 @@ CommandHandler::CommandHandler(std::string const& text, bool console) : m_consol
 
     while (std::getline(ss, tmp, ' '))
     {
-        std::for_each(tmp.begin(), tmp.end(), [](char & c) {
-            c = ::tolower(c);
-        });
-
+        StringToLower(tmp);
         m_tokens.push_back(tmp);
     }
 }
@@ -246,7 +244,7 @@ bool CommandHandler::HandleSpawnInfo()
         return true;
     }
 
-    ObjectGuid guid = pPlayer->GetGuidValue("UNIT_FIELD_TARGET");
+    ObjectGuid guid = pPlayer->GetTargetGuid();
     if (guid.IsEmpty())
     {
         SendSysMessage("No target selected.");
@@ -363,7 +361,7 @@ bool CommandHandler::HandleTargetGuid()
         return true;
     }
 
-    ObjectGuid guid = pPlayer->GetGuidValue("UNIT_FIELD_TARGET");
+    ObjectGuid guid = pPlayer->GetTargetGuid();
     PSendSysMessage("Your current target is:\n%s", guid.GetString(true).c_str());
     return true;
 }
@@ -385,9 +383,7 @@ bool CommandHandler::HandleGoName()
     for (auto const& itr : sWorld.GetPlayersMap())
     {
         tmpName = itr.second.GetName();
-        std::for_each(tmpName.begin(), tmpName.end(), [](char & c) {
-            c = ::tolower(c);
-        });
+        StringToLower(tmpName);
 
         if (name == tmpName)
         {
@@ -724,5 +720,59 @@ bool CommandHandler::HandleSniffSetTime()
         return false;
 
     sReplayMgr.ChangeTime(unixtime);
+    return true;
+}
+
+bool CommandHandler::HandleSniffResetTime()
+{
+    if (!sWorld.GetClientPlayer())
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    sReplayMgr.ChangeTime(sReplayMgr.GetFirstEventTime());
+    return true;
+}
+
+bool CommandHandler::HandleListEvents()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    ObjectGuid guid = pPlayer->GetTargetGuid();
+    if (guid.IsEmpty())
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    std::string eventName;
+    ExtractString(eventName);
+    
+    std::vector<std::pair<uint64, SniffedEventType>> eventsList;
+    sReplayMgr.GetEventsListForTarget(guid, eventName, eventsList);
+
+    if (eventsList.empty())
+        SendSysMessage("No events for target.");
+    else
+    {
+        PSendSysMessage("Listing events for %s:", guid.GetString().c_str());
+        for (uint32 i = 0; i < eventsList.size(); i++)
+        {
+            if (i > 99)
+            {
+                SendSysMessage("...");
+                break;
+            }
+
+            PSendSysMessage("%u - %s", uint32(eventsList[i].first / IN_MILLISECONDS), GetSniffedEventName(eventsList[i].second));
+        }
+    }   
+
     return true;
 }

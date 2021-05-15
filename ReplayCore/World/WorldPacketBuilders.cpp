@@ -1074,6 +1074,9 @@ void WorldServer::PSendSysMessage(char const* format, ...)
 
 void WorldServer::SendSysMessage(char const* str)
 {
+    if (!m_sessionData.isInWorld)
+        return;
+
     uint32 msgType;
     if (GetClientBuild() < CLIENT_BUILD_2_0_1)
         msgType = Vanilla::CHAT_MSG_SYSTEM;

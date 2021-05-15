@@ -347,6 +347,8 @@ public:
     void LoadXPGainLog();
     void LoadFactionStandingUpdates();
 
+    void GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList);
+
 #pragma endregion SniffedEvents
     
 #pragma region Replay

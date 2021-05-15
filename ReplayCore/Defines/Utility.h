@@ -4,6 +4,7 @@
 #include "Common.h"
 #include <string>
 #include <sstream>
+#include <algorithm>
 #include <time.h>
 
 struct IpAddress
@@ -83,6 +84,13 @@ inline std::string ReplaceString(std::string subject, const std::string& search,
         pos += replace.length();
     }
     return subject;
+}
+
+inline void StringToLower(std::string& text)
+{
+    std::for_each(text.begin(), text.end(), [](char & c) {
+        c = ::tolower(c);
+    });
 }
 
 #endif

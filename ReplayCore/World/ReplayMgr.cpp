@@ -1,4 +1,4 @@
-#include "../Defines//Databases.h"
+#include "../Defines/Databases.h"
 #include "ReplayMgr.h"
 #include "Player.h"
 #include "GameObject.h"
@@ -966,6 +966,7 @@ void ReplayMgr::Update(uint32 const diff)
     if (m_currentSniffTimeMs > m_eventsMap.rbegin()->first)
     {
         printf("[ReplayMgr] Sniff replay is over.\n");
+        sWorld.SendSysMessage("[ReplayMgr]  Sniff replay is over.");
         m_enabled = false;
     }
 }
@@ -975,6 +976,7 @@ void ReplayMgr::ChangeTime(uint32 unixtime)
     if (unixtime == GetCurrentSniffTime())
     {
         printf("[ReplayMgr] Attempt to change time to current time.\n");
+        sWorld.SendSysMessage("[ReplayMgr] Attempt to change time to current time.");
         return;
     }
 
@@ -1043,6 +1045,7 @@ void ReplayMgr::SetPlayTime(uint32 unixtime)
     if (unixtime > currentTime)
     {
         printf("[ReplayMgr] Sniff time is later than current time!\n");
+        sWorld.SendSysMessage("[ReplayMgr] Sniff time is later than current time!");
         return;
     }
 
@@ -1051,6 +1054,7 @@ void ReplayMgr::SetPlayTime(uint32 unixtime)
     m_currentSniffTimeMs = uint64(unixtime) * 1000;
     m_timeDifference = currentTime - m_startTimeSniff;
     printf("[ReplayMgr] Sniff time has been set to %u.\n", unixtime);
+    sWorld.PSendSysMessage("[ReplayMgr] Sniff time has been set to %u.", unixtime);
 }
 
 void ReplayMgr::StartPlaying()
@@ -1060,6 +1064,7 @@ void ReplayMgr::StartPlaying()
         if (m_eventsMapBackup.empty())
         {
             printf("[ReplayMgr] Events map is empty!\n");
+            sWorld.SendSysMessage("[ReplayMgr] Events map is empty!");
             return;
         }
 
@@ -1074,6 +1079,7 @@ void ReplayMgr::StartPlaying()
         m_initialized = true;
     }
     printf("[ReplayMgr] Sniff replay started.\n");
+    sWorld.SendSysMessage("[ReplayMgr] Sniff replay started.");
     m_enabled = true;
 }
 
@@ -1084,6 +1090,7 @@ void ReplayMgr::StopPlaying()
 
     m_enabled = false;
     printf("[ReplayMgr] Sniff replay stopped.\n");
+    sWorld.SendSysMessage("[ReplayMgr] Sniff replay stopped.");
 }
 
 void ReplayMgr::Uninitialize()
@@ -1095,4 +1102,20 @@ void ReplayMgr::Uninitialize()
     m_currentSniffTimeMs = 0;
     m_timeDifference = 0;
     m_eventsMap.clear();
+}
+
+void ReplayMgr::GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList)
+{
+    for (const auto& itr : m_eventsMapBackup)
+    {
+        // skip client movement cause there are thousands of those events
+        if (itr.second->GetSourceGuid() == guid && itr.second->GetType() != SE_UNIT_CLIENTSIDE_MOVEMENT)
+        {
+            std::string currentEventName = GetSniffedEventName(itr.second->GetType());
+            StringToLower(currentEventName);
+
+            if (eventName.empty() || (currentEventName.find(eventName) != std::string::npos))
+                eventsList.push_back({ itr.first, itr.second->GetType() });
+        }
+    }
 }
