@@ -147,9 +147,19 @@ void Player::InitializeDefaultPlayerValues()
     }
 }
 
+uint32 Player::GetPlayerBytes() const
+{
+    return GetUInt32Value("PLAYER_BYTES");
+}
+
 void Player::SetPlayerBytes(uint32 bytes1)
 {
     SetUInt32Value("PLAYER_BYTES", bytes1);
+}
+
+uint32 Player::GetPlayerBytes2() const
+{
+    return GetUInt32Value("PLAYER_BYTES_2");
 }
 
 void Player::SetPlayerBytes2(uint32 bytes2)
@@ -157,9 +167,39 @@ void Player::SetPlayerBytes2(uint32 bytes2)
     SetUInt32Value("PLAYER_BYTES_2", bytes2);
 }
 
+uint32 Player::GetPlayerFlags() const
+{
+    return GetUInt32Value("PLAYER_FLAGS");
+}
+
 void Player::SetPlayerFlags(uint32 flags)
 {
     SetUInt32Value("PLAYER_FLAGS", flags);
+}
+
+uint8 Player::GetSkinColor() const
+{
+    return GetPlayerBytes() & 0xFF;
+}
+
+uint8 Player::GetFace() const
+{
+    return (GetPlayerBytes() >> 8) & 0xFF;
+}
+
+uint8 Player::GetHairStyle() const
+{
+    return (GetPlayerBytes() >> 16) & 0xFF;
+}
+
+uint8 Player::GetHairColor() const
+{
+    return (GetPlayerBytes() >> 24) & 0xFF;
+}
+
+uint8 Player::GetFacialHair() const
+{
+    return GetPlayerBytes2() & 0xFF;
 }
 
 void Player::SetVisibleItemSlot(uint8 slot, uint32 itemId, uint32 enchantId)

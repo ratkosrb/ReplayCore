@@ -3,6 +3,7 @@
 
 #include "../Defines/Common.h"
 #include "UnitDefines.h"
+#include "ObjectGuid.h"
 
 enum PlayerRestState
 {
@@ -147,6 +148,35 @@ namespace WotLK
     };
 }
 
+struct CharEnumData
+{
+    ObjectGuid guid;
+    std::string name;
+    uint8 raceId = 0;
+    uint8 classId = 0;
+    uint8 gender = 0;
+    uint8 skinColor = 0;
+    uint8 face = 0;
+    uint8 hairStyle = 0;
+    uint8 hairColor = 0;
+    uint8 facialHair = 0;
+    uint8 level = 0;
+    uint32 zoneId = 0;
+    uint32 mapid = 0;
+    float positionX = 0.0f;
+    float positionY = 0.0f;
+    float positionZ = 0.0f;
+    uint32 guildId = 0;
+    uint32 characterFlags = 0;
+    uint32 customizationFlags = 0;
+    uint8 firstLogin = 0;
+    uint32 petDisplayId = 0;
+    uint32 petLevel = 0;
+    uint32 petFamily = 0;
+    uint32 equipmentItemId[EQUIPMENT_SLOT_END] = {};
+    uint32 equipmentEnchantId[EQUIPMENT_SLOT_END] = {};
+};
+
 enum ActionButtonType
 {
     ACTION_BUTTON_SPELL = 0x00,
@@ -255,6 +285,31 @@ inline uint32 GetDefaultDisplayIdForPlayerRace(uint8 race, uint8 gender)
             break;
     }
     return UNIT_DISPLAY_ID_BOX;
+}
+
+inline uint32 GetDefaultPowerTypeForPlayerClass(uint8 classId)
+{
+    switch (classId)
+    {
+        case CLASS_WARRIOR:
+            return POWER_RAGE;
+        case CLASS_PALADIN:
+        case CLASS_HUNTER:
+        case CLASS_PRIEST:
+        case CLASS_SHAMAN:
+        case CLASS_MAGE:
+        case CLASS_WARLOCK:
+        case CLASS_DRUID:
+            return POWER_MANA;
+        case CLASS_ROGUE:
+            return POWER_ENERGY;
+        case CLASS_DEATH_KNIGHT:
+            return POWER_RUNIC_POWER;
+        default:
+            printf("Error: Unknown class %hhu in GetDefaultPowerTypeForPlayerClass!\n", classId);
+            break;
+    }
+    return POWER_MANA;
 }
 
 namespace XP

@@ -258,14 +258,8 @@ ObjectGuid ReplayMgr::MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std
     return ObjectGuid();
 }
 
-ObjectGuid ReplayMgr::GetOrCreatePlayerChatGuid(std::string name)
+uint32 ReplayMgr::GetNewPlayerLowGuid()
 {
-    for (auto const& itr : m_playerChatNames)
-    {
-        if (itr.second == name)
-            return itr.first;
-    }
-
     uint32 lowGuid;
     if (!m_playerChatNames.empty())
         lowGuid = m_playerChatNames.rbegin()->first.GetCounter() + 1;
@@ -274,9 +268,39 @@ ObjectGuid ReplayMgr::GetOrCreatePlayerChatGuid(std::string name)
     else
         lowGuid = 111111;
 
+    return lowGuid;
+}
+
+ObjectGuid ReplayMgr::GetOrCreatePlayerChatGuid(std::string name)
+{
+    for (auto const& itr : m_playerChatNames)
+    {
+        if (itr.second == name)
+            return itr.first;
+    }
+
+    uint32 lowGuid = GetNewPlayerLowGuid();
+
     ObjectGuid guid = ObjectGuid(HIGHGUID_PLAYER, lowGuid);
     m_playerChatNames[guid] = name;
     return guid;
+}
+
+bool ReplayMgr::IsPlayerNameTaken(std::string name)
+{
+    for (auto const& itr : m_playerSpawns)
+    {
+        if (itr.second.name == name)
+            return true;
+    }
+
+    for (auto const& itr : m_playerChatNames)
+    {
+        if (itr.second == name)
+            return true;
+    }
+
+    return false;
 }
 
 void ReplayMgr::LoadInitialWorldStates()
@@ -350,8 +374,8 @@ void ReplayMgr::LoadGameObjects()
     std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, "
     //    7            8            9            10           11              12              13            14              15
         "`rotation0`, `rotation1`, `rotation2`, `rotation3`, `is_temporary`, `creator_guid`, `creator_id`, `creator_type`, `display_id`, "
-    //    16       17         18       19               20               21       22      23
-        "`level`, `faction`, `flags`, `dynamic_flags`, `path_progress`, `state`, `type`, `artkit` FROM `gameobject`"));
+    //    16       17         18       19               20               21       22      23        24
+        "`level`, `faction`, `flags`, `dynamic_flags`, `path_progress`, `state`, `type`, `artkit`, `sniff_id` FROM `gameobject`"));
 
     if (!result)
     {
@@ -456,6 +480,7 @@ void ReplayMgr::LoadGameObjects()
         }
 
         data.artKit = fields[23].GetUInt32();
+        data.sourceSniffId = fields[24].GetUInt32();
 
     } while (result->NextRow());
 
@@ -588,6 +613,7 @@ void ReplayMgr::LoadCreatures()
         data.channelSpell = fields[51].GetUInt32();
         std::string auras = fields[52].GetCppString();
         ParseStringIntoVector(auras, data.auras);
+        data.sourceSniffId = fields[53].GetUInt32();
 
         if (data.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
@@ -743,7 +769,6 @@ void ReplayMgr::LoadPlayers()
         WorldLocation& location = playerData.location;
         
         playerData.guid = objectGuid;
-        playerData.typeId = TYPEID_PLAYER;
         
         location.mapId = fields[1].GetUInt16();
         location.x = fields[2].GetFloat();

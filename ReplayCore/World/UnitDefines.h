@@ -139,6 +139,8 @@ enum Powers
     POWER_FOCUS                         = 2,            // UNIT_FIELD_POWER3
     POWER_ENERGY                        = 3,            // UNIT_FIELD_POWER4
     POWER_HAPPINESS                     = 4,            // UNIT_FIELD_POWER5
+    POWER_RUNE                          = 5,            // UNIT_FIELD_POWER6
+    POWER_RUNIC_POWER                   = 6,            // UNIT_FIELD_POWER7
     POWER_HEALTH                        = 0xFFFFFFFE    // (-2 as signed value)
 };
 

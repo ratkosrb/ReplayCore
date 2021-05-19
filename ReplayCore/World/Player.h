@@ -19,9 +19,18 @@ public:
     char const* GetName() const { return m_name.c_str(); }
     void SetName(std::string name) { m_name = name; }
 
+    uint32 GetPlayerBytes() const;
     void SetPlayerBytes(uint32 bytes1);
+    uint32 GetPlayerBytes2() const;
     void SetPlayerBytes2(uint32 bytes2);
+    uint32 GetPlayerFlags() const;
     void SetPlayerFlags(uint32 flags);
+
+    uint8 GetSkinColor() const;
+    uint8 GetFace() const;
+    uint8 GetHairStyle() const;
+    uint8 GetHairColor() const;
+    uint8 GetFacialHair() const;
 
     void SetVisibleItemSlot(uint8 slot, uint32 itemId, uint32 enchantId);
     uint32 GetVisibleItemId(uint8 slot) const;

@@ -259,6 +259,9 @@
     <ClInclude Include="World\DynamicObject.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="Defines\ResponseCodes.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Database">

@@ -6,6 +6,7 @@
 #include "../Defines/Utility.h"
 #include "../Defines/GameAccount.h"
 #include "../Defines/ClientVersions.h"
+#include "../Defines/ResponseCodes.h"
 #include "../Input/CommandHandler.h"
 #include "GameDataMgr.h"
 #include "ReplayMgr.h"
@@ -26,6 +27,7 @@ void WorldServer::SetupOpcodeHandlers()
 {
     SetOpcodeHandler("CMSG_AUTH_SESSION", &WorldServer::HandleAuthSession);
     SetOpcodeHandler("CMSG_CHAR_ENUM", &WorldServer::HandleEnumCharacters);
+    SetOpcodeHandler("CMSG_CHAR_CREATE", &WorldServer::HandleCharCreate);
     SetOpcodeHandler("CMSG_PING", &WorldServer::HandlePing);
     SetOpcodeHandler("CMSG_REALM_SPLIT", &WorldServer::HandleRealmSplit);
     SetOpcodeHandler("CMSG_PLAYER_LOGIN", &WorldServer::HandlePlayerLogin);
@@ -281,94 +283,198 @@ void WorldServer::HandleAddonInfo(WorldPacket& authSessionPacket)
     SendAddonInfo(clientAddons);
 }
 
+template <class T>
+void SetCharEnumData(CharEnumData& character, T const* pPlayer)
+{
+    character.name = pPlayer->GetName();
+    character.raceId = pPlayer->GetRace();
+    character.classId = pPlayer->GetClass();
+    character.gender = pPlayer->GetGender();
+    character.skinColor = pPlayer->GetSkinColor();
+    character.face = pPlayer->GetFace();
+    character.hairStyle = pPlayer->GetHairStyle();
+    character.hairColor = pPlayer->GetHairColor();
+    character.facialHair = pPlayer->GetFacialHair();
+    character.level = uint8(pPlayer->GetLevel());
+
+    character.zoneId = uint32(sGameDataMgr.GetZoneIdFromCoordinates(pPlayer->GetMapId(), pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ()));
+    character.mapid = pPlayer->GetMapId();
+    character.positionX = pPlayer->GetPositionX();
+    character.positionY = pPlayer->GetPositionY();
+    character.positionZ = pPlayer->GetPositionZ();
+
+    character.guildId = 0;
+    character.characterFlags = 0;
+    character.customizationFlags = 0;
+    character.firstLogin = 0;
+    character.petDisplayId = 0;
+    character.petLevel = 0;
+    character.petFamily = 0;
+
+    for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
+    {
+        character.equipmentItemId[i] = pPlayer->GetVisibleItemId(i);
+        character.equipmentEnchantId[i] = pPlayer->GetVisibleItemEnchant(i);
+    }
+}
+
 void WorldServer::HandleEnumCharacters(WorldPacket& packet)
 {
     std::set<ObjectGuid> const& activePlayers = sReplayMgr.GetActivePlayers();
-    uint8 count = std::min(uint32(activePlayers.size()), uint32(10));
+    std::vector<CharEnumData> characters;
 
-    WorldPacket response(GetOpcode("SMSG_CHAR_ENUM"));
-    response << uint8(count);
-
+    bool clientPlayerSent = false;
     for (auto const& guid : activePlayers)
     {
-        if (count <= 0)
-            break;
-
         if (PlayerData const* pPlayer = sReplayMgr.GetPlayerSpawnData(guid.GetCounter()))
         {
+            CharEnumData character;
             ObjectGuid newGuid(HIGHGUID_PLAYER, uint32(guid.GetCounter() + CLIENT_CHARACTER_GUID_OFFSET));
-            response << newGuid;
-            response << pPlayer->GetName();
-            response << pPlayer->GetRace();
-            response << pPlayer->GetClass();
-            response << pPlayer->GetGender();
-            response << pPlayer->GetSkinColor();
-            response << pPlayer->GetFace();
-            response << pPlayer->GetHairStyle();
-            response << pPlayer->GetHairColor();
-            response << pPlayer->GetFacialHair();
-            response << uint8(pPlayer->GetLevel());
-            
+            character.guid = newGuid;
+
             if (m_clientPlayer && m_clientPlayer->GetObjectGuid() == newGuid)
             {
-                response << uint32(sGameDataMgr.GetZoneIdFromCoordinates(m_clientPlayer->GetMapId(), m_clientPlayer->GetPositionX(), m_clientPlayer->GetPositionY(), m_clientPlayer->GetPositionZ()));
-                response << uint32(m_clientPlayer->GetMapId());
-                response << m_clientPlayer->GetPositionX();
-                response << m_clientPlayer->GetPositionY();
-                response << m_clientPlayer->GetPositionZ();
+                SetCharEnumData(character, m_clientPlayer.get());
+                clientPlayerSent = true;
             }
             else
-            {
-                response << uint32(sGameDataMgr.GetZoneIdFromCoordinates(pPlayer->GetMapId(), pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ()));
-                response << uint32(pPlayer->GetMapId());
-                response << pPlayer->GetPositionX();
-                response << pPlayer->GetPositionY();
-                response << pPlayer->GetPositionZ();
-            }
-
-            response << uint32(0); // guild id
-            response << uint32(0); // character flags
-
-            if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
-                response << uint32(0); // customization flags
-
-            response << uint8(0); // first login
-            response << uint32(0); // pet display id
-            response << uint32(0); // pet level
-            response << uint32(0); // pet family
-
-            for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
-            {
-                if (ItemPrototype const* pItem = sGameDataMgr.GetItemPrototype(pPlayer->GetVisibleItem(i)))
-                {
-                    response << pItem->DisplayInfoID;
-                    response << uint8(pItem->InventoryType);
-                    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
-                        response << pPlayer->GetVisibleItemEnchant(i);
-                }
-                else
-                {
-                    response << uint32(0); // display id
-                    response << uint8(0); // inventory type;
-                    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
-                        response << uint32(0); // enchant id
-                }
-            }
-
-            int bagCount = (GetClientBuild() >= CLIENT_BUILD_3_3_3) ? 4 : 1;
-            for (int j = 0; j < bagCount; j++)
-            {
-                response << uint32(0); // display id
-                response << uint8(0); // inventory type;
-                if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
-                    response << uint32(0); // enchant id
-            }
+                SetCharEnumData(character, pPlayer);
+            
+            characters.push_back(character);
         }
-
-        count--;
     }
 
-    SendPacket(response);
+    if (!clientPlayerSent && m_clientPlayer)
+    {
+        CharEnumData character;
+        character.guid = m_clientPlayer->GetObjectGuid();
+        SetCharEnumData(character, m_clientPlayer.get());
+        characters.push_back(character);
+    }
+
+    SendCharEnum(characters);
+}
+
+void WorldServer::HandleCharCreate(WorldPacket& packet)
+{
+    std::string name;
+    uint8 raceId, classId, gender, skin, face, hairStyle, hairColor, facialHair, outfitId;
+    packet >> name;
+    packet >> raceId;
+    packet >> classId;
+    packet >> gender;
+    packet >> skin;
+    packet >> face;
+    packet >> hairStyle;
+    packet >> hairColor;
+    packet >> facialHair;
+    packet >> outfitId;
+
+    if (name.empty() || sReplayMgr.IsPlayerNameTaken(name))
+    {
+        if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+            SendCharCreate(Vanilla::CHAR_CREATE_NAME_IN_USE);
+        else if(GetClientBuild() < CLIENT_BUILD_3_0_2)
+            SendCharCreate(TBC::CHAR_CREATE_NAME_IN_USE);
+        else
+            SendCharCreate(WotLK::CHAR_CREATE_NAME_IN_USE);
+        return;
+    }
+
+    if (!sGameDataMgr.IsValidRace(raceId) ||
+        !sGameDataMgr.IsValidClass(classId))
+    {
+        if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+            SendCharCreate(Vanilla::CHAR_CREATE_FAILED);
+        else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+            SendCharCreate(TBC::CHAR_CREATE_FAILED);
+        else
+            SendCharCreate(WotLK::CHAR_CREATE_FAILED);
+        return;
+    }
+
+    uint32 lowGuid = sReplayMgr.GetNewPlayerLowGuid() + CLIENT_CHARACTER_GUID_OFFSET;
+
+    PlayerData playerData;
+    playerData.guid = ObjectGuid(HIGHGUID_PLAYER, lowGuid);
+    playerData.name = name;
+    playerData.classId = classId;
+    playerData.raceId = raceId;
+    playerData.gender = gender;
+
+    PlayerInfo const* info = sGameDataMgr.GetPlayerInfo(raceId, classId);
+    if (!info)
+    {
+        printf("Error: Player have incorrect race/class pair. Can't be created.\n");
+        if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+            SendCharCreate(Vanilla::CHAR_CREATE_FAILED);
+        else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+            SendCharCreate(TBC::CHAR_CREATE_FAILED);
+        else
+            SendCharCreate(WotLK::CHAR_CREATE_FAILED);
+        return;
+    }
+
+    playerData.location.mapId = info->mapId;
+    playerData.location.x = info->positionX;
+    playerData.location.y = info->positionY;
+    playerData.location.z = info->positionZ;
+    playerData.location.o = info->orientation;
+
+    union
+    {
+        struct
+        {
+            uint8 skin;
+            uint8 face;
+            uint8 hairStyle;
+            uint8 hairColor;
+        } bytes;
+        uint32 raw;
+    } playerBytes1;
+
+    playerBytes1.bytes.skin = skin;
+    playerBytes1.bytes.face = face;
+    playerBytes1.bytes.hairStyle = hairStyle;
+    playerBytes1.bytes.hairColor = hairColor;
+
+    playerData.bytes1 = playerBytes1.raw;
+
+    union
+    {
+        struct
+        {
+            uint8 facialHair;
+            uint8 unk1;
+            uint8 bankBagSlots;
+            uint8 restState;
+        } bytes;
+        uint32 raw;
+    } playerBytes2;
+
+    playerBytes2.bytes.facialHair = facialHair;
+    playerBytes2.bytes.unk1 = 0;
+    playerBytes2.bytes.bankBagSlots = 0;
+    playerBytes2.bytes.restState = 0x02;
+
+    playerData.bytes2 = playerBytes2.raw;
+
+    playerData.displayId = GetDefaultDisplayIdForPlayerRace(raceId, gender);
+    playerData.nativeDisplayId = playerData.displayId;
+    playerData.powerType = GetDefaultPowerTypeForPlayerClass(classId);
+
+    if (!m_worldSpawned)
+        ResetAndSpawnWorld();
+
+    m_clientPlayer = std::make_unique<Player>(playerData);
+    m_clientPlayer->SetVisibility(true);
+
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+        SendCharCreate(Vanilla::CHAR_CREATE_SUCCESS);
+    else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+        SendCharCreate(TBC::CHAR_CREATE_SUCCESS);
+    else
+        SendCharCreate(WotLK::CHAR_CREATE_SUCCESS);
 }
 
 void WorldServer::HandlePing(WorldPacket& packet)

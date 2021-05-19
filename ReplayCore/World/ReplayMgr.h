@@ -22,7 +22,6 @@ class MovementInfo;
 struct ObjectData
 {
     ObjectGuid guid;
-    uint8 typeId = 0;
     uint32 entry = 0;
     float scale = DEFAULT_OBJECT_SCALE;
     uint32 sourceSniffId = 0;
@@ -94,12 +93,12 @@ struct UnitData : public WorldObjectData
     uint8 classId = 0;
     uint8 gender = 0;
     uint8 powerType = 0;
-    uint32 virtualItems[MAX_VIRTUAL_ITEM_SLOT];
+    uint32 virtualItems[MAX_VIRTUAL_ITEM_SLOT] = {};
     uint32 auraState = 0;
     uint32 mainHandAttackTime = 2000;
     uint32 offHandAttackTime = 2000;
-    float boundingRadius = 1.0f;
-    float combatReach = 1.0f;
+    float boundingRadius = 0.347f;
+    float combatReach = 1.5f;
     uint32 displayId = 0;
     uint32 nativeDisplayId = 0;
     uint32 mountDisplayId = 0;
@@ -116,7 +115,7 @@ struct UnitData : public WorldObjectData
     uint32 emoteState = 0;
     uint8 sheathState = 0;
     uint32 movementFlags = 0;
-    float speedRate[MAX_MOVE_TYPE_TBC] = {};
+    float speedRate[MAX_MOVE_TYPE_TBC] = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::vector<uint32> auras;
 
     void InitializeUnit(Unit* pUnit) const;
@@ -156,7 +155,7 @@ struct PlayerData : public UnitData
     uint8 GetHairColor() const { return (bytes1 >> 24) & 0xFF; }
     uint8 GetFacialHair() const { return bytes2 & 0xFF; }
 
-    uint32 GetVisibleItem(uint32 slot) const { return visibleItems[slot]; }
+    uint32 GetVisibleItemId(uint32 slot) const { return visibleItems[slot]; }
     uint32 GetVisibleItemEnchant(uint32 slot) const { return visibleItemEnchants[slot]; }
 };
 
@@ -288,7 +287,10 @@ public:
 
         return itr->second;
     }
+    bool IsPlayerNameTaken(std::string name);
+    uint32 GetNewPlayerLowGuid();
     ObjectGuid GetOrCreatePlayerChatGuid(std::string name);
+
 
 #pragma endregion WorldObjects
 

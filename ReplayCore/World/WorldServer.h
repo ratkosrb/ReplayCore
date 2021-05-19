@@ -227,6 +227,7 @@ private:
     void HandleAuthSession(WorldPacket& packet);
     void HandleAddonInfo(WorldPacket& authSessionPacket);
     void HandleEnumCharacters(WorldPacket& packet);
+    void HandleCharCreate(WorldPacket& packet);
     void HandlePing(WorldPacket& packet);
     void HandleRealmSplit(WorldPacket& packet);
     void HandlePlayerLogin(WorldPacket& packet);
@@ -261,6 +262,8 @@ public:
     // Packet Building
     void SendAuthChallenge();
     void SendAddonInfo(std::vector<ClientAddonData> const& clientAddons);
+    void SendCharEnum(std::vector<CharEnumData> const& characters);
+    void SendCharCreate(uint8 result);
     void SendLoginVerifyWorld(WorldLocation const& location);
     void SendAccountDataTimes();
     void SendAccountDataTimesVanilla();

@@ -10,6 +10,14 @@
 #include "SpellDefines.h"
 #include "Aura.h"
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 void WorldServer::SendAuthChallenge()
 {
     if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
@@ -35,7 +43,7 @@ void WorldServer::SendAuthChallenge()
 
 void WorldServer::SendAddonInfo(std::vector<ClientAddonData> const& clientAddons)
 {
-    WorldPacket response(GetOpcode("SMSG_ADDON_INFO"));
+    WorldPacket data(GetOpcode("SMSG_ADDON_INFO"));
 
     unsigned char tdata[256] =
     {
@@ -61,41 +69,121 @@ void WorldServer::SendAddonInfo(std::vector<ClientAddonData> const& clientAddons
 
     for (auto const& itr : clientAddons)
     {
-        response << (uint8)2;
+        data << (uint8)2;
 
         uint8 unk1 = 1;
-        response << (uint8)unk1;
+        data << (uint8)unk1;
         if (unk1)
         {
             uint8 unk2 = itr.modulusCRC != standardCRC; // If addon is Standard addon CRC
-            response << (uint8)unk2;
+            data << (uint8)unk2;
             if (unk2)
-                response.append(tdata, sizeof(tdata));
+                data.append(tdata, sizeof(tdata));
 
-            response << (uint32)0;
+            data << (uint32)0;
         }
 
         uint8 unk3 = 0;
-        response << (uint8)unk3;
+        data << (uint8)unk3;
         if (unk3)
         {
             // String, 256
-            response << uint8(0);
+            data << uint8(0);
         }
     }
 
-    SendPacket(response);
+    SendPacket(data);
+}
+
+void WorldServer::SendCharEnum(std::vector<CharEnumData> const& characters)
+{
+    uint8 count = std::min(uint32(characters.size()), uint32(10));
+
+    WorldPacket data(GetOpcode("SMSG_CHAR_ENUM"));
+    data << uint8(count);
+
+    for (auto const& character : characters)
+    {
+        if (count <= 0)
+            break;
+
+        data << character.guid;
+        data << character.name;
+        data << uint8(character.raceId);
+        data << uint8(character.classId);
+        data << uint8(character.gender);
+        data << uint8(character.skinColor);
+        data << uint8(character.face);
+        data << uint8(character.hairStyle);
+        data << uint8(character.hairColor);
+        data << uint8(character.facialHair);
+        data << uint8(character.level);
+
+        data << uint32(character.zoneId);
+        data << uint32(character.mapid);
+        data << float(character.positionX);
+        data << float(character.positionY);
+        data << float(character.positionZ);
+
+        data << uint32(character.guildId);
+        data << uint32(character.characterFlags);
+
+        if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+            data << uint32(character.customizationFlags);
+
+        data << uint8(character.firstLogin);
+        data << uint32(character.petDisplayId);
+        data << uint32(character.petLevel);
+        data << uint32(character.petFamily);
+
+        for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
+        {
+            if (ItemPrototype const* pItem = sGameDataMgr.GetItemPrototype(character.equipmentItemId[i]))
+            {
+                data << uint32(pItem->DisplayInfoID);
+                data << uint8(pItem->InventoryType);
+                if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+                    data << uint32(character.equipmentEnchantId[i]);
+            }
+            else
+            {
+                data << uint32(0); // display id
+                data << uint8(0); // inventory type;
+                if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+                    data << uint32(0); // enchant id
+            }
+        }
+
+        int bagCount = (GetClientBuild() >= CLIENT_BUILD_3_3_3) ? 4 : 1;
+        for (int j = 0; j < bagCount; j++)
+        {
+            data << uint32(0); // display id
+            data << uint8(0); // inventory type;
+            if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+                data << uint32(0); // enchant id
+        }
+
+        count--;
+    }
+    SendPacket(data);
+}
+
+void WorldServer::SendCharCreate(uint8 result)
+{
+    WorldPacket data(GetOpcode("SMSG_CHAR_CREATE"), 1);
+    data << uint8(result);
+    SendPacket(data);
 }
 
 void WorldServer::SendLoginVerifyWorld(WorldLocation const& location)
 {
-    WorldPacket response(GetOpcode("SMSG_LOGIN_VERIFY_WORLD"), 20);
-    response << uint32(location.mapId);
-    response << float(location.x);
-    response << float(location.y);
-    response << float(location.z);
-    response << float(location.o);
-    SendPacket(response);
+    WorldPacket data(GetOpcode("SMSG_LOGIN_VERIFY_WORLD"), 20);
+    data << uint32(location.mapId);
+    data << float(location.x);
+    data << float(location.y);
+    data << float(location.z);
+    data << float(location.o);
+    SendPacket(data);
 }
 
 #define GLOBAL_CACHE_MASK           0x15

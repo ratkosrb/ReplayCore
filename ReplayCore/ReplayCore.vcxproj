@@ -99,6 +99,7 @@
     <ClInclude Include="Defines\Console.h" />
     <ClInclude Include="Defines\Databases.h" />
     <ClInclude Include="Defines\GameAccount.h" />
+    <ClInclude Include="Defines\ResponseCodes.h" />
     <ClInclude Include="Defines\Utility.h" />
     <ClInclude Include="Defines\WorldPacket.h" />
     <ClInclude Include="Input\CommandHandler.h" />
