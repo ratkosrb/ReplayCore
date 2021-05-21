@@ -27,6 +27,7 @@ struct WorldSessionData
     bool isTeleportPending = false;
     WorldLocation pendingTeleportLocation;
     uint32 movementCounter = 0;
+    std::string pendingChatCommand;
     uint32 seed = 1212669851;
     uint16 build = 0;
     std::string sessionKey;

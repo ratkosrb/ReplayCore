@@ -78,6 +78,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>libmySQL.lib;libeay32.lib;$(OutDir)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

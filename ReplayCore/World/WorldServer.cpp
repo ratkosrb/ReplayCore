@@ -8,6 +8,7 @@
 #include "UpdateFields.h"
 #include "ReplayMgr.h"
 #include "../Input/Config.h"
+#include "../Input/CommandHandler.h"
 
 #include <chrono>
 
@@ -44,6 +45,13 @@ void WorldServer::WorldLoop()
         uint32 diff = uint32(m_lastUpdateTimeMs ? ms - m_lastUpdateTimeMs : 0);
         m_msTimeSinceServerStart += diff;
         m_lastUpdateTimeMs = ms;
+
+        if (!m_sessionData.pendingChatCommand.empty())
+        {
+            CommandHandler handler(m_sessionData.pendingChatCommand, false);
+            handler.HandleCommand();
+            m_sessionData.pendingChatCommand.clear();
+        }
 
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Player>>(m_players);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatures);

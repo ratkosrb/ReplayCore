@@ -7,7 +7,6 @@
 #include "../Defines/GameAccount.h"
 #include "../Defines/ClientVersions.h"
 #include "../Defines/ResponseCodes.h"
-#include "../Input/CommandHandler.h"
 #include "GameDataMgr.h"
 #include "ReplayMgr.h"
 #include "ChatDefines.h"
@@ -986,8 +985,7 @@ void WorldServer::HandleMessageChat(WorldPacket& packet)
     if (msg[0] == '.' && msg.length() > 1)
         msg = msg.substr(1, msg.length() - 1);
 
-    CommandHandler handler(msg, false);
-    handler.HandleCommand();
+    m_sessionData.pendingChatCommand = msg;
 }
 
 void WorldServer::HandleQuestQuery(WorldPacket& packet)
