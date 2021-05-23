@@ -263,7 +263,8 @@ public:
         }
         return nullptr;
     }
-    
+    void GetWaypointsForCreature(uint32 guid, std::vector<Position>& waypoints, bool useStartPosition);
+
     void SpawnPlayers();
     void LoadPlayers();
     void LoadActivePlayers();

@@ -776,3 +776,100 @@ bool CommandHandler::HandleListEvents()
 
     return true;
 }
+
+bool CommandHandler::HandleWaypointsShow()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    ObjectGuid guid = pPlayer->GetTargetGuid();
+    if (guid.IsEmpty())
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    std::string option;
+    ExtractString(option);
+
+    bool useStartPosition = true;
+    if (option == "end" || option == "destination")
+        useStartPosition = false;
+
+    std::vector<Position> waypoints;
+    sReplayMgr.GetWaypointsForCreature(guid.GetCounter(), waypoints, useStartPosition);
+
+    if (waypoints.empty())
+    {
+        SendSysMessage("No waypoint for target.");
+        return true;
+    }
+
+    uint32 maxCreatureGuid = sWorld.GetMaxCreatureGuid() + 1;
+    for (uint32 i = 0; i < waypoints.size(); i++)
+    {
+        CreatureData wpData;
+        wpData.guid = ObjectGuid(HIGHGUID_CONTAINER, 1, maxCreatureGuid + i);
+        wpData.entry = 1;
+        wpData.createdBy = guid;
+        wpData.level = i + 1;
+        wpData.currentHealth = guid.GetCounter();
+        wpData.maxHealth = guid.GetCounter();
+        wpData.isHovering = true;
+        wpData.location = WorldLocation(pPlayer->GetMapId(), waypoints[i].x, waypoints[i].y, waypoints[i].z, waypoints[i].o);
+        sWorld.MakeNewCreatureWaypoint(wpData.guid, wpData);
+    }
+
+    PSendSysMessage("Showing %u waypoints for %s.", (uint32)waypoints.size(), guid.GetString().c_str());
+    return true;
+}
+
+bool CommandHandler::HandleWaypointsHide()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    ObjectGuid guid = pPlayer->GetTargetGuid();
+    auto& waypoints = sWorld.GetWaypointsMap();
+    if (waypoints.empty())
+    {
+        SendSysMessage("No waypoints found.");
+        return true;
+    }
+
+    std::vector<ObjectGuid> guidsToErase;
+    UpdateData updateData;
+    for (auto const& itr : waypoints)
+    {
+        if (guid.IsEmpty() || guid == itr.first || guid == itr.second.GetCreatedByGuid())
+        {
+            if (sWorld.IsGuidVisibleToClient(itr.first))
+            {
+                updateData.AddOutOfRangeGUID(itr.first);
+                sWorld.RemoveGuidFromVisibilityList(itr.first);
+            }
+            guidsToErase.push_back(itr.first);
+        }
+    }
+
+    if (updateData.HasData())
+        updateData.Send();
+
+    for (auto const& itr : guidsToErase)
+        waypoints.erase(itr);
+
+    if (guid.IsEmpty())
+        SendSysMessage("Removed all waypoints.");
+    else
+        PSendSysMessage("Removed all waypoints for %s.", guid.GetString().c_str());
+
+    return true;
+}

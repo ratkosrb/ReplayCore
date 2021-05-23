@@ -54,8 +54,10 @@ public:
     bool HandleSniffSetTime();
     bool HandleSniffResetTime();
     bool HandleListEvents();
+    bool HandleWaypointsShow();
+    bool HandleWaypointsHide();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[32] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[34] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -89,6 +91,8 @@ private:
         { "settime", &CommandHandler::HandleSniffSetTime },
         { "resettime", &CommandHandler::HandleSniffResetTime },
         { "listevents", &CommandHandler::HandleListEvents },
+        { "wpshow", &CommandHandler::HandleWaypointsShow },
+        { "wphide", &CommandHandler::HandleWaypointsHide },
     };
 
     bool m_console = true;

@@ -55,6 +55,7 @@ void WorldServer::WorldLoop()
 
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Player>>(m_players);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatures);
+        BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatureWaypoints);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, GameObject>>(m_gameObjects);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, DynamicObject>>(m_dynamicObjects);
 
@@ -132,6 +133,7 @@ void WorldServer::DestroyAllObjects()
     m_weather.clear();
     m_players.clear();
     m_creatures.clear();
+    m_creatureWaypoints.clear();
     m_gameObjects.clear();
     m_dynamicObjects.clear();
 }
@@ -473,7 +475,8 @@ void WorldServer::HideAllObjectsFromClient()
         UpdateData updateData;
         for (auto const& itr : m_sessionData.visibleObjects)
             updateData.AddOutOfRangeGUID(itr);
-        updateData.Send();
+        if (updateData.HasData())
+            updateData.Send();
         m_sessionData.visibleObjects.clear();
     }
 }

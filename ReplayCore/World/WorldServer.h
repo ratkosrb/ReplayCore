@@ -14,6 +14,14 @@
 #include <thread>
 #include <set>
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 class WorldServer;
 class ByteBuffer;
 class WorldPacket;
@@ -71,9 +79,12 @@ public:
     Unit* FindCreature(ObjectGuid guid)
     {
         auto itr = m_creatures.find(guid);
-        if (itr == m_creatures.end())
-            return nullptr;
-        return &itr->second;
+        if (itr != m_creatures.end())
+            return &itr->second;
+        itr = m_creatureWaypoints.find(guid);
+        if (itr != m_creatureWaypoints.end())
+            return &itr->second;
+        return nullptr;
     }
 
     GameObject* FindGameObject(ObjectGuid guid)
@@ -124,6 +135,11 @@ public:
         return m_creatures;
     }
 
+    std::map<ObjectGuid, Unit>& GetWaypointsMap()
+    {
+        return m_creatureWaypoints;
+    }
+
     std::map<ObjectGuid, GameObject> const& GetGameObjectsMap()
     {
         return m_gameObjects;
@@ -142,6 +158,11 @@ public:
     void MakeNewCreature(ObjectGuid const& guid, CreatureData const& creatureData)
     {
         m_creatures.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(creatureData));
+    }
+
+    void MakeNewCreatureWaypoint(ObjectGuid const& guid, CreatureData const& creatureData)
+    {
+        m_creatureWaypoints.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(creatureData));
     }
 
     void MakeNewGameObject(ObjectGuid const& guid, GameObjectData const& gameObjectData)
@@ -170,6 +191,20 @@ public:
             return false;
 
         return m_sessionData.visibleObjects.find(guid) != m_sessionData.visibleObjects.end();
+    }
+    void RemoveGuidFromVisibilityList(ObjectGuid guid)
+
+    {
+        m_sessionData.visibleObjects.erase(guid);
+    }
+    uint32 GetMaxCreatureGuid() const
+    {
+        uint32 max = 0;
+        if (!m_creatures.empty())
+            max = m_creatures.rbegin()->second.GetObjectGuid().GetCounter();
+        if (!m_creatureWaypoints.empty())
+            max = std::max(max, m_creatureWaypoints.rbegin()->second.GetObjectGuid().GetCounter());
+        return max;
     }
     void HideAllObjectsFromClient();
     void DestroyAllObjects();
@@ -205,6 +240,7 @@ private:
     std::map<ObjectGuid, GameObject> m_gameObjects;
     std::map<ObjectGuid, DynamicObject> m_dynamicObjects;
     std::map<ObjectGuid, Unit> m_creatures;
+    std::map<ObjectGuid, Unit> m_creatureWaypoints;
     std::map<ObjectGuid, Player> m_players;
     std::unique_ptr<Player> m_clientPlayer = nullptr;
     std::map<uint32 /*map*/, std::map<uint32 /*zone*/, WeatherData>> m_weather;
