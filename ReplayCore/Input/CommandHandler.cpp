@@ -813,12 +813,18 @@ bool CommandHandler::HandleWaypointsShow()
     for (uint32 i = 0; i < waypoints.size(); i++)
     {
         CreatureData wpData;
-        wpData.guid = ObjectGuid(HIGHGUID_CONTAINER, 1, maxCreatureGuid + i);
+        wpData.guid = ObjectGuid(HIGHGUID_UNIT, 1, maxCreatureGuid + i);
         wpData.entry = 1;
         wpData.createdBy = guid;
         wpData.level = i + 1;
         wpData.currentHealth = guid.GetCounter();
         wpData.maxHealth = guid.GetCounter();
+        if (!useStartPosition)
+        {
+            wpData.powerType = POWER_MANA;
+            wpData.currentPowers[POWER_MANA] = 1;
+            wpData.maxPowers[POWER_MANA] = 1;
+        }
         wpData.isHovering = true;
         wpData.location = WorldLocation(pPlayer->GetMapId(), waypoints[i].x, waypoints[i].y, waypoints[i].z, waypoints[i].o);
         sWorld.MakeNewCreatureWaypoint(wpData.guid, wpData);
