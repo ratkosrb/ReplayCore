@@ -37,8 +37,22 @@ void WorldServer::WorldLoop()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(WORLD_UPDATE_TIME));
 
+        // Need to log out player in main thread, or we risk crash while clearing visible guids.
+        if (m_sessionData.isLoggingOut)
+        {
+            if (m_sessionData.isConnected)
+            {
+                SendLogoutResponse(0, true);
+                SendLogoutComplete();
+            }
+            m_sessionData.isInWorld = false;
+            m_sessionData.isLoggingOut = false;
+            m_sessionData.visibleObjects.clear();
+            continue;
+        }
+
         // Don't update world before client connects.
-        if (!m_sessionData.connected || !m_sessionData.isInWorld || m_sessionData.isTeleportPending || !m_clientPlayer)
+        if (!m_sessionData.isConnected || !m_sessionData.isInWorld || m_sessionData.isTeleportPending || !m_clientPlayer)
             continue;
 
         uint64 ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -191,26 +205,20 @@ void WorldServer::ResetClientData()
 {
     m_lastSessionBuild = m_sessionData.build;
     m_sessionData = WorldSessionData();
-    m_sessionData.connected = true;
+    m_sessionData.isConnected = true;
     m_sessionData.build = sAuth.GetClientBuild();
     m_sessionData.sessionKey = sAuth.GetSessionKey();
 }
 
 void WorldServer::OnClientDisconnect()
 {
-    m_sessionData.connected = false;
-    OnClientLogout();
+    m_sessionData.isConnected = false;
+    m_sessionData.isLoggingOut = true;
     if (m_packetLog)
     {
         fclose(m_packetLog);
         m_packetLog = nullptr;
     }
-}
-
-void WorldServer::OnClientLogout()
-{
-    m_sessionData.isInWorld = false;
-    m_sessionData.visibleObjects.clear();
 }
 
 void WorldServer::NetworkLoop()

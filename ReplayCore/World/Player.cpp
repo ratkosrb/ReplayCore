@@ -14,24 +14,22 @@
 
 Player::Player(PlayerData const& playerData) : Unit(playerData.guid)
 {
-    m_objectType |= TYPEMASK_UNIT | TYPEMASK_PLAYER;
+    m_objectTypeMask |= TYPEMASK_UNIT | TYPEMASK_PLAYER;
     m_objectTypeId = TYPEID_PLAYER;
 
     m_valuesCount = sWorld.GetUpdateField("PLAYER_END");
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
     InitializePlaceholderUnitFields();
     playerData.InitializePlayer(this);
     InitializeDefaultPlayerValues();
-    m_uint32Values_mirror = new uint32[m_valuesCount];
-    memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
 
 Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : Unit(guid)
 {
-    m_objectType |= TYPEMASK_UNIT | TYPEMASK_PLAYER;
+    m_objectTypeMask |= TYPEMASK_UNIT | TYPEMASK_PLAYER;
     m_objectTypeId = TYPEID_PLAYER;
 
     m_name = name;
@@ -44,10 +42,8 @@ Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : U
     m_uint32Values = new uint32[m_valuesCount];
     memcpy(m_uint32Values, otherPlayer.m_uint32Values, sizeof(uint32) * m_valuesCount);
     SetGuidValue(OBJECT_FIELD_GUID, guid);
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
     SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", 0);
-    m_uint32Values_mirror = new uint32[m_valuesCount];
-    memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
 
 static std::vector<std::pair<uint32, uint32>> const g_playerSkills =

@@ -32,7 +32,7 @@ public:
     }
 
     uint8 GetTypeId() const { return m_objectTypeId; }
-    bool IsType(TypeMask mask) const { return (mask & m_objectType) != 0; }
+    bool IsType(TypeMask mask) const { return (mask & m_objectTypeMask) != 0; }
     virtual void Update() {};
 
     bool IsVisible() const { return m_isVisible; }
@@ -108,12 +108,13 @@ public:
 
 protected:
     bool m_isVisible = false;
-    bool m_isNewObject = true;
+    mutable bool m_isNewObject = true;
     bool m_objectUpdated = false;
+
     ObjectGuid m_guid;
     PackedGuid m_packGuid;
     uint8 m_objectTypeId = TYPEID_OBJECT;
-    uint16 m_objectType = TYPEMASK_OBJECT;
+    uint8 m_objectTypeMask = TYPEMASK_OBJECT;
     uint16 m_updateFlags = 0;
     union
     {
@@ -123,6 +124,8 @@ protected:
     };
     uint32* m_uint32Values_mirror = nullptr;;
     uint16 m_valuesCount = 0;
+
+    void InitializeMirrorUpdateFieldsArray();
 
     int32 const& GetInt32Value(uint16 index) const
     {

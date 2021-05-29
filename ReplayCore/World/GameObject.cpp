@@ -5,7 +5,7 @@
 
 GameObject::GameObject(GameObjectData const& gameObjectData) : WorldObject(gameObjectData.guid)
 {
-    m_objectType |= TYPEMASK_GAMEOBJECT;
+    m_objectTypeMask |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
     m_updateFlags = (UPDATEFLAG_ALL | UPDATEFLAG_HAS_POSITION);
     if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
@@ -15,10 +15,8 @@ GameObject::GameObject(GameObjectData const& gameObjectData) : WorldObject(gameO
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
     gameObjectData.InitializeGameObject(this);
-    m_uint32Values_mirror = new uint32[m_valuesCount];
-    memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
 
 enum

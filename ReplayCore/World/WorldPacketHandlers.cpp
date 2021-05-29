@@ -656,9 +656,7 @@ void WorldServer::HandleWho(WorldPacket& packet)
 
 void WorldServer::HandleLogoutRequest(WorldPacket& packet)
 {
-    SendLogoutResponse(0, true);
-    SendLogoutComplete();
-    OnClientLogout();
+    m_sessionData.isLoggingOut = true;
 }
 
 void WorldServer::HandleJoinChannel(WorldPacket& packet)

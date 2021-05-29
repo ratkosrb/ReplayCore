@@ -32,7 +32,7 @@ void Unit::Update()
 
 Unit::Unit(CreatureData const& unitData) : WorldObject(unitData.guid)
 {
-    m_objectType |= TYPEMASK_UNIT;
+    m_objectTypeMask |= TYPEMASK_UNIT;
     m_objectTypeId = TYPEID_UNIT;
     m_updateFlags = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
     InitializeMoveSpeeds();
@@ -41,11 +41,9 @@ Unit::Unit(CreatureData const& unitData) : WorldObject(unitData.guid)
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
     InitializePlaceholderUnitFields();
     unitData.InitializeCreature(this);
-    m_uint32Values_mirror = new uint32[m_valuesCount];
-    memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
 
 void Unit::InitializePlaceholderUnitFields()

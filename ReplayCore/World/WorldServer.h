@@ -30,9 +30,10 @@ typedef void(WorldServer::*WorldOpcodeHandler) (WorldPacket& buffer);
 
 struct WorldSessionData
 {
-    bool connected = false;
+    bool isConnected = false;
     bool isInWorld = false;
     bool isTeleportPending = false;
+    bool isLoggingOut = false;
     WorldLocation pendingTeleportLocation;
     uint32 movementCounter = 0;
     std::string pendingChatCommand;
@@ -234,7 +235,6 @@ private:
     void WorldLoop();
     void ResetAndSpawnWorld();
     void OnClientDisconnect();
-    void OnClientLogout();
     template<class T>
     void BuildAndSendObjectUpdates(T& objectsMap);
     std::map<ObjectGuid, GameObject> m_gameObjects;

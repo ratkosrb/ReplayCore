@@ -4,7 +4,7 @@
 
 DynamicObject::DynamicObject(DynamicObjectData const& dynamicObjectData) : WorldObject(dynamicObjectData.guid)
 {
-    m_objectType |= TYPEMASK_DYNAMICOBJECT;
+    m_objectTypeMask |= TYPEMASK_DYNAMICOBJECT;
     m_objectTypeId = TYPEID_DYNAMICOBJECT;
     m_updateFlags = (UPDATEFLAG_ALL | UPDATEFLAG_HAS_POSITION);
 
@@ -12,10 +12,8 @@ DynamicObject::DynamicObject(DynamicObjectData const& dynamicObjectData) : World
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
+    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
     dynamicObjectData.InitializeDynamicObject(this);
-    m_uint32Values_mirror = new uint32[m_valuesCount];
-    memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 }
 
 void DynamicObject::SetCasterGuid(ObjectGuid guid)

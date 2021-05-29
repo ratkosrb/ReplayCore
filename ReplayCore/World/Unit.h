@@ -17,7 +17,7 @@ class Unit : public WorldObject
 public :
     Unit(ObjectGuid guid) : WorldObject(guid)
     {
-        m_objectType |= TYPEMASK_UNIT;
+        m_objectTypeMask |= TYPEMASK_UNIT;
         m_objectTypeId = TYPEID_UNIT;
         m_updateFlags = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
         InitializeMoveSpeeds();

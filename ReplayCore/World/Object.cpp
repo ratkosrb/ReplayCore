@@ -55,8 +55,17 @@ void WorldObject::GetRelativePositions(float fForwardBackward, float fLeftRight,
     z = GetPositionZ() + fUpDown;
 }
 
+void Object::InitializeMirrorUpdateFieldsArray()
+{
+    m_uint32Values_mirror = new uint32[m_valuesCount];
+    memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
+}
+
 void Object::MarkForClientUpdate()
 {
+    if (!m_isNewObject && !m_uint32Values_mirror)
+        InitializeMirrorUpdateFieldsArray();
+
     if (!m_isVisible)
         return;
 
@@ -65,7 +74,7 @@ void Object::MarkForClientUpdate()
 
 void Object::ClearUpdateMask()
 {
-    if (m_uint32Values)
+    if (m_uint32Values && m_uint32Values_mirror)
         memcpy(m_uint32Values_mirror, m_uint32Values, sizeof(uint32) * m_valuesCount);
 
     if (m_objectUpdated)
@@ -153,7 +162,7 @@ void Object::SetUInt16Value(const char* index, uint8 offset, uint16 value)
 bool Object::PrintIndexError(uint32 index, bool set) const
 {
     printf("%s nonexistent value field: %u (count: %u) for object typeid: %u type mask: %u\n",
-        (set ? "set value to" : "get value from"), index, m_valuesCount, GetTypeId(), m_objectType);
+        (set ? "set value to" : "get value from"), index, m_valuesCount, GetTypeId(), m_objectTypeMask);
 
     // ASSERT must fail after function call
     return false;
@@ -165,8 +174,8 @@ void Object::SetInt32Value(uint16 index, int32 value)
 
     if (m_int32Values[index] != value)
     {
-        m_int32Values[index] = value;
         MarkForClientUpdate();
+        m_int32Values[index] = value;
     }
 }
 
@@ -176,8 +185,8 @@ void Object::SetUInt32Value(uint16 index, uint32 value)
 
     if (m_uint32Values[index] != value)
     {
-        m_uint32Values[index] = value;
         MarkForClientUpdate();
+        m_uint32Values[index] = value;
     }
 }
 
@@ -186,6 +195,7 @@ void Object::SetUInt64Value(uint16 index, uint64 const& value)
     assert(index + 1 < m_valuesCount || PrintIndexError(index, true));
     if (*((uint64*) & (m_uint32Values[index])) != value)
     {
+        MarkForClientUpdate();
         uint32 first = m_uint32Values[index] = *((uint32*)&value);
         uint32 second = m_uint32Values[index + 1] = *(((uint32*)&value) + 1);
 
@@ -205,7 +215,6 @@ void Object::SetUInt64Value(uint16 index, uint64 const& value)
         {
             m_uint32Values_mirror[index] = first + 1;
             m_uint32Values_mirror[index + 1] = second + 1;
-            MarkForClientUpdate();
         }
     }
 }
@@ -216,8 +225,8 @@ void Object::SetFloatValue(uint16 index, float value)
 
     if (m_floatValues[index] != value)
     {
-        m_floatValues[index] = value;
         MarkForClientUpdate();
+        m_floatValues[index] = value;
     }
 }
 
@@ -233,9 +242,9 @@ void Object::SetByteValue(uint16 index, uint8 offset, uint8 value)
 
     if (uint8(m_uint32Values[index] >> (offset * 8)) != value)
     {
+        MarkForClientUpdate();
         m_uint32Values[index] &= ~uint32(uint32(0xFF) << (offset * 8));
         m_uint32Values[index] |= uint32(uint32(value) << (offset * 8));
-        MarkForClientUpdate();
     }
 }
 
@@ -251,9 +260,9 @@ void Object::SetUInt16Value(uint16 index, uint8 offset, uint16 value)
 
     if (uint16(m_uint32Values[index] >> (offset * 16)) != value)
     {
+        MarkForClientUpdate();
         m_uint32Values[index] &= ~uint32(uint32(0xFFFF) << (offset * 16));
         m_uint32Values[index] |= uint32(uint32(value) << (offset * 16));
-        MarkForClientUpdate();
     }
 }
 
@@ -289,6 +298,9 @@ bool Object::IsUpdateFieldVisibleTo(uint16 index, Player* target) const
 
 bool Object::_SetUpdateBits(UpdateMask* updateMask, Player* target) const
 {
+    if (!m_uint32Values_mirror)
+        return false;
+
     bool hasData = false;
     for (uint16 index = 0; index < m_valuesCount; ++index)
     {
@@ -325,20 +337,24 @@ void Object::SendDirectValueUpdate(uint16 index, uint16 size)
     }
 
     // Do we need an update ?
-    bool updateNeeded = false;
-    for (uint16 i = 0; i < size; i++)
+    if (m_uint32Values_mirror)
     {
-        if (m_uint32Values_mirror[index] != m_uint32Values[index])
+        bool updateNeeded = false;
+        for (uint16 i = 0; i < size; i++)
         {
-            updateNeeded = true;
-            break;
+            if (m_uint32Values_mirror[index] != m_uint32Values[index])
+            {
+                updateNeeded = true;
+                break;
+            }
         }
+
+        if (!updateNeeded)
+            return;
+
+        m_uint32Values_mirror[index] = m_uint32Values[index];
     }
     
-    if (!updateNeeded)
-        return;
-
-    m_uint32Values_mirror[index] = m_uint32Values[index];
     UpdateData data;
     ByteBuffer buf(50);
     buf << uint8(UPDATETYPE_VALUES);
@@ -398,7 +414,6 @@ void Object::SendCreateUpdateToPlayer(Player* player)
 
     BuildCreateUpdateBlockForPlayer(&upd, player);
     upd.Send();
-    m_isNewObject = false;
 }
 
 void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) const
@@ -413,8 +428,10 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
         updateFlags |= UPDATEFLAG_SELF;
 
     if (m_isNewObject)
+    {
         updatetype = UPDATETYPE_CREATE_OBJECT2;
-
+        m_isNewObject = false;
+    }
 
     //printf("BuildCreateUpdate: update-type: %u, object-type: %u got updateFlags: %X\n", updatetype, m_objectTypeId, updateFlags);
 
