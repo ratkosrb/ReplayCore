@@ -56,8 +56,10 @@ public:
     bool HandleListEvents();
     bool HandleWaypointsShow();
     bool HandleWaypointsHide();
+    bool HandleWaypointInfo();
+    bool HandleDistance();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[34] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[36] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -93,6 +95,8 @@ private:
         { "listevents", &CommandHandler::HandleListEvents },
         { "wpshow", &CommandHandler::HandleWaypointsShow },
         { "wphide", &CommandHandler::HandleWaypointsHide },
+        { "wpinfo", &CommandHandler::HandleWaypointInfo },
+        { "distance", &CommandHandler::HandleDistance },
     };
 
     bool m_console = true;

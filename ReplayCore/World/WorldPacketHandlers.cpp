@@ -83,6 +83,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_CAST_SPELL", &WorldServer::HandleCastSpell);
     SetOpcodeHandler("CMSG_ATTACKSTOP", &WorldServer::HandleAttackStop);
     SetOpcodeHandler("CMSG_ZONEUPDATE", &WorldServer::HandleZoneUpdate);
+    SetOpcodeHandler("CMSG_TAXINODE_STATUS_QUERY", &WorldServer::HandleTaxiNodeStatusQuery);
 }
 
 void WorldServer::HandleAuthSession(WorldPacket& packet)
@@ -1187,4 +1188,11 @@ void WorldServer::HandleZoneUpdate(WorldPacket& packet)
     m_clientPlayer->SetCachedZoneId(zoneId);
     SendWeatherForCurrentZone();
     SendInitialWorldStates(sReplayMgr.GetInitialWorldStatesForCurrentTime());
+}
+
+void WorldServer::HandleTaxiNodeStatusQuery(WorldPacket& packet)
+{
+    ObjectGuid guid;
+    packet >> guid;
+    SendTaxiNodeStatus(guid, false);
 }

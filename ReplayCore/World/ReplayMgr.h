@@ -5,6 +5,7 @@
 #include "ObjectGuid.h"
 #include "ObjectDefines.h"
 #include "UnitDefines.h"
+#include "WaypointData.h"
 #include "PlayerDefines.h"
 #include "SniffedEvents.h"
 #include <set>
@@ -263,7 +264,7 @@ public:
         }
         return nullptr;
     }
-    void GetWaypointsForCreature(uint32 guid, std::vector<Position>& waypoints, bool useStartPosition);
+    void GetWaypointsForCreature(uint32 guid, std::vector<WaypointData>& waypoints, bool useStartPosition);
 
     void SpawnPlayers();
     void LoadPlayers();

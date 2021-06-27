@@ -1145,13 +1145,13 @@ void ReplayMgr::GetEventsListForTarget(ObjectGuid guid, std::string eventName, s
     }
 }
 
-void ReplayMgr::GetWaypointsForCreature(uint32 guid, std::vector<Position>& waypoints, bool useStartPosition)
+void ReplayMgr::GetWaypointsForCreature(uint32 guid, std::vector<WaypointData>& waypoints, bool useStartPosition)
 {
     std::map<uint32 /*point*/, std::vector<Position>> splinesMap;
     if (!useStartPosition)
     {
-        //                                                                     0               1               2             3             4
-        if (std::shared_ptr<QueryResult> result = SniffDatabase.Query("SELECT `parent_point`, `spline_point`, `position_x`, `position_y`, `position_z` FROM `creature_movement_server_spline` WHERE `guid`=%u", guid))
+        //                                                                     0               1             2             3
+        if (std::shared_ptr<QueryResult> result = SniffDatabase.Query("SELECT `parent_point`, `position_x`, `position_y`, `position_z` FROM `creature_movement_server_spline` WHERE `guid`=%u ORDER BY `parent_point`, `spline_point`", guid))
         {
             do
             {
@@ -1159,19 +1159,17 @@ void ReplayMgr::GetWaypointsForCreature(uint32 guid, std::vector<Position>& wayp
 
                 Position spline;
                 uint32 parent_point = pFields[0].GetUInt32();
-                //spline.spline_point = pFields[1].GetUInt32();
-
-                spline.x = pFields[2].GetFloat();
-                spline.y = pFields[3].GetFloat();
-                spline.z = pFields[4].GetFloat();
-
+                spline.x = pFields[1].GetFloat();
+                spline.y = pFields[2].GetFloat();
+                spline.z = pFields[3].GetFloat();
                 splinesMap[parent_point].push_back(spline);
+
             } while (result->NextRow());
         }
     }
     
-    //                                                                     0       1        2               3                   4                   5                   6                 7                 8                9
-    if (std::shared_ptr<QueryResult> result = SniffDatabase.Query("SELECT `guid`, `point`, `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation` FROM `creature_movement_server` WHERE `guid`=%u",  guid))
+    //                                                                     0       1         2                3               4                   5                   6                   7                 8                 9                 10             11
+    if (std::shared_ptr<QueryResult> result = SniffDatabase.Query("SELECT `guid`, `point`,  `spline_flags`,  `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation`, `unixtimems` FROM `creature_movement_server` WHERE `guid`=%u",  guid))
     {
         uint32 pointCounter = 1;
         float lastOrientation = 100.0f;
@@ -1181,18 +1179,21 @@ void ReplayMgr::GetWaypointsForCreature(uint32 guid, std::vector<Position>& wayp
 
             uint32 const id = pFields[0].GetUInt32();
             uint32 const point = pFields[1].GetUInt32();
-            uint32 const splineCount = pFields[2].GetUInt32();
+            uint32 const splineFlags = pFields[2].GetUInt32();
+            uint32 const splineCount = pFields[3].GetUInt32();
 
-            Vector3 const startPos(pFields[3].GetFloat(), pFields[4].GetFloat(), pFields[5].GetFloat());
-            Vector3 const endPos(pFields[6].GetFloat(), pFields[7].GetFloat(), pFields[8].GetFloat());
-            float const finalOrientation = pFields[9].GetFloat();
+            Vector3 const startPos(pFields[4].GetFloat(), pFields[5].GetFloat(), pFields[6].GetFloat());
+            Vector3 const endPos(pFields[7].GetFloat(), pFields[8].GetFloat(), pFields[9].GetFloat());
+            float const finalOrientation = pFields[10].GetFloat();
+            
+            time_t const unixTime = pFields[11].GetUInt64() / IN_MILLISECONDS;
             
             if (useStartPosition)
             {
                 float orientation = lastOrientation;
                 lastOrientation = finalOrientation;
 
-                waypoints.push_back(Position(startPos.x, startPos.y, startPos.z, orientation));
+                waypoints.push_back(WaypointData(startPos.x, startPos.y, startPos.z, orientation, point, splineFlags, splineCount, false, unixTime));
                 pointCounter++;
             }
             else
@@ -1206,7 +1207,7 @@ void ReplayMgr::GetWaypointsForCreature(uint32 guid, std::vector<Position>& wayp
                         uint32 splinesCount = (splines.size() - 1);
                         float orientation = (i == splinesCount) ? finalOrientation : 100.0f;
 
-                        waypoints.push_back(Position(spline.x, spline.y, spline.z, orientation));
+                        waypoints.push_back(WaypointData(spline.x, spline.y, spline.z, orientation, point, splineFlags, i + 1, true, unixTime));
                         pointCounter++;
                     }
                 }
@@ -1216,7 +1217,7 @@ void ReplayMgr::GetWaypointsForCreature(uint32 guid, std::vector<Position>& wayp
                     float posY = (splineCount == 0) ? startPos.y : endPos.y;
                     float posZ = (splineCount == 0) ? startPos.z : endPos.z;
 
-                    waypoints.push_back(Position(posX, posY, posZ, finalOrientation));
+                    waypoints.push_back(WaypointData(posX, posY, posZ, finalOrientation, point, splineFlags, splineCount, false, unixTime));
                     pointCounter++;
                 }
             }

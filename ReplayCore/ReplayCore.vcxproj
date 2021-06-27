@@ -135,6 +135,8 @@
     <ClInclude Include="World\UpdateData.h" />
     <ClInclude Include="World\UpdateFields.h" />
     <ClInclude Include="World\UpdateMask.h" />
+    <ClInclude Include="World\Waypoint.h" />
+    <ClInclude Include="World\WaypointData.h" />
     <ClInclude Include="World\WorldServer.h" />
   </ItemGroup>
   <ItemGroup>

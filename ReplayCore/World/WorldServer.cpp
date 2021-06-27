@@ -69,7 +69,7 @@ void WorldServer::WorldLoop()
 
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Player>>(m_players);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatures);
-        BuildAndSendObjectUpdates<std::map<ObjectGuid, Unit>>(m_creatureWaypoints);
+        BuildAndSendObjectUpdates<std::map<ObjectGuid, Waypoint>>(m_creatureWaypoints);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, GameObject>>(m_gameObjects);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, DynamicObject>>(m_dynamicObjects);
 

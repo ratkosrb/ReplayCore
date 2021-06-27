@@ -262,6 +262,12 @@
     <ClInclude Include="Defines\ResponseCodes.h">
       <Filter>Defines</Filter>
     </ClInclude>
+    <ClInclude Include="World\Waypoint.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\WaypointData.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Database">

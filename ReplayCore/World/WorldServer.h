@@ -5,6 +5,7 @@
 #include "..\Crypto\BigNumber.h"
 #include "..\Crypto\AuthCrypt.h"
 #include "Player.h"
+#include "Waypoint.h"
 #include "GameObject.h"
 #include "DynamicObject.h"
 #include "SpellCastTargets.h"
@@ -82,9 +83,9 @@ public:
         auto itr = m_creatures.find(guid);
         if (itr != m_creatures.end())
             return &itr->second;
-        itr = m_creatureWaypoints.find(guid);
-        if (itr != m_creatureWaypoints.end())
-            return &itr->second;
+        auto itr2 = m_creatureWaypoints.find(guid);
+        if (itr2 != m_creatureWaypoints.end())
+            return &itr2->second;
         return nullptr;
     }
 
@@ -136,7 +137,7 @@ public:
         return m_creatures;
     }
 
-    std::map<ObjectGuid, Unit>& GetWaypointsMap()
+    std::map<ObjectGuid, Waypoint>& GetWaypointsMap()
     {
         return m_creatureWaypoints;
     }
@@ -161,9 +162,9 @@ public:
         m_creatures.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(creatureData));
     }
 
-    void MakeNewCreatureWaypoint(ObjectGuid const& guid, CreatureData const& creatureData)
+    void MakeNewCreatureWaypoint(ObjectGuid const& guid, CreatureData const& creatureData, WaypointData const& waypointData)
     {
-        m_creatureWaypoints.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(creatureData));
+        m_creatureWaypoints.emplace(std::piecewise_construct, std::forward_as_tuple(guid), std::forward_as_tuple(creatureData, waypointData));
     }
 
     void MakeNewGameObject(ObjectGuid const& guid, GameObjectData const& gameObjectData)
@@ -240,7 +241,7 @@ private:
     std::map<ObjectGuid, GameObject> m_gameObjects;
     std::map<ObjectGuid, DynamicObject> m_dynamicObjects;
     std::map<ObjectGuid, Unit> m_creatures;
-    std::map<ObjectGuid, Unit> m_creatureWaypoints;
+    std::map<ObjectGuid, Waypoint> m_creatureWaypoints;
     std::map<ObjectGuid, Player> m_players;
     std::unique_ptr<Player> m_clientPlayer = nullptr;
     std::map<uint32 /*map*/, std::map<uint32 /*zone*/, WeatherData>> m_weather;
@@ -295,6 +296,7 @@ private:
     void HandleCastSpell(WorldPacket& packet);
     void HandleAttackStop(WorldPacket& packet);
     void HandleZoneUpdate(WorldPacket& packet);
+    void HandleTaxiNodeStatusQuery(WorldPacket& packet);
 public:
     // Packet Building
     void SendAuthChallenge();
@@ -376,6 +378,7 @@ public:
     void SendPlaySpellVisual(ObjectGuid guid, uint32 kitId);
     void SendLogXPGain(ObjectGuid victimGuid, uint32 totalXP, uint32 killXP, float groupBonus, bool rafBonus);
     void SendSetFactionStanding(float rafBonus, bool showVisual, int32 reputationListId, int32 standing);
+    void SendTaxiNodeStatus(ObjectGuid guid, bool known);
 };
 
 #define sWorld WorldServer::Instance()

@@ -2135,3 +2135,11 @@ void WorldServer::SendSetFactionStanding(float rafBonus, bool showVisual, int32 
     data << int32(standing);
     SendPacket(data);
 }
+
+void WorldServer::SendTaxiNodeStatus(ObjectGuid guid, bool known)
+{
+    WorldPacket data(GetOpcode("SMSG_TAXINODE_STATUS"), 9);
+    data << guid;
+    data << uint8(known);
+    SendPacket(data);
+}

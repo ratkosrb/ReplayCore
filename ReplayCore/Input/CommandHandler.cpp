@@ -261,7 +261,6 @@ bool CommandHandler::HandleSpawnInfo()
         }
 
         PSendSysMessage("Spawn data for %s", guid.GetString().c_str());
-        PSendSysMessage("Map: %u", pData->location.mapId);
         PSendSysMessage("Position: %g %g %g", pData->location.x, pData->location.y, pData->location.z);
         PSendSysMessage("Orientation: %g", pData->location.o);
         PSendSysMessage("Movement Type: %s", GetCreatureMovementTypeName(pData->movementType));
@@ -285,7 +284,6 @@ bool CommandHandler::HandleSpawnInfo()
         }
 
         PSendSysMessage("Spawn data for %s", guid.GetString().c_str());
-        PSendSysMessage("Map: %u", pData->location.mapId);
         PSendSysMessage("Position: %g %g %g", pData->location.x, pData->location.y, pData->location.z);
         PSendSysMessage("Orientation: %g", pData->location.o);
         PSendSysMessage("Sniff Id: %u", pData->sourceSniffId);
@@ -800,7 +798,7 @@ bool CommandHandler::HandleWaypointsShow()
     if (option == "end" || option == "destination")
         useStartPosition = false;
 
-    std::vector<Position> waypoints;
+    std::vector<WaypointData> waypoints;
     sReplayMgr.GetWaypointsForCreature(guid.GetCounter(), waypoints, useStartPosition);
 
     if (waypoints.empty())
@@ -827,7 +825,7 @@ bool CommandHandler::HandleWaypointsShow()
         }
         wpData.isHovering = true;
         wpData.location = WorldLocation(pPlayer->GetMapId(), waypoints[i].x, waypoints[i].y, waypoints[i].z, waypoints[i].o);
-        sWorld.MakeNewCreatureWaypoint(wpData.guid, wpData);
+        sWorld.MakeNewCreatureWaypoint(wpData.guid, wpData, waypoints[i]);
     }
 
     PSendSysMessage("Showing %u waypoints for %s.", (uint32)waypoints.size(), guid.GetString().c_str());
@@ -877,5 +875,66 @@ bool CommandHandler::HandleWaypointsHide()
     else
         PSendSysMessage("Removed all waypoints for %s.", guid.GetString().c_str());
 
+    return true;
+}
+
+bool CommandHandler::HandleWaypointInfo()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    Unit* pTarget = pPlayer->GetTarget();
+    if (!pTarget)
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    if (Waypoint const* pWaypoint = dynamic_cast<Waypoint const*>(pTarget))
+    {
+        WaypointData const& wpData = pWaypoint->GetWaypointData();
+
+        PSendSysMessage("Showing waypoint info for %s.", pWaypoint->GetCreatedByGuid().GetString().c_str());
+        if (wpData.isSpline)
+        {
+            PSendSysMessage("Type: Spline");
+            PSendSysMessage("Parent Point: %u (spline %u)", wpData.point, wpData.splineCount);
+        }
+        else
+        {
+            PSendSysMessage("Type: %s", pWaypoint->GetMaxPower(POWER_MANA) ? "Destination" : "Origin");
+            PSendSysMessage("Point: %u", pWaypoint->GetWaypointData().point);
+            PSendSysMessage("Spline Count: %u", pWaypoint->GetWaypointData().splineCount);
+        }
+        PSendSysMessage("Spline Flags: %u", pWaypoint->GetWaypointData().splineFlags);
+        PSendSysMessage("Timestamp: %llu", (uint64)pWaypoint->GetWaypointData().timestamp);
+    }
+    else
+        PSendSysMessage("Target is not a waypoint.");
+
+    return true;
+}
+
+bool CommandHandler::HandleDistance()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    Unit* pTarget = pPlayer->GetTarget();
+    if (!pTarget)
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    PSendSysMessage("Distance to target is %g yards.", pPlayer->GetDistance3D(pTarget));
     return true;
 }
