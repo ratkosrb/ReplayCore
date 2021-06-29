@@ -370,10 +370,9 @@ void AuthServer::HandleLogonProof(ByteBuffer& buffer)
     }
 }
 
-Realm realm = Realm("SniffReplay", sConfig.GetWorldServerIpAndPort(), 0, REALM_FLAG_NONE, 1, 0);
-
 void AuthServer::HandleRealmlist(ByteBuffer& buffer)
 {
+    Realm realm("SniffReplay", sConfig.GetWorldServerIpAndPort(), 0, REALM_FLAG_NONE, 1, 0);
     ByteBuffer pkt;
 
     // unused value
