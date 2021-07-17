@@ -29,7 +29,7 @@ void MovementInfo::Read(ByteBuffer &data)
 
         if (HasMovementFlag(Vanilla::MOVEFLAG_JUMPING))
         {
-            data >> jump.velocity;
+            data >> jump.zspeed;
             data >> jump.cosAngle;
             data >> jump.sinAngle;
             data >> jump.xyspeed;
@@ -75,7 +75,7 @@ void MovementInfo::Read(ByteBuffer &data)
 
         if (HasMovementFlag(TBC::MOVEFLAG_FALLING))
         {
-            data >> jump.velocity;
+            data >> jump.zspeed;
             data >> jump.sinAngle;
             data >> jump.cosAngle;
             data >> jump.xyspeed;
@@ -121,7 +121,7 @@ void MovementInfo::Read(ByteBuffer &data)
 
         if (HasMovementFlag(WotLK::MOVEFLAG_FALLING))
         {
-            data >> jump.velocity;
+            data >> jump.zspeed;
             data >> jump.sinAngle;
             data >> jump.cosAngle;
             data >> jump.xyspeed;
@@ -165,7 +165,7 @@ void MovementInfo::Write(ByteBuffer &data) const
 
         if (HasMovementFlag(Vanilla::MOVEFLAG_JUMPING))
         {
-            data << jump.velocity;
+            data << jump.zspeed;
             data << jump.cosAngle;
             data << jump.sinAngle;
             data << jump.xyspeed;
@@ -204,7 +204,7 @@ void MovementInfo::Write(ByteBuffer &data) const
 
         if (HasMovementFlag(TBC::MOVEFLAG_FALLING))
         {
-            data << jump.velocity;
+            data << jump.zspeed;
             data << jump.sinAngle;
             data << jump.cosAngle;
             data << jump.xyspeed;
@@ -250,7 +250,7 @@ void MovementInfo::Write(ByteBuffer &data) const
 
         if (HasMovementFlag(WotLK::MOVEFLAG_FALLING))
         {
-            data << jump.velocity;
+            data << jump.zspeed;
             data << jump.sinAngle;
             data << jump.cosAngle;
             data << jump.xyspeed;

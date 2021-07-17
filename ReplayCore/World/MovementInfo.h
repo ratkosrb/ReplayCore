@@ -8,6 +8,16 @@
 class Unit;
 class ByteBuffer;
 
+struct JumpInfo
+{
+    JumpInfo() : zspeed(0.f), sinAngle(0.f), cosAngle(0.f), xyspeed(0.f), startClientTime(0) {}
+    JumpInfo(float zspeed_, float sinAngle_, float cosAngle_, float xyspeed_) :
+        zspeed(zspeed_), sinAngle(sinAngle_), cosAngle(cosAngle_), xyspeed(xyspeed_) {}
+    float zspeed, sinAngle, cosAngle, xyspeed;
+    Position start;
+    uint32 startClientTime;
+};
+
 class MovementInfo
 {
     public:
@@ -54,14 +64,6 @@ class MovementInfo
         void ChangeOrientation(float o) { pos.o = o; }
         void ChangePosition(float x, float y, float z, float o) { pos.x = x; pos.y = y; pos.z = z; pos.o = o; }
         void UpdateTime(uint32 _time) { time = _time; }
-
-        struct JumpInfo
-        {
-            JumpInfo() : velocity(0.f), sinAngle(0.f), cosAngle(0.f), xyspeed(0.f), startClientTime(0) {}
-            float   velocity, sinAngle, cosAngle, xyspeed;
-            Position start;
-            uint32 startClientTime;
-        };
 
         JumpInfo const& GetJumpInfo() const { return jump; }
     //private:

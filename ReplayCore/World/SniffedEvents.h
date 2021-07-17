@@ -20,6 +20,7 @@
 #include "../Defines/Common.h"
 #include "ObjectGuid.h"
 #include "Aura.h"
+#include "MovementInfo.h"
 #include <string>
 
 enum SniffedEventType : uint8
@@ -461,8 +462,8 @@ struct SniffedEvent_UnitEmote : SniffedEventCRTP<SniffedEvent_UnitEmote>
 
 struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSideMovement>
 {
-    SniffedEvent_ClientSideMovement(ObjectGuid moverGuid, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o) :
-        m_moverGuid(moverGuid), m_opcodeName(opcodeName), m_moveTime(moveTime), m_moveFlags(moveFlags), m_location(mapId, x, y, z, o) {};
+    SniffedEvent_ClientSideMovement(ObjectGuid moverGuid, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle) :
+        m_moverGuid(moverGuid), m_opcodeName(opcodeName), m_moveTime(moveTime), m_moveFlags(moveFlags), m_location(mapId, x, y, z, o), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY) {};
 
     ObjectGuid m_moverGuid;
     uint32 m_opcode = 0;
@@ -470,6 +471,9 @@ struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSid
     uint32 m_moveTime = 0;
     uint32 m_moveFlags = 0;
     WorldLocation m_location;
+    float m_swimPitch = 0;
+    uint32 m_fallTime = 0;
+    JumpInfo m_jumpInfo;
     void Execute() const final;
     SniffedEventType GetType() const final
     {

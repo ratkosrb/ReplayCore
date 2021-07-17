@@ -185,6 +185,9 @@ void ReplayMgr::PrepareClientSideMovementDataForCurrentClient()
             newState.ctime = moveEvent->m_moveTime;
             newState.moveFlags = sGameDataMgr.ConvertMovementFlagsForBuild(moveEvent->m_moveFlags, CLIENT_BUILD_1_12_1);
             newState.pos = moveEvent->m_location.ToPosition();
+            newState.fallTime = moveEvent->m_fallTime;
+            newState.s_pitch = moveEvent->m_swimPitch;
+            newState.jump = moveEvent->m_jumpInfo;
 
             if (uint16 opcode = sWorld.GetOpcode(moveEvent->m_opcodeName))
                 moveEvent->m_opcode = opcode;
@@ -660,8 +663,8 @@ void SniffedEvent_UnitEmote::Execute() const
 
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
 {
-    //                                                               0             1       2         3            4             5      6             7             8              9
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `map`, `position_x`, `position_y`, `position_z`, `orientation` FROM `%s` ORDER BY `unixtimems` ASC, `move_time` ASC, `move_flags` DESC", tableName));
+    //                                                               0             1       2         3            4             5      6             7             8              9             10            11           12                       13                     14                15
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `swim_pitch`, `fall_time`, `jump_horizontal_speed`, `jump_vertical_speed`, `jump_cos_angle`, `jump_sin_angle` FROM `%s` ORDER BY `unixtimems` ASC, `move_time` ASC, `move_flags` DESC", tableName));
     if (!result)
         return;
 
@@ -700,8 +703,14 @@ void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
         float y = fields[7].GetFloat();
         float z = fields[8].GetFloat();
         float o = fields[9].GetFloat();
+        float swimPitch = fields[10].GetFloat();
+        uint32 fallTime = fields[11].GetUInt32();
+        float jumpSpeedXY = fields[12].GetFloat();
+        float jumpSpeedZ = fields[13].GetFloat();
+        float jumpCosAngle = fields[14].GetFloat();
+        float jumpSinAngle = fields[15].GetFloat();
 
-        std::shared_ptr<SniffedEvent_ClientSideMovement> newEvent = std::make_shared<SniffedEvent_ClientSideMovement>(sourceGuid, opcodeName, moveTime, moveFlags, mapId, x, y, z, o);
+        std::shared_ptr<SniffedEvent_ClientSideMovement> newEvent = std::make_shared<SniffedEvent_ClientSideMovement>(sourceGuid, opcodeName, moveTime, moveFlags, mapId, x, y, z, o, swimPitch, fallTime, jumpSpeedXY, jumpSpeedZ, jumpCosAngle, jumpSinAngle);
         m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
     } while (result->NextRow());
@@ -721,6 +730,9 @@ void SniffedEvent_ClientSideMovement::Execute() const
     pUnit->SetLastPositionUpdate(sReplayMgr.GetCurrentSniffTime());
     pUnit->SetUnitMovementFlags(m_moveFlags);
     pUnit->GetMovementInfo().UpdateTime(m_moveTime);
+    pUnit->GetMovementInfo().s_pitch = m_swimPitch;
+    pUnit->GetMovementInfo().fallTime = m_fallTime;
+    pUnit->GetMovementInfo().jump = m_jumpInfo;
 
     if (!sReplayMgr.IsPlaying())
         return;
