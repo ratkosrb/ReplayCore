@@ -98,6 +98,7 @@ struct UnitData : public WorldObjectData
     uint32 auraState = 0;
     uint32 mainHandAttackTime = 2000;
     uint32 offHandAttackTime = 2000;
+    uint32 rangedAttackTime = 2000;
     float boundingRadius = 0.347f;
     float combatReach = 1.5f;
     uint32 displayId = 0;
@@ -310,6 +311,10 @@ public:
     void LoadWorldStateUpdates();
     template <class T>
     void LoadWorldObjectCreate(char const* tableName, uint32 typeId);
+    template <class T>
+    void LoadGameObjectCreate(char const* tableName, uint32 typeId);
+    template <class T>
+    void LoadUnitCreate(char const* tableName, uint32 typeId);
     void LoadWorldObjectDestroy(char const* tableName, uint32 typeId);
     template <class T>
     void LoadUnitAttackToggle(char const* tableName, uint32 typeId);
@@ -351,6 +356,7 @@ public:
     void LoadXPGainLog();
     void LoadFactionStandingUpdates();
 
+    std::shared_ptr<SniffedEvent> GetFirstEventForTarget(ObjectGuid guid, std::set<SniffedEventType> const& eventTypes);
     void GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList);
 
 #pragma endregion SniffedEvents

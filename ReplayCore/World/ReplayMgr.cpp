@@ -37,6 +37,21 @@ void WorldObjectData::InitializeWorldObject(WorldObject* pObject) const
 {
     InitializeObject(pObject);
     pObject->Relocate(location);
+
+    std::set<SniffedEventType> createEventTypes;
+    createEventTypes.insert(SE_WORLDOBJECT_CREATE1);
+    createEventTypes.insert(SE_WORLDOBJECT_CREATE2);
+
+    if (auto pSniffedEvent = sReplayMgr.GetFirstEventForTarget(guid, createEventTypes))
+    {
+        if (pSniffedEvent->GetType() == SE_WORLDOBJECT_CREATE1)
+        {
+            // i think this cast is undefined behavior but it works
+            auto pCreate1Event = std::static_pointer_cast<SniffedEvent_WorldObjectCreate1>(pSniffedEvent);
+            pObject->GetMovementInfo().t_guid = pCreate1Event->m_transportGuid;
+            pObject->GetMovementInfo().t_pos = pCreate1Event->m_transportPosition;
+        }
+    }
 }
 
 void GameObjectData::InitializeGameObject(GameObject* pGo) const
@@ -72,6 +87,9 @@ void GameObjectData::InitializeGameObject(GameObject* pGo) const
     pGo->SetLevel(level);
     pGo->SetArtKit(artKit);
     pGo->SetAnimProgress(animProgress);
+
+    //if (pGo->GetType() == GAMEOBJECT_TYPE_MO_TRANSPORT)
+    //    pGo->SetObjectGuid(ObjectGuid(HIGHGUID_MO_TRANSPORT, 0, guid.GetEntry()));
 }
 
 void DynamicObjectData::InitializeDynamicObject(DynamicObject* pDynObject) const
@@ -93,7 +111,7 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     InitializeWorldObject(pUnit);
 
     pUnit->GetMovementInfo().pos = location.ToPosition();
-    pUnit->GetMovementInfo().SetMovementFlags(sGameDataMgr.ConvertMovementFlags(movementFlags));
+    pUnit->GetMovementInfo().SetMovementFlags(sGameDataMgr.ConvertMovementFlags(movementFlags, false));
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
         pUnit->RemoveUnitMovementFlag(Vanilla::MOVEFLAG_MASK_MOVING_OR_TURN);
     if (unitFlags & UNIT_FLAG_TAXI_FLIGHT)
@@ -139,6 +157,7 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     pUnit->SetAuraState(auraState);
     pUnit->SetAttackTime(BASE_ATTACK, mainHandAttackTime);
     pUnit->SetAttackTime(OFF_ATTACK, offHandAttackTime);
+    pUnit->SetAttackTime(RANGED_ATTACK, rangedAttackTime);
     pUnit->SetBoundingRadius(boundingRadius);
     pUnit->SetCombatReach(combatReach);
 
@@ -533,8 +552,8 @@ void ReplayMgr::LoadDynamicObjects()
 void ReplayMgr::LoadCreatures()
 {
     printf("[ReplayMgr] Loading creature spawns...\n");
-    //                                                               0       1     2      3             4             5             6              7                  8                9              10              11        12              13       14            15                   16                  17       18        19         20       21           22            23             24               25                26            27              28          29            30             31             32           33              34           35                 36            37            38           39                40            41                 42           43                44                 45              46                       47                      48                     49                    50                  51                  52       53
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `wander_distance`, `movement_type`, `is_hovering`, `is_temporary`, `is_pet`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `current_mana`, `max_mana`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `move_flags`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
+    //                                                               0       1     2      3             4             5             6              7                  8                9              10              11        12              13       14            15                   16                  17       18        19         20       21           22            23             24               25                26            27              28          29            30             31             32           33              34           35                 36            37           38                39            40                 41           42                43                 44              45                       46                      47                     48                    49                  50                  51       52
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `wander_distance`, `movement_type`, `is_hovering`, `is_temporary`, `is_pet`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `current_mana`, `max_mana`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
 
     if (!result)
     {
@@ -595,25 +614,24 @@ void ReplayMgr::LoadCreatures()
         data.sheathState = fields[33].GetUInt32();
         data.pvpFlags = fields[34].GetUInt32();
         data.shapeShiftForm = fields[35].GetUInt32();
-        data.movementFlags = fields[36].GetUInt32();
-        data.speedRate[MOVE_WALK] = fields[37].GetFloat();
-        data.speedRate[MOVE_RUN] = fields[38].GetFloat();
-        data.speedRate[MOVE_RUN_BACK] = fields[39].GetFloat();
-        data.speedRate[MOVE_SWIM] = fields[40].GetFloat();
-        data.speedRate[MOVE_SWIM_BACK] = fields[41].GetFloat();
-        data.speedRate[MOVE_FLIGHT] = fields[42].GetFloat();
-        data.speedRate[MOVE_FLIGHT_BACK] = fields[43].GetFloat();
-        data.boundingRadius = fields[44].GetFloat();
-        data.combatReach = fields[45].GetFloat();
-        data.mainHandAttackTime = fields[46].GetUInt32();
-        data.offHandAttackTime = fields[47].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_0] = fields[48].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_1] = fields[49].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_2] = fields[50].GetUInt32();
-        data.channelSpell = fields[51].GetUInt32();
-        std::string auras = fields[52].GetCppString();
+        data.speedRate[MOVE_WALK] = fields[36].GetFloat();
+        data.speedRate[MOVE_RUN] = fields[37].GetFloat();
+        data.speedRate[MOVE_RUN_BACK] = fields[38].GetFloat();
+        data.speedRate[MOVE_SWIM] = fields[39].GetFloat();
+        data.speedRate[MOVE_SWIM_BACK] = fields[40].GetFloat();
+        data.speedRate[MOVE_FLIGHT] = fields[41].GetFloat();
+        data.speedRate[MOVE_FLIGHT_BACK] = fields[42].GetFloat();
+        data.boundingRadius = fields[43].GetFloat();
+        data.combatReach = fields[44].GetFloat();
+        data.mainHandAttackTime = fields[45].GetUInt32();
+        data.offHandAttackTime = fields[46].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_0] = fields[47].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_1] = fields[48].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_2] = fields[49].GetUInt32();
+        data.channelSpell = fields[50].GetUInt32();
+        std::string auras = fields[51].GetCppString();
         ParseStringIntoVector(auras, data.auras);
-        data.sourceSniffId = fields[53].GetUInt32();
+        data.sourceSniffId = fields[52].GetUInt32();
 
         if (data.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
@@ -750,8 +768,8 @@ void ReplayMgr::LoadPlayers()
 {
     printf("[ReplayMgr] Loading player spawns...\n");
 
-    //                                                               0       1      2             3             4             5              6       7       8        9         10       11    12       13               14               15              16       17            18                   19                  20         21            22             23                24            25              26          27            28             29             30           31              32           33                 34            35            36           37                38            39                 40           41                42                 43              44                       45                      46                    47                 48
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `name`, `race`, `class`, `gender`, `level`, `xp`, `money`, `player_bytes1`, `player_bytes2`, `player_flags`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `faction`, `unit_flags`, `unit_flags2`, `current_health`, `max_health`, `current_mana`, `max_mana`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `move_flags`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `ranged_attack_time`, `equipment_cache`, `auras` FROM `player`"));
+    //                                                               0       1      2             3             4             5              6       7       8        9         10       11    12       13               14               15              16       17            18                   19                  20         21            22             23                24            25              26          27            28             29             30           31              32           33                 34            35           36                37            38                 39           40                41                 42              43                       44                      45                    46                 47
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `name`, `race`, `class`, `gender`, `level`, `xp`, `money`, `player_bytes1`, `player_bytes2`, `player_flags`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `faction`, `unit_flags`, `unit_flags2`, `current_health`, `max_health`, `current_mana`, `max_mana`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `ranged_attack_time`, `equipment_cache`, `auras` FROM `player`"));
 
     if (!result)
     {
@@ -870,19 +888,19 @@ void ReplayMgr::LoadPlayers()
             playerData.shapeShiftForm = FORM_NONE;
         }
 
-        playerData.movementFlags = fields[34].GetUInt32();
-        playerData.speedRate[MOVE_WALK] = fields[35].GetFloat();
-        playerData.speedRate[MOVE_RUN] = fields[36].GetFloat();
-        playerData.speedRate[MOVE_RUN_BACK] = fields[37].GetFloat();
-        playerData.speedRate[MOVE_SWIM] = fields[38].GetFloat();
-        playerData.speedRate[MOVE_SWIM_BACK] = fields[39].GetFloat();
-        playerData.speedRate[MOVE_FLIGHT] = fields[40].GetFloat();
-        playerData.speedRate[MOVE_FLIGHT_BACK] = fields[41].GetFloat();
-        playerData.boundingRadius = fields[42].GetFloat();
-        playerData.combatReach = fields[43].GetFloat();
-        playerData.mainHandAttackTime = fields[44].GetUInt32();
-        playerData.offHandAttackTime = fields[45].GetUInt32();
-        std::string equipmentCache = fields[47].GetCppString();
+        playerData.speedRate[MOVE_WALK] = fields[34].GetFloat();
+        playerData.speedRate[MOVE_RUN] = fields[35].GetFloat();
+        playerData.speedRate[MOVE_RUN_BACK] = fields[36].GetFloat();
+        playerData.speedRate[MOVE_SWIM] = fields[37].GetFloat();
+        playerData.speedRate[MOVE_SWIM_BACK] = fields[38].GetFloat();
+        playerData.speedRate[MOVE_FLIGHT] = fields[39].GetFloat();
+        playerData.speedRate[MOVE_FLIGHT_BACK] = fields[40].GetFloat();
+        playerData.boundingRadius = fields[41].GetFloat();
+        playerData.combatReach = fields[42].GetFloat();
+        playerData.mainHandAttackTime = fields[43].GetUInt32();
+        playerData.offHandAttackTime = fields[44].GetUInt32();
+        playerData.rangedAttackTime = fields[45].GetUInt32() ? fields[45].GetUInt32() : 2000;
+        std::string equipmentCache = fields[46].GetCppString();
 
         std::string temp;
         bool isItemId = true;
@@ -1127,6 +1145,19 @@ void ReplayMgr::Uninitialize()
     m_currentSniffTimeMs = 0;
     m_timeDifference = 0;
     m_eventsMap.clear();
+}
+
+std::shared_ptr<SniffedEvent> ReplayMgr::GetFirstEventForTarget(ObjectGuid guid, std::set<SniffedEventType> const& eventTypes)
+{
+    for (const auto& itr : m_eventsMapBackup)
+    {
+        if (itr.second->GetSourceGuid() == guid )
+        {
+            if (eventTypes.find(itr.second->GetType()) != eventTypes.end())
+                return itr.second;
+        }
+    }
+    return nullptr;
 }
 
 void ReplayMgr::GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList)

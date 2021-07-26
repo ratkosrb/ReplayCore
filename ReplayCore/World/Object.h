@@ -7,6 +7,7 @@
 #include "Geometry.h"
 #include "UpdateData.h"
 #include "UpdateFields.h"
+#include "MovementInfo.h"
 
 struct ObjectData;
 struct WorldObjectData;
@@ -65,7 +66,7 @@ public:
     void SetUInt16Value(const char* index, uint8 offset, uint16 value);
     void SetInt16Value(const char* index, uint8 offset, int16 value) { SetUInt16Value(index, offset, (uint16)value); }
     void SetGuidValue(const char* index, ObjectGuid const& value) { SetUInt64Value(index, value.GetRawValue()); }
-    void SetObjectGuid(ObjectGuid const& value) { SetUInt64Value(OBJECT_FIELD_GUID, value.GetRawValue()); }
+    void SetObjectGuid(ObjectGuid const value) { SetUInt64Value(OBJECT_FIELD_GUID, value.GetRawValue()); m_packGuid.Set(value); }
 
     uint32 GetEntry() const;
     void SetEntry(uint32 entry);
@@ -91,6 +92,7 @@ public:
     inline bool IsGameObject() const { return GetTypeId() == TYPEID_GAMEOBJECT; }
     GameObject* ToGameObject();
     GameObject const* ToGameObject() const;
+    virtual bool IsTransport() const { return false; }
 
     inline bool IsDynamicObject() const { return GetTypeId() == TYPEID_DYNAMICOBJECT; }
     DynamicObject* ToDynamicObject();
@@ -184,6 +186,7 @@ public:
     WorldObject(ObjectGuid guid) : Object(guid) {}
 
     bool IsWithinVisibilityDistance(WorldObject const* pObject) const;
+    bool IsOnlyVisibleDuringReplay() const;
 
     virtual uint32 GetZoneId() const;
     uint32 GetAreaId() const;
@@ -225,18 +228,67 @@ public:
     {
         m_location.o = o;
     }
+
+    void AddUnitMovementFlag(uint32 f) { m_movementInfo.moveFlags |= f; }
+    void RemoveUnitMovementFlag(uint32 f) { m_movementInfo.moveFlags &= ~f; }
+    bool HasUnitMovementFlag(uint32 f) const { return (m_movementInfo.moveFlags & f) == f; }
+    uint32 GetUnitMovementFlags() const { return m_movementInfo.moveFlags; }
+    void SetUnitMovementFlags(uint32 f) { m_movementInfo.moveFlags = f; }
+    uint32 GetUnitMovementFlags2() const { return m_movementInfo.moveFlags2WotLK; }
+    void SetUnitMovementFlags2(uint32 f) { m_movementInfo.moveFlags2TBC = f; m_movementInfo.moveFlags2WotLK = f; }
+
+    MovementInfo& GetMovementInfo() { return m_movementInfo; }
+    MovementInfo const& GetMovementInfo() const { return m_movementInfo; }
+    void SetMovementInfo(MovementInfo const& movementInfo)
+    {
+        m_movementInfo = movementInfo;
+        m_location.x = movementInfo.pos.x;
+        m_location.y = movementInfo.pos.y;
+        m_location.z = movementInfo.pos.z;
+        m_location.o = movementInfo.pos.o;
+    }
+
     virtual void Relocate(WorldLocation const& location)
     {
         SetLocation(location);
+        m_movementInfo.pos.x = location.x;
+        m_movementInfo.pos.y = location.y;
+        m_movementInfo.pos.z = location.z;
+        m_movementInfo.pos.o = location.o;
     }
     virtual void Relocate(float x, float y, float z)
     {
         SetPosition(x, y, z);
+        m_movementInfo.pos.x = x;
+        m_movementInfo.pos.y = y;
+        m_movementInfo.pos.z = z;
     }
     virtual void Relocate(float x, float y, float z, float o)
     {
         SetPosition(x, y, z, o);
+        m_movementInfo.pos.x = x;
+        m_movementInfo.pos.y = y;
+        m_movementInfo.pos.z = z;
+        m_movementInfo.pos.o = o;
     }
+
+    ObjectGuid GetTransportGuid() const
+    {
+        return m_movementInfo.t_guid;
+    }
+    float GetTransOffsetX() const
+    {
+        return m_movementInfo.t_pos.x;
+    }
+    float GetTransOffsetY() const
+    {
+        return m_movementInfo.t_pos.y;
+    }
+    float GetTransOffsetZ() const
+    {
+        return m_movementInfo.t_pos.z;
+    }
+
     float GetDistance2D(float x, float y) const
     {
         return Geometry::GetDistance2D(m_location.x, m_location.y, x, y);
@@ -277,6 +329,7 @@ public:
     }
 protected:
     WorldLocation m_location;
+    MovementInfo m_movementInfo;
     uint32 m_lastPositionUpdate = 0;
 };
 

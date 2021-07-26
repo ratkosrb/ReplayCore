@@ -19,7 +19,7 @@ public:
 
     void Relocate(WorldLocation const& location) final
     {
-        SetLocation(location);
+        WorldObject::Relocate(location);
         SetFloatValue("DYNAMICOBJECT_POS_X", location.x);
         SetFloatValue("DYNAMICOBJECT_POS_Y", location.y);
         SetFloatValue("DYNAMICOBJECT_POS_Z", location.z);
@@ -27,14 +27,14 @@ public:
     }
     void Relocate(float x, float y, float z) final
     {
-        SetPosition(x, y, z);
+        WorldObject::Relocate(x, y, z);
         SetFloatValue("DYNAMICOBJECT_POS_X", x);
         SetFloatValue("DYNAMICOBJECT_POS_Y", y);
         SetFloatValue("DYNAMICOBJECT_POS_Z", z);
     }
     void Relocate(float x, float y, float z, float o) final
     {
-        SetPosition(x, y, z, o);
+        WorldObject::Relocate(x, y, z, o);
         SetFloatValue("DYNAMICOBJECT_POS_X", x);
         SetFloatValue("DYNAMICOBJECT_POS_Y", y);
         SetFloatValue("DYNAMICOBJECT_POS_Z", z);

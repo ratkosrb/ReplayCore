@@ -1988,8 +1988,17 @@ void WorldServer::SendWorldStateUpdate(uint32 variable, uint32 value)
 
 void WorldServer::SendMonsterMove(Unit* pUnit)
 {
-    WorldPacket data(GetOpcode("SMSG_MONSTER_MOVE"));
+    WorldPacket data(GetOpcode(pUnit->m_moveSpline.m_transportGuid.IsEmpty() ? "SMSG_MONSTER_MOVE" : "SMSG_MONSTER_MOVE_TRANSPORT"));
     data << pUnit->GetPackGUID();
+
+    if (!pUnit->m_moveSpline.m_transportGuid.IsEmpty())
+    {
+        data << pUnit->m_moveSpline.m_transportGuid.WriteAsPacked();
+
+        if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
+            data << uint8(0); // Transport Seat
+    }
+
     if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
         data << uint8(0); // Toggle AnimTierInTrans
     pUnit->m_moveSpline.WriteMove(data);

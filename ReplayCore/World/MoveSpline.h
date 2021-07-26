@@ -4,6 +4,7 @@
 #include "../Defines/Common.h"
 #include "../Defines/ByteBuffer.h"
 #include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include <vector>
 
 class Unit;
@@ -12,7 +13,7 @@ struct MoveSpline
 {
     MoveSpline() = default;
     MoveSpline(const MoveSpline&) = delete;
-    void Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, bool isCyclic, bool isCatmullrom);
+    void Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, bool isCyclic, bool isCatmullrom);
     void Reset()
     {
         m_initialized = false;;
@@ -38,6 +39,7 @@ struct MoveSpline
     uint32 m_flags = 0;
     uint32 m_moveTimeMs = 0; // how long the movement should take
     std::vector<Vector3> m_destinationPoints;
+    ObjectGuid m_transportGuid;
     bool m_cyclic = false;
     bool m_catmullrom = false;
 };

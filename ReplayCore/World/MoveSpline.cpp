@@ -7,7 +7,7 @@
 
 uint32 MoveSpline::m_maxId = 0;
 
-void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, bool isCyclic, bool isCatmullrom)
+void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, bool isCyclic, bool isCatmullrom)
 {
     m_id = m_maxId++;
     m_startTimeMs = sReplayMgr.GetCurrentSniffTimeMs();
@@ -19,6 +19,7 @@ void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8
     m_destinationPoints = destinationPoints;
     if (m_destinationPoints.empty() && m_type != SPLINE_TYPE_STOP)
         m_destinationPoints.push_back(startPosition);
+    m_transportGuid = transportGuid;
     m_cyclic = isCyclic;
     m_catmullrom = isCatmullrom;
     m_initialized = true;
@@ -144,11 +145,20 @@ void MoveSpline::Update(Unit* pUnit)
 
     if (elapsedTime >= m_moveTimeMs)
     {
-        if (m_finalOrientation != 100)
-            pUnit->Relocate(m_destinationPoints[0].x, m_destinationPoints[0].y, m_destinationPoints[0].z, m_finalOrientation);
+        if (m_transportGuid.IsEmpty())
+        {
+            if (m_finalOrientation != 100)
+                pUnit->Relocate(m_destinationPoints[0].x, m_destinationPoints[0].y, m_destinationPoints[0].z, m_finalOrientation);
+            else
+                pUnit->Relocate(m_destinationPoints[0].x, m_destinationPoints[0].y, m_destinationPoints[0].z);
+        }
         else
-            pUnit->Relocate(m_destinationPoints[0].x, m_destinationPoints[0].y, m_destinationPoints[0].z); 
-
+        {
+            pUnit->GetMovementInfo().t_pos.x = m_destinationPoints[0].x;
+            pUnit->GetMovementInfo().t_pos.y = m_destinationPoints[0].y;
+            pUnit->GetMovementInfo().t_pos.z = m_destinationPoints[0].z;
+        }
+        
         Reset();
         return;
     }
@@ -158,6 +168,15 @@ void MoveSpline::Update(Unit* pUnit)
         float percentDone = float(elapsedTime) / float(m_moveTimeMs);
         uint32 reachedPoint = m_destinationPoints.size() * percentDone;
         if (reachedPoint > 1)
-            pUnit->Relocate(m_destinationPoints[reachedPoint].x, m_destinationPoints[reachedPoint].y, m_destinationPoints[reachedPoint].z);
+        {
+            if (m_transportGuid.IsEmpty())
+                pUnit->Relocate(m_destinationPoints[reachedPoint].x, m_destinationPoints[reachedPoint].y, m_destinationPoints[reachedPoint].z);
+            else
+            {
+                pUnit->GetMovementInfo().t_pos.x = m_destinationPoints[reachedPoint].x;
+                pUnit->GetMovementInfo().t_pos.y = m_destinationPoints[reachedPoint].y;
+                pUnit->GetMovementInfo().t_pos.z = m_destinationPoints[reachedPoint].z;
+            }
+        }   
     }
 }

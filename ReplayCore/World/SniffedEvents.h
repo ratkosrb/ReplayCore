@@ -317,13 +317,16 @@ struct SniffedEvent_WorldStateUpdate : SniffedEventCRTP<SniffedEvent_WorldStateU
     }
 };
 
-struct SniffedEvent_WorldObjectCreate1 : SniffedEventCRTP<SniffedEvent_WorldObjectCreate1>
+template <class Derived>
+struct SniffedEvent_WorldObjectCreate1Base : SniffedEventCRTP<Derived>
 {
-    SniffedEvent_WorldObjectCreate1(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o) :
-        m_objectGuid(objectGuid), m_location(mapId, x, y, z, o) {};
+    SniffedEvent_WorldObjectCreate1Base(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
+        m_objectGuid(objectGuid), m_location(mapId, x, y, z, o), m_transportGuid(transportGuid), m_transportPosition(transportX, transportY, transportZ, transportO) {};
     ObjectGuid m_objectGuid;
     WorldLocation m_location;
-    void Execute() const final;
+    ObjectGuid m_transportGuid;
+    Position m_transportPosition;
+    void Execute() const override;
     SniffedEventType GetType() const final
     {
         return SE_WORLDOBJECT_CREATE1;
@@ -334,21 +337,82 @@ struct SniffedEvent_WorldObjectCreate1 : SniffedEventCRTP<SniffedEvent_WorldObje
     }
 };
 
-struct SniffedEvent_WorldObjectCreate2 : SniffedEventCRTP<SniffedEvent_WorldObjectCreate2>
+struct SniffedEvent_WorldObjectCreate1 : SniffedEvent_WorldObjectCreate1Base<SniffedEvent_WorldObjectCreate1>
 {
-    SniffedEvent_WorldObjectCreate2(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o) :
-        m_objectGuid(objectGuid), m_location(mapId, x, y, z, o) {};
+    SniffedEvent_WorldObjectCreate1(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
+        SniffedEvent_WorldObjectCreate1Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO) {};
+};
+
+struct SniffedEvent_GameObjectCreate1 : SniffedEvent_WorldObjectCreate1Base<SniffedEvent_GameObjectCreate1>
+{
+    SniffedEvent_GameObjectCreate1(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 transportPathTimer) :
+        SniffedEvent_WorldObjectCreate1Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_transportPathTimer(transportPathTimer) {};
+    uint32 m_transportPathTimer = 0;
+    void Execute() const final;
+};
+
+struct SniffedEvent_UnitCreate1 : SniffedEvent_WorldObjectCreate1Base<SniffedEvent_UnitCreate1>
+{
+    SniffedEvent_UnitCreate1(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation) :
+        SniffedEvent_WorldObjectCreate1Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(m_moveFlags2), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
+    uint32 m_moveTime = 0;
+    uint32 m_moveFlags = 0;
+    uint32 m_moveFlags2 = 0;
+    float m_swimPitch = 0;
+    uint32 m_fallTime = 0;
+    JumpInfo m_jumpInfo;
+    float m_splineElevation = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+};
+
+template <class Derived>
+struct SniffedEvent_WorldObjectCreate2Base : SniffedEventCRTP<Derived>
+{
+    SniffedEvent_WorldObjectCreate2Base(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
+        m_objectGuid(objectGuid), m_location(mapId, x, y, z, o), m_transportGuid(transportGuid), m_transportPosition(transportX, transportY, transportZ, transportO) {};
     ObjectGuid m_objectGuid;
     WorldLocation m_location;
-    void Execute() const final;
+    ObjectGuid m_transportGuid;
+    Position m_transportPosition;
+    void Execute() const override;
     SniffedEventType GetType() const final
     {
-        return SE_WORLDOBJECT_CREATE2;
+        return SE_WORLDOBJECT_CREATE1;
     }
     ObjectGuid GetSourceGuid() const final
     {
         return m_objectGuid;
     }
+};
+
+struct SniffedEvent_WorldObjectCreate2 : SniffedEvent_WorldObjectCreate2Base<SniffedEvent_WorldObjectCreate2>
+{
+    SniffedEvent_WorldObjectCreate2(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
+        SniffedEvent_WorldObjectCreate2Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO) {};
+};
+
+struct SniffedEvent_GameObjectCreate2 : SniffedEvent_WorldObjectCreate2Base<SniffedEvent_GameObjectCreate2>
+{
+    SniffedEvent_GameObjectCreate2(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 transportPathTimer) :
+        SniffedEvent_WorldObjectCreate2Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_transportPathTimer(transportPathTimer) {};
+    uint32 m_transportPathTimer = 0;
+    void Execute() const final;
+};
+
+struct SniffedEvent_UnitCreate2 : SniffedEvent_WorldObjectCreate2Base<SniffedEvent_UnitCreate2>
+{
+    SniffedEvent_UnitCreate2(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation) :
+        SniffedEvent_WorldObjectCreate2Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(m_moveFlags2), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
+    uint32 m_moveTime = 0;
+    uint32 m_moveFlags = 0;
+    uint32 m_moveFlags2 = 0;
+    float m_swimPitch = 0;
+    uint32 m_fallTime = 0;
+    JumpInfo m_jumpInfo;
+    float m_splineElevation = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
 };
 
 struct SniffedEvent_WorldObjectDestroy : SniffedEventCRTP<SniffedEvent_WorldObjectDestroy>
@@ -462,18 +526,22 @@ struct SniffedEvent_UnitEmote : SniffedEventCRTP<SniffedEvent_UnitEmote>
 
 struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSideMovement>
 {
-    SniffedEvent_ClientSideMovement(ObjectGuid moverGuid, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint16 mapId, float x, float y, float z, float o, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle) :
-        m_moverGuid(moverGuid), m_opcodeName(opcodeName), m_moveTime(moveTime), m_moveFlags(moveFlags), m_location(mapId, x, y, z, o), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY) {};
+    SniffedEvent_ClientSideMovement(ObjectGuid moverGuid, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, uint16 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation) :
+        m_moverGuid(moverGuid), m_opcodeName(opcodeName), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(moveFlags2), m_location(mapId, x, y, z, o), m_transportGuid(transportGuid), m_transportPosition(transportX, transportY, transportZ, transportO), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
 
     ObjectGuid m_moverGuid;
     uint32 m_opcode = 0;
     std::string m_opcodeName;
     uint32 m_moveTime = 0;
     uint32 m_moveFlags = 0;
+    uint32 m_moveFlags2 = 0;
     WorldLocation m_location;
+    ObjectGuid m_transportGuid;
+    Position m_transportPosition;
     float m_swimPitch = 0;
     uint32 m_fallTime = 0;
     JumpInfo m_jumpInfo;
+    float m_splineElevation = 0;
     void Execute() const final;
     SniffedEventType GetType() const final
     {
@@ -487,8 +555,8 @@ struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSid
 
 struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSideMovement>
 {
-    SniffedEvent_ServerSideMovement(ObjectGuid moverGuid, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines) :
-        m_moverGuid(moverGuid), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines) {};
+    SniffedEvent_ServerSideMovement(ObjectGuid moverGuid, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines, ObjectGuid transportGuid) :
+        m_moverGuid(moverGuid), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines), m_transportGuid(transportGuid) {};
     
     ObjectGuid m_moverGuid;
     Vector3 m_startPosition;
@@ -497,6 +565,7 @@ struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSid
     uint32 m_splineFlags = 0;
     float m_finalOrientation = 0.0f;
     std::vector<Vector3> const m_splines;
+    ObjectGuid m_transportGuid;
     bool m_cyclic = false;
     bool m_catmullrom = false;
     void Execute() const final;

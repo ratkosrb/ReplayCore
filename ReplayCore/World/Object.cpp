@@ -18,16 +18,30 @@ bool Object::IsVisibleToClient() const
 
 bool WorldObject::IsWithinVisibilityDistance(WorldObject const* pObject) const
 {
-    if ((sReplayMgr.IsInitialized() || pObject->IsDynamicObject()) && !pObject->IsVisible())
+    if ((sReplayMgr.IsInitialized() || pObject->IsOnlyVisibleDuringReplay()) && !pObject->IsVisible())
         return false;
 
     if (GetMapId() != pObject->GetMapId())
         return false;
 
+    if (pObject->IsTransport())
+        return true;
+
+    if (ObjectGuid transportGuid = GetTransportGuid())
+        return sWorld.IsGuidVisibleToClient(transportGuid);
+
     if (GetDistance3D(pObject) <= DEFAULT_VISIBILITY_DISTANCE)
         return true;
 
     return false;
+}
+
+bool WorldObject::IsOnlyVisibleDuringReplay() const
+{
+    if (!GetTransportGuid().IsEmpty())
+        return true;
+
+    return IsDynamicObject() || IsTransport();
 }
 
 uint32 WorldObject::GetZoneId() const
@@ -427,13 +441,17 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
     if (target == this)                                     // building packet for yourself
         updateFlags |= UPDATEFLAG_SELF;
 
+    if (IsTransport())
+        updateFlags |= UPDATEFLAG_TRANSPORT;
+
     if (m_isNewObject)
     {
         updatetype = UPDATETYPE_CREATE_OBJECT2;
         m_isNewObject = false;
     }
 
-    //printf("BuildCreateUpdate: update-type: %u, object-type: %u got updateFlags: %X\n", updatetype, m_objectTypeId, updateFlags);
+    if (IsTransport())
+    printf("BuildCreateUpdate: update-type: %u, object-type: %u got updateFlags: %X\n", updatetype, m_objectTypeId, updateFlags);
 
     ByteBuffer buf(500);
     buf << (uint8)updatetype;
@@ -580,7 +598,39 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
     }
     else
     {
-        if (updateFlags & UPDATEFLAG_HAS_POSITION)                     // 0x40
+        if (updateFlags & UPDATEFLAG_POSITION)
+        {
+            WorldObject const* wo = static_cast<WorldObject const*>(this);
+
+            ObjectGuid transportGuid = wo->GetTransportGuid();
+
+            *data << transportGuid.WriteAsPacked();
+
+            *data << wo->GetPositionX();
+            *data << wo->GetPositionY();
+            *data << wo->GetPositionZ();
+
+            if (!transportGuid.IsEmpty())
+            {
+                *data << wo->GetTransOffsetX();
+                *data << wo->GetTransOffsetY();
+                *data << wo->GetTransOffsetZ();
+            }
+            else
+            {
+                *data << wo->GetPositionX();
+                *data << wo->GetPositionY();
+                *data << wo->GetPositionZ();
+            }
+
+            *data << wo->GetOrientation();
+
+            if (GetTypeId() == TYPEID_CORPSE)
+                *data << float(wo->GetOrientation());
+            else
+                *data << float(0);
+        }
+        else if (updateFlags & UPDATEFLAG_HAS_POSITION)                     // 0x40
         {
             WorldObject* object = ((WorldObject*)this);
 
@@ -615,7 +665,7 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
     if (updateFlags & UPDATEFLAG_TRANSPORT)
     {
         // transport progress or mstime.
-        *data << uint32(sWorld.GetServerTimeMs());
+        *data << uint32(((GameObject*)this)->GetPathTimer());
     }
 
     // 0x80

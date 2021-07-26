@@ -1,12 +1,16 @@
 #include "DynamicObject.h"
 #include "WorldServer.h"
 #include "ReplayMgr.h"
+#include "../Defines/ClientVersions.h"
 
 DynamicObject::DynamicObject(DynamicObjectData const& dynamicObjectData) : WorldObject(dynamicObjectData.guid)
 {
     m_objectTypeMask |= TYPEMASK_DYNAMICOBJECT;
     m_objectTypeId = TYPEID_DYNAMICOBJECT;
     m_updateFlags = (UPDATEFLAG_ALL | UPDATEFLAG_HAS_POSITION);
+
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        m_updateFlags |= UPDATEFLAG_POSITION;
 
     m_valuesCount = sWorld.GetUpdateField("DYNAMICOBJECT_END");
     assert(m_valuesCount);

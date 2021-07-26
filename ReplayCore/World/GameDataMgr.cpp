@@ -123,9 +123,22 @@ uint8 GameDataMgr::GetMoveSpeedsCount() const
     return MAX_MOVE_TYPE_WOTLK;
 }
 
-uint32 GameDataMgr::ConvertMovementFlags(uint32 moveFlags) const
+uint32 GameDataMgr::GetTransportMoveFlag() const
 {
-    return ConvertMovementFlagsForBuild(moveFlags, sWorld.GetClientBuild());
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        return Vanilla::MOVEFLAG_ONTRANSPORT;
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return TBC::MOVEFLAG_ONTRANSPORT;
+    else
+        return WotLK::MOVEFLAG_ONTRANSPORT;
+}
+
+uint32 GameDataMgr::ConvertMovementFlags(uint32 moveFlags, bool onTransport) const
+{
+    moveFlags = ConvertMovementFlagsForBuild(moveFlags, sWorld.GetClientBuild());
+    if (onTransport)
+        moveFlags |= GetTransportMoveFlag();
+    return moveFlags;
 }
 
 uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const

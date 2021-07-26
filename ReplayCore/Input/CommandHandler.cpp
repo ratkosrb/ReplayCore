@@ -938,3 +938,38 @@ bool CommandHandler::HandleDistance()
     PSendSysMessage("Distance to target is %g yards.", pPlayer->GetDistance3D(pTarget));
     return true;
 }
+
+bool CommandHandler::HandleMoveInfo()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    Unit* pTarget = pPlayer->GetTarget();
+    if (!pTarget)
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    MovementInfo const& moveInfo = pTarget->GetMovementInfo();
+    PSendSysMessage("Movement info for %s:", pTarget->GetGuidStr().c_str());
+    PSendSysMessage("Position: %g %g %g %g", moveInfo.pos.x, moveInfo.pos.y, moveInfo.pos.z, moveInfo.pos.o);
+    PSendSysMessage("Transport Guid: %u", moveInfo.t_guid);
+    PSendSysMessage("Transport Position: %g %g %g %g", moveInfo.t_pos.x, moveInfo.t_pos.y, moveInfo.t_pos.z, moveInfo.t_pos.o);
+    PSendSysMessage("Time: %u", moveInfo.time);
+    PSendSysMessage("Flags: %u", moveInfo.moveFlags);
+    PSendSysMessage("FlagsExtra: %u", moveInfo.moveFlags2WotLK);
+    PSendSysMessage("Swim Pitch: %g", moveInfo.s_pitch);
+    PSendSysMessage("Fall Time: %u", moveInfo.fallTime);
+    PSendSysMessage("Jump XY Speed: %g", moveInfo.jump.xyspeed);
+    PSendSysMessage("Jump Z Speed: %g", moveInfo.jump.zspeed);
+    PSendSysMessage("Jump Cos Angle: %g", moveInfo.jump.cosAngle);
+    PSendSysMessage("Jump Sin Angle: %g", moveInfo.jump.sinAngle);
+    PSendSysMessage("Spline Elevation: %g", moveInfo.splineElevation);
+
+    return true;
+}

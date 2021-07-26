@@ -25,45 +25,6 @@ public :
     Unit(CreatureData const& unitData);
 
     void Update() override;
-    void AddUnitMovementFlag(uint32 f) { m_movementInfo.moveFlags |= f; }
-    void RemoveUnitMovementFlag(uint32 f) { m_movementInfo.moveFlags &= ~f; }
-    bool HasUnitMovementFlag(uint32 f) const { return (m_movementInfo.moveFlags & f) == f; }
-    uint32 GetUnitMovementFlags() const { return m_movementInfo.moveFlags; }
-    void SetUnitMovementFlags(uint32 f) { m_movementInfo.moveFlags = f; }
-    
-    MovementInfo& GetMovementInfo() { return m_movementInfo; }
-    MovementInfo const& GetMovementInfo() const { return m_movementInfo; }
-    void SetMovementInfo(MovementInfo const& movementInfo)
-    {
-        m_movementInfo = movementInfo;
-        m_location.x = movementInfo.pos.x;
-        m_location.y = movementInfo.pos.y;
-        m_location.z = movementInfo.pos.z;
-        m_location.o = movementInfo.pos.o;
-    }
-    void Relocate(WorldLocation const& location) final
-    {
-        SetLocation(location);
-        m_movementInfo.pos.x = location.x;
-        m_movementInfo.pos.y = location.y;
-        m_movementInfo.pos.z = location.z;
-        m_movementInfo.pos.o = location.o;
-    }
-    void Relocate(float x, float y, float z) final
-    {
-        SetPosition(x, y, z);
-        m_movementInfo.pos.x = x;
-        m_movementInfo.pos.y = y;
-        m_movementInfo.pos.z = z;
-    }
-    void Relocate(float x, float y, float z, float o) final
-    {
-        SetPosition(x, y, z, o);
-        m_movementInfo.pos.x = x;
-        m_movementInfo.pos.y = y;
-        m_movementInfo.pos.z = z;
-        m_movementInfo.pos.o = o;
-    }
 
     ObjectGuid GetCharmGuid() const;
     void SetCharmGuid(ObjectGuid guid);
@@ -179,7 +140,6 @@ public :
     MoveSpline m_moveSpline;
 protected:
     ObjectGuid m_meleeVictim;
-    MovementInfo m_movementInfo;
     float m_speedRate[MAX_MOVE_TYPE_WOTLK] = {};
     Aura m_auras[MAX_AURA_SLOTS] = {};
 };

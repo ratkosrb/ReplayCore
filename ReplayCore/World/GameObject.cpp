@@ -1,4 +1,5 @@
 #include "GameObject.h"
+#include "GameObjectDefines.h"
 #include "WorldServer.h"
 #include "ReplayMgr.h"
 #include "../Defines//ClientVersions.h"
@@ -8,6 +9,8 @@ GameObject::GameObject(GameObjectData const& gameObjectData) : WorldObject(gameO
     m_objectTypeMask |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
     m_updateFlags = (UPDATEFLAG_ALL | UPDATEFLAG_HAS_POSITION);
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        m_updateFlags |= UPDATEFLAG_POSITION;
     if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
         m_updateFlags |= UPDATEFLAG_ROTATION;
 
@@ -85,6 +88,15 @@ void GameObject::SetType(uint8 type)
         SetByteValue(GAMEOBJECT_BYTES_1, 1, type);
 }
 
+uint8 GameObject::GetType() const
+{
+    if (uint16 GAMEOBJECT_TYPE_ID = sWorld.GetUpdateField("GAMEOBJECT_TYPE_ID"))
+        return GetUInt32Value(GAMEOBJECT_TYPE_ID);
+    else if (uint16 GAMEOBJECT_BYTES_1 = sWorld.GetUpdateField("GAMEOBJECT_BYTES_1"))
+        return GetByteValue(GAMEOBJECT_BYTES_1, 1);
+    return 0;
+}
+
 void GameObject::SetArtKit(uint8 artKit)
 {
     if (uint16 GAMEOBJECT_ARTKIT = sWorld.GetUpdateField("GAMEOBJECT_ARTKIT"))
@@ -122,4 +134,38 @@ void GameObject::SetDynamicFlags(uint16 flags)
 void GameObject::SetPathProgress(uint16 pathProgress)
 {
     SetUInt16Value("GAMEOBJECT_DYNAMIC", 1, pathProgress);
+}
+
+uint16 GameObject::GetPathProgress() const
+{
+    return GetUInt16Value("GAMEOBJECT_DYNAMIC", 1);
+}
+
+uint32 GameObject::GetPathTimer() const
+{
+    if (m_pathTimer)
+    {
+        uint32 pathTimer = m_pathTimer;
+        uint32 const lastUpdate = GetLastPositionUpdate();
+        uint32 const currentTime = sReplayMgr.GetCurrentSniffTime();
+
+        if (lastUpdate > currentTime)
+            pathTimer -= (lastUpdate - currentTime) * 1000;
+        else
+            pathTimer += (currentTime - lastUpdate) * 1000;
+
+        return pathTimer;
+    }
+    return 0;
+}
+
+bool GameObject::IsTransport() const
+{
+    switch (GetType())
+    {
+        case GAMEOBJECT_TYPE_TRANSPORT:
+        case GAMEOBJECT_TYPE_MO_TRANSPORT:
+            return true;
+    }
+    return false;
 }

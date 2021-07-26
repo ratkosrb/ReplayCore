@@ -58,8 +58,9 @@ public:
     bool HandleWaypointsHide();
     bool HandleWaypointInfo();
     bool HandleDistance();
+    bool HandleMoveInfo();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[36] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[37] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -97,6 +98,7 @@ private:
         { "wphide", &CommandHandler::HandleWaypointsHide },
         { "wpinfo", &CommandHandler::HandleWaypointInfo },
         { "distance", &CommandHandler::HandleDistance },
+        { "moveinfo", &CommandHandler::HandleMoveInfo },
     };
 
     bool m_console = true;
