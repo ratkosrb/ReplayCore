@@ -38,19 +38,13 @@ void WorldObjectData::InitializeWorldObject(WorldObject* pObject) const
     InitializeObject(pObject);
     pObject->Relocate(location);
 
-    std::set<SniffedEventType> createEventTypes;
-    createEventTypes.insert(SE_WORLDOBJECT_CREATE1);
-    createEventTypes.insert(SE_WORLDOBJECT_CREATE2);
-
-    if (auto pSniffedEvent = sReplayMgr.GetFirstEventForTarget(guid, createEventTypes))
+    // assign transport data to spawn
+    if (auto pSniffedEvent = sReplayMgr.GetFirstEventForTarget(guid, SE_WORLDOBJECT_CREATE))
     {
-        if (pSniffedEvent->GetType() == SE_WORLDOBJECT_CREATE1)
-        {
-            // i think this cast is undefined behavior but it works
-            auto pCreate1Event = std::static_pointer_cast<SniffedEvent_WorldObjectCreate1>(pSniffedEvent);
-            pObject->GetMovementInfo().t_guid = pCreate1Event->m_transportGuid;
-            pObject->GetMovementInfo().t_pos = pCreate1Event->m_transportPosition;
-        }
+        // i think this cast is undefined behavior but it works
+        auto pCreate1Event = std::static_pointer_cast<SniffedEvent_WorldObjectCreate>(pSniffedEvent);
+        pObject->GetMovementInfo().t_guid = pCreate1Event->m_transportGuid;
+        pObject->GetMovementInfo().t_pos = pCreate1Event->m_transportPosition;
     }
 }
 
@@ -1147,13 +1141,13 @@ void ReplayMgr::Uninitialize()
     m_eventsMap.clear();
 }
 
-std::shared_ptr<SniffedEvent> ReplayMgr::GetFirstEventForTarget(ObjectGuid guid, std::set<SniffedEventType> const& eventTypes)
+std::shared_ptr<SniffedEvent> ReplayMgr::GetFirstEventForTarget(ObjectGuid guid, SniffedEventType eventType)
 {
     for (const auto& itr : m_eventsMapBackup)
     {
         if (itr.second->GetSourceGuid() == guid )
         {
-            if (eventTypes.find(itr.second->GetType()) != eventTypes.end())
+            if (eventType == itr.second->GetType())
                 return itr.second;
         }
     }

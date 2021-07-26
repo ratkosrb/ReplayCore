@@ -309,12 +309,9 @@ public:
     void LoadInitialWorldStates();
     std::map<uint32, uint32> GetInitialWorldStatesForCurrentTime();
     void LoadWorldStateUpdates();
-    template <class T>
-    void LoadWorldObjectCreate(char const* tableName, uint32 typeId);
-    template <class T>
-    void LoadGameObjectCreate(char const* tableName, uint32 typeId);
-    template <class T>
-    void LoadUnitCreate(char const* tableName, uint32 typeId);
+    void LoadWorldObjectCreate(char const* tableName, uint32 typeId, bool isSpawn);
+    void LoadGameObjectCreate(char const* tableName, uint32 typeId, bool isSpawn);
+    void LoadUnitCreate(char const* tableName, uint32 typeId, bool isSpawn);
     void LoadWorldObjectDestroy(char const* tableName, uint32 typeId);
     template <class T>
     void LoadUnitAttackToggle(char const* tableName, uint32 typeId);
@@ -356,7 +353,7 @@ public:
     void LoadXPGainLog();
     void LoadFactionStandingUpdates();
 
-    std::shared_ptr<SniffedEvent> GetFirstEventForTarget(ObjectGuid guid, std::set<SniffedEventType> const& eventTypes);
+    std::shared_ptr<SniffedEvent> GetFirstEventForTarget(ObjectGuid guid, SniffedEventType eventType);
     void GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList);
 
 #pragma endregion SniffedEvents

@@ -28,8 +28,7 @@ enum SniffedEventType : uint8
     SE_WEATHER_UPDATE,
     SE_WORLD_TEXT,
     SE_WORLD_STATE_UPDATE,
-    SE_WORLDOBJECT_CREATE1,
-    SE_WORLDOBJECT_CREATE2,
+    SE_WORLDOBJECT_CREATE,
     SE_WORLDOBJECT_DESTROY,
     SE_UNIT_ATTACK_LOG,
     SE_UNIT_ATTACK_START,
@@ -109,10 +108,8 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "World Text";
         case SE_WORLD_STATE_UPDATE:
             return "World State Update";
-        case SE_WORLDOBJECT_CREATE1:
-            return "WorldObject Create 1";
-        case SE_WORLDOBJECT_CREATE2:
-            return "WorldObject Create 2";
+        case SE_WORLDOBJECT_CREATE:
+            return "WorldObject Create";
         case SE_WORLDOBJECT_DESTROY:
             return "WorldObject Destroy";
         case SE_UNIT_ATTACK_LOG:
@@ -318,18 +315,19 @@ struct SniffedEvent_WorldStateUpdate : SniffedEventCRTP<SniffedEvent_WorldStateU
 };
 
 template <class Derived>
-struct SniffedEvent_WorldObjectCreate1Base : SniffedEventCRTP<Derived>
+struct SniffedEvent_WorldObjectCreate_Base : SniffedEventCRTP<Derived>
 {
-    SniffedEvent_WorldObjectCreate1Base(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
-        m_objectGuid(objectGuid), m_location(mapId, x, y, z, o), m_transportGuid(transportGuid), m_transportPosition(transportX, transportY, transportZ, transportO) {};
+    SniffedEvent_WorldObjectCreate_Base(ObjectGuid objectGuid, bool isSpawn, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
+        m_objectGuid(objectGuid), m_isSpawn(isSpawn), m_location(mapId, x, y, z, o), m_transportGuid(transportGuid), m_transportPosition(transportX, transportY, transportZ, transportO) {};
     ObjectGuid m_objectGuid;
+    bool m_isSpawn = false;
     WorldLocation m_location;
     ObjectGuid m_transportGuid;
     Position m_transportPosition;
     void Execute() const override;
     SniffedEventType GetType() const final
     {
-        return SE_WORLDOBJECT_CREATE1;
+        return SE_WORLDOBJECT_CREATE;
     }
     ObjectGuid GetSourceGuid() const final
     {
@@ -337,73 +335,24 @@ struct SniffedEvent_WorldObjectCreate1Base : SniffedEventCRTP<Derived>
     }
 };
 
-struct SniffedEvent_WorldObjectCreate1 : SniffedEvent_WorldObjectCreate1Base<SniffedEvent_WorldObjectCreate1>
+struct SniffedEvent_WorldObjectCreate : SniffedEvent_WorldObjectCreate_Base<SniffedEvent_WorldObjectCreate>
 {
-    SniffedEvent_WorldObjectCreate1(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
-        SniffedEvent_WorldObjectCreate1Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO) {};
+    SniffedEvent_WorldObjectCreate(ObjectGuid objectGuid, bool isSpawn, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
+        SniffedEvent_WorldObjectCreate_Base(objectGuid, isSpawn, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO) {};
 };
 
-struct SniffedEvent_GameObjectCreate1 : SniffedEvent_WorldObjectCreate1Base<SniffedEvent_GameObjectCreate1>
+struct SniffedEvent_GameObjectCreate : SniffedEvent_WorldObjectCreate_Base<SniffedEvent_GameObjectCreate>
 {
-    SniffedEvent_GameObjectCreate1(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 transportPathTimer) :
-        SniffedEvent_WorldObjectCreate1Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_transportPathTimer(transportPathTimer) {};
+    SniffedEvent_GameObjectCreate(ObjectGuid objectGuid, bool isSpawn, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 transportPathTimer) :
+        SniffedEvent_WorldObjectCreate_Base(objectGuid, isSpawn, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_transportPathTimer(transportPathTimer) {};
     uint32 m_transportPathTimer = 0;
     void Execute() const final;
 };
 
-struct SniffedEvent_UnitCreate1 : SniffedEvent_WorldObjectCreate1Base<SniffedEvent_UnitCreate1>
+struct SniffedEvent_UnitCreate : SniffedEvent_WorldObjectCreate_Base<SniffedEvent_UnitCreate>
 {
-    SniffedEvent_UnitCreate1(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation) :
-        SniffedEvent_WorldObjectCreate1Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(m_moveFlags2), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
-    uint32 m_moveTime = 0;
-    uint32 m_moveFlags = 0;
-    uint32 m_moveFlags2 = 0;
-    float m_swimPitch = 0;
-    uint32 m_fallTime = 0;
-    JumpInfo m_jumpInfo;
-    float m_splineElevation = 0;
-    void Execute() const final;
-    void PepareForCurrentClient() final;
-};
-
-template <class Derived>
-struct SniffedEvent_WorldObjectCreate2Base : SniffedEventCRTP<Derived>
-{
-    SniffedEvent_WorldObjectCreate2Base(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
-        m_objectGuid(objectGuid), m_location(mapId, x, y, z, o), m_transportGuid(transportGuid), m_transportPosition(transportX, transportY, transportZ, transportO) {};
-    ObjectGuid m_objectGuid;
-    WorldLocation m_location;
-    ObjectGuid m_transportGuid;
-    Position m_transportPosition;
-    void Execute() const override;
-    SniffedEventType GetType() const final
-    {
-        return SE_WORLDOBJECT_CREATE1;
-    }
-    ObjectGuid GetSourceGuid() const final
-    {
-        return m_objectGuid;
-    }
-};
-
-struct SniffedEvent_WorldObjectCreate2 : SniffedEvent_WorldObjectCreate2Base<SniffedEvent_WorldObjectCreate2>
-{
-    SniffedEvent_WorldObjectCreate2(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO) :
-        SniffedEvent_WorldObjectCreate2Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO) {};
-};
-
-struct SniffedEvent_GameObjectCreate2 : SniffedEvent_WorldObjectCreate2Base<SniffedEvent_GameObjectCreate2>
-{
-    SniffedEvent_GameObjectCreate2(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 transportPathTimer) :
-        SniffedEvent_WorldObjectCreate2Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_transportPathTimer(transportPathTimer) {};
-    uint32 m_transportPathTimer = 0;
-    void Execute() const final;
-};
-
-struct SniffedEvent_UnitCreate2 : SniffedEvent_WorldObjectCreate2Base<SniffedEvent_UnitCreate2>
-{
-    SniffedEvent_UnitCreate2(ObjectGuid objectGuid, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation) :
-        SniffedEvent_WorldObjectCreate2Base(objectGuid, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(m_moveFlags2), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
+    SniffedEvent_UnitCreate(ObjectGuid objectGuid, bool isSpawn, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation) :
+        SniffedEvent_WorldObjectCreate_Base(objectGuid, isSpawn, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(m_moveFlags2), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
     uint32 m_moveTime = 0;
     uint32 m_moveFlags = 0;
     uint32 m_moveFlags2 = 0;
@@ -1570,160 +1519,5 @@ struct SniffedEvent_FactionStandingUpdate : SniffedEventCRTP<SniffedEvent_Factio
         return SE_FACTION_STANDING_UPDATE;
     }
 };
-
-/*
-
-struct SniffedEvent_UnitDestroy : SniffedEvent
-{
-    SniffedEvent_UnitDestroy(uint32 guid, uint32 entry, uint32 type) : m_guid(guid), m_entry(entry), m_type(type) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_type = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_DESTROY;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_type));
-    }
-};
-
-struct SniffedEvent_ServerSideMovement : SniffedEvent
-{
-    SniffedEvent_ServerSideMovement(uint32 guid, uint32 entry, uint32 typeId, uint32 moveTime, uint32 splineFlags, float x, float y, float z, float o, std::vector<G3D::Vector3> const* splines) :
-        m_guid(guid), m_entry(entry), m_typeId(typeId), m_moveTime(moveTime), m_splineFlags(splineFlags), m_x(x), m_y(y), m_z(z), m_o(o), m_splines(splines) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_typeId = 0;
-    uint32 m_moveTime = 0;
-    uint32 m_splineFlags = 0;
-    float m_x = 0.0f;
-    float m_y = 0.0f;
-    float m_z = 0.0f;
-    float m_o = 0.0f;
-    std::vector<G3D::Vector3> const* m_splines;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_SERVERSIDE_MOVEMENT;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_typeId));
-    }
-};
-
-struct SniffedEvent_UnitUpdate_orientation : SniffedEvent
-{
-    SniffedEvent_UnitUpdate_orientation(uint32 guid, uint32 entry, uint32 typeId, float o) :
-        m_guid(guid), m_entry(entry), m_typeId(typeId), m_o(o) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    uint32 m_typeId = 0;
-    float m_o = 0.0f;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_UNIT_UPDATE_ORIENTATION;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TypeID(m_typeId));
-    }
-};
-
-struct DynamicObjectSpawn
-{
-    uint32 m_casterGuid = 0;
-    uint32 m_casterId = 0;
-    uint32 m_casterType;
-    uint32 m_map = 0;
-    float m_x = 0.0f;
-    float m_y = 0.0f;
-    float m_z = 0.0f;
-    float m_o = 0.0f;
-    uint32 m_spellId = 0;
-    float m_radius = 0.0f;
-    uint32 m_type = 0;
-};
-
-struct SniffedEvent_DynamicObjectCreate : SniffedEvent
-{
-    SniffedEvent_DynamicObjectCreate(DynamicObjectSpawn objectData, uint32 duration) :
-        m_objectData(objectData), m_duration(duration) {};
-    DynamicObjectSpawn m_objectData;
-    uint32 m_duration = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_DYNAMICOBJECT_CREATE;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_objectData.m_casterGuid, m_objectData.m_casterId, TypeID(m_objectData.m_casterType));
-    }
-};
-
-struct SniffedEvent_GameObjectCreate1 : SniffedEvent
-{
-    SniffedEvent_GameObjectCreate1(uint32 guid, uint32 entry, float x, float y, float z, float o) :
-        m_guid(guid), m_entry(entry), m_x(x), m_y(y), m_z(z), m_o(o) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    float m_x = 0.0f;
-    float m_y = 0.0f;
-    float m_z = 0.0f;
-    float m_o = 0.0f;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_GAMEOBJECT_CREATE1;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_GameObjectCreate2 : SniffedEvent
-{
-    SniffedEvent_GameObjectCreate2(uint32 guid, uint32 entry, float x, float y, float z, float o) :
-        m_guid(guid), m_entry(entry), m_x(x), m_y(y), m_z(z), m_o(o) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    float m_x = 0.0f;
-    float m_y = 0.0f;
-    float m_z = 0.0f;
-    float m_o = 0.0f;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_GAMEOBJECT_CREATE2;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-struct SniffedEvent_GameObjectDestroy : SniffedEvent
-{
-    SniffedEvent_GameObjectDestroy(uint32 guid, uint32 entry) : m_guid(guid), m_entry(entry) {};
-    uint32 m_guid = 0;
-    uint32 m_entry = 0;
-    void Execute() const final;
-    SniffedEventType GetType() const final
-    {
-        return SE_GAMEOBJECT_DESTROY;
-    }
-    KnownObject GetSourceObject() const final
-    {
-        return KnownObject(m_guid, m_entry, TYPEID_GAMEOBJECT);
-    }
-};
-
-*/
 
 #endif
