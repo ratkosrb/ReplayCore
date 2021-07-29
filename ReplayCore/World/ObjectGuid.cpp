@@ -58,27 +58,9 @@ std::string ObjectGuid::GetString(bool includeName) const
 
     if (includeName)
     {
-        switch (GetTypeId())
-        {
-            case TYPEID_UNIT:
-            {
-                if (CreatureTemplate const* pTemplate = sGameDataMgr.GetCreatureTemplate(GetEntry()))
-                    str << " " << pTemplate->name;
-                break;
-            }
-            case TYPEID_GAMEOBJECT:
-            {
-                if (GameObjectTemplate const* pTemplate = sGameDataMgr.GetGameObjectTemplate(GetEntry()))
-                    str << " " << pTemplate->name;
-                break;
-            }
-            case TYPEID_PLAYER:
-            {
-                std::string name = sWorld.GetPlayerName(*this);
-                if (!name.empty())
-                    str << " " << name;
-            }
-        }
+        std::string name = GetName();
+        if (!name.empty())
+            str << " " << name;
     }
 
     str << " (";
@@ -86,6 +68,39 @@ std::string ObjectGuid::GetString(bool includeName) const
         str << "Entry: " << GetEntry() << " ";
     str << "Guid: " << GetCounter() << ")";
     return str.str();
+}
+
+std::string ObjectGuid::GetName() const
+{
+    if (IsEmpty())
+        return std::string();
+
+    switch (GetTypeId())
+    {
+        case TYPEID_UNIT:
+        {
+            if (CreatureTemplate const* pTemplate = sGameDataMgr.GetCreatureTemplate(GetEntry()))
+                return pTemplate->name;
+            break;
+        }
+        case TYPEID_GAMEOBJECT:
+        {
+            if (GameObjectTemplate const* pTemplate = sGameDataMgr.GetGameObjectTemplate(GetEntry()))
+                return pTemplate->name;
+            break;
+        }
+        case TYPEID_PLAYER:
+        {
+            return sWorld.GetPlayerName(*this);
+        }
+        default:
+        {
+            printf("Error: Unsupported object type in ObjectGuid::GetName!\n");
+            break;
+        }
+    }
+
+    return std::string();
 }
 
 void ObjectGuid::Set(uint64 const& guid)

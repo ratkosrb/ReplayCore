@@ -1027,13 +1027,15 @@ struct SniffedEvent_UnitUpdate_auras : SniffedEventCRTP<SniffedEvent_UnitUpdate_
 
 struct SniffedEvent_CreatureText : SniffedEventCRTP<SniffedEvent_CreatureText>
 {
-    SniffedEvent_CreatureText(ObjectGuid senderGuid, std::string creatureName, std::string text, uint32 chatType, uint32 language) :
-        m_senderGuid(senderGuid), m_creatureName(creatureName), m_text(text), m_chatType(chatType), m_language(language) {};
+    SniffedEvent_CreatureText(ObjectGuid senderGuid, std::string creatureName, std::string text, uint32 chatType, uint32 language, ObjectGuid targetGuid, std::string targetName) :
+        m_senderGuid(senderGuid), m_creatureName(creatureName), m_text(text), m_chatType(chatType), m_language(language), m_targetGuid(targetGuid), m_targetName(targetName) {};
     ObjectGuid m_senderGuid;
     std::string m_creatureName;
     std::string m_text;
     uint32 m_chatType = 0;
     uint32 m_language = 0;
+    ObjectGuid m_targetGuid;
+    std::string m_targetName;
     void Execute() const final;
     void PepareForCurrentClient() final;
     SniffedEventType GetType() const final

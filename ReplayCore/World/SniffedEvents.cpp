@@ -1763,8 +1763,8 @@ void ReplayMgr::LoadCreatureTextTemplate()
 
 void ReplayMgr::LoadCreatureText()
 {
-    //                                             0             1       2        3
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `entry`, `group_id` FROM `creature_text` ORDER BY `unixtimems`"))
+    //                                             0             1       2        3           4              5            6
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `entry`, `group_id`, `target_guid`, `target_id`, `target_type` FROM `creature_text` ORDER BY `unixtimems`"))
     {
         do
         {
@@ -1775,6 +1775,10 @@ void ReplayMgr::LoadCreatureText()
             uint32 creatureId = fields[2].GetUInt32();
             ObjectGuid sourceGuid = ObjectGuid(HIGHGUID_UNIT, creatureId, creatureGuidLow);
             uint32 groupId = fields[3].GetUInt32();
+            uint32 targetGuidLow = fields[4].GetUInt32();
+            uint32 targetId = fields[5].GetUInt32();
+            std::string targetType = fields[6].GetCppString();
+            ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
 
             CreatureTemplate const* pCreatureTemplate = sGameDataMgr.GetCreatureTemplate(creatureId);
             if (!pCreatureTemplate)
@@ -1790,7 +1794,7 @@ void ReplayMgr::LoadCreatureText()
                 continue;
             }
 
-            std::shared_ptr<SniffedEvent_CreatureText> newEvent = std::make_shared<SniffedEvent_CreatureText>(sourceGuid, pCreatureTemplate->name, pTextEntry->text, pTextEntry->chatType, pTextEntry->language);
+            std::shared_ptr<SniffedEvent_CreatureText> newEvent = std::make_shared<SniffedEvent_CreatureText>(sourceGuid, pCreatureTemplate->name, pTextEntry->text, pTextEntry->chatType, pTextEntry->language, targetGuid, targetGuid.GetName());
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());
@@ -1810,7 +1814,7 @@ void SniffedEvent_CreatureText::Execute() const
     if (!sWorld.IsClientInWorld())
         return;
 
-    sWorld.SendChatPacket(m_chatType, m_text.c_str(), m_language, 0, GetSourceGuid(), m_creatureName.c_str());
+    sWorld.SendChatPacket(m_chatType, m_text.c_str(), m_language, 0, GetSourceGuid(), m_creatureName.c_str(), m_targetGuid, m_targetName.c_str());
 }
 
 void ReplayMgr::LoadCreatureEquipmentUpdate()

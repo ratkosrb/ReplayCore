@@ -1088,56 +1088,56 @@ void WorldServer::SendChatPacket(uint32 msgtype, char const* message, uint32 lan
 
         switch (msgtype)
         {
-        case WotLK::CHAT_MSG_MONSTER_SAY:
-        case WotLK::CHAT_MSG_MONSTER_PARTY:
-        case WotLK::CHAT_MSG_MONSTER_YELL:
-        case WotLK::CHAT_MSG_MONSTER_WHISPER:
-        case WotLK::CHAT_MSG_MONSTER_EMOTE:
-        case WotLK::CHAT_MSG_RAID_BOSS_WHISPER:
-        case WotLK::CHAT_MSG_RAID_BOSS_EMOTE:
-        case WotLK::CHAT_MSG_BNET:
-        case WotLK::CHAT_MSG_WHISPER_FOREIGN:
-            assert(senderName);
-            data << uint32(strlen(senderName) + 1);
-            data << senderName;
-            data << ObjectGuid(targetGuid);                         // Unit Target
-            if (targetGuid && !targetGuid.IsPlayer() && !targetGuid.IsPet() && (msgtype != WotLK::CHAT_MSG_WHISPER_FOREIGN))
-            {
-                data << uint32(strlen(targetName) + 1);             // target name length
-                data << targetName;                                 // target name
-            }
-            break;
-        case WotLK::CHAT_MSG_BG_SYSTEM_NEUTRAL:
-        case WotLK::CHAT_MSG_BG_SYSTEM_ALLIANCE:
-        case WotLK::CHAT_MSG_BG_SYSTEM_HORDE:
-            data << ObjectGuid(targetGuid);                         // Unit Target
-            if (targetGuid && !targetGuid.IsPlayer())
-            {
-                assert(targetName);
-                data << uint32(strlen(targetName) + 1);             // target name length
-                data << targetName;                                 // target name
-            }
-            break;
-        case WotLK::CHAT_MSG_ACHIEVEMENT:
-        case WotLK::CHAT_MSG_GUILD_ACHIEVEMENT:
-            data << ObjectGuid(targetGuid);                         // Unit Target
-            isAchievement = true;
-            break;
-        default:
-            if (isGM)
-            {
+            case WotLK::CHAT_MSG_MONSTER_SAY:
+            case WotLK::CHAT_MSG_MONSTER_PARTY:
+            case WotLK::CHAT_MSG_MONSTER_YELL:
+            case WotLK::CHAT_MSG_MONSTER_WHISPER:
+            case WotLK::CHAT_MSG_MONSTER_EMOTE:
+            case WotLK::CHAT_MSG_RAID_BOSS_WHISPER:
+            case WotLK::CHAT_MSG_RAID_BOSS_EMOTE:
+            case WotLK::CHAT_MSG_BNET:
+            case WotLK::CHAT_MSG_WHISPER_FOREIGN:
                 assert(senderName);
                 data << uint32(strlen(senderName) + 1);
                 data << senderName;
-            }
+                data << ObjectGuid(targetGuid);                         // Unit Target
+                if (targetGuid && !targetGuid.IsPlayer() && !targetGuid.IsPet() && (msgtype != WotLK::CHAT_MSG_WHISPER_FOREIGN))
+                {
+                    data << uint32(strlen(targetName) + 1);             // target name length
+                    data << targetName;                                 // target name
+                }
+                break;
+            case WotLK::CHAT_MSG_BG_SYSTEM_NEUTRAL:
+            case WotLK::CHAT_MSG_BG_SYSTEM_ALLIANCE:
+            case WotLK::CHAT_MSG_BG_SYSTEM_HORDE:
+                data << ObjectGuid(targetGuid);                         // Unit Target
+                if (targetGuid && !targetGuid.IsPlayer())
+                {
+                    assert(targetName);
+                    data << uint32(strlen(targetName) + 1);             // target name length
+                    data << targetName;                                 // target name
+                }
+                break;
+            case WotLK::CHAT_MSG_ACHIEVEMENT:
+            case WotLK::CHAT_MSG_GUILD_ACHIEVEMENT:
+                data << ObjectGuid(targetGuid);                         // Unit Target
+                isAchievement = true;
+                break;
+            default:
+                if (isGM)
+                {
+                    assert(senderName);
+                    data << uint32(strlen(senderName) + 1);
+                    data << senderName;
+                }
 
-            if (msgtype == WotLK::CHAT_MSG_CHANNEL)
-            {
-                assert(channelName);
-                data << channelName;
-            }
-            data << ObjectGuid(targetGuid);
-            break;
+                if (msgtype == WotLK::CHAT_MSG_CHANNEL)
+                {
+                    assert(channelName);
+                    data << channelName;
+                }
+                data << ObjectGuid(targetGuid);
+                break;
         }
         assert(message);
         data << uint32(strlen(message) + 1);

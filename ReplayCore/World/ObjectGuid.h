@@ -181,6 +181,7 @@ class ObjectGuid
         static char const* GetTypeName(HighGuid high);
         char const* GetTypeName() const { return !IsEmpty() ? GetTypeName(GetHigh()) : "None"; }
         std::string GetString(bool includeName = false) const;
+        std::string GetName() const;
 
     private:                                                // internal functions
         static bool HasEntry(HighGuid high)
