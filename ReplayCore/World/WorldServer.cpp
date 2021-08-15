@@ -476,6 +476,18 @@ std::string WorldServer::GetPlayerName(ObjectGuid guid)
     return sReplayMgr.GetPlayerChatName(guid);
 }
 
+void WorldServer::ToggleVisibilityForAllObjects(bool visible)
+{
+    for (auto& itr : m_players)
+        itr.second.SetVisibility(visible);
+    for (auto& itr : m_creatures)
+        itr.second.SetVisibility(visible);
+    for (auto& itr : m_gameObjects)
+        itr.second.SetVisibility(visible);
+    for (auto& itr : m_dynamicObjects)
+        itr.second.SetVisibility(visible);
+}
+
 void WorldServer::HideAllObjectsFromClient()
 {
     if (!m_sessionData.visibleObjects.empty())

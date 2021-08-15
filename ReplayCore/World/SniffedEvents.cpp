@@ -12,6 +12,7 @@
 void ReplayMgr::LoadSniffedEvents()
 {
     printf("[ReplayMgr] Loading sniffed events...\n");
+    LoadLoginTimes();
     LoadWeatherUpdates();
     LoadWorldText();
     LoadWorldStateUpdates();
@@ -97,6 +98,9 @@ void ReplayMgr::LoadSniffedEvents()
     LoadUnitAurasUpdate("player_auras_update", TYPEID_PLAYER);
     LoadCreatureTextTemplate();
     LoadCreatureText();
+    LoadCreatureThreatClear();
+    LoadCreatureThreatRemove();
+    LoadCreatureThreatUpdate();
     LoadCreatureEquipmentUpdate();
     LoadPlayerChat();
     LoadPlayerEquipmentUpdate();
@@ -126,6 +130,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadQuestUpdateFailed();
     LoadXPGainLog();
     LoadFactionStandingUpdates();
+    LoadLogoutTimes();
     LoadWorldObjectDestroy("creature_destroy_time", TYPEID_UNIT);
     LoadWorldObjectDestroy("player_destroy_time", TYPEID_PLAYER);
     LoadWorldObjectDestroy("gameobject_destroy_time", TYPEID_GAMEOBJECT);
@@ -1817,6 +1822,178 @@ void SniffedEvent_CreatureText::Execute() const
     sWorld.SendChatPacket(m_chatType, m_text.c_str(), m_language, 0, GetSourceGuid(), m_creatureName.c_str(), m_targetGuid, m_targetName.c_str());
 }
 
+void ReplayMgr::LoadCreatureThreatClear()
+{
+    //                                             0             1
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid` FROM `creature_threat_clear` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid creatureGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, TYPEID_UNIT))
+                creatureGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `creature_threat_clear`.\n", guidLow);
+                continue;
+            }
+
+            std::shared_ptr<SniffedEvent_CreatureThreatClear> newEvent = std::make_shared<SniffedEvent_CreatureThreatClear>(creatureGuid);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_CreatureThreatClear::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Unit* pCreature = sWorld.FindCreature(GetSourceGuid());
+    if (!pCreature)
+    {
+        printf("SniffedEvent_CreatureThreatClear: Cannot find source creature!\n");
+        return;
+    }
+
+    if (!pCreature->IsVisibleToClient())
+        return;
+
+    sWorld.SendThreatClear(GetSourceGuid());
+}
+
+void ReplayMgr::LoadCreatureThreatRemove()
+{
+    //                                             0             1       2              3            4
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `target_guid`, `target_id`, `target_type` FROM `creature_threat_remove` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid creatureGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, TYPEID_UNIT))
+                creatureGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `creature_threat_remove`.\n", guidLow);
+                continue;
+            }
+
+            uint32 targetGuidLow = fields[2].GetUInt32();
+            uint32 targetId = fields[3].GetUInt32();
+            std::string targetType = fields[4].GetCppString();
+            ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
+            if (targetGuid.IsEmpty())
+                continue;
+
+            std::shared_ptr<SniffedEvent_CreatureThreatRemove> newEvent = std::make_shared<SniffedEvent_CreatureThreatRemove>(creatureGuid, targetGuid);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_CreatureThreatRemove::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Unit* pCreature = sWorld.FindCreature(GetSourceGuid());
+    if (!pCreature)
+    {
+        printf("SniffedEvent_CreatureThreatRemove: Cannot find source creature!\n");
+        return;
+    }
+
+    if (!pCreature->IsVisibleToClient())
+        return;
+
+    sWorld.SendThreatRemove(GetSourceGuid(), GetTargetGuid());
+}
+
+void ReplayMgr::LoadCreatureThreatUpdate()
+{
+    std::map<uint32 /*listId*/, std::vector<std::pair<ObjectGuid, uint32>>> threatListsMap;
+    //                                             0          1              2            3              4
+    if (auto result = SniffDatabase.Query("SELECT `list_id`, `target_guid`, `target_id`, `target_type`, `threat` FROM `creature_threat_update_target` ORDER BY `list_id`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 listId = fields[0].GetUInt32();
+            uint32 targetGuidLow = fields[1].GetUInt32();
+            uint32 targetId = fields[2].GetUInt32();
+            std::string targetType = fields[3].GetCppString();
+            ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
+            if (targetGuid.IsEmpty())
+                continue;
+            uint32 threat = fields[4].GetUInt32();
+
+            threatListsMap[listId].push_back({ targetGuid, threat });
+        } while (result->NextRow());
+    }
+
+    //                                             0             1       2
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `target_list_id` FROM `creature_threat_update` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid creatureGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, TYPEID_UNIT))
+                creatureGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `creature_threat_update`.\n", guidLow);
+                continue;
+            }
+
+            uint32 listId = fields[2].GetUInt32();
+            
+            auto itr = threatListsMap.find(listId);
+            if (itr == threatListsMap.end())
+            {
+                printf("[ReplayMgr] Error: Nonexistent target list id %u in table `creature_threat_update`.\n", listId);
+                continue;
+            }   
+
+            std::shared_ptr<SniffedEvent_CreatureThreatUpdate> newEvent = std::make_shared<SniffedEvent_CreatureThreatUpdate>(creatureGuid, itr->second);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_CreatureThreatUpdate::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Unit* pCreature = sWorld.FindCreature(GetSourceGuid());
+    if (!pCreature)
+    {
+        printf("SniffedEvent_CreatureThreatUpdate: Cannot find source creature!\n");
+        return;
+    }
+
+    if (!pCreature->IsVisibleToClient())
+        return;
+
+    sWorld.SendThreatUpdate(GetSourceGuid(), m_threatList);
+}
+
 void ReplayMgr::LoadCreatureEquipmentUpdate()
 {
     //                                             0             1       2       3
@@ -3076,4 +3253,52 @@ void SniffedEvent_FactionStandingUpdate::Execute() const
         return;
 
     sWorld.SendSetFactionStanding(m_rafBonus, m_showVisual, m_reputationListId, m_standing);
+}
+
+void ReplayMgr::LoadLoginTimes()
+{
+    for (auto const& itr : sReplayMgr.GetActivePlayerTimes())
+    {
+        uint64 unixtimems = uint64(itr.first) * IN_MILLISECONDS;
+
+        std::shared_ptr<SniffedEvent_Login> newEvent = std::make_shared<SniffedEvent_Login>(itr.second);
+        m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+    }
+}
+
+void SniffedEvent_Login::Execute() const
+{
+    if (sReplayMgr.IsPlaying() && sWorld.IsClientInWorld())
+        sWorld.PSendSysMessage("[ReplayMgr] Client logs in with %s.", GetSourceGuid().GetName().c_str());
+}
+
+void ReplayMgr::LoadLogoutTimes()
+{
+    //                                             0
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems` FROM `logout_time` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+
+            std::shared_ptr<SniffedEvent_Logout> newEvent = std::make_shared<SniffedEvent_Logout>();
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_Logout::Execute() const
+{
+    if (sReplayMgr.IsPlaying() && sWorld.IsClientInWorld())
+        sWorld.PSendSysMessage("[ReplayMgr] Client logs out.");
+
+    sWorld.ToggleVisibilityForAllObjects(false);
+}
+
+ObjectGuid SniffedEvent_Logout::GetSourceGuid() const
+{
+    return sReplayMgr.GetActivePlayerGuid();
 }

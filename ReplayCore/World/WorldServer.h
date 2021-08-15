@@ -208,6 +208,7 @@ public:
             max = std::max(max, m_creatureWaypoints.rbegin()->second.GetObjectGuid().GetCounter());
         return max;
     }
+    void ToggleVisibilityForAllObjects(bool visible);
     void HideAllObjectsFromClient();
     void DestroyAllObjects();
     bool IsClientInWorld() const { return m_sessionData.isInWorld; }
@@ -379,6 +380,9 @@ public:
     void SendLogXPGain(ObjectGuid victimGuid, uint32 totalXP, uint32 killXP, float groupBonus, bool rafBonus);
     void SendSetFactionStanding(float rafBonus, bool showVisual, int32 reputationListId, int32 standing);
     void SendTaxiNodeStatus(ObjectGuid guid, bool known);
+    void SendThreatClear(ObjectGuid creatureGuid);
+    void SendThreatRemove(ObjectGuid creatureGuid, ObjectGuid targetGuid);
+    void SendThreatUpdate(ObjectGuid creatureGuid, std::vector<std::pair<ObjectGuid, uint32>> const& threatList);
 };
 
 #define sWorld WorldServer::Instance()

@@ -965,16 +965,20 @@ void ReplayMgr::LoadActivePlayers()
 
 Player* ReplayMgr::GetActivePlayer()
 {
-    ObjectGuid currentCharacterGuid;
+    return sWorld.FindPlayer(GetActivePlayerGuid());
+}
+
+ObjectGuid ReplayMgr::GetActivePlayerGuid()
+{
+    ObjectGuid activePlayerGuid;
     for (auto const& itr : m_activePlayerTimes)
     {
         if (itr.first < m_currentSniffTime)
-            currentCharacterGuid = itr.second;
+            activePlayerGuid = itr.second;
         else
             break;
     }
-
-    return sWorld.FindPlayer(currentCharacterGuid);
+    return activePlayerGuid;
 }
 
 void ReplayMgr::Update(uint32 const diff)

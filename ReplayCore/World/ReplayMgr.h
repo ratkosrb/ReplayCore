@@ -271,7 +271,9 @@ public:
     void LoadPlayers();
     void LoadActivePlayers();
     Player* GetActivePlayer();
+    ObjectGuid GetActivePlayerGuid();
     std::set<ObjectGuid> const& GetActivePlayers() const { return m_activePlayers; }
+    std::map<uint32, ObjectGuid> const& GetActivePlayerTimes() const { return m_activePlayerTimes; }
     PlayerData* GetPlayerSpawnData(uint32 guid)
     {
         auto itr = m_playerSpawns.find(guid);
@@ -328,6 +330,9 @@ public:
     void LoadUnitAurasUpdate(char const* tableName, uint32 typeId);
     void LoadCreatureTextTemplate();
     void LoadCreatureText();
+    void LoadCreatureThreatClear();
+    void LoadCreatureThreatRemove();
+    void LoadCreatureThreatUpdate();
     void LoadCreatureEquipmentUpdate();
     void LoadPlayerChat();
     void LoadPlayerEquipmentUpdate();
@@ -352,6 +357,8 @@ public:
     void LoadQuestUpdateFailed();
     void LoadXPGainLog();
     void LoadFactionStandingUpdates();
+    void LoadLoginTimes();
+    void LoadLogoutTimes();
 
     std::shared_ptr<SniffedEvent> GetFirstEventForTarget(ObjectGuid guid, SniffedEventType eventType);
     void GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList);

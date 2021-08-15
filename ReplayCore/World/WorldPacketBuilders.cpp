@@ -2152,3 +2152,31 @@ void WorldServer::SendTaxiNodeStatus(ObjectGuid guid, bool known)
     data << uint8(known);
     SendPacket(data);
 }
+
+void WorldServer::SendThreatClear(ObjectGuid creatureGuid)
+{
+    WorldPacket data(GetOpcode("SMSG_THREAT_CLEAR"), 8);
+    data << creatureGuid.WriteAsPacked();
+    SendPacket(data);
+}
+
+void WorldServer::SendThreatRemove(ObjectGuid creatureGuid, ObjectGuid targetGuid)
+{
+    WorldPacket data(GetOpcode("SMSG_THREAT_REMOVE"), 8 + 8);
+    data << creatureGuid.WriteAsPacked();
+    data << targetGuid.WriteAsPacked();
+    SendPacket(data);
+}
+
+void WorldServer::SendThreatUpdate(ObjectGuid creatureGuid, std::vector<std::pair<ObjectGuid, uint32>> const& threatList)
+{
+    WorldPacket data(GetOpcode("SMSG_THREAT_UPDATE"), 8 + threatList.size() * 8);
+    data << creatureGuid.WriteAsPacked();
+    data << uint32(threatList.size());
+    for (auto const& itr : threatList)
+    {
+        data << itr.first.WriteAsPacked();
+        data << uint32(itr.second);
+    }
+    SendPacket(data);
+}

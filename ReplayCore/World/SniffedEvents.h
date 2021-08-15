@@ -66,6 +66,9 @@ enum SniffedEventType : uint8
     SE_UNIT_UPDATE_SPEED,
     SE_UNIT_UPDATE_AURAS,
     SE_CREATURE_TEXT,
+    SE_CREATURE_THREAT_CLEAR,
+    SE_CREATURE_THREAT_REMOVE,
+    SE_CREATURE_THREAT_UPDATE,
     SE_CREATURE_EQUIPMENT_UPDATE,
     SE_PLAYER_CHAT,
     SE_PLAYER_EQUIPMENT_UPDATE,
@@ -96,6 +99,8 @@ enum SniffedEventType : uint8
     SE_QUEST_UPDATE_FAILED,
     SE_XP_GAIN_LOG,
     SE_FACTION_STANDING_UPDATE,
+    SE_LOGIN,
+    SE_LOGOUT,
 };
 
 inline char const* GetSniffedEventName(SniffedEventType eventType)
@@ -184,6 +189,12 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Unit Update Auras";
         case SE_CREATURE_TEXT:
             return "Creature Text";
+        case SE_CREATURE_THREAT_CLEAR:
+            return "Creature Threat Clear";
+        case SE_CREATURE_THREAT_REMOVE:
+            return "Creature Threat Remove";
+        case SE_CREATURE_THREAT_UPDATE:
+            return "Creature Threat Update";
         case SE_CREATURE_EQUIPMENT_UPDATE:
             return "Creature Equipment Update";
         case SE_PLAYER_CHAT:
@@ -244,6 +255,10 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "XP Gain Log";
         case SE_FACTION_STANDING_UPDATE:
             return "Faction Standing Update";
+        case SE_LOGIN:
+            return "Login";
+        case SE_LOGOUT:
+            return "Logout";
     }
     return "Unknown Event";
 }
@@ -1048,6 +1063,60 @@ struct SniffedEvent_CreatureText : SniffedEventCRTP<SniffedEvent_CreatureText>
     }
 };
 
+struct SniffedEvent_CreatureThreatClear : SniffedEventCRTP<SniffedEvent_CreatureThreatClear>
+{
+    SniffedEvent_CreatureThreatClear(ObjectGuid creatureGuid) :
+        m_creatureGuid(creatureGuid) {};
+    ObjectGuid m_creatureGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CREATURE_THREAT_CLEAR;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_creatureGuid;
+    }
+};
+
+struct SniffedEvent_CreatureThreatRemove : SniffedEventCRTP<SniffedEvent_CreatureThreatRemove>
+{
+    SniffedEvent_CreatureThreatRemove(ObjectGuid creatureGuid, ObjectGuid targetGuid) :
+        m_creatureGuid(creatureGuid), m_targetGuid(targetGuid) {};
+    ObjectGuid m_creatureGuid;
+    ObjectGuid m_targetGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CREATURE_THREAT_REMOVE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_creatureGuid;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_targetGuid;
+    }
+};
+
+struct SniffedEvent_CreatureThreatUpdate : SniffedEventCRTP<SniffedEvent_CreatureThreatUpdate>
+{
+    SniffedEvent_CreatureThreatUpdate(ObjectGuid creatureGuid, std::vector<std::pair<ObjectGuid, uint32>> threatList) :
+        m_creatureGuid(creatureGuid), m_threatList(threatList) {};
+    ObjectGuid m_creatureGuid;
+    std::vector<std::pair<ObjectGuid, uint32>> m_threatList;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CREATURE_THREAT_UPDATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_creatureGuid;
+    }
+};
+
 struct SniffedEvent_CreatureEquipmentUpdate : SniffedEventCRTP<SniffedEvent_CreatureEquipmentUpdate>
 {
     SniffedEvent_CreatureEquipmentUpdate(ObjectGuid objectGuid, uint32 slot, uint32 itemId) :
@@ -1520,6 +1589,33 @@ struct SniffedEvent_FactionStandingUpdate : SniffedEventCRTP<SniffedEvent_Factio
     {
         return SE_FACTION_STANDING_UPDATE;
     }
+};
+
+struct SniffedEvent_Login : SniffedEventCRTP<SniffedEvent_Login>
+{
+    SniffedEvent_Login(ObjectGuid playerGuid) :
+        m_playerGuid(playerGuid) {};
+    ObjectGuid m_playerGuid;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_LOGIN;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_playerGuid;
+    }
+};
+
+struct SniffedEvent_Logout : SniffedEventCRTP<SniffedEvent_Logout>
+{
+    SniffedEvent_Logout() = default;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_LOGOUT;
+    }
+    ObjectGuid GetSourceGuid() const final;
 };
 
 #endif
