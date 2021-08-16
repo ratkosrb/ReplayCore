@@ -94,9 +94,6 @@ void MoveSpline::WriteMove(WorldPacket& data) const
                 }
                 data.appendPackXYZ(offset.x, offset.y, offset.z);
             }
-
-            for (uint32 i = 0; i < (pointsCount - 1); i++)
-                data.appendPackXYZ(m_destinationPoints[i].x, m_destinationPoints[i].y, m_destinationPoints[i].z);
         }
     }
 }
