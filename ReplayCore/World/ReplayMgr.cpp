@@ -265,7 +265,7 @@ ObjectGuid ReplayMgr::MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std
     else if (type == "Creature" || type == "Unit")
         return ObjectGuid(HIGHGUID_UNIT, entry, guid);
     else if (type == "Pet")
-        return ObjectGuid(HIGHGUID_PET, entry, guid);
+        return ObjectGuid(HIGHGUID_PET, guid, guid);
     else if (type == "GameObject")
         return ObjectGuid(HIGHGUID_GAMEOBJECT, entry, guid);
 
@@ -563,7 +563,7 @@ void ReplayMgr::LoadCreatures()
         uint32 entry = fields[1].GetUInt32();
         bool isPet = fields[11].GetBool();
 
-        ObjectGuid objectGuid(isPet ? HIGHGUID_PET : HIGHGUID_UNIT, entry, guid);
+        ObjectGuid objectGuid(isPet ? HIGHGUID_PET : HIGHGUID_UNIT, isPet ? guid : entry, guid);
 
         CreatureTemplate const* cInfo = sGameDataMgr.GetCreatureTemplate(entry);
         if (!cInfo)

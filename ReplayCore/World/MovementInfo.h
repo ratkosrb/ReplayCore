@@ -27,7 +27,7 @@ class MovementInfo
         // Read/Write methods
         void Read(ByteBuffer &data);
         void Write(ByteBuffer &data) const;
-        void CorrectData(Unit* mover = nullptr);
+        void CorrectData();
 
         // Movement flags manipulations
         void AddMovementFlag(uint32 f) { moveFlags |= f; }

@@ -919,6 +919,7 @@ void SniffedEvent_ClientSideMovement::Execute() const
     pUnit->GetMovementInfo().fallTime = m_fallTime;
     pUnit->GetMovementInfo().jump = m_jumpInfo;
     pUnit->GetMovementInfo().splineElevation = m_splineElevation;
+    pUnit->GetMovementInfo().CorrectData();
 
     if (!sReplayMgr.IsPlaying())
         return;
