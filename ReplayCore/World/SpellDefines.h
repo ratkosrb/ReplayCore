@@ -120,9 +120,9 @@ namespace Vanilla
     {
         AFLAG_NONE                  = 0x00,
         AFLAG_CANCELABLE            = 0x01,
-        ALFAG_UNK2                  = 0x02,
-        AFLAG_POSITIVE              = 0x04,
-        AFLAG_NEGATIVE              = 0x08,
+        AFLAG_EFF_INDEX_2           = 0x02,
+        AFLAG_EFF_INDEX_1           = 0x04,
+        AFLAG_EFF_INDEX_0           = 0x08,
 
         AFLAG_MASK_ALL              = 0x0F
     };

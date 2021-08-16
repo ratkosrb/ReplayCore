@@ -62,6 +62,14 @@ struct Vector3
     float y = 0.0f;
     float z = 0.0f;
     bool IsEmpty() const { return x == 0.0f && y == 0.0f && z == 0.0f; }
+    inline Vector3 operator+ (const Vector3& rkVector) const
+    {
+        return Vector3(x + rkVector.x, y + rkVector.y, z + rkVector.z);
+    }
+    inline Vector3 operator- (const Vector3& rkVector) const
+    {
+        return Vector3(x - rkVector.x, y - rkVector.y, z - rkVector.z);
+    }
 };
 struct Position
 {

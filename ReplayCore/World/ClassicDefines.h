@@ -21,15 +21,20 @@
 #include "UnitDefines.h"
 #include "MovementDefines.h"
 #include "ChatDefines.h"
+#include "SpellDefines.h"
 #include <string>
 
-inline uint8 ConvertClassicAuraFlagsToVanilla(uint8 auraFlags)
+inline uint8 ConvertClassicAuraFlagsToVanilla(uint8 auraFlags, uint8 activeFlags)
 {
     uint8 newFlags = 0;
     if (auraFlags & Classic::AFLAG_POSITIVE)
-        newFlags |= Vanilla::AFLAG_CANCELABLE | Vanilla::AFLAG_POSITIVE;
-    if (auraFlags & Classic::AFLAG_NEGATIVE)
-        newFlags |= Vanilla::AFLAG_NEGATIVE;
+        newFlags |= Vanilla::AFLAG_CANCELABLE;
+    if (activeFlags & 1)
+        newFlags |= Vanilla::AFLAG_EFF_INDEX_0;
+    if (activeFlags & 2)
+        newFlags |= Vanilla::AFLAG_EFF_INDEX_1;
+    if (activeFlags & 4)
+        newFlags |= Vanilla::AFLAG_EFF_INDEX_2;
     return newFlags;
 }
 
@@ -485,6 +490,8 @@ inline uint32 ConvertClassicMovementFlagsToTBC(uint32 flags)
         newFlags |= TBC::MOVEFLAG_CAN_FLY;
     if (flags & Classic::MOVEFLAG_FLYING)
         newFlags |= TBC::MOVEFLAG_FLYING;
+    if (flags & Classic::MOVEFLAG_SPLINE_ELEVATION)
+        newFlags |= TBC::MOVEFLAG_SPLINE_ELEVATION;
     if (flags & Classic::MOVEFLAG_WATERWALKING)
         newFlags |= TBC::MOVEFLAG_WATERWALKING;
     if (flags & Classic::MOVEFLAG_SAFE_FALL)
@@ -545,6 +552,8 @@ inline uint32 ConvertClassicMovementFlagsToWotLK(uint32 flags)
         newFlags |= WotLK::MOVEFLAG_CAN_FLY;
     if (flags & Classic::MOVEFLAG_FLYING)
         newFlags |= WotLK::MOVEFLAG_FLYING;
+    if (flags & Classic::MOVEFLAG_SPLINE_ELEVATION)
+        newFlags |= WotLK::MOVEFLAG_SPLINE_ELEVATION;
     if (flags & Classic::MOVEFLAG_WATERWALKING)
         newFlags |= WotLK::MOVEFLAG_WATERWALKING;
     if (flags & Classic::MOVEFLAG_SAFE_FALL)

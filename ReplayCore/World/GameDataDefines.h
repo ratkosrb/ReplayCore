@@ -16,6 +16,9 @@ enum GameDataSource
 
 enum SniffVersion
 {
+    SNIFF_VANILLA,
+    SNIFF_TBC,
+    SNIFF_WOTLK,
     SNIFF_CLASSIC,
 };
 

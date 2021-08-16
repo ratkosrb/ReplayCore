@@ -6,6 +6,7 @@
 #include "GameObjectDefines.h"
 #include "SpellDefines.h"
 #include "Geometry.h"
+#include "VanillaDefines.h"
 #include "ClassicDefines.h"
 #include "../Input/Config.h"
 #include "../Defines/Utility.h"
@@ -143,15 +144,30 @@ uint32 GameDataMgr::ConvertMovementFlags(uint32 moveFlags, bool onTransport) con
 
 uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const
 {
-    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
+    switch (sConfig.GetSniffVersion())
     {
-        if (clientBuild < CLIENT_BUILD_2_0_1)
-            return ConvertClassicMovementFlagsToVanilla(moveFlags);
-        else if (clientBuild < CLIENT_BUILD_3_0_2)
-            return ConvertClassicMovementFlagsToTBC(moveFlags);
-        else
-            return ConvertClassicMovementFlagsToWotLK(moveFlags);
+        case SNIFF_VANILLA:
+        {
+            if (clientBuild < CLIENT_BUILD_2_0_1)
+                return moveFlags;
+            else if (clientBuild < CLIENT_BUILD_3_0_2)
+                return ConvertVanillaMovementFlagsToTBC(moveFlags);
+            else
+                return ConvertVanillaMovementFlagsToWotLK(moveFlags);
+            break;
+        }
+        case SNIFF_CLASSIC:
+        {
+            if (clientBuild < CLIENT_BUILD_2_0_1)
+                return ConvertClassicMovementFlagsToVanilla(moveFlags);
+            else if (clientBuild < CLIENT_BUILD_3_0_2)
+                return ConvertClassicMovementFlagsToTBC(moveFlags);
+            else
+                return ConvertClassicMovementFlagsToWotLK(moveFlags);
+            break;
+        }
     }
+
     return moveFlags;
 }
 
@@ -265,10 +281,25 @@ uint32 GameDataMgr::GetWeatherSoundForVanilla(uint32 type, float grade) const
 
 uint32 GameDataMgr::ConvertChatType(uint32 chatType) const
 {
-    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
-        return ConvertClassicChatType(chatType);
+    switch (sConfig.GetSniffVersion())
+    {
+        case SNIFF_VANILLA:
+            return ConvertVanillaChatType(chatType);
+        case SNIFF_CLASSIC:
+            return ConvertClassicChatType(chatType);
+    }
 
     return chatType;
+}
+
+uint32 GameDataMgr::ConvertVanillaChatType(uint32 chatType) const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        return chatType;
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return ConvertVanillaChatTypeToTBC(chatType);
+    else
+        return ConvertVanillaChatTypeToWotLK(chatType);
 }
 
 uint32 GameDataMgr::ConvertClassicChatType(uint32 chatType) const
@@ -284,115 +315,218 @@ uint32 GameDataMgr::ConvertClassicChatType(uint32 chatType) const
 void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination)
 {
     uint32 newFlags = 0;
-    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
+    switch (sConfig.GetSniffVersion())
     {
-        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        case SNIFF_VANILLA:
         {
-            if (splineFlags & Classic::Cyclic)
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
             {
-                isCyclic = true;
-                newFlags |= Vanilla::Cyclic;
-            }  
-            if (splineFlags & Classic::Flying)
-            {
-                newFlags |= Vanilla::Flying;
-                isCatmullrom = true;
+                newFlags = splineFlags;
+
+                if (splineFlags & Vanilla::Cyclic)
+                    isCyclic = true;
+                if (splineFlags & Vanilla::Flying)
+                    isCatmullrom = true;
+
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
             }
-            if (splineFlags & Classic::Falling)
-                newFlags |= Vanilla::Falling;
-            if (finalOrientation != 100)
-                splineType = SPLINE_TYPE_FACING_ANGLE;
-            else if (!hasDestination)
-                splineType = SPLINE_TYPE_STOP;
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            {
+                if (splineFlags & Vanilla::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= TBC::Cyclic;
+                }
+                if (splineFlags & Vanilla::Flying)
+                {
+                    newFlags |= TBC::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Vanilla::Falling)
+                    newFlags |= TBC::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
             else
-                newFlags |= Vanilla::Runmode;
-                
+            {
+                if (splineFlags & Vanilla::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= WotLK::Cyclic;
+                }
+                if (splineFlags & Vanilla::Flying)
+                {
+                    newFlags |= WotLK::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Vanilla::Falling)
+                    newFlags |= WotLK::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            break;
         }
-        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        case SNIFF_CLASSIC:
         {
-            if (splineFlags & Classic::Cyclic)
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
             {
-                isCyclic = true;
-                newFlags |= TBC::Cyclic;
+                if (splineFlags & Classic::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= Vanilla::Cyclic;
+                }
+                if (splineFlags & Classic::Flying)
+                {
+                    newFlags |= Vanilla::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Classic::Falling)
+                    newFlags |= Vanilla::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+                else
+                    newFlags |= Vanilla::Runmode;
+
             }
-            if (splineFlags & Classic::Flying)
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
             {
-                newFlags |= TBC::Flying;
-                isCatmullrom = true;
+                if (splineFlags & Classic::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= TBC::Cyclic;
+                }
+                if (splineFlags & Classic::Flying)
+                {
+                    newFlags |= TBC::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Classic::Falling)
+                    newFlags |= TBC::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
             }
-            if (splineFlags & Classic::Falling)
-                newFlags |= TBC::Falling;
-            if (finalOrientation != 100)
-                splineType = SPLINE_TYPE_FACING_ANGLE;
-            else if (!hasDestination)
-                splineType = SPLINE_TYPE_STOP;
-        }
-        else
-        {
-            if (splineFlags & Classic::Cyclic)
+            else
             {
-                isCyclic = true;
-                newFlags |= WotLK::Cyclic;
+                if (splineFlags & Classic::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= WotLK::Cyclic;
+                }
+                if (splineFlags & Classic::Flying)
+                {
+                    newFlags |= WotLK::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Classic::Catmullrom)
+                {
+                    newFlags |= WotLK::Catmullrom;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Classic::Falling)
+                    newFlags |= WotLK::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
             }
-            if (splineFlags & Classic::Flying)
-            {
-                newFlags |= WotLK::Flying;
-                isCatmullrom = true;
-            }
-            if (splineFlags & Classic::Catmullrom)
-            {
-                newFlags |= WotLK::Catmullrom;
-                isCatmullrom = true;
-            }
-            if (splineFlags & Classic::Falling)
-                newFlags |= WotLK::Falling;
-            if (finalOrientation != 100)
-                splineType = SPLINE_TYPE_FACING_ANGLE;
-            else if (!hasDestination)
-                splineType = SPLINE_TYPE_STOP;
+            break;
         }
     }
+
     splineFlags = newFlags;
 }
 
 uint32 GameDataMgr::ConvertNpcFlags(uint32 npcFlags)
 {
-    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
+    switch (sConfig.GetSniffVersion())
     {
-        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            return ConvertClassicNpcFlagsToVanilla(npcFlags);
-        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            return ConvertClassicNpcFlagsToTBC(npcFlags);
-        else
-            return ConvertClassicNpcFlagsToWotLK(npcFlags);
+        case SNIFF_VANILLA:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                return npcFlags;
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                return ConvertVanillaNpcFlagsToTBC(npcFlags);
+            else
+                return ConvertVanillaNpcFlagsToWotLK(npcFlags);
+            break;
+        }
+        case SNIFF_CLASSIC:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                return ConvertClassicNpcFlagsToVanilla(npcFlags);
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                return ConvertClassicNpcFlagsToTBC(npcFlags);
+            else
+                return ConvertClassicNpcFlagsToWotLK(npcFlags);
+            break;
+        }
     }
     return npcFlags;
 }
 
-uint8 GameDataMgr::ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags)
+uint8 GameDataMgr::ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags, uint32 slot)
 {
-    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
+    switch (sConfig.GetSniffVersion())
     {
-        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            return ConvertClassicAuraFlagsToVanilla(auraFlags);
-        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            return ConvertClassicAuraFlagsToTBC(auraFlags);
-        else
-            return ConvertClassicAuraFlagsToWotLK(auraFlags, activeFlags);
+        case SNIFF_VANILLA:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                return auraFlags;
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                return ConvertVanillaAuraFlagsToTBC(auraFlags, slot);
+            else
+                return ConvertVanillaAuraFlagsToWotLK(auraFlags, slot);
+            break;
+        }
+        case SNIFF_CLASSIC:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                return ConvertClassicAuraFlagsToVanilla(auraFlags, activeFlags);
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                return ConvertClassicAuraFlagsToTBC(auraFlags);
+            else
+                return ConvertClassicAuraFlagsToWotLK(auraFlags, activeFlags);
+            break;
+        }
     }
     return auraFlags;
 }
 
 uint32 GameDataMgr::ConvertHitInfoFlags(uint32 hitInfo)
 {
-    if (sConfig.GetSniffVersion() == SNIFF_CLASSIC)
+    switch (sConfig.GetSniffVersion())
     {
-        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            return ConvertClassicHitInfoFlagsToVanilla(hitInfo);
-        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            return ConvertClassicHitInfoFlagsToTBC(hitInfo);
-        else
-            return ConvertClassicHitInfoFlagsToWotLK(hitInfo);
+        case SNIFF_VANILLA:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                return hitInfo;
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                return ConvertVanillaHitInfoFlagsToTBC(hitInfo);
+            else
+                return ConvertVanillaHitInfoFlagsToWotLK(hitInfo);
+            break;
+        }
+        case SNIFF_CLASSIC:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                return ConvertClassicHitInfoFlagsToVanilla(hitInfo);
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                return ConvertClassicHitInfoFlagsToTBC(hitInfo);
+            else
+                return ConvertClassicHitInfoFlagsToWotLK(hitInfo);
+            break;
+        }
     }
     return hitInfo;
 }
@@ -1986,4 +2120,14 @@ void GameDataMgr::LoadItemPrototypes()
         } while (result->NextRow());
     }
     printf(">> Loaded %u item prototypes.\n", (uint32)m_itemPrototypesMap.size());
+}
+
+uint32 GameDataMgr::GetItemIdWithDisplayId(uint32 displayId) const
+{
+    for (auto const& itemProto : sGameDataMgr.GetItemPrototypeMap())
+    {
+        if (itemProto.second.DisplayInfoID == displayId)
+            return itemProto.second.ItemId;
+    }
+    return 0;
 }

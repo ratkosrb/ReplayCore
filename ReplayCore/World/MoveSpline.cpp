@@ -25,17 +25,33 @@ void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8
     m_initialized = true;
 }
 
-void MoveSpline::WriteMove(ByteBuffer &data) const
+void MoveSpline::WriteMove(WorldPacket& data) const
 {
     data << float(m_startPosition.x);
     data << float(m_startPosition.y);
     data << float(m_startPosition.z);
     data << uint32(m_id);
     data << uint8(m_type);
-    if (m_type == SPLINE_TYPE_STOP)
-        return;
-    else if (m_type == SPLINE_TYPE_FACING_ANGLE)
-        data << float(m_finalOrientation);
+
+    switch (m_type)
+    {
+        case SPLINE_TYPE_NORMAL:
+            break;
+        case SPLINE_TYPE_STOP:
+            return;
+        case SPLINE_TYPE_FACING_SPOT:
+            data << float(0);
+            data << float(0);
+            data << float(0);
+            break;
+        case SPLINE_TYPE_FACING_TARGET:
+            data << ObjectGuid();
+            break;
+        case SPLINE_TYPE_FACING_ANGLE:
+            data << float(m_finalOrientation);
+            break;
+    }
+
     data << uint32(m_flags);
     data << uint32(m_moveTimeMs);
     
@@ -56,22 +72,36 @@ void MoveSpline::WriteMove(ByteBuffer &data) const
         {
             // final destination
             uint32 finalPointIndex = pointsCount - 1;
+            Vector3 destination = m_destinationPoints[finalPointIndex];
             data << float(m_destinationPoints[finalPointIndex].x);
             data << float(m_destinationPoints[finalPointIndex].y);
             data << float(m_destinationPoints[finalPointIndex].z);
 
             // other points
-            for (uint32 i = 0; i < (pointsCount - 1); i++)
+            Vector3 offset;
+
+            // first and last points already appended
+            for (uint32 i = 0; i < finalPointIndex; ++i)
             {
-                data << float(m_destinationPoints[i].x);
-                data << float(m_destinationPoints[i].y);
-                data << float(m_destinationPoints[i].z);
+                offset = destination - m_destinationPoints[i];
+                // [-ZERO] The client freezes when it gets a zero offset.
+                if (fabs(offset.x) < 0.25 && fabs(offset.y) < 0.25 && fabs(offset.z) < 0.25)
+                {
+                    if (offset.z < 0)
+                        offset.z += 0.51f;
+                    else
+                        offset.z += 0.26f;
+                }
+                data.appendPackXYZ(offset.x, offset.y, offset.z);
             }
+
+            for (uint32 i = 0; i < (pointsCount - 1); i++)
+                data.appendPackXYZ(m_destinationPoints[i].x, m_destinationPoints[i].y, m_destinationPoints[i].z);
         }
     }
 }
 
-void MoveSpline::WriteCreate(ByteBuffer &data) const
+void MoveSpline::WriteCreate(ByteBuffer& data) const
 {
     uint32 splineFlags = m_flags;
     if (m_type == SPLINE_TYPE_FACING_ANGLE)
@@ -121,10 +151,19 @@ void MoveSpline::WriteCreate(ByteBuffer &data) const
     if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_8)
         data << uint8(m_catmullrom ? 1 : 0); // Spline Mode
 
-    uint32 finalPointIndex = m_destinationPoints.size() - 1;
-    data << float(m_destinationPoints[finalPointIndex].x);
-    data << float(m_destinationPoints[finalPointIndex].y);
-    data << float(m_destinationPoints[finalPointIndex].z);
+    if (m_cyclic)
+    {
+        data << float(0);
+        data << float(0);
+        data << float(0);
+    }
+    else
+    {
+        uint32 finalPointIndex = m_destinationPoints.size() - 1;
+        data << float(m_destinationPoints[finalPointIndex].x);
+        data << float(m_destinationPoints[finalPointIndex].y);
+        data << float(m_destinationPoints[finalPointIndex].z);
+    }
 }
 
 void MoveSpline::Update(Unit* pUnit)

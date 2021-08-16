@@ -5,6 +5,7 @@
 #include "../Defines/ByteBuffer.h"
 #include "ObjectDefines.h"
 #include "ObjectGuid.h"
+#include "../Defines/WorldPacket.h"
 #include <vector>
 
 class Unit;
@@ -26,8 +27,8 @@ struct MoveSpline
         m_moveTimeMs = 0;
         m_destinationPoints.clear();
     }
-    void WriteMove(ByteBuffer &data) const;
-    void WriteCreate(ByteBuffer &data) const;
+    void WriteMove(WorldPacket& data) const;
+    void WriteCreate(ByteBuffer& data) const;
     void Update(Unit* pUnit);
     bool m_initialized = false;
     static uint32 m_maxId;

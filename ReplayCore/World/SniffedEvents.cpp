@@ -4,6 +4,7 @@
 #include "WorldServer.h"
 #include "GameDataMgr.h"
 #include "ClassicDefines.h"
+#include "../Input/Config.h"
 #include "../Defines/Utility.h"
 #include "../Defines/Databases.h"
 #include "../Defines//ClientVersions.h"
@@ -1730,7 +1731,7 @@ void SniffedEvent_UnitUpdate_auras::PepareForCurrentClient()
     if (m_aura.spellId && !sGameDataMgr.IsValidSpellId(m_aura.spellId))
         m_disabled = true;
 
-    m_aura.auraFlags = sGameDataMgr.ConvertAuraFlags(m_aura.auraFlags, m_aura.activeFlags);
+    m_aura.auraFlags = sGameDataMgr.ConvertAuraFlags(m_aura.auraFlags, m_aura.activeFlags, m_slot);
 }
 
 void SniffedEvent_UnitUpdate_auras::Execute() const
@@ -1941,6 +1942,10 @@ void ReplayMgr::LoadCreatureThreatUpdate()
             threatListsMap[listId].push_back({ targetGuid, threat });
         } while (result->NextRow());
     }
+    
+    // Add empty list in case mob had no targets in threat list.
+    if (threatListsMap.find(0) == threatListsMap.end())
+        threatListsMap.insert({ 0, std::vector<std::pair<ObjectGuid, uint32>>() });
 
     //                                             0             1       2
     if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `target_list_id` FROM `creature_threat_update` ORDER BY `unixtimems`"))
@@ -2019,8 +2024,16 @@ void ReplayMgr::LoadCreatureEquipmentUpdate()
                 continue;
 
             uint32 itemId = fields[3].GetUInt32();
-            if (itemId && !sGameDataMgr.GetItemPrototype(itemId))
-                continue;
+            if (itemId)
+            {
+                // In vanilla and tbc the server sends item display id in virtual slots.
+                if (sConfig.GetSniffVersion() == SNIFF_VANILLA ||
+                    sConfig.GetSniffVersion() == SNIFF_TBC)
+                    itemId = sGameDataMgr.GetItemIdWithDisplayId(itemId);
+
+                if (!sGameDataMgr.GetItemPrototype(itemId))
+                    continue;
+            }
 
             std::shared_ptr<SniffedEvent_CreatureEquipmentUpdate> newEvent = std::make_shared<SniffedEvent_CreatureEquipmentUpdate>(sourceGuid, slot, itemId);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));

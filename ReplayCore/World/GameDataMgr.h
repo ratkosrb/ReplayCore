@@ -43,10 +43,11 @@ public:
     void ConvertWeatherStateAndGradeForVanilla(uint32& type, float& grade);
     uint32 GetWeatherSoundForVanilla(uint32 type, float grade) const;
     uint32 ConvertChatType(uint32 chatType) const;
+    uint32 ConvertVanillaChatType(uint32 chatType) const;
     uint32 ConvertClassicChatType(uint32 chatType) const;
     void ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination);
     uint32 ConvertNpcFlags(uint32 npcFlags);
-    uint8 ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags);
+    uint8 ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags, uint32 slot);
     uint32 ConvertHitInfoFlags(uint32 hitInfo);
 
     void LoadGameTele();
@@ -168,6 +169,7 @@ public:
 
         return &iter->second;
     }
+    uint32 GetItemIdWithDisplayId(uint32 displayId) const;
     ItemPrototypeMap const& GetItemPrototypeMap() const
     {
         return m_itemPrototypesMap;

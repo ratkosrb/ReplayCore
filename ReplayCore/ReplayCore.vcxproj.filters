@@ -268,6 +268,9 @@
     <ClInclude Include="World\WaypointData.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="World\VanillaDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Database">

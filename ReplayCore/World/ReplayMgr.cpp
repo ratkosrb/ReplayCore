@@ -1,4 +1,5 @@
 #include "../Defines/Databases.h"
+#include "../Input/Config.h"
 #include "ReplayMgr.h"
 #include "Player.h"
 #include "GameObject.h"
@@ -622,6 +623,18 @@ void ReplayMgr::LoadCreatures()
         data.virtualItems[VIRTUAL_ITEM_SLOT_0] = fields[47].GetUInt32();
         data.virtualItems[VIRTUAL_ITEM_SLOT_1] = fields[48].GetUInt32();
         data.virtualItems[VIRTUAL_ITEM_SLOT_2] = fields[49].GetUInt32();
+
+        if (sConfig.GetSniffVersion() == SNIFF_VANILLA ||
+            sConfig.GetSniffVersion() == SNIFF_TBC)
+        {
+            // In vanilla and tbc the server sends item display id in virtual slots.
+            for (auto& itemId : data.virtualItems)
+            {
+                if (itemId != 0)
+                    itemId = sGameDataMgr.GetItemIdWithDisplayId(itemId);
+            }
+        }
+
         data.channelSpell = fields[50].GetUInt32();
         std::string auras = fields[51].GetCppString();
         ParseStringIntoVector(auras, data.auras);
@@ -1007,7 +1020,7 @@ void ReplayMgr::Update(uint32 const diff)
     if (m_currentSniffTimeMs > m_eventsMap.rbegin()->first)
     {
         printf("[ReplayMgr] Sniff replay is over.\n");
-        sWorld.SendSysMessage("[ReplayMgr]  Sniff replay is over.");
+        sWorld.SendSysMessage("[ReplayMgr] Sniff replay is over.");
         m_enabled = false;
     }
 }
@@ -1114,6 +1127,11 @@ void ReplayMgr::StartPlaying()
         if (!m_startTimeSniff)
         {
             uint32 earliestEventTime = uint32(m_eventsMap.begin()->first / IN_MILLISECONDS);
+
+            // don't skip the first event
+            if (earliestEventTime > 0)
+                earliestEventTime -= 1;
+
             SetPlayTime(earliestEventTime);
         }
         
