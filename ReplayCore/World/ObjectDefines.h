@@ -70,6 +70,18 @@ struct Vector3
     {
         return Vector3(x - rkVector.x, y - rkVector.y, z - rkVector.z);
     }
+    inline Vector3 operator* (const Vector3& rkVector) const
+    {
+        return Vector3(x * rkVector.x, y * rkVector.y, z * rkVector.z);
+    }
+    inline Vector3 operator*(float f) const
+    {
+        return Vector3(x * f, y * f, z * f);
+    }
+    inline Vector3 operator/ (float s) const
+    {
+        return *this * (1.0f / s);
+    }
 };
 struct Position
 {

@@ -958,7 +958,7 @@ void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap&
 void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap)
 {
     //                                             0             1       2        3            4               5               6                   7                   8                   9                 10                11                12             13
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation`, `transport_guid` FROM `%s` ORDER BY `unixtimems`", tableName))
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation`, `transport_guid` FROM `%s` ORDER BY `unixtimems`, `point`", tableName))
     {
         do
         {

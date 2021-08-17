@@ -83,15 +83,24 @@ void MoveSpline::WriteMove(WorldPacket& data) const
             // first and last points already appended
             for (uint32 i = 0; i < finalPointIndex; ++i)
             {
-                offset = destination - m_destinationPoints[i];
-                // [-ZERO] The client freezes when it gets a zero offset.
-                if (fabs(offset.x) < 0.25 && fabs(offset.y) < 0.25 && fabs(offset.z) < 0.25)
+                if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
                 {
-                    if (offset.z < 0)
-                        offset.z += 0.51f;
-                    else
-                        offset.z += 0.26f;
+                    offset = destination - m_destinationPoints[i];
+                    // The client freezes when it gets a zero offset.
+                    if (fabs(offset.x) < 0.25 && fabs(offset.y) < 0.25 && fabs(offset.z) < 0.25)
+                    {
+                        if (offset.z < 0)
+                            offset.z += 0.51f;
+                        else
+                            offset.z += 0.26f;
+                    }
                 }
+                else
+                {
+                    Vector3 middle = (m_destinationPoints[0] + m_destinationPoints[finalPointIndex]) / 2.f;
+                    offset = middle - m_destinationPoints[i];
+                }
+                
                 data.appendPackXYZ(offset.x, offset.y, offset.z);
             }
         }
