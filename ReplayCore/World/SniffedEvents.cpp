@@ -131,6 +131,8 @@ void ReplayMgr::LoadSniffedEvents()
     LoadQuestUpdateFailed();
     LoadXPGainLog();
     LoadFactionStandingUpdates();
+    LoadCinematicBegin();
+    LoadCinematicEnd();
     LoadLogoutTimes();
     LoadWorldObjectDestroy("creature_destroy_time", TYPEID_UNIT);
     LoadWorldObjectDestroy("player_destroy_time", TYPEID_PLAYER);
@@ -3315,4 +3317,84 @@ void SniffedEvent_Logout::Execute() const
 ObjectGuid SniffedEvent_Logout::GetSourceGuid() const
 {
     return sReplayMgr.GetActivePlayerGuid();
+}
+
+void ReplayMgr::LoadCinematicBegin()
+{
+    //                                             0             1
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `cinematic_id` FROM `cinematic_begin` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 cinematicId = fields[1].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_CinematicBegin> newEvent = std::make_shared<SniffedEvent_CinematicBegin>(cinematicId);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_CinematicBegin::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    Player* pPlayer = sReplayMgr.GetActivePlayer();
+    if (!pPlayer)
+    {
+        printf("SniffedEvent_CinematicBegin: Cannot find active player!\n");
+        return;
+    }
+
+    if (pPlayer->GetMapId() != sWorld.GetClientPlayer()->GetMapId())
+        return;
+
+    std::string txt = "Client begins watching cinematic " + std::to_string(m_cinematicId) + ".";
+    uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
+    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendTriggerCinematic(m_cinematicId);
+}
+
+void ReplayMgr::LoadCinematicEnd()
+{
+    //                                             0
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems` FROM `cinematic_end` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+
+            std::shared_ptr<SniffedEvent_CinematicEnd> newEvent = std::make_shared<SniffedEvent_CinematicEnd>();
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_CinematicEnd::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Player* pPlayer = sReplayMgr.GetActivePlayer();
+    if (!pPlayer)
+    {
+        printf("SniffedEvent_CinematicEnd: Cannot find active player!\n");
+        return;
+    }
+
+    if (!pPlayer->IsVisibleToClient())
+        return;
+
+    uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
+    sWorld.SendChatPacket(say, "Client has finished watching cinematic.", 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
 }

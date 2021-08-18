@@ -84,6 +84,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_ATTACKSTOP", &WorldServer::HandleAttackStop);
     SetOpcodeHandler("CMSG_ZONEUPDATE", &WorldServer::HandleZoneUpdate);
     SetOpcodeHandler("CMSG_TAXINODE_STATUS_QUERY", &WorldServer::HandleTaxiNodeStatusQuery);
+    SetOpcodeHandler("CMSG_COMPLETE_CINEMATIC", &WorldServer::HandleCompleteCinematic);
 }
 
 void WorldServer::HandleAuthSession(WorldPacket& packet)
@@ -744,6 +745,7 @@ void WorldServer::HandleMovementPacket(WorldPacket& packet)
     MovementInfo movementInfo;
     packet >> movementInfo;
     m_clientPlayer->SetMovementInfo(movementInfo);
+    m_sessionData.isWatchingCinematic = false;
 }
 
 void WorldServer::HandleInspect(WorldPacket& packet)
@@ -1195,4 +1197,9 @@ void WorldServer::HandleTaxiNodeStatusQuery(WorldPacket& packet)
     ObjectGuid guid;
     packet >> guid;
     SendTaxiNodeStatus(guid, false);
+}
+
+void WorldServer::HandleCompleteCinematic(WorldPacket& packet)
+{
+    m_sessionData.isWatchingCinematic = false;
 }

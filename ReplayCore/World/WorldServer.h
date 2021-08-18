@@ -35,6 +35,7 @@ struct WorldSessionData
     bool isInWorld = false;
     bool isTeleportPending = false;
     bool isLoggingOut = false;
+    bool isWatchingCinematic = false;
     WorldLocation pendingTeleportLocation;
     uint32 movementCounter = 0;
     std::string pendingChatCommand;
@@ -212,6 +213,7 @@ public:
     void HideAllObjectsFromClient();
     void DestroyAllObjects();
     bool IsClientInWorld() const { return m_sessionData.isInWorld; }
+    bool IsClientWatchingCinematic() { return m_sessionData.isWatchingCinematic; }
     void SetWeather(uint32 mapId, uint32 zoneId, WeatherData weatherData)
     {
         m_weather[mapId][zoneId] = weatherData;
@@ -298,6 +300,7 @@ private:
     void HandleAttackStop(WorldPacket& packet);
     void HandleZoneUpdate(WorldPacket& packet);
     void HandleTaxiNodeStatusQuery(WorldPacket& packet);
+    void HandleCompleteCinematic(WorldPacket& packet);
 public:
     // Packet Building
     void SendAuthChallenge();
@@ -383,6 +386,7 @@ public:
     void SendThreatClear(ObjectGuid creatureGuid);
     void SendThreatRemove(ObjectGuid creatureGuid, ObjectGuid targetGuid);
     void SendThreatUpdate(ObjectGuid creatureGuid, std::vector<std::pair<ObjectGuid, uint32>> const& threatList);
+    void SendTriggerCinematic(uint32 cinematicId);
 };
 
 #define sWorld WorldServer::Instance()

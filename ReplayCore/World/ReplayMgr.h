@@ -359,6 +359,8 @@ public:
     void LoadFactionStandingUpdates();
     void LoadLoginTimes();
     void LoadLogoutTimes();
+    void LoadCinematicBegin();
+    void LoadCinematicEnd();
 
     std::shared_ptr<SniffedEvent> GetFirstEventForTarget(ObjectGuid guid, SniffedEventType eventType);
     void GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList);

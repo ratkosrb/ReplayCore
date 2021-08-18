@@ -2180,3 +2180,11 @@ void WorldServer::SendThreatUpdate(ObjectGuid creatureGuid, std::vector<std::pai
     }
     SendPacket(data);
 }
+
+void WorldServer::SendTriggerCinematic(uint32 cinematicId)
+{
+    WorldPacket data(GetOpcode("SMSG_TRIGGER_CINEMATIC"), 4);
+    data << uint32(cinematicId);
+    SendPacket(data);
+    m_sessionData.isWatchingCinematic = true;
+}

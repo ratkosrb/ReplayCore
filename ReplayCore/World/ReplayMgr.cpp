@@ -983,7 +983,10 @@ Player* ReplayMgr::GetActivePlayer()
 
 ObjectGuid ReplayMgr::GetActivePlayerGuid()
 {
-    ObjectGuid activePlayerGuid;
+    if (m_activePlayerTimes.empty())
+        return ObjectGuid();
+
+    ObjectGuid activePlayerGuid = m_activePlayerTimes.begin()->second;
     for (auto const& itr : m_activePlayerTimes)
     {
         if (itr.first < m_currentSniffTime)

@@ -24,6 +24,9 @@ bool WorldObject::IsWithinVisibilityDistance(WorldObject const* pObject) const
     if (GetMapId() != pObject->GetMapId())
         return false;
 
+    if (sWorld.IsClientWatchingCinematic())
+        return true;
+
     if (pObject->IsTransport())
         return true;
 

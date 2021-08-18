@@ -101,6 +101,8 @@ enum SniffedEventType : uint8
     SE_FACTION_STANDING_UPDATE,
     SE_LOGIN,
     SE_LOGOUT,
+    SE_CINEMATIC_BEGIN,
+    SE_CINEMATIC_END,
 };
 
 inline char const* GetSniffedEventName(SniffedEventType eventType)
@@ -259,6 +261,10 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Login";
         case SE_LOGOUT:
             return "Logout";
+        case SE_CINEMATIC_BEGIN:
+            return "Cinematic Begin";
+        case SE_CINEMATIC_END:
+            return "Cinematic End";
     }
     return "Unknown Event";
 }
@@ -1616,6 +1622,28 @@ struct SniffedEvent_Logout : SniffedEventCRTP<SniffedEvent_Logout>
         return SE_LOGOUT;
     }
     ObjectGuid GetSourceGuid() const final;
+};
+
+struct SniffedEvent_CinematicBegin : SniffedEventCRTP<SniffedEvent_CinematicBegin>
+{
+    SniffedEvent_CinematicBegin(uint32 cinematicId) :
+        m_cinematicId(cinematicId) {};
+    uint32 m_cinematicId = 0;
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CINEMATIC_BEGIN;
+    }
+};
+
+struct SniffedEvent_CinematicEnd : SniffedEventCRTP<SniffedEvent_CinematicEnd>
+{
+    SniffedEvent_CinematicEnd() {};
+    void Execute() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CINEMATIC_END;
+    }
 };
 
 #endif
