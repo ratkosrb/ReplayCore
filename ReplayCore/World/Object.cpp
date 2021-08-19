@@ -568,25 +568,25 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             m.ChangePosition(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ(), unit->GetOrientation());
         }
 
-        if (unit->m_moveSpline.m_initialized)
+        if (unit->m_moveSpline.m_initialized && unit->GetHealth() != 0)
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
             {
                 m.AddMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
-                if (!unit->m_moveSpline.m_catmullrom)
-                    m.AddMovementFlag(Vanilla::MOVEFLAG_FORWARD);
+                //if (!unit->m_moveSpline.m_catmullrom)
+                //    m.AddMovementFlag(Vanilla::MOVEFLAG_FORWARD);
             }
             else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
             {
                 m.AddMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
-                if (!unit->m_moveSpline.m_catmullrom)
-                    m.AddMovementFlag(TBC::MOVEFLAG_FORWARD);
+                //if (!unit->m_moveSpline.m_catmullrom)
+                //    m.AddMovementFlag(TBC::MOVEFLAG_FORWARD);
             } 
             else
             {
                 m.AddMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
-                if (!unit->m_moveSpline.m_catmullrom)
-                    m.AddMovementFlag(WotLK::MOVEFLAG_FORWARD);
+                //if (!unit->m_moveSpline.m_catmullrom)
+                //    m.AddMovementFlag(WotLK::MOVEFLAG_FORWARD);
             }
         }
 

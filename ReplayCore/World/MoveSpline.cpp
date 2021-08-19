@@ -178,7 +178,8 @@ void MoveSpline::Update(Unit* pUnit)
         return;
 
     if ((pUnit->GetLastPositionUpdate() > (m_startTimeMs / IN_MILLISECONDS)) ||
-        (sReplayMgr.GetCurrentSniffTimeMs() < m_startTimeMs))
+        (sReplayMgr.GetCurrentSniffTimeMs() < m_startTimeMs) ||
+        (pUnit->GetHealth() == 0))
     {
         Reset();
         return;
