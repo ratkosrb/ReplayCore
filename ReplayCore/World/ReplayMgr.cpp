@@ -242,6 +242,31 @@ void ReplayMgr::SpawnCreatures()
     printf("[ReplayMgr] Spawning creatures...\n");
     for (auto const& itr : m_creatureSpawns)
         sWorld.MakeNewCreature(itr.second.guid, itr.second);
+
+    if (m_eventsMapBackup.empty())
+        AddInitialAurasToCreatures();
+}
+
+void ReplayMgr::AddInitialAurasToCreatures()
+{
+    for (auto const& itr : m_creatureSpawns)
+    {
+        if (!itr.second.auras.empty())
+        {
+            if (Unit* pCreature = sWorld.FindCreature(itr.second.guid))
+            {
+                for (uint32 i = 0; i < std::min<uint32>(31, itr.second.auras.size()); i++)
+                {
+                    Aura aura;
+                    aura.activeFlags = 1;
+                    aura.auraFlags = sGameDataMgr.ConvertAuraFlags(Classic::AFLAG_POSITIVE, 1, i);
+                    aura.spellId = itr.second.auras[i];
+                    aura.casterGuid = itr.second.guid;
+                    pCreature->SetAura(i, aura, false);
+                }
+            }
+        }
+    }
 }
 
 void ReplayMgr::SpawnGameObjects()
@@ -1274,4 +1299,72 @@ void ReplayMgr::GetWaypointsForCreature(uint32 guid, std::vector<WaypointData>& 
 
         } while (result->NextRow());
     }
+}
+
+void ReplayMgr::EnterMassParseMode()
+{
+    if (!sConfig.ShouldRemoveDuplicateSpawns() &&
+        !sConfig.ShouldRemoveTemporarySpawns())
+        return;
+
+    printf("[ReplayMgr] No events loaded. Switching to mass parse mode.\n");
+    if (sConfig.ShouldRemoveDuplicateSpawns())
+    {
+        RemoveDuplicateSpawns(m_creatureSpawns);
+        RemoveDuplicateSpawns(m_gameObjectSpawns);
+    }
+    if (sConfig.ShouldRemoveTemporarySpawns())
+    {
+        RemoveTemporaryCreatures();
+        RemoveTemporaryGameObjects();
+    }
+}
+
+template<class T>
+void ReplayMgr::RemoveDuplicateSpawns(std::map<uint32 /*guid*/, T>& spawnsMap)
+{
+    std::set<uint32> duplicateGuids;
+    for (auto itr1 = spawnsMap.begin(); itr1 != spawnsMap.end(); itr1++)
+    {
+        if (duplicateGuids.find(itr1->first) != duplicateGuids.end())
+            continue;
+
+        for (auto itr2 = std::next(itr1); itr2 != spawnsMap.end(); itr2++)
+        {
+            if (itr1->second.entry == itr2->second.entry &&
+                itr1->second.location == itr2->second.location)
+            {
+                duplicateGuids.insert(itr2->first);
+            }
+        }
+    }
+
+    for (auto guid : duplicateGuids)
+        spawnsMap.erase(guid);
+}
+
+void ReplayMgr::RemoveTemporaryCreatures()
+{
+    std::set<uint32> temporarySpawns;
+    for (auto const& itr : m_creatureSpawns)
+    {
+        if (itr.second.isTemporary || itr.second.isPet)
+            temporarySpawns.insert(itr.first);
+    }
+
+    for (auto guid : temporarySpawns)
+        m_creatureSpawns.erase(guid);
+}
+
+void ReplayMgr::RemoveTemporaryGameObjects()
+{
+    std::set<uint32> temporarySpawns;
+    for (auto const& itr : m_gameObjectSpawns)
+    {
+        if (itr.second.isTemporary)
+            temporarySpawns.insert(itr.first);
+    }
+
+    for (auto guid : temporarySpawns)
+        m_gameObjectSpawns.erase(guid);
 }

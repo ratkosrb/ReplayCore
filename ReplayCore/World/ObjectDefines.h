@@ -106,6 +106,14 @@ struct WorldLocation : public Position
     WorldLocation(WorldLocation const& loc)
         : Position(loc.x, loc.y, loc.z, loc.o), mapId(loc.mapId) {}
     Position ToPosition() const { return Position(x, y, z, o); }
+    bool operator==(const WorldLocation& other) const
+    {
+        return mapId == other.mapId &&
+                   x == other.x &&
+                   y == other.y &&
+                   z == other.z &&
+                   o == other.o;
+    }
 };
 
 #endif

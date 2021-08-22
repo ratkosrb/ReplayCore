@@ -186,6 +186,9 @@ public:
         LoadActivePlayers();
         LoadInitialWorldStates();
         LoadSniffedEvents();
+
+        if (m_eventsMapBackup.empty())
+            EnterMassParseMode();
     }
 
 #pragma region WorldObjects
@@ -296,6 +299,12 @@ public:
     uint32 GetNewPlayerLowGuid();
     ObjectGuid GetOrCreatePlayerChatGuid(std::string name);
 
+    void EnterMassParseMode();
+    template<class T>
+    void RemoveDuplicateSpawns(std::map<uint32 /*guid*/, T>& spawnsMap);
+    void RemoveTemporaryCreatures();
+    void RemoveTemporaryGameObjects();
+    void AddInitialAurasToCreatures();
 
 #pragma endregion WorldObjects
 

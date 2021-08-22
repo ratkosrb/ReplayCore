@@ -24,6 +24,9 @@ bool Config::LoadConfig()
     m_worldServerPort = reader.GetInteger("Server", "WorldPort", 8085);
     m_writePacketLog = reader.GetBoolean("Server", "PacketLog", false);
 
+    m_removeDuplicateSpawns = reader.GetBoolean("MassParse", "RemoveDuplicate", true);
+    m_removeTemporarySpawns = reader.GetBoolean("MassParse", "RemoveTemporary", true);
+
     std::string sniffDbHost = reader.Get("SniffDatabase", "Host", "127.0.0.1");
     std::string sniffDbPort = reader.Get("SniffDatabase", "Port", "3306");
     std::string sniffDbUser = reader.Get("SniffDatabase", "User", "root");

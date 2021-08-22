@@ -17,6 +17,9 @@ public:
     std::string GetWorldServerIpAndPort() { return m_serverIp + ":" + std::to_string(m_worldServerPort); }
     bool IsPacketLoggingEnabled() { return m_writePacketLog; }
 
+    bool ShouldRemoveDuplicateSpawns() { return m_removeDuplicateSpawns; }
+    bool ShouldRemoveTemporarySpawns() { return m_removeTemporarySpawns; }
+
     const char* GetSniffDbConnectionString() { return m_sniffDbConnectionString.c_str(); }
     const char* GetWorldDbConnectionString() { return m_worldDbConnectionString.c_str(); }
     uint32 GetWorldDbType() { return m_worldDbType; }
@@ -40,6 +43,8 @@ private:
     uint32 m_vmangosContentPatch = 10;
     uint32 m_sniffVersion = 0;
     bool m_writePacketLog = false;
+    bool m_removeDuplicateSpawns = true;
+    bool m_removeTemporarySpawns = true;
 };
 
 #define sConfig Config::Instance()

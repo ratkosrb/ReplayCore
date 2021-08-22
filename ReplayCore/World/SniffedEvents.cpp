@@ -138,7 +138,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadWorldObjectDestroy("player_destroy_time", TYPEID_PLAYER);
     LoadWorldObjectDestroy("gameobject_destroy_time", TYPEID_GAMEOBJECT);
     LoadWorldObjectDestroy("dynamicobject_destroy_time", TYPEID_DYNAMICOBJECT);
-    printf(">> Loaded %u sniffed events.", (uint32)m_eventsMapBackup.size());
+    printf(">> Loaded %u sniffed events.\n", (uint32)m_eventsMapBackup.size());
 
     // Events are loaded into the backup map, and only copied into runtime map once
     // the data has been checked for compatibility with the current client version.
