@@ -7,6 +7,8 @@
 #include "SpellDefines.h"
 #include "Geometry.h"
 #include "VanillaDefines.h"
+#include "TbcDefines.h"
+#include "WotlkDefines.h"
 #include "ClassicDefines.h"
 #include "../Input/Config.h"
 #include "../Defines/Utility.h"
@@ -156,6 +158,26 @@ uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 client
                 return ConvertVanillaMovementFlagsToWotLK(moveFlags);
             break;
         }
+        case SNIFF_TBC:
+        {
+            if (clientBuild < CLIENT_BUILD_2_0_1)
+                return ConvertTBCMovementFlagsToVanilla(moveFlags);
+            else if (clientBuild < CLIENT_BUILD_3_0_2)
+                return moveFlags;
+            else
+                return ConvertTBCMovementFlagsToWotLK(moveFlags);
+            break;
+        }
+        case SNIFF_WOTLK:
+        {
+            if (clientBuild < CLIENT_BUILD_2_0_1)
+                return ConvertWotlkMovementFlagsToVanilla(moveFlags);
+            else if (clientBuild < CLIENT_BUILD_3_0_2)
+                return ConvertWotlkMovementFlagsToTBC(moveFlags);
+            else
+                return moveFlags;
+            break;
+        }
         case SNIFF_CLASSIC:
         {
             if (clientBuild < CLIENT_BUILD_2_0_1)
@@ -169,6 +191,39 @@ uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 client
     }
 
     return moveFlags;
+}
+
+uint32 GameDataMgr::ConvertWeatherTypeToWeatherState(uint32 type, float grade)
+{
+    switch (type)
+    {
+        case Vanilla::WEATHER_TYPE_FINE:
+            return TBC::WEATHER_STATE_FINE;
+        case Vanilla::WEATHER_TYPE_RAIN:
+            if (grade <= 0.25f)
+                return TBC::WEATHER_STATE_DRIZZLE;
+            else if (grade <= 0.3f)
+                return TBC::WEATHER_STATE_LIGHT_RAIN;
+            else if (grade <= 0.6f)
+                return TBC::WEATHER_STATE_MEDIUM_RAIN;
+            else
+                return TBC::WEATHER_STATE_HEAVY_RAIN;
+        case Vanilla::WEATHER_TYPE_SNOW:
+            if (grade <= 0.3f)
+                return TBC::WEATHER_STATE_LIGHT_SNOW;
+            else if (grade <= 0.6f)
+                return TBC::WEATHER_STATE_MEDIUM_SNOW;
+            else
+                return TBC::WEATHER_STATE_HEAVY_SNOW;
+        case Vanilla::WEATHER_TYPE_STORM:
+            if (grade <= 0.3f)
+                return TBC::WEATHER_STATE_LIGHT_SANDSTORM;
+            else if (grade <= 0.6f)
+                return TBC::WEATHER_STATE_MEDIUM_SANDSTORM;
+            else
+                return TBC::WEATHER_STATE_HEAVY_SANDSTORM;
+    }
+    return TBC::WEATHER_STATE_FINE;
 }
 
 void GameDataMgr::ConvertWeatherStateAndGradeForVanilla(uint32& type, float& grade)
@@ -285,6 +340,10 @@ uint32 GameDataMgr::ConvertChatType(uint32 chatType) const
     {
         case SNIFF_VANILLA:
             return ConvertVanillaChatType(chatType);
+        case SNIFF_TBC:
+            return ConvertTBCChatType(chatType);
+        case SNIFF_WOTLK:
+            return ConvertWotLKChatType(chatType);
         case SNIFF_CLASSIC:
             return ConvertClassicChatType(chatType);
     }
@@ -296,10 +355,26 @@ uint32 GameDataMgr::ConvertVanillaChatType(uint32 chatType) const
 {
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
         return chatType;
-    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-        return ConvertVanillaChatTypeToTBC(chatType);
-    else
+    else // tbc and wotlk are the same
         return ConvertVanillaChatTypeToWotLK(chatType);
+}
+
+uint32 GameDataMgr::ConvertTBCChatType(uint32 chatType) const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        return ConvertTBCChatTypeToVanilla(chatType);
+    else // tbc and wotlk are the same
+        return chatType;
+}
+
+uint32 GameDataMgr::ConvertWotLKChatType(uint32 chatType) const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        return ConvertTBCChatTypeToVanilla(chatType);
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return ConvertWotLKChatTypeToTBC(chatType);
+    else
+        return chatType;
 }
 
 uint32 GameDataMgr::ConvertClassicChatType(uint32 chatType) const
@@ -366,6 +441,126 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
                 }
                 if (splineFlags & Vanilla::Falling)
                     newFlags |= WotLK::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            break;
+        }
+        case SNIFF_TBC:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            {
+                if (splineFlags & TBC::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= Vanilla::Cyclic;
+                }
+                if (splineFlags & TBC::Flying)
+                {
+                    newFlags |= Vanilla::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & TBC::Falling)
+                    newFlags |= Vanilla::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+                else
+                    newFlags |= Vanilla::Runmode;
+
+            }
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            {
+                newFlags = splineFlags;
+
+                if (splineFlags & TBC::Cyclic)
+                    isCyclic = true;
+                if (splineFlags & TBC::Flying)
+                    isCatmullrom = true;
+
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            else
+            {
+                if (splineFlags & TBC::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= WotLK::Cyclic;
+                }
+                if (splineFlags & TBC::Flying)
+                {
+                    newFlags |= WotLK::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & TBC::Falling)
+                    newFlags |= WotLK::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            break;
+        }
+        case SNIFF_WOTLK:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            {
+                if (splineFlags & WotLK::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= Vanilla::Cyclic;
+                }
+                if (splineFlags & WotLK::Flying)
+                {
+                    newFlags |= Vanilla::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & WotLK::Falling)
+                    newFlags |= Vanilla::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+                else
+                    newFlags |= Vanilla::Runmode;
+
+            }
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            {
+                if (splineFlags & WotLK::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= TBC::Cyclic;
+                }
+                if (splineFlags & WotLK::Flying)
+                {
+                    newFlags |= TBC::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & WotLK::Falling)
+                    newFlags |= TBC::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            else
+            {
+                newFlags = splineFlags;
+
+                if (splineFlags & WotLK::Cyclic)
+                    isCyclic = true;
+                if (splineFlags & WotLK::Flying)
+                    isCatmullrom = true;
+                if (splineFlags & WotLK::Catmullrom)
+                    isCatmullrom = true;
+
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -449,26 +644,25 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
 
 uint32 GameDataMgr::ConvertNpcFlags(uint32 npcFlags)
 {
+    // tbc, wotlk and classic have same flags
     switch (sConfig.GetSniffVersion())
     {
         case SNIFF_VANILLA:
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
                 return npcFlags;
-            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-                return ConvertVanillaNpcFlagsToTBC(npcFlags);
             else
                 return ConvertVanillaNpcFlagsToWotLK(npcFlags);
             break;
         }
+        case SNIFF_TBC:
+        case SNIFF_WOTLK:
         case SNIFF_CLASSIC:
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
                 return ConvertClassicNpcFlagsToVanilla(npcFlags);
-            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-                return ConvertClassicNpcFlagsToTBC(npcFlags);
             else
-                return ConvertClassicNpcFlagsToWotLK(npcFlags);
+                return npcFlags;
             break;
         }
     }
@@ -489,6 +683,26 @@ uint8 GameDataMgr::ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags, uint32 s
                 return ConvertVanillaAuraFlagsToWotLK(auraFlags, slot);
             break;
         }
+        case SNIFF_TBC:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                return ConvertTBCAuraFlagsToVanilla(auraFlags);
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                return auraFlags;
+            else
+                return ConvertTBCAuraFlagsToWotLK(auraFlags);
+            break;
+        }
+        case SNIFF_WOTLK:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                return ConvertWotlkAuraFlagsToVanilla(auraFlags);
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                return ConvertWotlkAuraFlagsToTBC(auraFlags);
+            else
+                return auraFlags;
+            break;
+        }
         case SNIFF_CLASSIC:
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
@@ -505,26 +719,26 @@ uint8 GameDataMgr::ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags, uint32 s
 
 uint32 GameDataMgr::ConvertHitInfoFlags(uint32 hitInfo)
 {
+    // vanilla and tbc have same flags
+    // classic and wotlk have same flags
     switch (sConfig.GetSniffVersion())
     {
         case SNIFF_VANILLA:
+        case SNIFF_TBC:
         {
-            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
                 return hitInfo;
-            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-                return ConvertVanillaHitInfoFlagsToTBC(hitInfo);
             else
                 return ConvertVanillaHitInfoFlagsToWotLK(hitInfo);
             break;
         }
+        case SNIFF_WOTLK:
         case SNIFF_CLASSIC:
         {
-            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
                 return ConvertClassicHitInfoFlagsToVanilla(hitInfo);
-            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-                return ConvertClassicHitInfoFlagsToTBC(hitInfo);
             else
-                return ConvertClassicHitInfoFlagsToWotLK(hitInfo);
+                return hitInfo;
             break;
         }
     }

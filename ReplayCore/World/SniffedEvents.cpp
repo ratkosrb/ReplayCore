@@ -282,11 +282,19 @@ void ReplayMgr::LoadWeatherUpdates()
 
 void SniffedEvent_WeatherUpdate::PepareForCurrentClient()
 {
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+    if (sConfig.GetSniffVersion() == SNIFF_VANILLA)
     {
-        sGameDataMgr.ConvertWeatherStateAndGradeForVanilla(m_type, m_grade);
-        m_soundId = sGameDataMgr.GetWeatherSoundForVanilla(m_type, m_grade);
-    }   
+        if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1)
+            m_type = sGameDataMgr.ConvertWeatherTypeToWeatherState(m_type, m_grade);
+    }
+    else
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        {
+            sGameDataMgr.ConvertWeatherStateAndGradeForVanilla(m_type, m_grade);
+            m_soundId = sGameDataMgr.GetWeatherSoundForVanilla(m_type, m_grade);
+        }
+    }  
 }
 
 void SniffedEvent_WeatherUpdate::Execute() const
@@ -770,7 +778,7 @@ void SniffedEvent_UnitAttackLog::Execute() const
     if (!pAttacker->IsVisibleToClient())
         return;
 
-    sWorld.SendAttackerStateUpdate(m_hitInfo, m_attackerGuid, m_victimGuid, m_damage, m_originalDamage, m_overkillDamage, m_totalSchoolMask, m_totalAbsorbedDamage, m_totalResistedDamage, m_victimState, m_attackerState, m_spellId, m_blockedDamage);
+    sWorld.SendAttackerStateUpdate(m_hitInfo, m_attackerGuid, m_victimGuid, m_damage, m_overkillDamage, m_totalSchoolMask, m_totalAbsorbedDamage, m_totalResistedDamage, m_victimState, m_attackerState, m_spellId, m_blockedDamage);
 }
 
 void ReplayMgr::LoadUnitEmote(char const* tableName, uint32 typeId)

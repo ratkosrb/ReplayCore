@@ -1870,13 +1870,13 @@ void WorldServer::SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid)
     SendPacket(data);
 }
 
-void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, uint32 originalDamage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage)
+void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage)
 {
     WorldPacket data(GetOpcode("SMSG_ATTACKERSTATEUPDATE"), (16 + 45));
     data << uint32(hitInfo);
     data << attackerGuid.WriteAsPacked();
     data << victimGuid.WriteAsPacked();
-    data << uint32(originalDamage);
+    data << uint32(damage);
 
     if (GetClientBuild() >= CLIENT_BUILD_3_0_3)
         data << int32(overkillDamage);
@@ -1891,7 +1891,7 @@ void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGui
             data << uint32(GetFirstSchoolInMask(SpellSchoolMask(damageSchoolMask)));
 
         // Float coefficient of sub damage
-        data << ((originalDamage != 0) ? (float(damage) / float(originalDamage)) : 0);
+        data << float(damage);
         data << uint32(damage);
 
         if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_ABSORB | WotLK::HITINFO_ABSORB2)))
@@ -1910,6 +1910,27 @@ void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGui
 
     if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_BLOCK)))
         data << uint32(blockedDamage);
+
+    if ((GetClientBuild() >= CLIENT_BUILD_3_0_2) && (hitInfo & WotLK::HITINFO_RAGE_GAIN))
+        data << uint32(0);
+
+    if ((GetClientBuild() >= CLIENT_BUILD_3_0_2) && (hitInfo & WotLK::HITINFO_UNK0))
+    {
+        data << uint32(0);
+        data << float(0);
+        data << float(0);
+        data << float(0);
+        data << float(0);
+        data << float(0);
+        data << float(0);
+        data << float(0);
+        data << float(0);
+        data << float(0);
+        data << float(0);
+        data << uint32(0);
+        data << uint32(0);
+        data << uint32(0);
+    }
 
     SendPacket(data);
 }

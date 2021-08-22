@@ -666,7 +666,7 @@ namespace WotLK
         // 0x00100000
         HITINFO_SWINGNOHITSOUND     = 0x00200000,               // guessed
         // 0x00400000
-        HITINFO_UNK22               = 0x00800000
+        HITINFO_RAGE_GAIN           = 0x00800000,
     };
 
     enum NPCFlags

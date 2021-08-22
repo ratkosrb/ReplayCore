@@ -373,7 +373,7 @@ struct SniffedEvent_GameObjectCreate : SniffedEvent_WorldObjectCreate_Base<Sniff
 struct SniffedEvent_UnitCreate : SniffedEvent_WorldObjectCreate_Base<SniffedEvent_UnitCreate>
 {
     SniffedEvent_UnitCreate(ObjectGuid objectGuid, bool isSpawn, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation) :
-        SniffedEvent_WorldObjectCreate_Base(objectGuid, isSpawn, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(m_moveFlags2), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
+        SniffedEvent_WorldObjectCreate_Base(objectGuid, isSpawn, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(moveFlags2), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
     uint32 m_moveTime = 0;
     uint32 m_moveFlags = 0;
     uint32 m_moveFlags2 = 0;

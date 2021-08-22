@@ -271,6 +271,12 @@
     <ClInclude Include="World\VanillaDefines.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="World\TbcDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\WotlkDefines.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Database">

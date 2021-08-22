@@ -568,7 +568,9 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             m.ChangePosition(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ(), unit->GetOrientation());
         }
 
-        if (unit->m_moveSpline.m_initialized && unit->GetHealth() != 0)
+        bool const sendSpline = unit->m_moveSpline.m_initialized && unit->GetHealth() != 0;
+
+        if (sendSpline)
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
             {
@@ -589,6 +591,15 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
                 //    m.AddMovementFlag(WotLK::MOVEFLAG_FORWARD);
             }
         }
+        else
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                m.RemoveMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                m.RemoveMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
+            else
+                m.RemoveMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
+        }
 
         *data << m;
 
@@ -596,7 +607,7 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             *data << float(unit->GetSpeed(UnitMoveType(i)));
 
         // Send current movement informations
-        if (unit->m_moveSpline.m_initialized)
+        if (sendSpline)
             unit->m_moveSpline.WriteCreate(*data);
     }
     else

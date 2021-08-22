@@ -114,116 +114,6 @@ inline uint32 ConvertClassicNpcFlagToVanilla(uint32 flag)
     return 0;
 }
 
-inline uint32 ConvertClassicNpcFlagToTBC(uint32 flag)
-{
-    switch (flag)
-    {
-        case Classic::UNIT_NPC_FLAG_GOSSIP:
-            return TBC::UNIT_NPC_FLAG_GOSSIP;
-        case Classic::UNIT_NPC_FLAG_QUESTGIVER:
-            return TBC::UNIT_NPC_FLAG_QUESTGIVER;
-        case Classic::UNIT_NPC_FLAG_TRAINER:
-            return TBC::UNIT_NPC_FLAG_TRAINER;
-        case Classic::UNIT_NPC_FLAG_TRAINER_CLASS:
-            return TBC::UNIT_NPC_FLAG_TRAINER_CLASS;
-        case Classic::UNIT_NPC_FLAG_TRAINER_PROFESSION:
-            return TBC::UNIT_NPC_FLAG_TRAINER_PROFESSION;
-        case Classic::UNIT_NPC_FLAG_VENDOR:
-            return TBC::UNIT_NPC_FLAG_VENDOR;
-        case Classic::UNIT_NPC_FLAG_VENDOR_AMMO:
-            return TBC::UNIT_NPC_FLAG_VENDOR_AMMO;
-        case Classic::UNIT_NPC_FLAG_VENDOR_FOOD:
-            return TBC::UNIT_NPC_FLAG_VENDOR_FOOD;
-        case Classic::UNIT_NPC_FLAG_VENDOR_POISON:
-            return TBC::UNIT_NPC_FLAG_VENDOR_POISON;
-        case Classic::UNIT_NPC_FLAG_VENDOR_REAGENT:
-            return TBC::UNIT_NPC_FLAG_VENDOR_REAGENT;
-        case Classic::UNIT_NPC_FLAG_REPAIR:
-            return TBC::UNIT_NPC_FLAG_REPAIR;
-        case Classic::UNIT_NPC_FLAG_FLIGHTMASTER:
-            return TBC::UNIT_NPC_FLAG_FLIGHTMASTER;
-        case Classic::UNIT_NPC_FLAG_SPIRITHEALER:
-            return TBC::UNIT_NPC_FLAG_SPIRITHEALER;
-        case Classic::UNIT_NPC_FLAG_SPIRITGUIDE:
-            return TBC::UNIT_NPC_FLAG_SPIRITGUIDE;
-        case Classic::UNIT_NPC_FLAG_INNKEEPER:
-            return TBC::UNIT_NPC_FLAG_INNKEEPER;
-        case Classic::UNIT_NPC_FLAG_BANKER:
-            return TBC::UNIT_NPC_FLAG_BANKER;
-        case Classic::UNIT_NPC_FLAG_PETITIONER:
-            return TBC::UNIT_NPC_FLAG_PETITIONER;
-        case Classic::UNIT_NPC_FLAG_TABARDDESIGNER:
-            return TBC::UNIT_NPC_FLAG_TABARDDESIGNER;
-        case Classic::UNIT_NPC_FLAG_BATTLEMASTER:
-            return TBC::UNIT_NPC_FLAG_BATTLEMASTER;
-        case Classic::UNIT_NPC_FLAG_AUCTIONEER:
-            return TBC::UNIT_NPC_FLAG_AUCTIONEER;
-        case Classic::UNIT_NPC_FLAG_STABLEMASTER:
-            return TBC::UNIT_NPC_FLAG_STABLEMASTER;
-        case Classic::UNIT_NPC_FLAG_GUILD_BANKER:
-            return TBC::UNIT_NPC_FLAG_GUILD_BANKER;
-        case Classic::UNIT_NPC_FLAG_SPELLCLICK:
-            return TBC::UNIT_NPC_FLAG_SPELLCLICK;
-    }
-    return 0;
-}
-
-inline uint32 ConvertClassicNpcFlagToWotLK(uint32 flag)
-{
-    switch (flag)
-    {
-        case Classic::UNIT_NPC_FLAG_GOSSIP:
-            return WotLK::UNIT_NPC_FLAG_GOSSIP;
-        case Classic::UNIT_NPC_FLAG_QUESTGIVER:
-            return WotLK::UNIT_NPC_FLAG_QUESTGIVER;
-        case Classic::UNIT_NPC_FLAG_TRAINER:
-            return WotLK::UNIT_NPC_FLAG_TRAINER;
-        case Classic::UNIT_NPC_FLAG_TRAINER_CLASS:
-            return WotLK::UNIT_NPC_FLAG_TRAINER_CLASS;
-        case Classic::UNIT_NPC_FLAG_TRAINER_PROFESSION:
-            return WotLK::UNIT_NPC_FLAG_TRAINER_PROFESSION;
-        case Classic::UNIT_NPC_FLAG_VENDOR:
-            return WotLK::UNIT_NPC_FLAG_VENDOR;
-        case Classic::UNIT_NPC_FLAG_VENDOR_AMMO:
-            return WotLK::UNIT_NPC_FLAG_VENDOR_AMMO;
-        case Classic::UNIT_NPC_FLAG_VENDOR_FOOD:
-            return WotLK::UNIT_NPC_FLAG_VENDOR_FOOD;
-        case Classic::UNIT_NPC_FLAG_VENDOR_POISON:
-            return WotLK::UNIT_NPC_FLAG_VENDOR_POISON;
-        case Classic::UNIT_NPC_FLAG_VENDOR_REAGENT:
-            return WotLK::UNIT_NPC_FLAG_VENDOR_REAGENT;
-        case Classic::UNIT_NPC_FLAG_REPAIR:
-            return WotLK::UNIT_NPC_FLAG_REPAIR;
-        case Classic::UNIT_NPC_FLAG_FLIGHTMASTER:
-            return WotLK::UNIT_NPC_FLAG_FLIGHTMASTER;
-        case Classic::UNIT_NPC_FLAG_SPIRITHEALER:
-            return WotLK::UNIT_NPC_FLAG_SPIRITHEALER;
-        case Classic::UNIT_NPC_FLAG_SPIRITGUIDE:
-            return WotLK::UNIT_NPC_FLAG_SPIRITGUIDE;
-        case Classic::UNIT_NPC_FLAG_INNKEEPER:
-            return WotLK::UNIT_NPC_FLAG_INNKEEPER;
-        case Classic::UNIT_NPC_FLAG_BANKER:
-            return WotLK::UNIT_NPC_FLAG_BANKER;
-        case Classic::UNIT_NPC_FLAG_PETITIONER:
-            return WotLK::UNIT_NPC_FLAG_PETITIONER;
-        case Classic::UNIT_NPC_FLAG_TABARDDESIGNER:
-            return WotLK::UNIT_NPC_FLAG_TABARDDESIGNER;
-        case Classic::UNIT_NPC_FLAG_BATTLEMASTER:
-            return WotLK::UNIT_NPC_FLAG_BATTLEMASTER;
-        case Classic::UNIT_NPC_FLAG_AUCTIONEER:
-            return WotLK::UNIT_NPC_FLAG_AUCTIONEER;
-        case Classic::UNIT_NPC_FLAG_STABLEMASTER:
-            return WotLK::UNIT_NPC_FLAG_STABLEMASTER;
-        case Classic::UNIT_NPC_FLAG_GUILD_BANKER:
-            return WotLK::UNIT_NPC_FLAG_GUILD_BANKER;
-        case Classic::UNIT_NPC_FLAG_SPELLCLICK:
-            return WotLK::UNIT_NPC_FLAG_SPELLCLICK;
-        case Classic::UNIT_NPC_FLAG_PLAYER_VEHICLE:
-            return WotLK::UNIT_NPC_FLAG_PLAYER_VEHICLE;
-    }
-    return 0;
-}
-
 inline uint32 ConvertClassicNpcFlagsToVanilla(uint32 flags)
 {
     uint32 newFlags = 0;
@@ -233,34 +123,6 @@ inline uint32 ConvertClassicNpcFlagsToVanilla(uint32 flags)
         if (flags & flag)
         {
             newFlags |= ConvertClassicNpcFlagToVanilla(flag);
-        }
-    }
-    return newFlags;
-}
-
-inline uint32 ConvertClassicNpcFlagsToTBC(uint32 flags)
-{
-    uint32 newFlags = 0;
-    for (uint32 i = 0; i < Classic::MAX_NPC_FLAGS; i++)
-    {
-        uint32 flag = (uint32)pow(2, i);
-        if (flags & flag)
-        {
-            newFlags |= ConvertClassicNpcFlagToTBC(flag);
-        }
-    }
-    return newFlags;
-}
-
-inline uint32 ConvertClassicNpcFlagsToWotLK(uint32 flags)
-{
-    uint32 newFlags = 0;
-    for (uint32 i = 0; i < Classic::MAX_NPC_FLAGS; i++)
-    {
-        uint32 flag = (uint32)pow(2, i);
-        if (flags & flag)
-        {
-            newFlags |= ConvertClassicNpcFlagToWotLK(flag);
         }
     }
     return newFlags;
@@ -301,76 +163,6 @@ inline uint32 ConvertClassicHitInfoFlagToVanilla(uint32 flag)
     return 0;
 }
 
-inline uint32 ConvertClassicHitInfoFlagToTBC(uint32 flag)
-{
-    switch (flag)
-    {
-        case Classic::HITINFO_UNK0:
-            return TBC::HITINFO_UNK0;
-        case Classic::HITINFO_AFFECTS_VICTIM:
-            return TBC::HITINFO_AFFECTS_VICTIM;
-        case Classic::HITINFO_OFFHAND:
-            return TBC::HITINFO_LEFTSWING;
-        case Classic::HITINFO_UNK3:
-            return TBC::HITINFO_UNK3;
-        case Classic::HITINFO_MISS:
-            return TBC::HITINFO_MISS;
-        case Classic::HITINFO_FULL_ABSORB:
-            return TBC::HITINFO_ABSORB;
-        case Classic::HITINFO_PARTIAL_ABSORB:
-            return TBC::HITINFO_ABSORB;
-        case Classic::HITINFO_FULL_RESIST:
-            return TBC::HITINFO_RESIST;
-        case Classic::HITINFO_PARTIAL_RESIST:
-            return TBC::HITINFO_RESIST;
-        case Classic::HITINFO_CRITICALHIT:
-            return TBC::HITINFO_CRITICALHIT;
-        case Classic::HITINFO_GLANCING:
-            return TBC::HITINFO_GLANCING;
-        case Classic::HITINFO_CRUSHING:
-            return TBC::HITINFO_CRUSHING;
-        case Classic::HITINFO_NO_ANIMATION:
-            return TBC::HITINFO_NOACTION;
-    }
-
-    return 0;
-}
-
-inline uint32 ConvertClassicHitInfoFlagToWotLK(uint32 flag)
-{
-    switch (flag)
-    {
-        case Classic::HITINFO_UNK0:
-            return WotLK::HITINFO_UNK0;
-        case Classic::HITINFO_AFFECTS_VICTIM:
-            return WotLK::HITINFO_AFFECTS_VICTIM;
-        case Classic::HITINFO_OFFHAND:
-            return WotLK::HITINFO_LEFTSWING;
-        case Classic::HITINFO_UNK3:
-            return WotLK::HITINFO_UNK3;
-        case Classic::HITINFO_MISS:
-            return WotLK::HITINFO_MISS;
-        case Classic::HITINFO_FULL_ABSORB:
-            return WotLK::HITINFO_ABSORB;
-        case Classic::HITINFO_PARTIAL_ABSORB:
-            return WotLK::HITINFO_ABSORB2;
-        case Classic::HITINFO_FULL_RESIST:
-            return WotLK::HITINFO_RESIST;
-        case Classic::HITINFO_PARTIAL_RESIST:
-            return WotLK::HITINFO_RESIST2;
-        case Classic::HITINFO_CRITICALHIT:
-            return WotLK::HITINFO_CRITICALHIT;
-        case Classic::HITINFO_GLANCING:
-            return WotLK::HITINFO_GLANCING;
-        case Classic::HITINFO_CRUSHING:
-            return WotLK::HITINFO_CRUSHING;
-        case Classic::HITINFO_NO_ANIMATION:
-            return WotLK::HITINFO_NOACTION;
-    }
-
-    return 0;
-}
-
 inline uint32 ConvertClassicHitInfoFlagsToVanilla(uint32 flags)
 {
     uint32 newFlags = 0;
@@ -380,34 +172,6 @@ inline uint32 ConvertClassicHitInfoFlagsToVanilla(uint32 flags)
         if (flags & flag)
         {
             newFlags |= ConvertClassicHitInfoFlagToVanilla(flag);
-        }
-    }
-    return newFlags;
-}
-
-inline uint32 ConvertClassicHitInfoFlagsToTBC(uint32 flags)
-{
-    uint32 newFlags = 0;
-    for (uint32 i = 0; i < 32; i++)
-    {
-        uint32 flag = (uint32)pow(2, i);
-        if (flags & flag)
-        {
-            newFlags |= ConvertClassicHitInfoFlagToTBC(flag);
-        }
-    }
-    return newFlags;
-}
-
-inline uint32 ConvertClassicHitInfoFlagsToWotLK(uint32 flags)
-{
-    uint32 newFlags = 0;
-    for (uint32 i = 0; i < 32; i++)
-    {
-        uint32 flag = (uint32)pow(2, i);
-        if (flags & flag)
-        {
-            newFlags |= ConvertClassicHitInfoFlagToWotLK(flag);
         }
     }
     return newFlags;
@@ -676,7 +440,7 @@ inline uint32 ConvertClassicChatTypeToTBC(uint8 chatType)
         case Classic::CHAT_MSG_WHISPER:
             return TBC::CHAT_MSG_WHISPER;
         case Classic::CHAT_MSG_WHISPER_FOREIGN:
-            return TBC::CHAT_MSG_WHISPER;
+            return TBC::CHAT_MSG_WHISPER_FOREIGN;
         case Classic::CHAT_MSG_WHISPER_INFORM:
             return TBC::CHAT_MSG_WHISPER_INFORM;
         case Classic::CHAT_MSG_EMOTE:
@@ -788,7 +552,7 @@ inline uint32 ConvertClassicChatTypeToWotLK(uint8 chatType)
         case Classic::CHAT_MSG_WHISPER:
             return WotLK::CHAT_MSG_WHISPER;
         case Classic::CHAT_MSG_WHISPER_FOREIGN:
-            return WotLK::CHAT_MSG_WHISPER;
+            return WotLK::CHAT_MSG_WHISPER_FOREIGN;
         case Classic::CHAT_MSG_WHISPER_INFORM:
             return WotLK::CHAT_MSG_WHISPER_INFORM;
         case Classic::CHAT_MSG_EMOTE:

@@ -363,7 +363,7 @@ public:
     void SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<ObjectGuid> const& vHitTargets, std::vector<ObjectGuid> const& vMissTargets, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
     void SendAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid);
-    void SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, uint32 originalDamage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage);
+    void SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage);
     void SendEmote(ObjectGuid guid, uint32 emoteId);
     void SendWeather(uint32 type, float grade, uint32 soundId, bool instant);
     void SendInitialWorldStates(std::map<uint32, uint32> worldStates);

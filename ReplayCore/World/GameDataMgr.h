@@ -40,10 +40,13 @@ public:
     uint32 GetTransportMoveFlag() const;
     uint32 ConvertMovementFlags(uint32 moveFlags, bool onTransport) const;
     uint32 ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const;
+    uint32 ConvertWeatherTypeToWeatherState(uint32 type, float grade);
     void ConvertWeatherStateAndGradeForVanilla(uint32& type, float& grade);
     uint32 GetWeatherSoundForVanilla(uint32 type, float grade) const;
     uint32 ConvertChatType(uint32 chatType) const;
     uint32 ConvertVanillaChatType(uint32 chatType) const;
+    uint32 ConvertTBCChatType(uint32 chatType) const;
+    uint32 ConvertWotLKChatType(uint32 chatType) const;
     uint32 ConvertClassicChatType(uint32 chatType) const;
     void ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination);
     uint32 ConvertNpcFlags(uint32 npcFlags);

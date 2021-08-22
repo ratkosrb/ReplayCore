@@ -53,7 +53,20 @@ void MoveSpline::WriteMove(WorldPacket& data) const
     }
 
     data << uint32(m_flags);
+
+    if ((sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2) && (m_flags & WotLK::Animation))
+    {
+        data << uint8(0);  // Animation State
+        data << uint32(0); // Async-time in ms
+    }
+
     data << uint32(m_moveTimeMs);
+
+    if ((sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2) && (m_flags & WotLK::Parabolic))
+    {
+        data << float(1.0f); // Vertical Speed
+        data << uint32(0);   // Async-time in ms
+    }
     
     uint32 pointsCount = m_destinationPoints.size();
     data << uint32(pointsCount);
@@ -130,8 +143,8 @@ void MoveSpline::WriteCreate(ByteBuffer& data) const
     {
         data << float(1.0f); // Spline Duration Multiplier
         data << float(1.0f); // Spline Duration Multiplier Next
-        data << float(1.0f); // Spline Vertical Acceleration
-        data << uint32(m_startTimeMs); // Spline Start Time
+        data << uint32(0);   // Spline Vertical Acceleration
+        data << uint32(0);   // Spline Start Time
     }
 
     assert(!m_destinationPoints.empty());

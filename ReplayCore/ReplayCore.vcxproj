@@ -130,6 +130,7 @@
     <ClInclude Include="World\SniffedEvents.h" />
     <ClInclude Include="World\SpellCastTargets.h" />
     <ClInclude Include="World\SpellDefines.h" />
+    <ClInclude Include="World\TbcDefines.h" />
     <ClInclude Include="World\Unit.h" />
     <ClInclude Include="World\UnitDefines.h" />
     <ClInclude Include="World\UpdateData.h" />
@@ -139,6 +140,7 @@
     <ClInclude Include="World\Waypoint.h" />
     <ClInclude Include="World\WaypointData.h" />
     <ClInclude Include="World\WorldServer.h" />
+    <ClInclude Include="World\WotlkDefines.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Auth\AuthServer.cpp" />
