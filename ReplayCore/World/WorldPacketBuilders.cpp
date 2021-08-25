@@ -368,7 +368,7 @@ void WorldServer::SendActionButtons(uint8 raceId, uint8 classId)
     SendPacket(data);
 }
 
-void WorldServer::SendNameQueryResponse(ObjectGuid guid, char const* name, uint32 raceId, uint32 gender, uint32 classId)
+void WorldServer::SendPlayerNameQueryResponse(ObjectGuid guid, char const* name, uint32 raceId, uint32 gender, uint32 classId)
 {
     WorldPacket data(GetOpcode("SMSG_NAME_QUERY_RESPONSE"), (8 + 25 + 1 + 4 + 4 + 4));   // guess size
 
@@ -399,6 +399,15 @@ void WorldServer::SendNameQueryResponse(ObjectGuid guid, char const* name, uint3
     if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
         data << uint8(0); // name declined
 
+    SendPacket(data);
+}
+
+void WorldServer::SendPetNameQueryResponse(uint32 petNumber, char const* name, uint32 timestamp)
+{
+    WorldPacket data(GetOpcode("SMSG_PET_NAME_QUERY_RESPONSE"));
+    data << uint32(petNumber);
+    data << name;
+    data << uint32(timestamp);
     SendPacket(data);
 }
 

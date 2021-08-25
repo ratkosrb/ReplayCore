@@ -216,6 +216,12 @@ void CreatureData::InitializeCreature(Unit* pCreature) const
         else
             pCreature->AddUnitMovementFlag(WotLK::MOVEFLAG_HOVER);
     }
+
+    if (guid.IsPet())
+    {
+        pCreature->SetPetNumber(guid.GetEntry());
+        pCreature->SetPetNameTimestamp(1);
+    }
 }
 
 void PlayerData::InitializePlayer(Player* pPlayer) const
@@ -719,6 +725,8 @@ void ReplayMgr::LoadCreatures()
 
     LoadInitialGuidValues("creature_guid_values", m_creatureSpawns);
 
+    LoadCreaturePetNames();
+
     printf(">> Loaded %u creature spawns.\n", (uint32)m_creatureSpawns.size());
 }
 
@@ -792,6 +800,25 @@ void ReplayMgr::LoadInitialGuidValues(const char* tableName, T& spawnsMap)
             std::string targetType = fields[21].GetCppString();
             pData->target = MakeObjectGuidFromSniffData(targetGuid, targetId, targetType);
         }
+
+    } while (result->NextRow());
+}
+
+void ReplayMgr::LoadCreaturePetNames()
+{
+    //                                                               0       1
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `name` FROM `creature_pet_name`"));
+    if (!result)
+        return;
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 guid = fields[0].GetUInt32();
+        std::string name = fields[1].GetCppString();
+
+        m_creaturePetNames.insert({ guid, name });
 
     } while (result->NextRow());
 }

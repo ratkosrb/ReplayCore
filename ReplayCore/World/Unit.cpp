@@ -449,6 +449,26 @@ void Unit::SetEmoteState(uint32 emoteState)
     SetUInt32Value("UNIT_NPC_EMOTESTATE", emoteState);
 }
 
+uint32 Unit::GetPetNumber() const
+{
+    return GetUInt32Value("UNIT_FIELD_PETNUMBER");
+}
+
+void Unit::SetPetNumber(uint32 petNumber)
+{
+    SetUInt32Value("UNIT_FIELD_PETNUMBER", petNumber);
+}
+
+uint32 Unit::GetPetNameTimestamp() const
+{
+    return GetUInt32Value("UNIT_FIELD_PET_NAME_TIMESTAMP");
+}
+
+void Unit::SetPetNameTimestamp(uint32 timestamp)
+{
+    SetUInt32Value("UNIT_FIELD_PET_NAME_TIMESTAMP", timestamp);
+}
+
 void Unit::SetVirtualItem(uint8 slot, uint32 item_id)
 {
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)

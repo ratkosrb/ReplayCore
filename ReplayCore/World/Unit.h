@@ -98,6 +98,10 @@ public :
     void SetCreatedBySpell(uint32 createdBySpell);
     uint32 GetEmoteState() const;
     void SetEmoteState(uint32 emoteState);
+    uint32 GetPetNumber() const;
+    void SetPetNumber(uint32 petNumber);
+    uint32 GetPetNameTimestamp() const;
+    void SetPetNameTimestamp(uint32 timestamp);
 
     void SetVirtualItem(uint8 slot, uint32 item_id);
     uint32 GetAttackTime(WeaponAttackType att) const;

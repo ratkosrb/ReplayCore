@@ -273,6 +273,7 @@ private:
     void HandleRealmSplit(WorldPacket& packet);
     void HandlePlayerLogin(WorldPacket& packet);
     void HandlePlayerNameQuery(WorldPacket& packet);
+    void HandlePetNameQuery(WorldPacket& packet);
     void HandleTimeQuery(WorldPacket& packet);
     void HandleWho(WorldPacket& packet);
     void HandleLogoutRequest(WorldPacket& packet);
@@ -319,7 +320,8 @@ public:
     void SendTutorialFlags();
     void SendInitialSpells(uint8 raceId, uint8 classId);
     void SendActionButtons(uint8 raceId, uint8 classId);
-    void SendNameQueryResponse(ObjectGuid guid, char const* name, uint32 raceId, uint32 gender, uint32 classId);
+    void SendPlayerNameQueryResponse(ObjectGuid guid, char const* name, uint32 raceId, uint32 gender, uint32 classId);
+    void SendPetNameQueryResponse(uint32 petNumber, char const* name, uint32 timestamp);
     void SendFriendList();
     void SendIgnoreList();
     void SendWhoList(uint32 levelMin, uint32 levelMax, uint32 raceMask, uint32 classMask, std::string playerName, std::string guildName, std::vector<uint32> zones, std::vector<std::string> names);

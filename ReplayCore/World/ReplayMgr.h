@@ -247,6 +247,7 @@ public:
 
     void SpawnCreatures();
     void LoadCreatures();
+    void LoadCreaturePetNames();
     template<class T>
     void LoadInitialGuidValues(const char* tableName, T& spawnsMap);
     CreatureData* GetCreatureSpawnData(uint32 guid)
@@ -267,6 +268,14 @@ public:
                 return &itr;
         }
         return nullptr;
+    }
+    std::string GetCreaturePetName(uint32 guid)
+    {
+        auto itr = m_creaturePetNames.find(guid);
+        if (itr == m_creaturePetNames.end())
+            return std::string();
+
+        return itr->second;
     }
     void GetWaypointsForCreature(uint32 guid, std::vector<WaypointData>& waypoints, bool useStartPosition);
 
@@ -408,6 +417,7 @@ private:
     SplinesMap m_creatureMovementCombatSplines;
     std::set<ObjectGuid> m_activePlayers;
     std::map<uint32 /*unixtime*/, ObjectGuid> m_activePlayerTimes;
+    std::map<uint32 /*guid*/, std::string> m_creaturePetNames;
     std::map<ObjectGuid, std::string> m_playerChatNames; // players that have never been seen but wrote in a chat channel
     std::map<uint32 /*guid*/, PlayerData> m_playerSpawns;
     std::map<uint32 /*guid*/, CreatureData> m_creatureSpawns;

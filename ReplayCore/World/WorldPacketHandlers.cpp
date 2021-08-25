@@ -31,6 +31,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_REALM_SPLIT", &WorldServer::HandleRealmSplit);
     SetOpcodeHandler("CMSG_PLAYER_LOGIN", &WorldServer::HandlePlayerLogin);
     SetOpcodeHandler("CMSG_NAME_QUERY", &WorldServer::HandlePlayerNameQuery);
+    SetOpcodeHandler("CMSG_PET_NAME_QUERY", &WorldServer::HandlePetNameQuery);
     SetOpcodeHandler("CMSG_QUERY_TIME", &WorldServer::HandleTimeQuery);
     SetOpcodeHandler("CMSG_WHO", &WorldServer::HandleWho);
     SetOpcodeHandler("CMSG_LOGOUT_REQUEST", &WorldServer::HandleLogoutRequest);
@@ -580,18 +581,31 @@ void WorldServer::HandlePlayerNameQuery(WorldPacket& packet)
 
     if (pPlayer)
     {
-        SendNameQueryResponse(pPlayer->GetObjectGuid(), pPlayer->GetName(), pPlayer->GetRace(), pPlayer->GetGender(), pPlayer->GetClass());
+        SendPlayerNameQueryResponse(pPlayer->GetObjectGuid(), pPlayer->GetName(), pPlayer->GetRace(), pPlayer->GetGender(), pPlayer->GetClass());
         return;
     }
     
     std::string senderName = sReplayMgr.GetPlayerChatName(guid);
     if (!senderName.empty())
     {
-        SendNameQueryResponse(guid, senderName.c_str(), RACE_HUMAN, GENDER_MALE, CLASS_WARRIOR);
+        SendPlayerNameQueryResponse(guid, senderName.c_str(), RACE_HUMAN, GENDER_MALE, CLASS_WARRIOR);
         return;
     }
 
     printf("[HandlePlayerNameQuery] Error: Received name query for unknown guid %s!\n", guid.GetString().c_str());
+}
+
+void WorldServer::HandlePetNameQuery(WorldPacket& packet)
+{
+    uint32 petNumber;
+    ObjectGuid petGuid;
+
+    packet >> petNumber;
+    packet >> petGuid;
+
+    std::string name = sReplayMgr.GetCreaturePetName(petNumber);
+    if (!name.empty())
+        SendPetNameQueryResponse(petNumber, name.c_str(), 1);
 }
 
 void WorldServer::HandleTimeQuery(WorldPacket& packet)
