@@ -349,7 +349,7 @@ void Unit::SetSheathState(uint8 sheathState)
 
 uint8 Unit::GetVisFlags() const
 {
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_4_0)
         return GetByteValue("UNIT_FIELD_BYTES_1", 3);
 
     return GetByteValue("UNIT_FIELD_BYTES_1", 2);
@@ -357,7 +357,7 @@ uint8 Unit::GetVisFlags() const
 
 void Unit::SetVisFlags(uint8 visFlags)
 {
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_4_0)
         SetByteValue("UNIT_FIELD_BYTES_1", 3, visFlags);
     else
         SetByteValue("UNIT_FIELD_BYTES_1", 2, visFlags);
