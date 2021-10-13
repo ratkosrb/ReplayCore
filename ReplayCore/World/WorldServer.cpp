@@ -470,8 +470,8 @@ std::string WorldServer::GetPlayerName(ObjectGuid guid)
     if (m_clientPlayer && m_clientPlayer->GetObjectGuid() == guid)
         return m_clientPlayer->GetName();
 
-    if (Player const* pPlayer = FindPlayer(guid))
-        return pPlayer->GetName();
+    if (PlayerData const* pPlayer = sReplayMgr.GetPlayerSpawnData(guid.GetCounter()))
+        return pPlayer->name;
 
     return sReplayMgr.GetPlayerChatName(guid);
 }

@@ -111,16 +111,16 @@ inline uint32 ConvertVanillaHitInfoFlagToWotLK(uint32 flag)
             return WotLK::HITINFO_UNK0;
         case Vanilla::HITINFO_AFFECTS_VICTIM:
             return WotLK::HITINFO_AFFECTS_VICTIM;
-        case Vanilla::HITINFO_LEFTSWING:
-            return WotLK::HITINFO_LEFTSWING;
+        case Vanilla::HITINFO_OFFHAND:
+            return WotLK::HITINFO_OFFHAND;
         case Vanilla::HITINFO_UNK3:
             return WotLK::HITINFO_UNK3;
         case Vanilla::HITINFO_MISS:
             return WotLK::HITINFO_MISS;
         case Vanilla::HITINFO_ABSORB:
-            return WotLK::HITINFO_ABSORB;
+            return WotLK::HITINFO_FULL_ABSORB;
         case Vanilla::HITINFO_RESIST:
-            return WotLK::HITINFO_RESIST;
+            return WotLK::HITINFO_FULL_RESIST;
         case Vanilla::HITINFO_CRITICALHIT:
             return WotLK::HITINFO_CRITICALHIT;
         case Vanilla::HITINFO_BLOCK:
@@ -129,8 +129,8 @@ inline uint32 ConvertVanillaHitInfoFlagToWotLK(uint32 flag)
             return WotLK::HITINFO_GLANCING;
         case Vanilla::HITINFO_CRUSHING:
             return WotLK::HITINFO_CRUSHING;
-        case Vanilla::HITINFO_NOACTION:
-            return WotLK::HITINFO_NOACTION;
+        case Vanilla::HITINFO_NO_ANIMATION:
+            return WotLK::HITINFO_NO_ANIMATION;
         case Vanilla::HITINFO_SWINGNOHITSOUND:
             return WotLK::HITINFO_SWINGNOHITSOUND;
     }

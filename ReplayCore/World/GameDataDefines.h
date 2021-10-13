@@ -38,6 +38,34 @@ namespace Vanilla
         WEATHER_SANDSTORMHEAVY         = 8558
     };
 
+    inline std::string WeatherSoundToString(uint32 value)
+    {
+        switch (value)
+        {
+            case WEATHER_NOSOUND:
+                return "WEATHER_NOSOUND";
+            case WEATHER_RAINLIGHT:
+                return "WEATHER_RAINLIGHT";
+            case WEATHER_RAINMEDIUM:
+                return "WEATHER_RAINMEDIUM";
+            case WEATHER_RAINHEAVY:
+                return "WEATHER_RAINHEAVY";
+            case WEATHER_SNOWLIGHT:
+                return "WEATHER_SNOWLIGHT";
+            case WEATHER_SNOWMEDIUM:
+                return "WEATHER_SNOWMEDIUM";
+            case WEATHER_SNOWHEAVY:
+                return "WEATHER_SNOWHEAVY";
+            case WEATHER_SANDSTORMLIGHT:
+                return "WEATHER_SANDSTORMLIGHT";
+            case WEATHER_SANDSTORMMEDIUM:
+                return "WEATHER_SANDSTORMMEDIUM";
+            case WEATHER_SANDSTORMHEAVY:
+                return "WEATHER_SANDSTORMHEAVY";
+        }
+        return std::to_string(value);
+    }
+
     enum WeatherType
     {
         WEATHER_TYPE_FINE       = 0,
@@ -45,6 +73,23 @@ namespace Vanilla
         WEATHER_TYPE_SNOW       = 2,
         WEATHER_TYPE_STORM      = 3
     };
+
+    inline std::string WeatherTypeToString(uint32 value)
+    {
+        switch (value)
+        {
+            case WEATHER_TYPE_FINE:
+                return "WEATHER_TYPE_FINE";
+            case WEATHER_TYPE_RAIN:
+                return "WEATHER_TYPE_RAIN";
+            case WEATHER_TYPE_SNOW:
+                return "WEATHER_TYPE_SNOW";
+            case WEATHER_TYPE_STORM:
+                return "WEATHER_TYPE_STORM";
+
+        }
+        return std::to_string(value);
+    }
 }
 
 #define MAX_WEATHER_TYPE 4
@@ -68,6 +113,42 @@ namespace TBC
         WEATHER_STATE_THUNDERS          = 86,
         WEATHER_STATE_BLACKRAIN         = 90
     };
+
+    inline std::string WeatherStateToString(uint32 value)
+    {
+        switch(value)
+        {
+            case WEATHER_STATE_FINE:
+                return "WEATHER_STATE_FINE";
+            case WEATHER_STATE_FOG:
+                return "WEATHER_STATE_FOG";
+            case WEATHER_STATE_DRIZZLE:
+                return "WEATHER_STATE_DRIZZLE";
+            case WEATHER_STATE_LIGHT_RAIN:
+                return "WEATHER_STATE_LIGHT_RAIN";
+            case WEATHER_STATE_MEDIUM_RAIN:
+                return "WEATHER_STATE_MEDIUM_RAIN";
+            case WEATHER_STATE_HEAVY_RAIN:
+                return "WEATHER_STATE_HEAVY_RAIN";
+            case WEATHER_STATE_LIGHT_SNOW:
+                return "WEATHER_STATE_LIGHT_SNOW";
+            case WEATHER_STATE_MEDIUM_SNOW:
+                return "WEATHER_STATE_MEDIUM_SNOW";
+            case WEATHER_STATE_HEAVY_SNOW:
+                return "WEATHER_STATE_HEAVY_SNOW";
+            case WEATHER_STATE_LIGHT_SANDSTORM:
+                return "WEATHER_STATE_LIGHT_SANDSTORM";
+            case WEATHER_STATE_MEDIUM_SANDSTORM:
+                return "WEATHER_STATE_MEDIUM_SANDSTORM";
+            case WEATHER_STATE_HEAVY_SANDSTORM:
+                return "WEATHER_STATE_HEAVY_SANDSTORM";
+            case WEATHER_STATE_THUNDERS:
+                return "WEATHER_STATE_THUNDERS";
+            case WEATHER_STATE_BLACKRAIN:
+                return "WEATHER_STATE_BLACKRAIN";
+        }
+        return std::to_string(value);
+    }
 }
 
 enum FactionTemplateFlags
@@ -248,6 +329,13 @@ struct GameObjectTemplate
     std::string unkString;
     uint32 data[MAX_GAMEOBJECT_DATA] = {};
     uint32 questItems[MAX_GAMEOBJECT_QUEST_ITEMS] = {};
+};
+
+struct BroadcastTextEntry
+{
+    uint32 entry = 0;
+    std::string maleText;
+    std::string femaleText;
 };
 
 #endif

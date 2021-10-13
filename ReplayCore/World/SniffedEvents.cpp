@@ -4,10 +4,11 @@
 #include "WorldServer.h"
 #include "GameDataMgr.h"
 #include "ClassicDefines.h"
+#include "GameObjectDefines.h"
 #include "../Input/Config.h"
 #include "../Defines/Utility.h"
 #include "../Defines/Databases.h"
-#include "../Defines//ClientVersions.h"
+#include "../Defines/ClientVersions.h"
 #include <map>
 
 void ReplayMgr::LoadSniffedEvents()
@@ -163,6 +164,21 @@ void ReplayMgr::PrepareSniffedEventDataForCurrentClient()
         itr.second->PepareForCurrentClient();
 }
 
+inline std::string CheckOpcodeName(std::string opcodeName)
+{
+    // These opcodes have non-standard structure. Replace them so we don't crash client.
+    if (opcodeName.find("SPLINE_DONE") != std::string::npos)
+        opcodeName = "MSG_MOVE_STOP";
+    else if (opcodeName.find("_ACK") != std::string::npos ||
+        opcodeName.find("TRANSPORT") != std::string::npos ||
+        opcodeName.find("TELEPORT") != std::string::npos ||
+        opcodeName.find("_MOVE_") == std::string::npos)
+        opcodeName = "MSG_MOVE_HEARTBEAT";
+    else
+        opcodeName = ReplaceString(opcodeName, "CMSG_MOVE", "MSG_MOVE");
+    return opcodeName;
+}
+
 void ReplayMgr::PrepareClientSideMovementDataForCurrentClient()
 {
     std::map<ObjectGuid, MovementInfo> lastMovementInfo;
@@ -197,7 +213,7 @@ void ReplayMgr::PrepareClientSideMovementDataForCurrentClient()
             newState.s_pitch = moveEvent->m_swimPitch;
             newState.jump = moveEvent->m_jumpInfo;
 
-            if (uint16 opcode = sWorld.GetOpcode(moveEvent->m_opcodeName))
+            if (uint16 opcode = sWorld.GetOpcode(CheckOpcodeName(moveEvent->m_opcodeName)))
                 moveEvent->m_opcode = opcode;
             else if (uint16 opcode = sWorld.GetOpcode(GuessMovementOpcode(lastMovementInfo[moveEvent->m_moverGuid], newState)))
                 moveEvent->m_opcode = opcode;
@@ -312,6 +328,32 @@ void SniffedEvent_WeatherUpdate::Execute() const
             sWorld.SendWeather(m_type, m_grade, m_soundId, m_instant);
 }
 
+std::string SniffedEvent_WeatherUpdate::GetShortDescription() const
+{
+    std::string const weatherName = (sConfig.GetSniffVersion() == SNIFF_VANILLA) ? Vanilla::WeatherTypeToString(m_type) : TBC::WeatherStateToString(m_type);
+    std::string zoneName = "Zone " + std::to_string(m_zoneId);
+    if (AreaTableEntry const* pAreaEntry = sGameDataMgr.GetAreaTableEntry(m_zoneId))
+        zoneName = pAreaEntry->name;
+    return "Weather in " + zoneName + " changes to " + weatherName + " with intensity " + std::to_string(m_grade) + ".";
+}
+
+std::string SniffedEvent_WeatherUpdate::GetLongDescription() const
+{
+    std::string const weatherName = (sConfig.GetSniffVersion() == SNIFF_VANILLA) ? Vanilla::WeatherTypeToString(m_type) : TBC::WeatherStateToString(m_type);
+    std::string zoneName = "Zone " + std::to_string(m_zoneId);
+    if (AreaTableEntry const* pAreaEntry = sGameDataMgr.GetAreaTableEntry(m_zoneId))
+        zoneName = pAreaEntry->name;
+    std::string returnString;
+    returnString += "Map: " + std::string(sGameDataMgr.GetMapName(m_mapId)) + " (" + std::to_string(m_mapId) + ")\r\n";
+    returnString += "Zone: " + std::string(sGameDataMgr.GetAreaName(m_zoneId)) + " (" + std::to_string(m_zoneId) + ")\r\n";
+    returnString += "State: " + weatherName + "\r\n";
+    returnString += "Intensity: " + std::to_string(m_grade) + "\r\n";
+    if (sConfig.GetSniffVersion() == SNIFF_VANILLA)
+        returnString += "Sound: " + Vanilla::WeatherSoundToString(m_soundId) + "\r\n";
+    returnString += "Instant: " + std::to_string(m_instant);
+    return returnString;
+}
+
 void ReplayMgr::LoadWorldText()
 {
     //                                             0             1       2            3
@@ -349,6 +391,20 @@ void SniffedEvent_WorldText::Execute() const
     sWorld.SendChatPacket(m_chatType, m_text.c_str(), m_language, 0);
 }
 
+std::string SniffedEvent_WorldText::GetShortDescription() const
+{
+    return "Server sends message \"" + m_text + "\".\r\n";
+}
+
+std::string SniffedEvent_WorldText::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Text: " + m_text + "\r\n";
+    returnString += "ChatType: " + sGameDataMgr.ChatTypeToString(m_chatType) + "\r\n";
+    returnString += "Language: " + std::string(sGameDataMgr.GetLanguageName(m_language)) + " (" + std::to_string(m_language) + ")";
+    return returnString;
+}
+
 void ReplayMgr::LoadWorldStateUpdates()
 {
     //                                             0             1           2
@@ -378,6 +434,19 @@ void SniffedEvent_WorldStateUpdate::Execute() const
         return;
 
     sWorld.SendWorldStateUpdate(m_variable, m_value);
+}
+
+std::string SniffedEvent_WorldStateUpdate::GetShortDescription() const
+{
+    return "World state " + std::to_string(m_variable) + " changes to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_WorldStateUpdate::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Index: " + std::to_string(m_variable) + "\r\n";
+    returnString += "Value: " + std::to_string(m_value);
+    return returnString;
 }
 
 void ReplayMgr::LoadWorldObjectCreate(char const* tableName, uint32 typeId, bool isSpawn)
@@ -448,6 +517,33 @@ void SniffedEvent_WorldObjectCreate_Base<T>::Execute() const
         pObject->SetIsNewObject(false);
 
     pObject->SetVisibility(true);
+}
+
+template<class T>
+std::string SniffedEvent_WorldObjectCreate_Base<T>::GetShortDescription() const
+{
+    std::string returnString;
+    returnString += m_objectGuid.GetString(true);
+    if (m_isSpawn)
+        returnString += " spawns at ";
+    else
+        returnString += " becomes visible at ";
+    returnString += std::to_string(m_location.x) + " " + std::to_string(m_location.y) + " " + std::to_string(m_location.z) + ".";
+    return returnString;
+}
+
+template<class T>
+std::string SniffedEvent_WorldObjectCreate_Base<T>::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Map: " + std::string(sGameDataMgr.GetMapName(m_location.mapId)) + " (" + std::to_string(m_location.mapId) + ")\r\n";
+    returnString += "Position: " + std::to_string(m_location.x) + " " + std::to_string(m_location.y) + " " + std::to_string(m_location.z) + " " + std::to_string(m_location.o) + "\n";
+    if (!m_transportGuid.IsEmpty())
+    {
+        returnString += "Transport Guid: " + m_transportGuid.GetString(true) + "\r\n";
+        returnString += "Transport Position: " + std::to_string(m_transportPosition.x) + " " + std::to_string(m_transportPosition.y) + " " + std::to_string(m_transportPosition.z) + " " + std::to_string(m_transportPosition.o) + "\n";
+    }
+    return returnString;
 }
 
 void ReplayMgr::LoadGameObjectCreate(char const* tableName, uint32 typeId, bool isSpawn)
@@ -639,6 +735,16 @@ void SniffedEvent_WorldObjectDestroy::Execute() const
     pObject->SetVisibility(false);
 }
 
+std::string SniffedEvent_WorldObjectDestroy::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " despawns or goes out of range.";
+}
+
+std::string SniffedEvent_WorldObjectDestroy::GetLongDescription() const
+{
+    return std::string();
+}
+
 template <class T>
 void ReplayMgr::LoadUnitAttackToggle(char const* tableName, uint32 typeId)
 {
@@ -692,6 +798,16 @@ void SniffedEvent_UnitAttackStart::Execute() const
     sWorld.SendAttackStart(GetSourceGuid(), GetTargetGuid());
 }
 
+std::string SniffedEvent_UnitAttackStart::GetShortDescription() const
+{
+    return m_attackerGuid.GetString(true) + " starts attacking " + m_victimGuid.GetString(true) + ".";
+}
+
+std::string SniffedEvent_UnitAttackStart::GetLongDescription() const
+{
+    return std::string();
+}
+
 void SniffedEvent_UnitAttackStop::Execute() const
 {
     Unit* pAttacker = sWorld.FindUnit(GetSourceGuid());
@@ -711,6 +827,16 @@ void SniffedEvent_UnitAttackStop::Execute() const
         return;
 
     sWorld.SendAttackStop(GetSourceGuid(), GetTargetGuid());
+}
+
+std::string SniffedEvent_UnitAttackStop::GetShortDescription() const
+{
+    return m_attackerGuid.GetString(true) + " stops attacking " + m_victimGuid.GetString(true) + ".";
+}
+
+std::string SniffedEvent_UnitAttackStop::GetLongDescription() const
+{
+    return std::string();
 }
 
 void ReplayMgr::LoadUnitAttackLog(char const* tableName, uint32 typeId)
@@ -781,10 +907,33 @@ void SniffedEvent_UnitAttackLog::Execute() const
     sWorld.SendAttackerStateUpdate(m_hitInfo, m_attackerGuid, m_victimGuid, m_damage, m_overkillDamage, m_totalSchoolMask, m_totalAbsorbedDamage, m_totalResistedDamage, m_victimState, m_attackerState, m_spellId, m_blockedDamage);
 }
 
+std::string SniffedEvent_UnitAttackLog::GetShortDescription() const
+{
+    return m_attackerGuid.GetString(true) + " deals " + std::to_string(m_damage) + " melee damage to " + m_victimGuid.GetString(true) + ".";
+}
+
+std::string SniffedEvent_UnitAttackLog::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Hit Info: " + std::to_string(m_hitInfo) + " (" + sGameDataMgr.HitInfoFlagsToString(m_hitInfo) + ")\r\n";
+    returnString += "Damage: " + std::to_string(m_damage) + "\r\n";
+    returnString += "Original Damage: " + std::to_string(m_originalDamage) + "\r\n";
+    returnString += "Overkill Damage: " + std::to_string(m_overkillDamage) + "\r\n";
+    returnString += "School Mask: " + std::to_string(m_totalSchoolMask) + "\r\n";
+    returnString += "Absorbed Damage: " + std::to_string(m_totalAbsorbedDamage) + "\r\n";
+    returnString += "Resisted Damage: " + std::to_string(m_totalResistedDamage) + "\r\n";
+    returnString += "Blocked Damage: " + std::to_string(m_blockedDamage) + "\r\n";
+    returnString += "Victim State: " + std::to_string(m_victimState) + "\r\n";
+    returnString += "Attacker State: " + std::to_string(m_attackerState) + "\r\n";
+    if (m_spellId)
+        returnString += "Spell: " + sGameDataMgr.GetSpellName(m_spellId) + "(" + std::to_string(m_spellId) + ")";
+    return returnString;
+}
+
 void ReplayMgr::LoadUnitEmote(char const* tableName, uint32 typeId)
 {
-    //                                             0             1       2
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `emote_id` FROM `%s` ORDER BY `unixtimems`", tableName))
+    //                                             0             1       2           3
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `emote_id`, `emote_name` FROM `%s` ORDER BY `unixtimems`", tableName))
     {
         do
         {
@@ -802,8 +951,9 @@ void ReplayMgr::LoadUnitEmote(char const* tableName, uint32 typeId)
             }
 
             uint32 emoteId = fields[2].GetUInt32();
+            std::string emoteName = fields[3].GetCppString();
 
-            std::shared_ptr<SniffedEvent_UnitEmote> newEvent = std::make_shared<SniffedEvent_UnitEmote>(sourceGuid, emoteId);
+            std::shared_ptr<SniffedEvent_UnitEmote> newEvent = std::make_shared<SniffedEvent_UnitEmote>(sourceGuid, emoteId, emoteName);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());
@@ -834,6 +984,16 @@ void SniffedEvent_UnitEmote::Execute() const
     sWorld.SendEmote(GetSourceGuid(), m_emoteId);
 }
 
+std::string SniffedEvent_UnitEmote::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " plays emote " + m_emoteName + " (" + std::to_string(m_emoteId) + ").";
+}
+
+std::string SniffedEvent_UnitEmote::GetLongDescription() const
+{
+    return "Emote: " + m_emoteName + " (" + std::to_string(m_emoteId) + ")";
+}
+
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
 {
     //                                                               0             1       2         3            4             5              6      7             8             9             10             11                12             13             14             15             16            17           18                       19                     20                21                22
@@ -857,18 +1017,6 @@ void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
         }
 
         std::string opcodeName = fields[2].GetCppString();
-
-        // These opcodes have non-standard structure. Replace them so we don't crash client.
-        if (opcodeName.find("SPLINE_DONE") != std::string::npos)
-            opcodeName = "MSG_MOVE_STOP";
-        else if (opcodeName.find("_ACK") != std::string::npos ||
-            opcodeName.find("TRANSPORT") != std::string::npos ||
-            opcodeName.find("TELEPORT") != std::string::npos ||
-            opcodeName.find("_MOVE_") == std::string::npos)
-            opcodeName = "MSG_MOVE_HEARTBEAT";
-        else
-            opcodeName = ReplaceString(opcodeName, "CMSG_MOVE", "MSG_MOVE");
-
         uint32 moveTime = fields[3].GetUInt32();
         uint32 moveFlags = fields[4].GetUInt32();
         uint32 moveFlags2 = fields[5].GetUInt32();
@@ -941,6 +1089,41 @@ void SniffedEvent_ClientSideMovement::Execute() const
         return;
 
     sWorld.SendMovementPacket(pUnit, m_opcode);
+}
+
+std::string SniffedEvent_ClientSideMovement::GetShortDescription() const
+{
+    return m_moverGuid.GetString(true) + " moves to " + std::to_string(m_location.x) + " " + std::to_string(m_location.y) + " " + std::to_string(m_location.z) + ".";
+}
+
+std::string SniffedEvent_ClientSideMovement::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Opcode: " + m_opcodeName + "\r\n";
+    returnString += "Move Flags: " + std::to_string(m_moveFlags) + " (" + sGameDataMgr.MovementFlagsToString(m_moveFlags) + ")\r\n";
+    if (m_moveFlags2)
+        returnString += "Move Flags 2: " + std::to_string(m_moveFlags2) + "\r\n";
+    returnString += "Position: " + std::to_string(m_location.x) + " " + std::to_string(m_location.y) + " " + std::to_string(m_location.z) + " " + std::to_string(m_location.o) + "\r\n";
+    if (!m_transportGuid.IsEmpty())
+    {
+        returnString += "Transport Guid: " + m_transportGuid.GetString(true) + "\r\n";
+        returnString += "Transport Position: " + std::to_string(m_transportPosition.x) + " " + std::to_string(m_transportPosition.y) + " " + std::to_string(m_transportPosition.z) + " " + std::to_string(m_transportPosition.o) + "\r\n";
+    }
+    if (m_swimPitch)
+        returnString += "Swim Pitch: " + std::to_string(m_swimPitch) + "\r\n";
+    if (m_fallTime)
+        returnString += "Fall Time: " + std::to_string(m_fallTime) + "\r\n";
+    if (!m_jumpInfo.IsEmpty())
+    {
+        returnString += "Jump XY Speed: " + std::to_string(m_jumpInfo.xyspeed) + "\r\n";
+        returnString += "Jump Z Speed: " + std::to_string(m_jumpInfo.zspeed) + "\r\n";
+        returnString += "Jump Cos Angle: " + std::to_string(m_jumpInfo.cosAngle) + "\r\n";
+        returnString += "Jump Sin Angle: " + std::to_string(m_jumpInfo.sinAngle) + "\r\n";
+    }
+    if (m_splineElevation)
+        returnString += "Spline Elevation: " + std::to_string(m_splineElevation) + "\r\n";
+    
+    return returnString;
 }
 
 void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap)
@@ -1077,6 +1260,35 @@ void SniffedEvent_ServerSideMovement::Execute() const
         pUnit->m_moveSpline.Reset();
 }
 
+std::string SniffedEvent_ServerSideMovement::GetShortDescription() const
+{
+    if (m_splines.empty())
+    {
+        if (m_finalOrientation != 100)
+            return m_moverGuid.GetString(true) + " changes orientation to " + std::to_string(m_finalOrientation) + ".";
+
+        return m_moverGuid.GetString(true) + " stops moving at position " + std::to_string(m_startPosition.x) + " " + std::to_string(m_startPosition.y) + " " + std::to_string(m_startPosition.z) + ".";
+    }
+
+    return m_moverGuid.GetString(true) + " begins moving to " + std::to_string(m_splines.rbegin()->x) + " " + std::to_string(m_splines.rbegin()->y) + " " + std::to_string(m_splines.rbegin()->z) + ".";
+}
+
+std::string SniffedEvent_ServerSideMovement::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Start Position: " + std::to_string(m_startPosition.x) + " " + std::to_string(m_startPosition.y) + " " + std::to_string(m_startPosition.z) + "\r\n";
+    returnString += "Move Time: " + std::to_string(m_moveTime) + "\r\n";
+    returnString += "Spline Flags: " + std::to_string(m_splineFlags) + " (" + sGameDataMgr.SplineFlagsToString(m_splineFlags) + ")\r\n";
+    if (!m_transportGuid.IsEmpty())
+        returnString += "Transport Guid: " + m_transportGuid.GetString(true) + "\r\n";
+    returnString += "Waypoints Count: " + std::to_string(m_splines.size()) + "\r\n";
+    for (uint32 i = 0; i < m_splines.size(); i++)
+    {
+        returnString += "Waypoint[" + std::to_string(i) + "]: " + std::to_string(m_splines[i].x) + " " + std::to_string(m_splines[i].y) + " " + std::to_string(m_splines[i].z) + "\r\n";
+    }
+    return returnString;
+}
+
 template <class T>
 void ReplayMgr::LoadObjectValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId)
 {
@@ -1155,6 +1367,16 @@ void SniffedEvent_UnitUpdate_entry::Execute() const
     pUnit->SetEntry(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_entry::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates entry to " + sGameDataMgr.GetCreatureName(m_value) + "(" + std::to_string(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_entry::GetLongDescription() const
+{
+    return "Entry: " + sGameDataMgr.GetCreatureName(m_value) + "(" + std::to_string(m_value) + ")";
+}
+
 void SniffedEvent_UnitUpdate_scale::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1165,6 +1387,16 @@ void SniffedEvent_UnitUpdate_scale::Execute() const
     }
 
     pUnit->SetScale(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_scale::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates scale to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_scale::GetLongDescription() const
+{
+    return "Scale: " + std::to_string(m_value);
 }
 
 void SniffedEvent_UnitUpdate_display_id::PepareForCurrentClient()
@@ -1185,6 +1417,16 @@ void SniffedEvent_UnitUpdate_display_id::Execute() const
     pUnit->SetDisplayId(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_display_id::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates display_id to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_display_id::GetLongDescription() const
+{
+    return "Display Id: " + std::to_string(m_value);
+}
+
 void SniffedEvent_UnitUpdate_mount::PepareForCurrentClient()
 {
     if (m_value && !sGameDataMgr.IsValidUnitDisplayId(m_value))
@@ -1201,6 +1443,16 @@ void SniffedEvent_UnitUpdate_mount::Execute() const
     }
 
     pUnit->SetMountDisplayId(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_mount::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates mount_display_id to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_mount::GetLongDescription() const
+{
+    return "Mount Display Id: " + std::to_string(m_value);
 }
 
 void SniffedEvent_UnitUpdate_faction::PepareForCurrentClient()
@@ -1221,6 +1473,16 @@ void SniffedEvent_UnitUpdate_faction::Execute() const
     pUnit->SetFactionTemplate(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_faction::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates faction to " + sGameDataMgr.GetFactionTemplateName(m_value) + " (" + std::to_string(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_faction::GetLongDescription() const
+{
+    return "Faction Template: " + sGameDataMgr.GetFactionTemplateName(m_value) + " (" + std::to_string(m_value) + ")";
+}
+
 void SniffedEvent_UnitUpdate_level::PepareForCurrentClient()
 {
     if (GetSourceGuid().IsPlayer() && m_value > 255)
@@ -1239,6 +1501,16 @@ void SniffedEvent_UnitUpdate_level::Execute() const
     pUnit->SetLevel(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_level::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates level to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_level::GetLongDescription() const
+{
+    return "Level: " + std::to_string(m_value);
+}
+
 void SniffedEvent_UnitUpdate_aura_state::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1249,6 +1521,16 @@ void SniffedEvent_UnitUpdate_aura_state::Execute() const
     }
 
     pUnit->SetAuraState(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_aura_state::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates aura_state to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_aura_state::GetLongDescription() const
+{
+    return "Aura State: " + std::to_string(m_value);
 }
 
 void SniffedEvent_UnitUpdate_emote_state::PepareForCurrentClient()
@@ -1269,6 +1551,16 @@ void SniffedEvent_UnitUpdate_emote_state::Execute() const
     pUnit->SetEmoteState(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_emote_state::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates emote_state to " + EmoteToString(m_value) + " (" + std::to_string(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_emote_state::GetLongDescription() const
+{
+    return "Emote: " + EmoteToString(m_value) + " (" + std::to_string(m_value) + ")";
+}
+
 void SniffedEvent_UnitUpdate_stand_state::PepareForCurrentClient()
 {
     if (!sGameDataMgr.IsValidStandState(m_value))
@@ -1287,6 +1579,16 @@ void SniffedEvent_UnitUpdate_stand_state::Execute() const
     pUnit->SetStandState(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_stand_state::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates stand_state to " + StandStateToString(m_value) + " (" + std::to_string(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_stand_state::GetLongDescription() const
+{
+    return "Stand State: " + StandStateToString(m_value) + " (" + std::to_string(m_value) + ")";
+}
+
 void SniffedEvent_UnitUpdate_vis_flags::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1297,6 +1599,16 @@ void SniffedEvent_UnitUpdate_vis_flags::Execute() const
     }
 
     pUnit->SetVisFlags(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_vis_flags::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates vis_flags to " + std::to_string(m_value) + " (" + VisFlagsToString(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_vis_flags::GetLongDescription() const
+{
+    return "Vis Flags: " + std::to_string(m_value) + " (" + VisFlagsToString(m_value) + ")";
 }
 
 void SniffedEvent_UnitUpdate_sheath_state::PepareForCurrentClient()
@@ -1317,6 +1629,16 @@ void SniffedEvent_UnitUpdate_sheath_state::Execute() const
     pUnit->SetSheathState(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_sheath_state::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates sheath_state to " + SheathStateToString(m_value) + " (" + std::to_string(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_sheath_state::GetLongDescription() const
+{
+    return "Sheath State: " + SheathStateToString(m_value) + " (" + std::to_string(m_value) + ")";
+}
+
 void SniffedEvent_UnitUpdate_shapeshift_form::PepareForCurrentClient()
 {
     if (m_value >= MAX_SHAPESHIFT_FORM)
@@ -1333,6 +1655,16 @@ void SniffedEvent_UnitUpdate_shapeshift_form::Execute() const
     }
 
     pUnit->SetShapeShiftForm(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_shapeshift_form::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates shapeshift_form to " + ShapeShiftFormToString(m_value) + " (" + std::to_string(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_shapeshift_form::GetLongDescription() const
+{
+    return "Shapeshift Form: " + ShapeShiftFormToString(m_value) + " (" + std::to_string(m_value) + ")";
 }
 
 void SniffedEvent_UnitUpdate_npc_flags::PepareForCurrentClient()
@@ -1352,6 +1684,16 @@ void SniffedEvent_UnitUpdate_npc_flags::Execute() const
     pUnit->SetNpcFlags(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_npc_flags::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates npc_flags to " + std::to_string(m_value) + " (" + sGameDataMgr.NpcFlagsToString(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_npc_flags::GetLongDescription() const
+{
+    return "NPC Flags: " + std::to_string(m_value) + " (" + sGameDataMgr.NpcFlagsToString(m_value) + ")";
+}
+
 void SniffedEvent_UnitUpdate_unit_flags::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1362,6 +1704,16 @@ void SniffedEvent_UnitUpdate_unit_flags::Execute() const
     }
 
     pUnit->SetUnitFlags(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_unit_flags::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates unit_flags to " + std::to_string(m_value) + " (" + UnitFlagsToString(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_unit_flags::GetLongDescription() const
+{
+    return "Unit Flags: " + std::to_string(m_value) + " (" + UnitFlagsToString(m_value) + ")";
 }
 
 void SniffedEvent_UnitUpdate_unit_flags2::Execute() const
@@ -1376,6 +1728,16 @@ void SniffedEvent_UnitUpdate_unit_flags2::Execute() const
     pUnit->SetUnitFlags2(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_unit_flags2::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates unit_flags2 to " + std::to_string(m_value) + " (" + UnitFlags2ToString(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_unit_flags2::GetLongDescription() const
+{
+    return "Unit Flags2: " + std::to_string(m_value) + " (" + UnitFlags2ToString(m_value) + ")";
+}
+
 void SniffedEvent_UnitUpdate_dynamic_flags::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1386,6 +1748,16 @@ void SniffedEvent_UnitUpdate_dynamic_flags::Execute() const
     }
 
     pUnit->SetDynamicFlags(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_dynamic_flags::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates dynamic_flags to " + std::to_string(m_value) + " (" + UnitDynFlagsToString(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_dynamic_flags::GetLongDescription() const
+{
+    return "Dynamic Flags: " + std::to_string(m_value) + " (" + UnitDynFlagsToString(m_value) + ")";
 }
 
 void SniffedEvent_UnitUpdate_current_health::Execute() const
@@ -1400,6 +1772,16 @@ void SniffedEvent_UnitUpdate_current_health::Execute() const
     pUnit->SetHealth(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_current_health::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates current_health to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_current_health::GetLongDescription() const
+{
+    return "Current Health: " + std::to_string(m_value);
+}
+
 void SniffedEvent_UnitUpdate_max_health::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1410,6 +1792,16 @@ void SniffedEvent_UnitUpdate_max_health::Execute() const
     }
 
     pUnit->SetMaxHealth(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_max_health::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates max_health to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_max_health::GetLongDescription() const
+{
+    return "Max Health: " + std::to_string(m_value);
 }
 
 void SniffedEvent_UnitUpdate_current_mana::Execute() const
@@ -1424,6 +1816,16 @@ void SniffedEvent_UnitUpdate_current_mana::Execute() const
     pUnit->SetPower(POWER_MANA, m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_current_mana::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates current_mana to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_current_mana::GetLongDescription() const
+{
+    return "Current Mana: " + std::to_string(m_value);
+}
+
 void SniffedEvent_UnitUpdate_max_mana::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1434,6 +1836,16 @@ void SniffedEvent_UnitUpdate_max_mana::Execute() const
     }
 
     pUnit->SetMaxPower(POWER_MANA, m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_max_mana::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates max_mana to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_max_mana::GetLongDescription() const
+{
+    return "Max Mana: " + std::to_string(m_value);
 }
 
 void SniffedEvent_UnitUpdate_bounding_radius::Execute() const
@@ -1448,6 +1860,16 @@ void SniffedEvent_UnitUpdate_bounding_radius::Execute() const
     pUnit->SetBoundingRadius(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_bounding_radius::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates bounding_radius to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_bounding_radius::GetLongDescription() const
+{
+    return "Bounding Radius: " + std::to_string(m_value);
+}
+
 void SniffedEvent_UnitUpdate_combat_reach::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1458,6 +1880,16 @@ void SniffedEvent_UnitUpdate_combat_reach::Execute() const
     }
 
     pUnit->SetCombatReach(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_combat_reach::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates combat_reach to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_combat_reach::GetLongDescription() const
+{
+    return "Combat Reach: " + std::to_string(m_value);
 }
 
 void SniffedEvent_UnitUpdate_main_hand_attack_time::Execute() const
@@ -1472,6 +1904,16 @@ void SniffedEvent_UnitUpdate_main_hand_attack_time::Execute() const
     pUnit->SetAttackTime(BASE_ATTACK, m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_main_hand_attack_time::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates main_hand_attack_time to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_main_hand_attack_time::GetLongDescription() const
+{
+    return "Main Hand Attack Time: " + std::to_string(m_value);
+}
+
 void SniffedEvent_UnitUpdate_off_hand_attack_time::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -1482,6 +1924,16 @@ void SniffedEvent_UnitUpdate_off_hand_attack_time::Execute() const
     }
 
     pUnit->SetAttackTime(OFF_ATTACK, m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_off_hand_attack_time::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates off_hand_attack_time to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_off_hand_attack_time::GetLongDescription() const
+{
+    return "Off Hand Attack Time: " + std::to_string(m_value);
 }
 
 void SniffedEvent_UnitUpdate_channel_spell::PepareForCurrentClient()
@@ -1502,6 +1954,20 @@ void SniffedEvent_UnitUpdate_channel_spell::Execute() const
     pUnit->SetChannelSpell(m_value);
 }
 
+std::string SniffedEvent_UnitUpdate_channel_spell::GetShortDescription() const
+{
+    if (m_value)
+        return m_objectGuid.GetString(true) + " updates channel_spell to " + sGameDataMgr.GetSpellName(m_value) + " (" + std::to_string(m_value) + ").";
+    return m_objectGuid.GetString(true) + " updates channel_spell to 0.";
+}
+
+std::string SniffedEvent_UnitUpdate_channel_spell::GetLongDescription() const
+{
+    if (m_value)
+        return "Channel Spell: " + sGameDataMgr.GetSpellName(m_value) + " (" + std::to_string(m_value) + ")";
+    return "Channel Spell: 0";
+}
+
 void SniffedEvent_GameObjectUpdate_flags::Execute() const
 {
     GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
@@ -1512,6 +1978,16 @@ void SniffedEvent_GameObjectUpdate_flags::Execute() const
     }
 
     pGo->SetFlags(m_value);
+}
+
+std::string SniffedEvent_GameObjectUpdate_flags::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates flags to " + std::to_string(m_value) + " (" + GameObjectFlagsToString(m_value) + ").";
+}
+
+std::string SniffedEvent_GameObjectUpdate_flags::GetLongDescription() const
+{
+    return "Flags: " + std::to_string(m_value) + " (" + GameObjectFlagsToString(m_value) + ")";
 }
 
 void SniffedEvent_GameObjectUpdate_state::Execute() const
@@ -1526,6 +2002,16 @@ void SniffedEvent_GameObjectUpdate_state::Execute() const
     pGo->SetState(m_value);
 }
 
+std::string SniffedEvent_GameObjectUpdate_state::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates state to " + GameObjectStateToString(m_value) + " (" + std::to_string(m_value) + ").";
+}
+
+std::string SniffedEvent_GameObjectUpdate_state::GetLongDescription() const
+{
+    return "State: " + GameObjectStateToString(m_value) + " (" + std::to_string(m_value) + ")";
+}
+
 void SniffedEvent_GameObjectUpdate_artkit::Execute() const
 {
     GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
@@ -1536,6 +2022,16 @@ void SniffedEvent_GameObjectUpdate_artkit::Execute() const
     }
 
     pGo->SetArtKit(m_value);
+}
+
+std::string SniffedEvent_GameObjectUpdate_artkit::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates artkit to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_GameObjectUpdate_artkit::GetLongDescription() const
+{
+    return "Art Kit: " + std::to_string(m_value);
 }
 
 void SniffedEvent_GameObjectUpdate_dynamic_flags::Execute() const
@@ -1550,6 +2046,16 @@ void SniffedEvent_GameObjectUpdate_dynamic_flags::Execute() const
     pGo->SetDynamicFlags(m_value);
 }
 
+std::string SniffedEvent_GameObjectUpdate_dynamic_flags::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates dynamic_flags to " + std::to_string(m_value) + " (" + GameObjectDynFlagsToString(m_value) + ").";
+}
+
+std::string SniffedEvent_GameObjectUpdate_dynamic_flags::GetLongDescription() const
+{
+    return "Dynamic Flags: " + std::to_string(m_value) + " (" + GameObjectDynFlagsToString(m_value) + ")";
+}
+
 void SniffedEvent_GameObjectUpdate_path_progress::Execute() const
 {
     GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
@@ -1560,6 +2066,16 @@ void SniffedEvent_GameObjectUpdate_path_progress::Execute() const
     }
 
     pGo->SetPathProgress(m_value);
+}
+
+std::string SniffedEvent_GameObjectUpdate_path_progress::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates path_progress to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_GameObjectUpdate_path_progress::GetLongDescription() const
+{
+    return "Path Progress: " + std::to_string(m_value);
 }
 
 void ReplayMgr::LoadUnitGuidValuesUpdate(char const* tableName, uint32 typeId)
@@ -1621,6 +2137,43 @@ void SniffedEvent_UnitUpdate_guid_value::Execute() const
     }
 
     pUnit->SetGuidValue(m_updateField, GetTargetGuid());
+}
+
+std::string SniffedEvent_UnitUpdate_guid_value::GetShortDescription() const
+{
+    if (strcmp(m_updateField, "UNIT_FIELD_CHARM") == 0)
+    {
+        if (m_targetGuid.IsEmpty())
+            return m_sourceGuid.GetString(true) + " no longer has a charmed minion.";
+
+        return m_sourceGuid.GetString(true) + " charms " + m_targetGuid.GetString(true);
+    }
+    else if (strcmp(m_updateField, "UNIT_FIELD_CHARMEDBY") == 0)
+    {
+        if (m_targetGuid.IsEmpty())
+            return m_sourceGuid.GetString(true) + " is no longer charmed.";
+
+        return m_sourceGuid.GetString(true) + " is charmed by " + m_targetGuid.GetString(true);
+    }
+    else if (strcmp(m_updateField, "UNIT_FIELD_TARGET") == 0)
+    {
+        if (m_targetGuid.IsEmpty())
+            return m_sourceGuid.GetString(true) + " no longer has a target.";
+
+        return m_sourceGuid.GetString(true) + " targets " + m_targetGuid.GetString(true);
+    }
+
+    return m_sourceGuid.GetString(true) + " updates guid field " + m_updateField + " to " + m_targetGuid.GetString(true) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_guid_value::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Field: ";
+    returnString += m_updateField;
+    returnString += "\r\n";
+    returnString += "Guid: " + m_targetGuid.GetString(true);
+    return returnString;
 }
 
 void ReplayMgr::LoadUnitSpeedUpdate(char const* tableName, uint32 typeId)
@@ -1686,6 +2239,19 @@ void SniffedEvent_UnitUpdate_speed::Execute() const
         sWorld.SendSplineSetSpeed(GetSourceGuid(), m_speedType, m_speedRate * baseMoveSpeed[m_speedType]);
     else
         sWorld.SendSetSpeed(pUnit, m_speedType, m_speedRate * baseMoveSpeed[m_speedType]);
+}
+
+std::string SniffedEvent_UnitUpdate_speed::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates " + UnitMoveTypeToString(m_speedType) + " speed to " + std::to_string(m_speedRate) + " times normal.";
+}
+
+std::string SniffedEvent_UnitUpdate_speed::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Move Type: " + std::string(UnitMoveTypeToString(m_speedType)) + " (" + std::to_string(m_speedType) + ")\r\n";
+    returnString += "Speed Rate: " + std::to_string(m_speedRate);
+    return returnString;
 }
 
 void ReplayMgr::LoadUnitAurasUpdate(char const* tableName, uint32 typeId)
@@ -1755,6 +2321,35 @@ void SniffedEvent_UnitUpdate_auras::Execute() const
     }
 
     pUnit->SetAura(m_slot, m_aura, sReplayMgr.IsPlaying() && pUnit->IsVisibleToClient());
+}
+
+std::string SniffedEvent_UnitUpdate_auras::GetShortDescription() const
+{
+    std::string returnString;
+    returnString += m_objectGuid.GetString(true) + " updates aura slot " + std::to_string(m_slot) + " to ";
+    if (m_aura.spellId)
+        returnString += sGameDataMgr.GetSpellName(m_aura.spellId) + " (" + std::to_string(m_aura.spellId) + ").";
+    else
+        returnString += "0.";
+    return returnString;
+}
+
+std::string SniffedEvent_UnitUpdate_auras::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Slot: " + std::to_string(m_slot) + "\r\n";
+    returnString += "Spell: ";
+    if (m_aura.spellId)
+        returnString += sGameDataMgr.GetSpellName(m_aura.spellId) + " (" + std::to_string(m_aura.spellId) + ")\r\n";
+    else
+        returnString += "0\r\n";
+    returnString += "Aura Flags: " + std::to_string(m_aura.auraFlags) + "\r\n";
+    returnString += "Active Flags: " + std::to_string(m_aura.activeFlags) + "\r\n";
+    returnString += "Level: " + std::to_string(m_aura.level) + "\r\n";
+    returnString += "Stacks: " + std::to_string(m_aura.stacks) + "\r\n";
+    returnString += "Duration: " + std::to_string(m_aura.duration) + " / " + std::to_string(m_aura.durationMax) + "\r\n";
+    returnString += "Caster: " + m_aura.casterGuid.GetString(true) + "\r\n";
+    return returnString;
 }
 
 void ReplayMgr::LoadCreatureTextTemplate()
@@ -1834,6 +2429,26 @@ void SniffedEvent_CreatureText::Execute() const
     sWorld.SendChatPacket(m_chatType, m_text.c_str(), m_language, 0, GetSourceGuid(), m_creatureName.c_str(), m_targetGuid, m_targetName.c_str());
 }
 
+std::string SniffedEvent_CreatureText::GetShortDescription() const
+{
+    return m_senderGuid.GetString(true) + " " + sGameDataMgr.ChatTypeToVerbString(m_chatType) + " text id " + std::to_string(sGameDataMgr.GetMatchingBroadcastTextId(m_text)) + ": " + m_text;
+}
+
+std::string SniffedEvent_CreatureText::GetLongDescription() const
+{
+    std::string returnString;
+    if (!m_creatureName.empty())
+        returnString += "Creature Name: " + m_creatureName + "\r\n";
+    returnString += "Text: " + m_text + "\r\n";
+    returnString += "Chat Type: " + sGameDataMgr.ChatTypeToString(m_chatType) + " (" + std::to_string(m_chatType) + ")\r\n";
+    returnString += "Language: " + std::string(sGameDataMgr.GetLanguageName(m_language)) + " (" + std::to_string(m_language) + ")\r\n";
+    if (!m_targetGuid.IsEmpty())
+        returnString += "Target Guid: " + m_targetGuid.GetString() + "\r\n";
+    if (!m_targetName.empty())
+        returnString += "Target Name: " + m_targetName + "\r\n";
+    return returnString;
+}
+
 void ReplayMgr::LoadCreatureThreatClear()
 {
     //                                             0             1
@@ -1877,6 +2492,16 @@ void SniffedEvent_CreatureThreatClear::Execute() const
         return;
 
     sWorld.SendThreatClear(GetSourceGuid());
+}
+
+std::string SniffedEvent_CreatureThreatClear::GetShortDescription() const
+{
+    return m_creatureGuid.GetString(true) + " has it's threat list cleared.";
+}
+
+std::string SniffedEvent_CreatureThreatClear::GetLongDescription() const
+{
+    return std::string();
 }
 
 void ReplayMgr::LoadCreatureThreatRemove()
@@ -1929,6 +2554,16 @@ void SniffedEvent_CreatureThreatRemove::Execute() const
         return;
 
     sWorld.SendThreatRemove(GetSourceGuid(), GetTargetGuid());
+}
+
+std::string SniffedEvent_CreatureThreatRemove::GetShortDescription() const
+{
+    return m_creatureGuid.GetString(true) + " removes " + m_targetGuid.GetString(true) + " from it's threat list.";
+}
+
+std::string SniffedEvent_CreatureThreatRemove::GetLongDescription() const
+{
+    return std::string();
 }
 
 void ReplayMgr::LoadCreatureThreatUpdate()
@@ -2010,6 +2645,43 @@ void SniffedEvent_CreatureThreatUpdate::Execute() const
     sWorld.SendThreatUpdate(GetSourceGuid(), m_threatList);
 }
 
+std::string SniffedEvent_CreatureThreatUpdate::GetShortDescription() const
+{
+    std::string returnString = m_creatureGuid.GetString(true);
+    
+    ObjectGuid topTarget;
+    uint32 topThreat = 0;
+    if (!m_threatList.empty())
+    {
+        topTarget = m_threatList.front().first;
+        topThreat = m_threatList.front().second;
+        for (auto const& itr : m_threatList)
+        {
+            if (itr.second > topThreat)
+            {
+                topTarget = itr.first;
+                topThreat = itr.second;
+            }
+        }
+    }
+
+    if (!topTarget.IsEmpty())
+        returnString += " sends a threat list update in which " + topTarget.GetString(true) + " is the top target with " + std::to_string(topThreat) + " threat.";
+    else
+        returnString += " sends an empty threat list update.";
+
+    return returnString;
+}
+
+std::string SniffedEvent_CreatureThreatUpdate::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Targets Count: " + std::to_string(m_threatList.size()) + "\r\n";
+    for (auto const& itr : m_threatList)
+        returnString += std::to_string(itr.second) + " - " + itr.first.GetString(true);
+    return returnString;
+}
+
 void ReplayMgr::LoadCreatureEquipmentUpdate()
 {
     //                                             0             1       2       3
@@ -2065,6 +2737,19 @@ void SniffedEvent_CreatureEquipmentUpdate::Execute() const
     pCreature->SetVirtualItem(m_slot, m_itemId);
 }
 
+std::string SniffedEvent_CreatureEquipmentUpdate::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " equips item " + sGameDataMgr.GetItemName(m_itemId) + " (" + std::to_string(m_itemId) + ") in " + VirtualItemSlotToString(m_slot) + ".";
+}
+
+std::string SniffedEvent_CreatureEquipmentUpdate::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Item: " + sGameDataMgr.GetItemName(m_itemId) + " (" + std::to_string(m_itemId) + ")\r\n";
+    returnString += "Slot: " + std::to_string(m_slot);
+    return returnString;
+}
+
 void ReplayMgr::LoadPlayerChat()
 {
     //                                             0             1       2              3       4            5
@@ -2115,6 +2800,51 @@ void SniffedEvent_PlayerChat::Execute() const
     sWorld.SendChatPacket(m_chatType, m_text.c_str(), 0, 0, GetSourceGuid(), m_senderName.c_str(), ObjectGuid(), "", m_channelName.c_str());
 }
 
+std::string SniffedEvent_PlayerChat::GetShortDescription() const
+{
+    std::string channelName = m_channelName;
+    if (channelName.empty())
+    {
+        std::string chatType = sGameDataMgr.ChatTypeToString(m_chatType);
+        
+        if (chatType == "CHAT_MSG_PARTY" || chatType == "CHAT_MSG_MONSTER_PARTY")
+            channelName = "Party";
+        else if (chatType == "CHAT_MSG_PARTY_LEADER")
+            channelName = "Party Leader";
+        else if (chatType == "CHAT_MSG_RAID")
+            channelName = "Raid";
+        else if (chatType == "CHAT_MSG_GUILD")
+            channelName = "Guild";
+        else if (chatType == "CHAT_MSG_OFFICER")
+            channelName = "Officer";
+        else if (chatType == "CHAT_MSG_BATTLEGROUND")
+            channelName = "Battleground";
+        else if (chatType == "CHAT_MSG_BATTLEGROUND_LEADER")
+            channelName = "Battleground Leader";
+        else if (chatType == "CHAT_MSG_INSTANCE_CHAT")
+            channelName = "Instance";
+        else if (chatType == "CHAT_MSG_INSTANCE_CHAT_LEADER")
+            channelName = "Instance Leader";
+    }
+    std::string returnString;
+    if (!channelName.empty())
+        returnString = "[" + m_channelName + "] ";
+    returnString += "[" + m_senderName + "] " + sGameDataMgr.ChatTypeToVerbString(m_chatType) + ": " + m_text;
+    return returnString;
+}
+
+std::string SniffedEvent_PlayerChat::GetLongDescription() const
+{
+    std::string returnString;
+    if (!m_senderName.empty())
+        returnString += "Sender Name: " + m_senderName + "\r\n";
+    returnString += "Text: " + m_text + "\r\n";
+    returnString += "Chat Type: " + sGameDataMgr.ChatTypeToString(m_chatType) + " (" + std::to_string(m_chatType) + ")";
+    if (!m_channelName.empty())
+        returnString += "\r\nChannel Name: " + m_channelName;
+    return returnString;
+}
+
 void ReplayMgr::LoadPlayerEquipmentUpdate()
 {
     //                                             0             1       2       3
@@ -2160,6 +2890,22 @@ void SniffedEvent_PlayerEquipmentUpdate::Execute() const
     }
 
     pPlayer->SetVisibleItemSlot(m_slot, m_itemId, 0);
+}
+
+std::string SniffedEvent_PlayerEquipmentUpdate::GetShortDescription() const
+{
+    if (m_itemId)
+        return m_objectGuid.GetString(true) + " equips item " + sGameDataMgr.GetItemName(m_itemId) + " (" + std::to_string(m_itemId) + ") in " + EquipmentSlotToString(m_slot) + ".";
+    
+    return m_objectGuid.GetString(true) + " unequips " + EquipmentSlotToString(m_slot) + ".";
+}
+
+std::string SniffedEvent_PlayerEquipmentUpdate::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Item: " + sGameDataMgr.GetItemName(m_itemId) + " (" + std::to_string(m_itemId) + ")\r\n";
+    returnString += "Slot: " + std::to_string(m_slot);
+    return returnString;
 }
 
 void ReplayMgr::LoadGameObjectCustomAnim()
@@ -2209,6 +2955,16 @@ void SniffedEvent_GameObjectCustomAnim::Execute() const
     sWorld.SendGameObjectCustomAnim(GetSourceGuid(), m_animId);
 }
 
+std::string SniffedEvent_GameObjectCustomAnim::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " plays custom anim " + std::to_string(m_animId) + ".";
+}
+
+std::string SniffedEvent_GameObjectCustomAnim::GetLongDescription() const
+{
+    return "Anim: " + std::to_string(m_animId);
+}
+
 void ReplayMgr::LoadGameObjectDespawnAnim()
 {
     //                                             0             1
@@ -2254,6 +3010,16 @@ void SniffedEvent_GameObjectDespawnAnim::Execute() const
     sWorld.SendGameObjectDespawnAnim(GetSourceGuid());
 }
 
+std::string SniffedEvent_GameObjectDespawnAnim::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " plays despawn anim.";
+}
+
+std::string SniffedEvent_GameObjectDespawnAnim::GetLongDescription() const
+{
+    return std::string();
+}
+
 void ReplayMgr::LoadPlayMusic()
 {
     //                                             0             1
@@ -2282,6 +3048,16 @@ void SniffedEvent_PlayMusic::Execute() const
         return;
 
     sWorld.SendPlayMusic(m_musicId);
+}
+
+std::string SniffedEvent_PlayMusic::GetShortDescription() const
+{
+    return "Music Id " + std::to_string(m_musicId) + " begins playing.";
+}
+
+std::string SniffedEvent_PlayMusic::GetLongDescription() const
+{
+    return "Music Id: " + std::to_string(m_musicId);
 }
 
 void ReplayMgr::LoadPlaySound()
@@ -2335,6 +3111,19 @@ void SniffedEvent_PlaySound::Execute() const
     }
 }
 
+std::string SniffedEvent_PlaySound::GetShortDescription() const
+{
+    if (m_sourceGuid.IsEmpty())
+        return "Sound Id " + std::to_string(m_soundId) + " plays.";
+
+    return m_sourceGuid.GetString(true) + " plays sound Id " + std::to_string(m_soundId) + ".";
+}
+
+std::string SniffedEvent_PlaySound::GetLongDescription() const
+{
+    return "Sound Id: " + std::to_string(m_soundId);
+}
+
 void ReplayMgr::LoadPlaySpellVisualKit()
 {
     //                                             0             1              2            3              4
@@ -2380,6 +3169,16 @@ void SniffedEvent_PlaySpellVisualKit::Execute() const
         return;
 
     sWorld.SendPlaySpellVisual(GetSourceGuid(), m_kitId);
+}
+
+std::string SniffedEvent_PlaySpellVisualKit::GetShortDescription() const
+{
+    return m_casterGuid.GetString(true) + " plays spell visual kit " + std::to_string(m_kitId) + ".";
+}
+
+std::string SniffedEvent_PlaySpellVisualKit::GetLongDescription() const
+{
+    return "Kit Id: " + std::to_string(m_kitId);
 }
 
 void ReplayMgr::LoadSpellCastFailed()
@@ -2438,6 +3237,19 @@ void SniffedEvent_SpellCastFailed::Execute() const
         return;
 
     sWorld.SendSpellFailedOther(GetSourceGuid(), m_spellId, m_reason);
+}
+
+std::string SniffedEvent_SpellCastFailed::GetShortDescription() const
+{
+    return m_casterGuid.GetString(true) + " fails to cast spell " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ").";
+}
+
+std::string SniffedEvent_SpellCastFailed::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Spell: " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ")\r\n";
+    returnString += "Reason: " + std::to_string(m_reason);
+    return returnString;
 }
 
 void ReplayMgr::LoadSpellCastStart()
@@ -2527,6 +3339,33 @@ void SniffedEvent_SpellCastStart::Execute() const
     }
     
     sWorld.SendSpellCastStart(m_spellId, m_castTime, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_ammoDisplayId, m_ammoInventoryType);
+}
+
+std::string SniffedEvent_SpellCastStart::GetShortDescription() const
+{
+    std::string returnString;
+    returnString += m_casterGuid.GetString(true) + " starts casting spell " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ")";
+    if (!m_targetGuid.IsEmpty())
+        returnString += " at " + m_targetGuid.GetString(true) + ".";
+    else
+        returnString += ".";
+    return returnString;
+}
+
+std::string SniffedEvent_SpellCastStart::GetLongDescription() const
+{
+    std::string returnString;
+    if (!m_casterUnitGuid.IsEmpty())
+        returnString += "Caster Unit: " + m_casterUnitGuid.GetString(true) + "\r\n";
+    returnString += "Spell: " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ")\r\n";
+    returnString += "Cast Time: " + std::to_string(m_castTime) + "\r\n";
+    returnString += "Cast Flags: " + std::to_string(m_castFlags);
+    if (m_ammoDisplayId)
+        returnString += "\r\nAmmo Display Id: " + std::to_string(m_ammoDisplayId);
+    if (m_ammoInventoryType)
+        returnString += "\r\nAmmo Inventory Type: " + std::to_string(m_ammoInventoryType);
+
+    return returnString;
 }
 
 void ReplayMgr::LoadSpellCastGo()
@@ -2683,6 +3522,44 @@ void SniffedEvent_SpellCastGo::Execute() const
     sWorld.SendSpellCastGo(m_spellId, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_hitTargets, m_missTargets, m_ammoDisplayId, m_ammoInventoryType);
 }
 
+std::string SniffedEvent_SpellCastGo::GetShortDescription() const
+{
+    std::string returnString;
+    returnString += m_casterGuid.GetString(true) + " casts spell " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ")";
+    if (!m_mainTargetGuid.IsEmpty())
+        returnString += " at " + m_mainTargetGuid.GetString(true) + ".";
+    else
+        returnString += ".";
+    return returnString;
+}
+
+std::string SniffedEvent_SpellCastGo::GetLongDescription() const
+{
+    std::string returnString;
+    if (!m_casterUnitGuid.IsEmpty())
+        returnString += "Caster Unit: " + m_casterUnitGuid.GetString(true) + "\r\n";
+    returnString += "Spell: " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ")\r\n";
+    returnString += "Cast Flags: " + std::to_string(m_castFlags);
+    if (m_ammoDisplayId)
+        returnString += "\r\nAmmo Display Id: " + std::to_string(m_ammoDisplayId);
+    if (m_ammoInventoryType)
+        returnString += "\r\nAmmo Inventory Type: " + std::to_string(m_ammoInventoryType);
+
+    returnString += "\r\nHit Targets: " + std::to_string(m_hitTargets.size());
+    for (auto const& guid : m_hitTargets)
+        returnString += "\r\n- " + guid.GetString(true);
+    returnString += "\r\nMiss Targets: " + std::to_string(m_missTargets.size());
+    for (auto const& guid : m_missTargets)
+        returnString += "\r\n- " + guid.GetString(true);
+
+    if (!m_sourcePosition.IsEmpty())
+        returnString += "\r\nSrc Position: " + std::to_string(m_sourcePosition.x) + " " + std::to_string(m_sourcePosition.y) + " " + std::to_string(m_sourcePosition.z);
+    if (!m_destinationPosition.IsEmpty())
+        returnString += "\r\nDst Position: " + std::to_string(m_destinationPosition.x) + " " + std::to_string(m_destinationPosition.y) + " " + std::to_string(m_destinationPosition.z);
+
+    return returnString;
+}
+
 void ReplayMgr::LoadSpellChannelStart()
 {
     //                                             0             1              2            3              4           5
@@ -2742,6 +3619,21 @@ void SniffedEvent_SpellChannelStart::Execute() const
         sWorld.SendSpellChannelStart(m_casterGuid, m_spellId, m_duration);
 }
 
+std::string SniffedEvent_SpellChannelStart::GetShortDescription() const
+{
+    return (m_casterGuid.IsEmpty() ? "Player" : m_casterGuid.GetString(true)) + " starts channeling spell " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ").";
+}
+
+std::string SniffedEvent_SpellChannelStart::GetLongDescription() const
+{
+    std::string returnString;
+    if (!m_casterGuid.IsEmpty())
+        returnString += "Caster: " + m_casterGuid.GetString(true) + "\r\n";
+    returnString += "Spell: " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ")\r\n";
+    returnString += "Duration: " + std::to_string(m_duration) + "\r\n";
+    return returnString;
+}
+
 void ReplayMgr::LoadSpellChannelUpdate()
 {
     //                                             0             1              2            3              4
@@ -2791,6 +3683,20 @@ void SniffedEvent_SpellChannelUpdate::Execute() const
         sWorld.SendSpellChannelUpdate(m_casterGuid, m_duration);
 }
 
+std::string SniffedEvent_SpellChannelUpdate::GetShortDescription() const
+{
+    return (m_casterGuid.IsEmpty() ? "Player" : m_casterGuid.GetString(true)) + " has " + std::to_string(m_duration) + " milliseconds left on his spell channel.";
+}
+
+std::string SniffedEvent_SpellChannelUpdate::GetLongDescription() const
+{
+    std::string returnString;
+    if (!m_casterGuid.IsEmpty())
+        returnString += "Caster: " + m_casterGuid.GetString(true) + "\r\n";
+    returnString += "Duration: " + std::to_string(m_duration) + "\r\n";
+    return returnString;
+}
+
 void ReplayMgr::LoadClientQuestAccept()
 {
     //                                             0             1              2            3              4
@@ -2829,20 +3735,24 @@ void SniffedEvent_Client_QuestAccept::Execute() const
     if (!pPlayer->IsVisibleToClient())
         return;
 
-    std::string questName;
-    if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(m_questId))
-        questName = pQuest->GetTitle();
-    else
-        questName = "UNKNOWN";
-
-    std::string txt;
-    if (m_questStarterGuid.IsEmpty())
-        txt = "Client accepts quest " + questName + " (" + std::to_string(m_questId) + ").";
-    else
-        txt = "Client accepts quest " + questName + " (" + std::to_string(m_questId) + ") from " + m_questStarterGuid.GetString(true) + ".";
-
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_Client_QuestAccept::GetShortDescription() const
+{
+    std::string returnString;
+    returnString += "Client accepts quest " + sGameDataMgr.GetQuestName(m_questId) + " (" + std::to_string(m_questId) + ")";
+    if (!m_questStarterGuid.IsEmpty())
+        returnString += " from " + m_questStarterGuid.GetString(true) + ".";
+    else
+        returnString += ".";
+    return returnString;
+}
+
+std::string SniffedEvent_Client_QuestAccept::GetLongDescription() const
+{
+    return "Quest: " + sGameDataMgr.GetQuestName(m_questId) + " (" + std::to_string(m_questId) + ")";
 }
 
 void ReplayMgr::LoadClientQuestComplete()
@@ -2883,20 +3793,24 @@ void SniffedEvent_Client_QuestComplete::Execute() const
     if (!pPlayer->IsVisibleToClient())
         return;
 
-    std::string questName;
-    if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(m_questId))
-        questName = pQuest->GetTitle();
-    else
-        questName = "UNKNOWN";
-
-    std::string txt;
-    if (m_questEnderGuid.IsEmpty())
-        txt = "Client turns in quest " + questName + " (" + std::to_string(m_questId) + ").";
-    else
-        txt = "Client turns in quest " + questName + " (" + std::to_string(m_questId) + ") to " + m_questEnderGuid.GetString(true) + ".";
-
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_Client_QuestComplete::GetShortDescription() const
+{
+    std::string returnString;
+    returnString += "Client turns in quest " + sGameDataMgr.GetQuestName(m_questId) + " (" + std::to_string(m_questId) + ")";
+    if (!m_questEnderGuid.IsEmpty())
+        returnString += " to " + m_questEnderGuid.GetString(true) + ".";
+    else
+        returnString += ".";
+    return returnString;
+}
+
+std::string SniffedEvent_Client_QuestComplete::GetLongDescription() const
+{
+    return "Quest: " + sGameDataMgr.GetQuestName(m_questId) + " (" + std::to_string(m_questId) + ")";
 }
 
 void ReplayMgr::LoadClientCreatureInteract()
@@ -2941,10 +3855,18 @@ void SniffedEvent_Client_CreatureInteract::Execute() const
     if (!pPlayer->IsVisibleToClient())
         return;
     
-    std::string txt = "Client interacts with " + m_creatureGuid.GetString(true) + ".";
-
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_Client_CreatureInteract::GetShortDescription() const
+{
+    return "Client interacts with " + m_creatureGuid.GetString(true) + ".";
+}
+
+std::string SniffedEvent_Client_CreatureInteract::GetLongDescription() const
+{
+    return std::string();
 }
 
 void ReplayMgr::LoadClientGameObjectUse()
@@ -2988,11 +3910,18 @@ void SniffedEvent_Client_GameObjectUse::Execute() const
 
     if (!pPlayer->IsVisibleToClient())
         return;
-
-    std::string txt = "Client uses " + m_objectGuid.GetString(true) + ".";
-
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_Client_GameObjectUse::GetShortDescription() const
+{
+    return "Client uses " + m_objectGuid.GetString(true) + ".";
+}
+
+std::string SniffedEvent_Client_GameObjectUse::GetLongDescription() const
+{
+    return std::string();
 }
 
 void ReplayMgr::LoadClientItemUse()
@@ -3029,16 +3958,18 @@ void SniffedEvent_Client_ItemUse::Execute() const
     if (!pPlayer->IsVisibleToClient())
         return;
 
-    std::string itemName;
-    if (ItemPrototype const* pItem = sGameDataMgr.GetItemPrototype(m_itemId))
-        itemName = pItem->Name1;
-    else
-        itemName = "UNKNOWN";
-
-    std::string txt = "Client uses item " + itemName + " (" + std::to_string(m_itemId) + ").";
-
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_Client_ItemUse::GetShortDescription() const
+{
+    return "Client uses item " + sGameDataMgr.GetItemName(m_itemId) + " (" + std::to_string(m_itemId) + ").";
+}
+
+std::string SniffedEvent_Client_ItemUse::GetLongDescription() const
+{
+    return "Item: " + sGameDataMgr.GetItemName(m_itemId) + " (" + std::to_string(m_itemId) + ")";
 }
 
 void ReplayMgr::LoadClientReclaimCorpse()
@@ -3075,7 +4006,17 @@ void SniffedEvent_Client_ReclaimCorpse::Execute() const
         return;
 
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, "Client reclaims corpse.", 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_Client_ReclaimCorpse::GetShortDescription() const
+{
+    return "Client reclaims corpse.";
+}
+
+std::string SniffedEvent_Client_ReclaimCorpse::GetLongDescription() const
+{
+    return std::string();
 }
 
 void ReplayMgr::LoadClientReleaseSpirit()
@@ -3112,9 +4053,18 @@ void SniffedEvent_Client_ReleaseSpirit::Execute() const
         return;
 
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, "Client releases spirit.", 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
 }
 
+std::string SniffedEvent_Client_ReleaseSpirit::GetShortDescription() const
+{
+    return "Client releases spirit.";
+}
+
+std::string SniffedEvent_Client_ReleaseSpirit::GetLongDescription() const
+{
+    return std::string();
+}
 
 void ReplayMgr::LoadQuestUpdateComplete()
 {
@@ -3150,16 +4100,18 @@ void SniffedEvent_QuestUpdateComplete::Execute() const
     if (!pPlayer->IsVisibleToClient())
         return;
 
-    std::string questName;
-    if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(m_questId))
-        questName = pQuest->GetTitle();
-    else
-        questName = "UNKNOWN";
-
-    std::string txt = "Player has completed quest " + questName + " (" + std::to_string(m_questId) + ").";
-
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_QuestUpdateComplete::GetShortDescription() const
+{
+    return "Player has completed quest " + sGameDataMgr.GetQuestName(m_questId) + " (" + std::to_string(m_questId) + ").";
+}
+
+std::string SniffedEvent_QuestUpdateComplete::GetLongDescription() const
+{
+    return "Quest: " + sGameDataMgr.GetQuestName(m_questId) + " (" + std::to_string(m_questId) + ")";
 }
 
 void ReplayMgr::LoadQuestUpdateFailed()
@@ -3196,16 +4148,18 @@ void SniffedEvent_QuestUpdateFailed::Execute() const
     if (!pPlayer->IsVisibleToClient())
         return;
 
-    std::string questName;
-    if (Quest const* pQuest = sGameDataMgr.GetQuestTemplate(m_questId))
-        questName = pQuest->GetTitle();
-    else
-        questName = "UNKNOWN";
-
-    std::string txt = "Player has failed quest " + questName + " (" + std::to_string(m_questId) + ").";
-
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_QuestUpdateFailed::GetShortDescription() const
+{
+    return "Player has failed quest " + sGameDataMgr.GetQuestName(m_questId) + " (" + std::to_string(m_questId) + ").";
+}
+
+std::string SniffedEvent_QuestUpdateFailed::GetLongDescription() const
+{
+    return "Quest: " + sGameDataMgr.GetQuestName(m_questId) + " (" + std::to_string(m_questId) + ")";
 }
 
 void ReplayMgr::LoadXPGainLog()
@@ -3246,6 +4200,28 @@ void SniffedEvent_XPGainLog::Execute() const
     sWorld.SendLogXPGain(m_victimGuid, m_originalAmount, m_amount, m_groupBonus, m_rafBonus);
 }
 
+std::string SniffedEvent_XPGainLog::GetShortDescription() const
+{
+    if (m_victimGuid.IsEmpty())
+        return "Player gains " + std::to_string(m_originalAmount) + " experience.";
+
+    return "Player gains " + std::to_string(m_amount) + " experience from killing " + m_victimGuid.GetString(true) + ".";
+}
+
+std::string SniffedEvent_XPGainLog::GetLongDescription() const
+{
+    std::string returnString;
+    if (!m_victimGuid.IsEmpty())
+        returnString += "Victim: " + m_victimGuid.GetString(true) + "\r\n";
+    returnString += "Original Amount: " + std::to_string(m_originalAmount) + "\r\n";
+    returnString += "Kill Amount: " + std::to_string(m_amount);
+    if (m_groupBonus)
+        returnString += "\r\nGroup Bonus: " + std::to_string(m_groupBonus);
+    if (m_rafBonus)
+        returnString += "\r\nRAF Bonus: " + std::to_string(m_rafBonus);
+    return returnString;
+}
+
 void ReplayMgr::LoadFactionStandingUpdates()
 {
     //                                             0             1                     2           3            4
@@ -3257,7 +4233,7 @@ void ReplayMgr::LoadFactionStandingUpdates()
 
             uint64 unixtimems = fields[0].GetUInt64();
             uint32 reputatonListId = fields[1].GetUInt32();
-            uint32 standing = fields[2].GetUInt32();
+            int32 standing = fields[2].GetInt32();
             float rafBonus = fields[3].GetFloat();
             bool showVisual = fields[4].GetBool();
 
@@ -3279,6 +4255,33 @@ void SniffedEvent_FactionStandingUpdate::Execute() const
     sWorld.SendSetFactionStanding(m_rafBonus, m_showVisual, m_reputationListId, m_standing);
 }
 
+std::string SniffedEvent_FactionStandingUpdate::GetShortDescription() const
+{
+    uint32 raceMask = 0;
+    uint32 classMask = 0;
+    if (ObjectGuid activePlayerGuid = sReplayMgr.GetActivePlayerGuid())
+    {
+        if (PlayerData const* pData = sReplayMgr.GetPlayerSpawnData(activePlayerGuid.GetCounter()))
+        {
+            raceMask = pData->GetRaceMask();
+            classMask = pData->GetClassMask();
+        }
+    }
+    
+    return "Player's reputation with " + sGameDataMgr.GetReputationName(m_reputationListId) + " (" +
+        std::to_string(m_reputationListId) + ") has changed to " + sGameDataMgr.FactionStandingToString(sGameDataMgr.GetFactionEntryFromReputationId(m_reputationListId), m_standing, raceMask, classMask) + ".";
+}
+
+std::string SniffedEvent_FactionStandingUpdate::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Faction: " + sGameDataMgr.GetReputationName(m_reputationListId) + " (" + std::to_string(m_reputationListId) + ")\r\n";
+    returnString += "Standing: " + std::to_string(m_standing) + "\r\n";
+    returnString += "RAF Bonus: " + std::to_string(m_rafBonus) + "\r\n";
+    returnString += "Show Visual: " + std::to_string(m_showVisual);
+    return returnString;
+}
+
 void ReplayMgr::LoadLoginTimes()
 {
     for (auto const& itr : sReplayMgr.GetActivePlayerTimes())
@@ -3294,6 +4297,16 @@ void SniffedEvent_Login::Execute() const
 {
     if (sReplayMgr.IsPlaying() && sWorld.IsClientInWorld())
         sWorld.PSendSysMessage("[ReplayMgr] Client logs in with %s.", GetSourceGuid().GetName().c_str());
+}
+
+std::string SniffedEvent_Login::GetShortDescription() const
+{
+    return "Client logs in with " + GetSourceGuid().GetName() + ".";
+}
+
+std::string SniffedEvent_Login::GetLongDescription() const
+{
+    return std::string();
 }
 
 void ReplayMgr::LoadLogoutTimes()
@@ -3320,6 +4333,16 @@ void SniffedEvent_Logout::Execute() const
         sWorld.PSendSysMessage("[ReplayMgr] Client logs out.");
 
     sWorld.ToggleVisibilityForAllObjects(false);
+}
+
+std::string SniffedEvent_Logout::GetShortDescription() const
+{
+    return "Client logs out.";
+}
+
+std::string SniffedEvent_Logout::GetLongDescription() const
+{
+    return std::string();
 }
 
 ObjectGuid SniffedEvent_Logout::GetSourceGuid() const
@@ -3364,10 +4387,19 @@ void SniffedEvent_CinematicBegin::Execute() const
     if (pPlayer->GetMapId() != sWorld.GetClientPlayer()->GetMapId())
         return;
 
-    std::string txt = "Client begins watching cinematic " + std::to_string(m_cinematicId) + ".";
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, txt.c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
     sWorld.SendTriggerCinematic(m_cinematicId);
+}
+
+std::string SniffedEvent_CinematicBegin::GetShortDescription() const
+{
+    return "Cinematic " + std::to_string(m_cinematicId) + " begins playing.";
+}
+
+std::string SniffedEvent_CinematicBegin::GetLongDescription() const
+{
+    return std::string();
 }
 
 void ReplayMgr::LoadCinematicEnd()
@@ -3404,5 +4436,15 @@ void SniffedEvent_CinematicEnd::Execute() const
         return;
 
     uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
-    sWorld.SendChatPacket(say, "Client has finished watching cinematic.", 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_CinematicEnd::GetShortDescription() const
+{
+    return "Client has finished watching cinematic.";
+}
+
+std::string SniffedEvent_CinematicEnd::GetLongDescription() const
+{
+    return std::string();
 }

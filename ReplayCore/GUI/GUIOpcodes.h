@@ -1,0 +1,14 @@
+#ifndef _GUI_OPCODES_H
+#define _GUI_OPCODES_H
+
+enum GUIOpcodes
+{
+    SMSG_EVENT_TYPE_LIST = 1,
+    CMSG_REQUEST_EVENT_DATA = 2,
+    SMSG_EVENT_DATA_LIST = 3,
+    SMSG_EVENT_DATA_END = 4,
+    CMSG_SET_TIME = 5,
+    CMSG_GOTO_GUID = 6,
+};
+
+#endif

@@ -137,7 +137,7 @@ inline uint32 ConvertClassicHitInfoFlagToVanilla(uint32 flag)
         case Classic::HITINFO_AFFECTS_VICTIM:
             return Vanilla::HITINFO_AFFECTS_VICTIM;
         case Classic::HITINFO_OFFHAND:
-            return Vanilla::HITINFO_LEFTSWING;
+            return Vanilla::HITINFO_OFFHAND;
         case Classic::HITINFO_UNK3:
             return Vanilla::HITINFO_UNK3;
         case Classic::HITINFO_MISS:
@@ -157,7 +157,7 @@ inline uint32 ConvertClassicHitInfoFlagToVanilla(uint32 flag)
         case Classic::HITINFO_CRUSHING:
             return Vanilla::HITINFO_CRUSHING;
         case Classic::HITINFO_NO_ANIMATION:
-            return Vanilla::HITINFO_NOACTION;
+            return Vanilla::HITINFO_NO_ANIMATION;
     }
 
     return 0;

@@ -455,8 +455,8 @@ struct ItemPrototype
     uint32 Class = 0;                                       // id from ItemClass.dbc
     uint32 SubClass = 0;                                    // id from ItemSubClass.dbc
     int32 SoundOverrideSubclass = 0;
-    char*  Name1 = "";
-    char*  Description = "";
+    std::string  Name1;
+    std::string  Description;
     uint32 DisplayInfoID = 0;                               // id from ItemDisplayInfo.dbc
     uint32 Quality = 0;
     uint32 Flags = 0;

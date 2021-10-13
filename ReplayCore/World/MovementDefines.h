@@ -61,49 +61,143 @@ namespace Vanilla
         MOVEFLAG_MASK_XZ = MOVEFLAG_FORWARD | MOVEFLAG_BACKWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT
     };
 
-    enum SplineFlags
+    inline std::string MovementFlagToString(uint32 value)
     {
-        None         = 0x00000000,
-        Done         = 0x00000001,
-        Falling      = 0x00000002,           // Affects elevation computation
-        Unknown3     = 0x00000004,
-        Unknown4     = 0x00000008,
-        Unknown5     = 0x00000010,
-        Unknown6     = 0x00000020,
-        Unknown7     = 0x00000040,
-        Unknown8     = 0x00000080,
-        Runmode      = 0x00000100,
-        Flying       = 0x00000200,           // Smooth movement(Catmullrom interpolation mode), flying animation
-        No_Spline    = 0x00000400,
-        Unknown12    = 0x00000800,
-        Unknown13    = 0x00001000,
-        Unknown14    = 0x00002000,
-        Unknown15    = 0x00004000,
-        Unknown16    = 0x00008000,
-        Final_Point  = 0x00010000,
-        Final_Target = 0x00020000,
-        Final_Angle  = 0x00040000,
-        Unknown19    = 0x00080000,           // exists, but unknown what it does
-        Cyclic       = 0x00100000,           // Movement by cycled spline
-        Enter_Cycle  = 0x00200000,           // Everytimes appears with cyclic flag in monster move packet, erases first spline vertex after first cycle done
-        Frozen       = 0x00400000,           // Will never arrive
-        Unknown23    = 0x00800000,
-        Unknown24    = 0x01000000,
-        Unknown25    = 0x02000000,          // exists, but unknown what it does
-        Unknown26    = 0x04000000,
-        Unknown27    = 0x08000000,
-        Unknown28    = 0x10000000,
-        Unknown29    = 0x20000000,
-        Unknown30    = 0x40000000,
-        Unknown31    = 0x80000000,
+        switch (value)
+        {
+            case MOVEFLAG_NONE:
+                return "MOVEFLAG_NONE";
+            case MOVEFLAG_FORWARD:
+                return "MOVEFLAG_FORWARD";
+            case MOVEFLAG_BACKWARD:
+                return "MOVEFLAG_BACKWARD";
+            case MOVEFLAG_STRAFE_LEFT:
+                return "MOVEFLAG_STRAFE_LEFT";
+            case MOVEFLAG_STRAFE_RIGHT:
+                return "MOVEFLAG_STRAFE_RIGHT";
+            case MOVEFLAG_TURN_LEFT:
+                return "MOVEFLAG_TURN_LEFT";
+            case MOVEFLAG_TURN_RIGHT:
+                return "MOVEFLAG_TURN_RIGHT";
+            case MOVEFLAG_PITCH_UP:
+                return "MOVEFLAG_PITCH_UP";
+            case MOVEFLAG_PITCH_DOWN:
+                return "MOVEFLAG_PITCH_DOWN";
+            case MOVEFLAG_WALK_MODE:
+                return "MOVEFLAG_WALK_MODE";
+            case MOVEFLAG_LEVITATING:
+                return "MOVEFLAG_LEVITATING";
+            case MOVEFLAG_FIXED_Z:
+                return "MOVEFLAG_FIXED_Z";
+            case MOVEFLAG_ROOT:
+                return "MOVEFLAG_ROOT";
+            case MOVEFLAG_JUMPING:
+                return "MOVEFLAG_JUMPING";
+            case MOVEFLAG_FALLINGFAR:
+                return "MOVEFLAG_FALLINGFAR";
+            case MOVEFLAG_SWIMMING:
+                return "MOVEFLAG_SWIMMING";
+            case MOVEFLAG_SPLINE_ENABLED:
+                return "MOVEFLAG_SPLINE_ENABLED";
+            case MOVEFLAG_CAN_FLY:
+                return "MOVEFLAG_CAN_FLY";
+            case MOVEFLAG_FLYING:
+                return "MOVEFLAG_FLYING";
+            case MOVEFLAG_ONTRANSPORT:
+                return "MOVEFLAG_ONTRANSPORT";
+            case MOVEFLAG_SPLINE_ELEVATION:
+                return "MOVEFLAG_SPLINE_ELEVATION";
+            case MOVEFLAG_WATERWALKING:
+                return "MOVEFLAG_WATERWALKING";
+            case MOVEFLAG_SAFE_FALL:
+                return "MOVEFLAG_SAFE_FALL";
+            case MOVEFLAG_HOVER:
+                return "MOVEFLAG_HOVER";
+            case MOVEFLAG_INTERNAL:
+                return "MOVEFLAG_INTERNAL";
+        }
+        return std::to_string(value);
+    }
 
-        // Masks
-        Mask_Final_Facing = Final_Point | Final_Target | Final_Angle,
-        // flags that shouldn't be appended into SMSG_MONSTER_MOVE\SMSG_MONSTER_MOVE_TRANSPORT packet, should be more probably
-        Mask_No_Monster_Move = Mask_Final_Facing | Done,
-        // CatmullRom interpolation mode used
-        Mask_CatmullRom = Flying,
-    };
+    namespace SplineFlags
+    {
+        enum SplineFlags
+        {
+            None         = 0x00000000,
+            Done         = 0x00000001,
+            Falling      = 0x00000002,           // Affects elevation computation
+            Unknown3     = 0x00000004,
+            Unknown4     = 0x00000008,
+            Unknown5     = 0x00000010,
+            Unknown6     = 0x00000020,
+            Unknown7     = 0x00000040,
+            Unknown8     = 0x00000080,
+            Runmode      = 0x00000100,
+            Flying       = 0x00000200,           // Smooth movement(Catmullrom interpolation mode), flying animation
+            No_Spline    = 0x00000400,
+            Unknown12    = 0x00000800,
+            Unknown13    = 0x00001000,
+            Unknown14    = 0x00002000,
+            Unknown15    = 0x00004000,
+            Unknown16    = 0x00008000,
+            Final_Point  = 0x00010000,
+            Final_Target = 0x00020000,
+            Final_Angle  = 0x00040000,
+            Unknown19    = 0x00080000,           // exists, but unknown what it does
+            Cyclic       = 0x00100000,           // Movement by cycled spline
+            Enter_Cycle  = 0x00200000,           // Everytimes appears with cyclic flag in monster move packet, erases first spline vertex after first cycle done
+            Frozen       = 0x00400000,           // Will never arrive
+            Unknown23    = 0x00800000,
+            Unknown24    = 0x01000000,
+            Unknown25    = 0x02000000,          // exists, but unknown what it does
+            Unknown26    = 0x04000000,
+            Unknown27    = 0x08000000,
+            Unknown28    = 0x10000000,
+            Unknown29    = 0x20000000,
+            Unknown30    = 0x40000000,
+            Unknown31    = 0x80000000,
+
+            // Masks
+            Mask_Final_Facing = Final_Point | Final_Target | Final_Angle,
+            // flags that shouldn't be appended into SMSG_MONSTER_MOVE\SMSG_MONSTER_MOVE_TRANSPORT packet, should be more probably
+            Mask_No_Monster_Move = Mask_Final_Facing | Done,
+            // CatmullRom interpolation mode used
+            Mask_CatmullRom = Flying,
+        };
+    }
+
+    inline std::string SplineFlagToString(uint32 value)
+    {
+        switch (value)
+        {
+            case SplineFlags::None:
+                    return "None";
+            case SplineFlags::Done:
+                return "Done";
+            case SplineFlags::Falling:
+                return "Falling";
+            case SplineFlags::Runmode:
+                return "Runmode";
+            case SplineFlags::Flying:
+                return "Flying";
+            case SplineFlags::No_Spline:
+                return "No_Spline";
+            case SplineFlags::Final_Point:
+                return "Final_Point";
+            case SplineFlags::Final_Target:
+                return "Final_Target";
+            case SplineFlags::Final_Angle:
+                return "Final_Angle";
+            case SplineFlags::Cyclic:
+                return "Cyclic";
+            case SplineFlags::Enter_Cycle:
+                return "Enter_Cycle";
+            case SplineFlags::Frozen:
+                return "Frozen";
+
+        }
+        return std::to_string(value);
+    }
 }
 
 namespace TBC
@@ -147,49 +241,144 @@ namespace TBC
         MOVEFLAG_MASK_XY = MOVEFLAG_FORWARD | MOVEFLAG_BACKWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT
     };
 
-    enum SplineFlags
+    inline std::string MovementFlagToString(uint32 value)
     {
-        None         = 0x00000000,
-        Done         = 0x00000001,
-        Falling      = 0x00000002,           // Affects elevation computation
-        Unknown3     = 0x00000004,
-        Unknown4     = 0x00000008,
-        Unknown5     = 0x00000010,
-        Unknown6     = 0x00000020,
-        Unknown7     = 0x00000040,
-        Unknown8     = 0x00000080,
-        Runmode      = 0x00000100,
-        Flying       = 0x00000200,           // Smooth movement(Catmullrom interpolation mode), flying animation
-        No_Spline    = 0x00000400,
-        Unknown12    = 0x00000800,
-        Unknown13    = 0x00001000,
-        Unknown14    = 0x00002000,
-        Unknown15    = 0x00004000,
-        Unknown16    = 0x00008000,
-        Final_Point  = 0x00010000,
-        Final_Target = 0x00020000,
-        Final_Angle  = 0x00040000,
-        Unknown19    = 0x00080000,           // exists, but unknown what it does
-        Cyclic       = 0x00100000,           // Movement by cycled spline
-        Enter_Cycle  = 0x00200000,           // Everytimes appears with cyclic flag in monster move packet, erases first spline vertex after first cycle done
-        Frozen       = 0x00400000,           // Will never arrive
-        Unknown23    = 0x00800000,
-        Unknown24    = 0x01000000,
-        Unknown25    = 0x02000000,          // exists, but unknown what it does
-        Unknown26    = 0x04000000,
-        Unknown27    = 0x08000000,
-        Unknown28    = 0x10000000,
-        Unknown29    = 0x20000000,
-        Unknown30    = 0x40000000,
-        Unknown31    = 0x80000000,
+        switch (value)
+        {
+            case MOVEFLAG_NONE:
+                return "MOVEFLAG_NONE";
+            case MOVEFLAG_FORWARD:
+                return "MOVEFLAG_FORWARD";
+            case MOVEFLAG_BACKWARD:
+                return "MOVEFLAG_BACKWARD";
+            case MOVEFLAG_STRAFE_LEFT:
+                return "MOVEFLAG_STRAFE_LEFT";
+            case MOVEFLAG_STRAFE_RIGHT:
+                return "MOVEFLAG_STRAFE_RIGHT";
+            case MOVEFLAG_TURN_LEFT:
+                return "MOVEFLAG_TURN_LEFT";
+            case MOVEFLAG_TURN_RIGHT:
+                return "MOVEFLAG_TURN_RIGHT";
+            case MOVEFLAG_PITCH_UP:
+                return "MOVEFLAG_PITCH_UP";
+            case MOVEFLAG_PITCH_DOWN:
+                return "MOVEFLAG_PITCH_DOWN";
+            case MOVEFLAG_WALK_MODE:
+                return "MOVEFLAG_WALK_MODE";
+            case MOVEFLAG_ONTRANSPORT:
+                return "MOVEFLAG_ONTRANSPORT";
+            case MOVEFLAG_LEVITATING:
+                return "MOVEFLAG_LEVITATING";
+            case MOVEFLAG_ROOT:
+                return "MOVEFLAG_ROOT";
+            case MOVEFLAG_FALLING:
+                return "MOVEFLAG_FALLING";
+            case MOVEFLAG_JUMPING:
+                return "MOVEFLAG_JUMPING";
+            case MOVEFLAG_FALLINGFAR:
+                return "MOVEFLAG_FALLINGFAR";
+            case MOVEFLAG_SWIMMING:
+                return "MOVEFLAG_SWIMMING";
+            case MOVEFLAG_ASCENDING:
+                return "MOVEFLAG_ASCENDING";
+            case MOVEFLAG_CAN_FLY:
+                return "MOVEFLAG_CAN_FLY";
+            case MOVEFLAG_FLYING:
+                return "MOVEFLAG_FLYING";
+            case MOVEFLAG_FLYING2:
+                return "MOVEFLAG_FLYING2";
+            case MOVEFLAG_SPLINE_ELEVATION:
+                return "MOVEFLAG_SPLINE_ELEVATION";
+            case MOVEFLAG_SPLINE_ENABLED:
+                return "MOVEFLAG_SPLINE_ENABLED";
+            case MOVEFLAG_WATERWALKING:
+                return "MOVEFLAG_WATERWALKING";
+            case MOVEFLAG_SAFE_FALL:
+                return "MOVEFLAG_SAFE_FALL";
+            case MOVEFLAG_HOVER:
+                return "MOVEFLAG_HOVER";
+        }
+        return std::to_string(value);
+    }
 
-        // Masks
-        Mask_Final_Facing = Final_Point | Final_Target | Final_Angle,
-        // flags that shouldn't be appended into SMSG_MONSTER_MOVE\SMSG_MONSTER_MOVE_TRANSPORT packet, should be more probably
-        Mask_No_Monster_Move = Mask_Final_Facing | Done,
-        // CatmullRom interpolation mode used
-        Mask_CatmullRom = Flying,
-    };
+    namespace SplineFlags
+    {
+        enum SplineFlags
+        {
+            None         = 0x00000000,
+            Done         = 0x00000001,
+            Falling      = 0x00000002,           // Affects elevation computation
+            Unknown3     = 0x00000004,
+            Unknown4     = 0x00000008,
+            Unknown5     = 0x00000010,
+            Unknown6     = 0x00000020,
+            Unknown7     = 0x00000040,
+            Unknown8     = 0x00000080,
+            Runmode      = 0x00000100,
+            Flying       = 0x00000200,           // Smooth movement(Catmullrom interpolation mode), flying animation
+            No_Spline    = 0x00000400,
+            Unknown12    = 0x00000800,
+            Unknown13    = 0x00001000,
+            Unknown14    = 0x00002000,
+            Unknown15    = 0x00004000,
+            Unknown16    = 0x00008000,
+            Final_Point  = 0x00010000,
+            Final_Target = 0x00020000,
+            Final_Angle  = 0x00040000,
+            Unknown19    = 0x00080000,           // exists, but unknown what it does
+            Cyclic       = 0x00100000,           // Movement by cycled spline
+            Enter_Cycle  = 0x00200000,           // Everytimes appears with cyclic flag in monster move packet, erases first spline vertex after first cycle done
+            Frozen       = 0x00400000,           // Will never arrive
+            Unknown23    = 0x00800000,
+            Unknown24    = 0x01000000,
+            Unknown25    = 0x02000000,          // exists, but unknown what it does
+            Unknown26    = 0x04000000,
+            Unknown27    = 0x08000000,
+            Unknown28    = 0x10000000,
+            Unknown29    = 0x20000000,
+            Unknown30    = 0x40000000,
+            Unknown31    = 0x80000000,
+
+            // Masks
+            Mask_Final_Facing = Final_Point | Final_Target | Final_Angle,
+            // flags that shouldn't be appended into SMSG_MONSTER_MOVE\SMSG_MONSTER_MOVE_TRANSPORT packet, should be more probably
+            Mask_No_Monster_Move = Mask_Final_Facing | Done,
+            // CatmullRom interpolation mode used
+            Mask_CatmullRom = Flying,
+        };
+    }
+
+    inline std::string SplineFlagToString(uint32 value)
+    {
+        switch (value)
+        {
+            case SplineFlags::None:
+                return "None";
+            case SplineFlags::Done:
+                return "Done";
+            case SplineFlags::Falling:
+                return "Falling";
+            case SplineFlags::Runmode:
+                return "Runmode";
+            case SplineFlags::Flying:
+                return "Flying";
+            case SplineFlags::No_Spline:
+                return "No_Spline";
+            case SplineFlags::Final_Point:
+                return "Final_Point";
+            case SplineFlags::Final_Target:
+                return "Final_Target";
+            case SplineFlags::Final_Angle:
+                return "Final_Angle";
+            case SplineFlags::Cyclic:
+                return "Cyclic";
+            case SplineFlags::Enter_Cycle:
+                return "Enter_Cycle";
+            case SplineFlags::Frozen:
+                return "Frozen";
+        }
+        return std::to_string(value);
+    }
 }
 
 namespace WotLK
@@ -237,6 +426,78 @@ namespace WotLK
         MOVEFLAG_MASK_MOVING_FORWARD = MOVEFLAG_FORWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT | MOVEFLAG_FALLING,
     };
 
+    inline std::string MovementFlagToString(uint32 value)
+    {
+        switch (value)
+        {
+            case MOVEFLAG_NONE:
+                return "MOVEFLAG_NONE";
+            case MOVEFLAG_FORWARD:
+                return "MOVEFLAG_FORWARD";
+            case MOVEFLAG_BACKWARD:
+                return "MOVEFLAG_BACKWARD";
+            case MOVEFLAG_STRAFE_LEFT:
+                return "MOVEFLAG_STRAFE_LEFT";
+            case MOVEFLAG_STRAFE_RIGHT:
+                return "MOVEFLAG_STRAFE_RIGHT";
+            case MOVEFLAG_TURN_LEFT:
+                return "MOVEFLAG_TURN_LEFT";
+            case MOVEFLAG_TURN_RIGHT:
+                return "MOVEFLAG_TURN_RIGHT";
+            case MOVEFLAG_PITCH_UP:
+                return "MOVEFLAG_PITCH_UP";
+            case MOVEFLAG_PITCH_DOWN:
+                return "MOVEFLAG_PITCH_DOWN";
+            case MOVEFLAG_WALK_MODE:
+                return "MOVEFLAG_WALK_MODE";
+            case MOVEFLAG_ONTRANSPORT:
+                return "MOVEFLAG_ONTRANSPORT";
+            case MOVEFLAG_LEVITATING:
+                return "MOVEFLAG_LEVITATING";
+            case MOVEFLAG_ROOT:
+                return "MOVEFLAG_ROOT";
+            case MOVEFLAG_FALLING:
+                return "MOVEFLAG_FALLING";
+            case MOVEFLAG_FALLINGFAR:
+                return "MOVEFLAG_FALLINGFAR";
+            case MOVEFLAG_PENDINGSTOP:
+                return "MOVEFLAG_PENDINGSTOP";
+            case MOVEFLAG_PENDINGSTRAFESTOP:
+                return "MOVEFLAG_PENDINGSTRAFESTOP";
+            case MOVEFLAG_PENDINGFORWARD:
+                return "MOVEFLAG_PENDINGFORWARD";
+            case MOVEFLAG_PENDINGBACKWARD:
+                return "MOVEFLAG_PENDINGBACKWARD";
+            case MOVEFLAG_PENDINGSTRAFELEFT:
+                return "MOVEFLAG_PENDINGSTRAFELEFT";
+            case MOVEFLAG_PENDINGSTRAFERIGHT:
+                return "MOVEFLAG_PENDINGSTRAFERIGHT";
+            case MOVEFLAG_PENDINGROOT:
+                return "MOVEFLAG_PENDINGROOT";
+            case MOVEFLAG_SWIMMING:
+                return "MOVEFLAG_SWIMMING";
+            case MOVEFLAG_ASCENDING:
+                return "MOVEFLAG_ASCENDING";
+            case MOVEFLAG_DESCENDING:
+                return "MOVEFLAG_DESCENDING";
+            case MOVEFLAG_CAN_FLY:
+                return "MOVEFLAG_CAN_FLY";
+            case MOVEFLAG_FLYING:
+                return "MOVEFLAG_FLYING";
+            case MOVEFLAG_SPLINE_ELEVATION:
+                return "MOVEFLAG_SPLINE_ELEVATION";
+            case MOVEFLAG_SPLINE_ENABLED:
+                return "MOVEFLAG_SPLINE_ENABLED";
+            case MOVEFLAG_WATERWALKING:
+                return "MOVEFLAG_WATERWALKING";
+            case MOVEFLAG_SAFE_FALL:
+                return "MOVEFLAG_SAFE_FALL";
+            case MOVEFLAG_HOVER:
+                return "MOVEFLAG_HOVER";
+        }
+        return std::to_string(value);
+    }
+
     enum MovementFlags2
     {
         MOVEFLAG2_NONE              = 0x0000,
@@ -259,46 +520,95 @@ namespace WotLK
         MOVEFLAG2_INTERP_MASK       = MOVEFLAG2_INTERP_MOVEMENT | MOVEFLAG2_INTERP_TURNING | MOVEFLAG2_INTERP_PITCHING
     };
 
-    enum SplineFlags
+    namespace SplineFlags
     {
-        None         = 0x00000000,
-        // x00-xFF(first byte) used as animation Ids storage in pair with Animation flag
-        Done         = 0x00000100,
-        Falling      = 0x00000200,           // Affects elevation computation, can't be combined with Parabolic flag
-        No_Spline    = 0x00000400,
-        Parabolic    = 0x00000800,           // Affects elevation computation, can't be combined with Falling flag
-        Walkmode     = 0x00001000,
-        Flying       = 0x00002000,           // Smooth movement(Catmullrom interpolation mode), flying animation
-        OrientationFixed = 0x00004000,       // Model orientation fixed
-        Final_Point  = 0x00008000,
-        Final_Target = 0x00010000,
-        Final_Angle  = 0x00020000,
-        Catmullrom   = 0x00040000,           // Used Catmullrom interpolation mode
-        Cyclic       = 0x00080000,           // Movement by cycled spline
-        Enter_Cycle  = 0x00100000,           // Everytimes appears with cyclic flag in monster move packet, erases first spline vertex after first cycle done
-        Animation    = 0x00200000,           // Plays animation after some time passed
-        Frozen       = 0x00400000,           // Will never arrive
-        BoardVehicle = 0x00800000,
-        ExitVehicle  = 0x01000000,
-        Unknown7     = 0x02000000,
-        Unknown8     = 0x04000000,
-        OrientationInversed = 0x08000000,
-        Unknown10    = 0x10000000,
-        Unknown11    = 0x20000000,
-        Unknown12    = 0x40000000,
-        Unknown13    = 0x80000000,
+        enum SplineFlags
+        {
+            None         = 0x00000000,
+            // x00-xFF(first byte) used as animation Ids storage in pair with Animation flag
+            Done         = 0x00000100,
+            Falling      = 0x00000200,           // Affects elevation computation, can't be combined with Parabolic flag
+            No_Spline    = 0x00000400,
+            Parabolic    = 0x00000800,           // Affects elevation computation, can't be combined with Falling flag
+            Walkmode     = 0x00001000,
+            Flying       = 0x00002000,           // Smooth movement(Catmullrom interpolation mode), flying animation
+            OrientationFixed = 0x00004000,       // Model orientation fixed
+            Final_Point  = 0x00008000,
+            Final_Target = 0x00010000,
+            Final_Angle  = 0x00020000,
+            Catmullrom   = 0x00040000,           // Used Catmullrom interpolation mode
+            Cyclic       = 0x00080000,           // Movement by cycled spline
+            Enter_Cycle  = 0x00100000,           // Everytimes appears with cyclic flag in monster move packet, erases first spline vertex after first cycle done
+            Animation    = 0x00200000,           // Plays animation after some time passed
+            Frozen       = 0x00400000,           // Will never arrive
+            BoardVehicle = 0x00800000,
+            ExitVehicle  = 0x01000000,
+            Unknown7     = 0x02000000,
+            Unknown8     = 0x04000000,
+            OrientationInversed = 0x08000000,
+            Unknown10    = 0x10000000,
+            Unknown11    = 0x20000000,
+            Unknown12    = 0x40000000,
+            Unknown13    = 0x80000000,
 
-        // Masks
-        Mask_Final_Facing = Final_Point | Final_Target | Final_Angle,
-        // animation ids stored here, see AnimType enum, used with Animation flag
-        Mask_Animations = 0xFF,
-        // flags that shouldn't be appended into SMSG_MONSTER_MOVE\SMSG_MONSTER_MOVE_TRANSPORT packet, should be more probably
-        Mask_No_Monster_Move = Mask_Final_Facing | Mask_Animations | Done,
-        // CatmullRom interpolation mode used
-        Mask_CatmullRom = Flying | Catmullrom,
-        // Unused, not suported flags
-        Mask_Unused = No_Spline | Enter_Cycle | Frozen | Unknown7 | Unknown8 | Unknown10 | Unknown11 | Unknown12 | Unknown13,
-    };
+            // Masks
+            Mask_Final_Facing = Final_Point | Final_Target | Final_Angle,
+            // animation ids stored here, see AnimType enum, used with Animation flag
+            Mask_Animations = 0xFF,
+            // flags that shouldn't be appended into SMSG_MONSTER_MOVE\SMSG_MONSTER_MOVE_TRANSPORT packet, should be more probably
+            Mask_No_Monster_Move = Mask_Final_Facing | Mask_Animations | Done,
+            // CatmullRom interpolation mode used
+            Mask_CatmullRom = Flying | Catmullrom,
+            // Unused, not suported flags
+            Mask_Unused = No_Spline | Enter_Cycle | Frozen | Unknown7 | Unknown8 | Unknown10 | Unknown11 | Unknown12 | Unknown13,
+        };
+    }
+
+    inline std::string SplineFlagToString(uint32 value)
+    {
+        switch (value)
+        {
+            case SplineFlags::None:
+                return "None";
+            case SplineFlags::Done:
+                return "Done";
+            case SplineFlags::Falling:
+                return "Falling";
+            case SplineFlags::No_Spline:
+                return "No_Spline";
+            case SplineFlags::Parabolic:
+                return "Parabolic";
+            case SplineFlags::Walkmode:
+                return "Walkmode";
+            case SplineFlags::Flying:
+                return "Flying";
+            case SplineFlags::OrientationFixed:
+                return "OrientationFixed";
+            case SplineFlags::Final_Point:
+                return "Final_Point";
+            case SplineFlags::Final_Target:
+                return "Final_Target";
+            case SplineFlags::Final_Angle:
+                return "Final_Angle";
+            case SplineFlags::Catmullrom:
+                return "Catmullrom";
+            case SplineFlags::Cyclic:
+                return "Cyclic";
+            case SplineFlags::Enter_Cycle:
+                return "Enter_Cycle";
+            case SplineFlags::Animation:
+                return "Animation";
+            case SplineFlags::Frozen:
+                return "Frozen";
+            case SplineFlags::BoardVehicle:
+                return "BoardVehicle";
+            case SplineFlags::ExitVehicle:
+                return "ExitVehicle";
+            case SplineFlags::OrientationInversed:
+                return "OrientationInversed";
+        }
+        return std::to_string(value);
+    }
 }
 
 namespace Classic
@@ -338,43 +648,174 @@ namespace Classic
         MOVEFLAG_DISABLE_COLLISION  = 0x20000000,
     };
 
-    enum SplineFlags
+    inline std::string MovementFlagToString(uint32 value)
     {
-        None = 0x00000000,
-        AnimTierSwim = 0x00000001,
-        AnimTierHover = 0x00000002,
-        AnimTierFly = 0x00000003,
-        AnimTierSubmerged = 0x00000004,
-        Unknown0 = 0x00000008,
-        FallingSlow = 0x00000010,
-        Done = 0x00000020,
-        Falling = 0x00000040,
-        NoSpline = 0x00000080,
-        Unknown1 = 0x00000100,
-        Flying = 0x00000200,
-        OrientationFixed = 0x00000400,
-        Catmullrom = 0x00000800,
-        Cyclic = 0x00001000,
-        EnterCycle = 0x00002000,
-        Frozen = 0x00004000,
-        TransportEnter = 0x00008000,
-        TransportExit = 0x00010000,
-        Unknown2 = 0x00020000,
-        Unknown3 = 0x00040000,
-        Backward = 0x00080000,
-        SmoothGroundPath = 0x00100000,
-        CanSwim = 0x00200000,
-        UncompressedPath = 0x00400000,
-        Unknown4 = 0x00800000,
-        Unknown5 = 0x01000000,
-        Animation = 0x02000000,
-        Parabolic = 0x04000000,
-        FadeObject = 0x08000000,
-        Steering = 0x10000000,
-        Unknown8 = 0x20000000,
-        Unknown9 = 0x40000000,
-        Unknown10 = 0x80000000,
-    };
+        switch (value)
+        {
+            case MOVEFLAG_NONE:
+                return "MOVEFLAG_NONE";
+            case MOVEFLAG_FORWARD:
+                return "MOVEFLAG_FORWARD";
+            case MOVEFLAG_BACKWARD:
+                return "MOVEFLAG_BACKWARD";
+            case MOVEFLAG_STRAFE_LEFT:
+                return "MOVEFLAG_STRAFE_LEFT";
+            case MOVEFLAG_STRAFE_RIGHT:
+                return "MOVEFLAG_STRAFE_RIGHT";
+            case MOVEFLAG_TURN_LEFT:
+                return "MOVEFLAG_TURN_LEFT";
+            case MOVEFLAG_TURN_RIGHT:
+                return "MOVEFLAG_TURN_RIGHT";
+            case MOVEFLAG_PITCH_UP:
+                return "MOVEFLAG_PITCH_UP";
+            case MOVEFLAG_PITCH_DOWN:
+                return "MOVEFLAG_PITCH_DOWN";
+            case MOVEFLAG_WALK_MODE:
+                return "MOVEFLAG_WALK_MODE";
+            case MOVEFLAG_DISABLE_GRAVITY:
+                return "MOVEFLAG_DISABLE_GRAVITY";
+            case MOVEFLAG_ROOT:
+                return "MOVEFLAG_ROOT";
+            case MOVEFLAG_FALLING:
+                return "MOVEFLAG_FALLING";
+            case MOVEFLAG_FALLINGFAR:
+                return "MOVEFLAG_FALLINGFAR";
+            case MOVEFLAG_PENDINGSTOP:
+                return "MOVEFLAG_PENDINGSTOP";
+            case MOVEFLAG_PENDINGSTRAFESTOP:
+                return "MOVEFLAG_PENDINGSTRAFESTOP";
+            case MOVEFLAG_PENDINGFORWARD:
+                return "MOVEFLAG_PENDINGFORWARD";
+            case MOVEFLAG_PENDINGBACKWARD:
+                return "MOVEFLAG_PENDINGBACKWARD";
+            case MOVEFLAG_PENDINGSTRAFELEFT:
+                return "MOVEFLAG_PENDINGSTRAFELEFT";
+            case MOVEFLAG_PENDINGSTRAFERIGHT:
+                return "MOVEFLAG_PENDINGSTRAFERIGHT";
+            case MOVEFLAG_PENDINGROOT:
+                return "MOVEFLAG_PENDINGROOT";
+            case MOVEFLAG_SWIMMING:
+                return "MOVEFLAG_SWIMMING";
+            case MOVEFLAG_ASCENDING:
+                return "MOVEFLAG_ASCENDING";
+            case MOVEFLAG_DESCENDING:
+                return "MOVEFLAG_DESCENDING";
+            case MOVEFLAG_CAN_FLY:
+                return "MOVEFLAG_CAN_FLY";
+            case MOVEFLAG_FLYING:
+                return "MOVEFLAG_FLYING";
+            case MOVEFLAG_SPLINE_ELEVATION:
+                return "MOVEFLAG_SPLINE_ELEVATION";
+            case MOVEFLAG_WATERWALKING:
+                return "MOVEFLAG_WATERWALKING";
+            case MOVEFLAG_SAFE_FALL:
+                return "MOVEFLAG_SAFE_FALL";
+            case MOVEFLAG_HOVER:
+                return "MOVEFLAG_HOVER";
+            case MOVEFLAG_DISABLE_COLLISION:
+                return "MOVEFLAG_DISABLE_COLLISION";
+        }
+        return std::to_string(value);
+    }
+
+    namespace SplineFlags
+    {
+        enum SplineFlags
+        {
+            None              = 0x00000000,
+            AnimTierSwim      = 0x00000001,
+            AnimTierHover     = 0x00000002,
+            AnimTierFly       = 0x00000003,
+            AnimTierSubmerged = 0x00000004,
+            Unknown0          = 0x00000008,
+            FallingSlow       = 0x00000010,
+            Done              = 0x00000020,
+            Falling           = 0x00000040,
+            NoSpline          = 0x00000080,
+            Unknown1          = 0x00000100,
+            Flying            = 0x00000200,
+            OrientationFixed  = 0x00000400,
+            Catmullrom        = 0x00000800,
+            Cyclic            = 0x00001000,
+            EnterCycle        = 0x00002000,
+            Frozen            = 0x00004000,
+            TransportEnter    = 0x00008000,
+            TransportExit     = 0x00010000,
+            Unknown2          = 0x00020000,
+            Unknown3          = 0x00040000,
+            Backward          = 0x00080000,
+            SmoothGroundPath  = 0x00100000,
+            CanSwim           = 0x00200000,
+            UncompressedPath  = 0x00400000,
+            Unknown4          = 0x00800000,
+            Unknown5          = 0x01000000,
+            Animation         = 0x02000000,
+            Parabolic         = 0x04000000,
+            FadeObject        = 0x08000000,
+            Steering          = 0x10000000,
+            Unknown8          = 0x20000000,
+            Unknown9          = 0x40000000,
+            Unknown10         = 0x80000000,
+        };
+    }
+
+    inline std::string SplineFlagToString(uint32 value)
+    {
+        switch (value)
+        {
+            case SplineFlags::None:
+                return "None";
+            case SplineFlags::AnimTierSwim:
+                return "AnimTierSwim";
+            case SplineFlags::AnimTierHover:
+                return "AnimTierHover";
+            case SplineFlags::AnimTierFly:
+                return "AnimTierFly";
+            case SplineFlags::AnimTierSubmerged:
+                return "AnimTierSubmerged";
+            case SplineFlags::FallingSlow:
+                return "FallingSlow";
+            case SplineFlags::Done:
+                return "Done";
+            case SplineFlags::Falling:
+                return "Falling";
+            case SplineFlags::NoSpline:
+                return "NoSpline";
+            case SplineFlags::Flying:
+                return "Flying";
+            case SplineFlags::OrientationFixed:
+                return "OrientationFixed";
+            case SplineFlags::Catmullrom:
+                return "Catmullrom";
+            case SplineFlags::Cyclic:
+                return "Cyclic";
+            case SplineFlags::EnterCycle:
+                return "EnterCycle";
+            case SplineFlags::Frozen:
+                return "Frozen";
+            case SplineFlags::TransportEnter:
+                return "TransportEnter";
+            case SplineFlags::TransportExit:
+                return "TransportExit";
+            case SplineFlags::Backward:
+                return "Backward";
+            case SplineFlags::SmoothGroundPath:
+                return "SmoothGroundPath";
+            case SplineFlags::CanSwim:
+                return "CanSwim";
+            case SplineFlags::UncompressedPath:
+                return "UncompressedPath";
+            case SplineFlags::Animation:
+                return "Animation";
+            case SplineFlags::Parabolic:
+                return "Parabolic";
+            case SplineFlags::FadeObject:
+                return "FadeObject";
+            case SplineFlags::Steering:
+                return "Steering";
+        }
+        return std::to_string(value);
+    }
 }
 
 #endif

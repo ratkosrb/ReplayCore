@@ -8,6 +8,7 @@
 #include "WaypointData.h"
 #include "PlayerDefines.h"
 #include "SniffedEvents.h"
+#include "../GUI/GUIFilters.h"
 #include <set>
 #include <map>
 
@@ -123,7 +124,9 @@ struct UnitData : public WorldObjectData
     void InitializeUnit(Unit* pUnit) const;
 
     uint8 GetRace() const { return raceId; }
+    uint32 GetRaceMask() const { return GetRace() ? 1 << (GetRace() - 1) : 0x0; }
     uint8 GetClass() const { return classId; }
+    uint32 GetClassMask() const { return GetClass() ? 1 << (GetClass() - 1) : 0x0; }
     uint8 GetGender() const { return gender; }
     uint32 GetLevel() const { return level; }
 };
@@ -195,7 +198,11 @@ public:
 
     ObjectGuid MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std::string type);
     ObjectGuid MakeObjectGuidFromSniffData(ObjectGuid guid, uint32 entry, std::string type); // trap for wrong arguments
-    ObjectData* GetObjectSpawnData(uint32 guid, uint32 typeId)
+    WorldObjectData* GetObjectSpawnData(ObjectGuid guid)
+    {
+        return GetObjectSpawnData(guid.GetCounter(), guid.GetTypeId());
+    }
+    WorldObjectData* GetObjectSpawnData(uint32 guid, uint32 typeId)
     {
         switch (typeId)
         {
@@ -382,6 +389,7 @@ public:
 
     std::shared_ptr<SniffedEvent> GetFirstEventForTarget(ObjectGuid guid, SniffedEventType eventType);
     void GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList);
+    void GetEventsListForTargets(uint32 startTime, uint32 endTime, std::vector<ObjectFilterEntry> const& objectFilters, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>>& eventsList);
 
 #pragma endregion SniffedEvents
     
@@ -400,8 +408,10 @@ public:
     uint64 GetCurrentSniffTimeMs() { return m_currentSniffTimeMs; }
     uint32 GetStartTimeSniff() { return m_startTimeSniff; }
     uint32 GetTimeDifference() { return m_timeDifference; }
-    uint32 GetFirstEventTime() { return (m_eventsMap.empty() ? 0 : uint32(m_eventsMap.begin()->first / IN_MILLISECONDS)); }
-    uint64 GetFirstEventTimeMs() { return (m_eventsMap.empty() ? 0 : m_eventsMap.begin()->first); }
+    uint32 GetFirstEventTime() { return (m_eventsMapBackup.empty() ? 0 : uint32(m_eventsMapBackup.begin()->first / IN_MILLISECONDS)); }
+    uint64 GetFirstEventTimeMs() { return (m_eventsMapBackup.empty() ? 0 : m_eventsMapBackup.begin()->first); }
+    uint32 GetLastEventTime() { return (m_eventsMapBackup.empty() ? 0 : uint32(m_eventsMapBackup.rbegin()->first / IN_MILLISECONDS)); }
+    uint64 GetLastEventTimeMs() { return (m_eventsMapBackup.empty() ? 0 : m_eventsMapBackup.begin()->first); }
 
 #pragma endregion Replay
    

@@ -880,7 +880,7 @@ void WorldServer::TeleportClient(WorldLocation const& location)
 {
     if (!m_clientPlayer)
     {
-        printf("[SendMoveTeleportAck] Error: Attempt to teleport client but he is not in world!");
+        printf("[TeleportClient] Error: Attempt to teleport client but he is not in world!\n");
         return;
     }
 
@@ -920,7 +920,7 @@ void WorldServer::SendMoveTeleportAck(float x, float y, float z, float o)
 {
     if (!m_clientPlayer)
     {
-        printf("[SendMoveTeleportAck] Error: Attempt to teleport client but he is not in world!");
+        printf("[SendMoveTeleportAck] Error: Attempt to teleport client but he is not in world!\n");
         return;
     }
 
@@ -1903,9 +1903,9 @@ void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGui
         data << float(damage);
         data << uint32(damage);
 
-        if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_ABSORB | WotLK::HITINFO_ABSORB2)))
+        if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_FULL_ABSORB | WotLK::HITINFO_PARTIAL_ABSORB)))
             data << uint32(absorbedDamage);
-        if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_RESIST | WotLK::HITINFO_RESIST2)))
+        if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_FULL_RESIST | WotLK::HITINFO_PARTIAL_RESIST)))
             data << int32(resistedDamage);
     }
 
@@ -1989,7 +1989,7 @@ void WorldServer::SendInitialWorldStates(std::map<uint32, uint32> worldStates)
 
     if (!m_clientPlayer)
     {
-        printf("[SendInitialWorldStates] Error: Attempt to send initial world states while client is not in world!");
+        printf("[SendInitialWorldStates] Error: Attempt to send initial world states while client is not in world!\n");
         return;
     }
 

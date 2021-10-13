@@ -58,6 +58,105 @@ namespace Vanilla
         //CHAT_MSG_FILTERED               = 0x2B,
         //CHAT_MSG_RESTRICTED             = 0x2E,
     };
+
+    inline std::string ChatTypeToString(uint32 value)
+    {
+        switch (value)
+        {
+            case CHAT_MSG_ADDON:
+                return "CHAT_MSG_ADDON";
+            case CHAT_MSG_SAY:
+                return "CHAT_MSG_SAY";
+            case CHAT_MSG_PARTY:
+                return "CHAT_MSG_PARTY";
+            case CHAT_MSG_RAID:
+                return "CHAT_MSG_RAID";
+            case CHAT_MSG_GUILD:
+                return "CHAT_MSG_GUILD";
+            case CHAT_MSG_OFFICER:
+                return "CHAT_MSG_OFFICER";
+            case CHAT_MSG_YELL:
+                return "CHAT_MSG_YELL";
+            case CHAT_MSG_WHISPER:
+                return "CHAT_MSG_WHISPER";
+            case CHAT_MSG_WHISPER_INFORM:
+                return "CHAT_MSG_WHISPER_INFORM";
+            case CHAT_MSG_EMOTE:
+                return "CHAT_MSG_EMOTE";
+            case CHAT_MSG_TEXT_EMOTE:
+                return "CHAT_MSG_TEXT_EMOTE";
+            case CHAT_MSG_SYSTEM:
+                return "CHAT_MSG_SYSTEM";
+            case CHAT_MSG_MONSTER_SAY:
+                return "CHAT_MSG_MONSTER_SAY";
+            case CHAT_MSG_MONSTER_PARTY:
+                return "CHAT_MSG_MONSTER_PARTY";
+            case CHAT_MSG_MONSTER_YELL:
+                return "CHAT_MSG_MONSTER_YELL";
+            case CHAT_MSG_MONSTER_WHISPER:
+                return "CHAT_MSG_MONSTER_WHISPER";
+            case CHAT_MSG_MONSTER_EMOTE:
+                return "CHAT_MSG_MONSTER_EMOTE";
+            case CHAT_MSG_CHANNEL:
+                return "CHAT_MSG_CHANNEL";
+            case CHAT_MSG_CHANNEL_JOIN:
+                return "CHAT_MSG_CHANNEL_JOIN";
+            case CHAT_MSG_CHANNEL_LEAVE:
+                return "CHAT_MSG_CHANNEL_LEAVE";
+            case CHAT_MSG_CHANNEL_LIST:
+                return "CHAT_MSG_CHANNEL_LIST";
+            case CHAT_MSG_CHANNEL_NOTICE:
+                return "CHAT_MSG_CHANNEL_NOTICE";
+            case CHAT_MSG_CHANNEL_NOTICE_USER:
+                return "CHAT_MSG_CHANNEL_NOTICE_USER";
+            case CHAT_MSG_AFK:
+                return "CHAT_MSG_AFK";
+            case CHAT_MSG_DND:
+                return "CHAT_MSG_DND";
+            case CHAT_MSG_IGNORED:
+                return "CHAT_MSG_IGNORED";
+            case CHAT_MSG_SKILL:
+                return "CHAT_MSG_SKILL";
+            case CHAT_MSG_LOOT:
+                return "CHAT_MSG_LOOT";
+            case CHAT_MSG_BG_SYSTEM_NEUTRAL:
+                return "CHAT_MSG_BG_SYSTEM_NEUTRAL";
+            case CHAT_MSG_BG_SYSTEM_ALLIANCE:
+                return "CHAT_MSG_BG_SYSTEM_ALLIANCE";
+            case CHAT_MSG_BG_SYSTEM_HORDE:
+                return "CHAT_MSG_BG_SYSTEM_HORDE";
+            case CHAT_MSG_RAID_LEADER:
+                return "CHAT_MSG_RAID_LEADER";
+            case CHAT_MSG_RAID_WARNING:
+                return "CHAT_MSG_RAID_WARNING";
+            case CHAT_MSG_RAID_BOSS_EMOTE:
+                return "CHAT_MSG_RAID_BOSS_EMOTE";
+            case CHAT_MSG_BATTLEGROUND:
+                return "CHAT_MSG_BATTLEGROUND";
+            case CHAT_MSG_BATTLEGROUND_LEADER:
+                return "CHAT_MSG_BATTLEGROUND_LEADER";
+        }
+        return std::to_string(value);
+    }
+
+    inline char const* ChatTypeToVerbString(uint32 value)
+    {
+        switch (value)
+        {
+            case CHAT_MSG_WHISPER:
+            case CHAT_MSG_MONSTER_WHISPER:
+                return "whispers";
+            case CHAT_MSG_YELL:
+            case CHAT_MSG_MONSTER_YELL:
+                return "yells";
+            case CHAT_MSG_EMOTE:
+            case CHAT_MSG_TEXT_EMOTE:
+            case CHAT_MSG_MONSTER_EMOTE:
+            case CHAT_MSG_RAID_BOSS_EMOTE:
+                return "emotes";
+        }
+        return "says";
+    }
 }
 
 namespace TBC
@@ -113,6 +212,130 @@ namespace TBC
         CHAT_MSG_BATTLEGROUND_LEADER    = 0x2D,
         CHAT_MSG_RESTRICTED             = 0x2E,
     };
+
+    inline std::string ChatTypeToString(uint32 value)
+    {
+        switch (value)
+        {
+            case CHAT_MSG_ADDON:
+                return "CHAT_MSG_ADDON";
+            case CHAT_MSG_SYSTEM:
+                return "CHAT_MSG_SYSTEM";
+            case CHAT_MSG_SAY:
+                return "CHAT_MSG_SAY";
+            case CHAT_MSG_PARTY:
+                return "CHAT_MSG_PARTY";
+            case CHAT_MSG_RAID:
+                return "CHAT_MSG_RAID";
+            case CHAT_MSG_GUILD:
+                return "CHAT_MSG_GUILD";
+            case CHAT_MSG_OFFICER:
+                return "CHAT_MSG_OFFICER";
+            case CHAT_MSG_YELL:
+                return "CHAT_MSG_YELL";
+            case CHAT_MSG_WHISPER:
+                return "CHAT_MSG_WHISPER";
+            case CHAT_MSG_WHISPER_FOREIGN:
+                return "CHAT_MSG_WHISPER_FOREIGN";
+            case CHAT_MSG_WHISPER_INFORM:
+                return "CHAT_MSG_WHISPER_INFORM";
+            case CHAT_MSG_EMOTE:
+                return "CHAT_MSG_EMOTE";
+            case CHAT_MSG_TEXT_EMOTE:
+                return "CHAT_MSG_TEXT_EMOTE";
+            case CHAT_MSG_MONSTER_SAY:
+                return "CHAT_MSG_MONSTER_SAY";
+            case CHAT_MSG_MONSTER_PARTY:
+                return "CHAT_MSG_MONSTER_PARTY";
+            case CHAT_MSG_MONSTER_YELL:
+                return "CHAT_MSG_MONSTER_YELL";
+            case CHAT_MSG_MONSTER_WHISPER:
+                return "CHAT_MSG_MONSTER_WHISPER";
+            case CHAT_MSG_MONSTER_EMOTE:
+                return "CHAT_MSG_MONSTER_EMOTE";
+            case CHAT_MSG_CHANNEL:
+                return "CHAT_MSG_CHANNEL";
+            case CHAT_MSG_CHANNEL_JOIN:
+                return "CHAT_MSG_CHANNEL_JOIN";
+            case CHAT_MSG_CHANNEL_LEAVE:
+                return "CHAT_MSG_CHANNEL_LEAVE";
+            case CHAT_MSG_CHANNEL_LIST:
+                return "CHAT_MSG_CHANNEL_LIST";
+            case CHAT_MSG_CHANNEL_NOTICE:
+                return "CHAT_MSG_CHANNEL_NOTICE";
+            case CHAT_MSG_CHANNEL_NOTICE_USER:
+                return "CHAT_MSG_CHANNEL_NOTICE_USER";
+            case CHAT_MSG_AFK:
+                return "CHAT_MSG_AFK";
+            case CHAT_MSG_DND:
+                return "CHAT_MSG_DND";
+            case CHAT_MSG_IGNORED:
+                return "CHAT_MSG_IGNORED";
+            case CHAT_MSG_SKILL:
+                return "CHAT_MSG_SKILL";
+            case CHAT_MSG_LOOT:
+                return "CHAT_MSG_LOOT";
+            case CHAT_MSG_MONEY:
+                return "CHAT_MSG_MONEY";
+            case CHAT_MSG_OPENING:
+                return "CHAT_MSG_OPENING";
+            case CHAT_MSG_TRADESKILLS:
+                return "CHAT_MSG_TRADESKILLS";
+            case CHAT_MSG_PET_INFO:
+                return "CHAT_MSG_PET_INFO";
+            case CHAT_MSG_COMBAT_MISC_INFO:
+                return "CHAT_MSG_COMBAT_MISC_INFO";
+            case CHAT_MSG_COMBAT_XP_GAIN:
+                return "CHAT_MSG_COMBAT_XP_GAIN";
+            case CHAT_MSG_COMBAT_HONOR_GAIN:
+                return "CHAT_MSG_COMBAT_HONOR_GAIN";
+            case CHAT_MSG_COMBAT_FACTION_CHANGE:
+                return "CHAT_MSG_COMBAT_FACTION_CHANGE";
+            case CHAT_MSG_BG_SYSTEM_NEUTRAL:
+                return "CHAT_MSG_BG_SYSTEM_NEUTRAL";
+            case CHAT_MSG_BG_SYSTEM_ALLIANCE:
+                return "CHAT_MSG_BG_SYSTEM_ALLIANCE";
+            case CHAT_MSG_BG_SYSTEM_HORDE:
+                return "CHAT_MSG_BG_SYSTEM_HORDE";
+            case CHAT_MSG_RAID_LEADER:
+                return "CHAT_MSG_RAID_LEADER";
+            case CHAT_MSG_RAID_WARNING:
+                return "CHAT_MSG_RAID_WARNING";
+            case CHAT_MSG_RAID_BOSS_EMOTE:
+                return "CHAT_MSG_RAID_BOSS_EMOTE";
+            case CHAT_MSG_RAID_BOSS_WHISPER:
+                return "CHAT_MSG_RAID_BOSS_WHISPER";
+            case CHAT_MSG_FILTERED:
+                return "CHAT_MSG_FILTERED";
+            case CHAT_MSG_RESTRICTED:
+                return "CHAT_MSG_RESTRICTED";
+            case CHAT_MSG_BATTLEGROUND:
+                return "CHAT_MSG_BATTLEGROUND";
+            case CHAT_MSG_BATTLEGROUND_LEADER:
+                return "CHAT_MSG_BATTLEGROUND_LEADER";
+        }
+        return std::to_string(value);
+    }
+
+    inline char const* ChatTypeToVerbString(uint32 value)
+    {
+        switch (value)
+        {
+            case CHAT_MSG_WHISPER:
+            case CHAT_MSG_MONSTER_WHISPER:
+            case CHAT_MSG_RAID_BOSS_WHISPER:
+                return "whispers";
+            case CHAT_MSG_YELL:
+            case CHAT_MSG_MONSTER_YELL:
+                return "yells";
+            case CHAT_MSG_EMOTE:
+            case CHAT_MSG_TEXT_EMOTE:
+            case CHAT_MSG_MONSTER_EMOTE:
+            case CHAT_MSG_RAID_BOSS_EMOTE:
+                return "emotes";
+        }
+        return "says";
+    }
 }
 
 namespace WotLK
@@ -173,6 +396,141 @@ namespace WotLK
         CHAT_MSG_ARENA_POINTS           = 0x32,
         CHAT_MSG_PARTY_LEADER           = 0x33
     };
+
+    inline std::string ChatTypeToString(uint32 value)
+    {
+        switch (value)
+        {
+            case CHAT_MSG_ADDON:
+                return "CHAT_MSG_ADDON";
+            case CHAT_MSG_SYSTEM:
+                return "CHAT_MSG_SYSTEM";
+            case CHAT_MSG_SAY:
+                return "CHAT_MSG_SAY";
+            case CHAT_MSG_PARTY:
+                return "CHAT_MSG_PARTY";
+            case CHAT_MSG_RAID:
+                return "CHAT_MSG_RAID";
+            case CHAT_MSG_GUILD:
+                return "CHAT_MSG_GUILD";
+            case CHAT_MSG_OFFICER:
+                return "CHAT_MSG_OFFICER";
+            case CHAT_MSG_YELL:
+                return "CHAT_MSG_YELL";
+            case CHAT_MSG_WHISPER:
+                return "CHAT_MSG_WHISPER";
+            case CHAT_MSG_WHISPER_FOREIGN:
+                return "CHAT_MSG_WHISPER_FOREIGN";
+            case CHAT_MSG_WHISPER_INFORM:
+                return "CHAT_MSG_WHISPER_INFORM";
+            case CHAT_MSG_EMOTE:
+                return "CHAT_MSG_EMOTE";
+            case CHAT_MSG_TEXT_EMOTE:
+                return "CHAT_MSG_TEXT_EMOTE";
+            case CHAT_MSG_MONSTER_SAY:
+                return "CHAT_MSG_MONSTER_SAY";
+            case CHAT_MSG_MONSTER_PARTY:
+                return "CHAT_MSG_MONSTER_PARTY";
+            case CHAT_MSG_MONSTER_YELL:
+                return "CHAT_MSG_MONSTER_YELL";
+            case CHAT_MSG_MONSTER_WHISPER:
+                return "CHAT_MSG_MONSTER_WHISPER";
+            case CHAT_MSG_MONSTER_EMOTE:
+                return "CHAT_MSG_MONSTER_EMOTE";
+            case CHAT_MSG_CHANNEL:
+                return "CHAT_MSG_CHANNEL";
+            case CHAT_MSG_CHANNEL_JOIN:
+                return "CHAT_MSG_CHANNEL_JOIN";
+            case CHAT_MSG_CHANNEL_LEAVE:
+                return "CHAT_MSG_CHANNEL_LEAVE";
+            case CHAT_MSG_CHANNEL_LIST:
+                return "CHAT_MSG_CHANNEL_LIST";
+            case CHAT_MSG_CHANNEL_NOTICE:
+                return "CHAT_MSG_CHANNEL_NOTICE";
+            case CHAT_MSG_CHANNEL_NOTICE_USER:
+                return "CHAT_MSG_CHANNEL_NOTICE_USER";
+            case CHAT_MSG_AFK:
+                return "CHAT_MSG_AFK";
+            case CHAT_MSG_DND:
+                return "CHAT_MSG_DND";
+            case CHAT_MSG_IGNORED:
+                return "CHAT_MSG_IGNORED";
+            case CHAT_MSG_SKILL:
+                return "CHAT_MSG_SKILL";
+            case CHAT_MSG_LOOT:
+                return "CHAT_MSG_LOOT";
+            case CHAT_MSG_MONEY:
+                return "CHAT_MSG_MONEY";
+            case CHAT_MSG_OPENING:
+                return "CHAT_MSG_OPENING";
+            case CHAT_MSG_TRADESKILLS:
+                return "CHAT_MSG_TRADESKILLS";
+            case CHAT_MSG_PET_INFO:
+                return "CHAT_MSG_PET_INFO";
+            case CHAT_MSG_COMBAT_MISC_INFO:
+                return "CHAT_MSG_COMBAT_MISC_INFO";
+            case CHAT_MSG_COMBAT_XP_GAIN:
+                return "CHAT_MSG_COMBAT_XP_GAIN";
+            case CHAT_MSG_COMBAT_HONOR_GAIN:
+                return "CHAT_MSG_COMBAT_HONOR_GAIN";
+            case CHAT_MSG_COMBAT_FACTION_CHANGE:
+                return "CHAT_MSG_COMBAT_FACTION_CHANGE";
+            case CHAT_MSG_BG_SYSTEM_NEUTRAL:
+                return "CHAT_MSG_BG_SYSTEM_NEUTRAL";
+            case CHAT_MSG_BG_SYSTEM_ALLIANCE:
+                return "CHAT_MSG_BG_SYSTEM_ALLIANCE";
+            case CHAT_MSG_BG_SYSTEM_HORDE:
+                return "CHAT_MSG_BG_SYSTEM_HORDE";
+            case CHAT_MSG_RAID_LEADER:
+                return "CHAT_MSG_RAID_LEADER";
+            case CHAT_MSG_RAID_WARNING:
+                return "CHAT_MSG_RAID_WARNING";
+            case CHAT_MSG_RAID_BOSS_EMOTE:
+                return "CHAT_MSG_RAID_BOSS_EMOTE";
+            case CHAT_MSG_RAID_BOSS_WHISPER:
+                return "CHAT_MSG_RAID_BOSS_WHISPER";
+            case CHAT_MSG_FILTERED:
+                return "CHAT_MSG_FILTERED";
+            case CHAT_MSG_RESTRICTED:
+                return "CHAT_MSG_RESTRICTED";
+            case CHAT_MSG_BNET:
+                return "CHAT_MSG_BNET";
+            case CHAT_MSG_ACHIEVEMENT:
+                return "CHAT_MSG_ACHIEVEMENT";
+            case CHAT_MSG_GUILD_ACHIEVEMENT:
+                return "CHAT_MSG_GUILD_ACHIEVEMENT";
+            case CHAT_MSG_ARENA_POINTS:
+                return "CHAT_MSG_ARENA_POINTS";
+            case CHAT_MSG_PARTY_LEADER:
+                return "CHAT_MSG_PARTY_LEADER";
+            case CHAT_MSG_BATTLEGROUND:
+                return "CHAT_MSG_BATTLEGROUND";
+            case CHAT_MSG_BATTLEGROUND_LEADER:
+                return "CHAT_MSG_BATTLEGROUND_LEADER";
+        }
+        return std::to_string(value);
+    }
+
+    inline char const* ChatTypeToVerbString(uint32 value)
+    {
+        switch (value)
+        {
+            case CHAT_MSG_WHISPER:
+            case CHAT_MSG_WHISPER_FOREIGN:
+            case CHAT_MSG_MONSTER_WHISPER:
+            case CHAT_MSG_RAID_BOSS_WHISPER:
+                return "whispers";
+            case CHAT_MSG_YELL:
+            case CHAT_MSG_MONSTER_YELL:
+                return "yells";
+            case CHAT_MSG_EMOTE:
+            case CHAT_MSG_TEXT_EMOTE:
+            case CHAT_MSG_MONSTER_EMOTE:
+            case CHAT_MSG_RAID_BOSS_EMOTE:
+                return "emotes";
+        }
+        return "says";
+    }
 }
 
 namespace Classic
@@ -248,6 +606,168 @@ namespace Classic
         CHAT_MSG_INSTANCE_CHAT          = 66,
         CHAT_MSG_INSTANCE_CHAT_LEADER   = 67,
     };
+
+    inline std::string ChatTypeToString(uint32 value)
+    {
+        switch (value)
+        {
+            case CHAT_MSG_SYSTEM:
+                return "CHAT_MSG_SYSTEM";
+            case CHAT_MSG_SAY:
+                return "CHAT_MSG_SAY";
+            case CHAT_MSG_PARTY:
+                return "CHAT_MSG_PARTY";
+            case CHAT_MSG_RAID:
+                return "CHAT_MSG_RAID";
+            case CHAT_MSG_GUILD:
+                return "CHAT_MSG_GUILD";
+            case CHAT_MSG_OFFICER:
+                return "CHAT_MSG_OFFICER";
+            case CHAT_MSG_YELL:
+                return "CHAT_MSG_YELL";
+            case CHAT_MSG_WHISPER:
+                return "CHAT_MSG_WHISPER";
+            case CHAT_MSG_WHISPER_FOREIGN:
+                return "CHAT_MSG_WHISPER_FOREIGN";
+            case CHAT_MSG_WHISPER_INFORM:
+                return "CHAT_MSG_WHISPER_INFORM";
+            case CHAT_MSG_EMOTE:
+                return "CHAT_MSG_EMOTE";
+            case CHAT_MSG_TEXT_EMOTE:
+                return "CHAT_MSG_TEXT_EMOTE";
+            case CHAT_MSG_MONSTER_SAY:
+                return "CHAT_MSG_MONSTER_SAY";
+            case CHAT_MSG_MONSTER_PARTY:
+                return "CHAT_MSG_MONSTER_PARTY";
+            case CHAT_MSG_MONSTER_YELL:
+                return "CHAT_MSG_MONSTER_YELL";
+            case CHAT_MSG_MONSTER_WHISPER:
+                return "CHAT_MSG_MONSTER_WHISPER";
+            case CHAT_MSG_MONSTER_EMOTE:
+                return "CHAT_MSG_MONSTER_EMOTE";
+            case CHAT_MSG_CHANNEL:
+                return "CHAT_MSG_CHANNEL";
+            case CHAT_MSG_CHANNEL_JOIN:
+                return "CHAT_MSG_CHANNEL_JOIN";
+            case CHAT_MSG_CHANNEL_LEAVE:
+                return "CHAT_MSG_CHANNEL_LEAVE";
+            case CHAT_MSG_CHANNEL_LIST:
+                return "CHAT_MSG_CHANNEL_LIST";
+            case CHAT_MSG_CHANNEL_NOTICE:
+                return "CHAT_MSG_CHANNEL_NOTICE";
+            case CHAT_MSG_CHANNEL_NOTICE_USER:
+                return "CHAT_MSG_CHANNEL_NOTICE_USER";
+            case CHAT_MSG_AFK:
+                return "CHAT_MSG_AFK";
+            case CHAT_MSG_DND:
+                return "CHAT_MSG_DND";
+            case CHAT_MSG_IGNORED:
+                return "CHAT_MSG_IGNORED";
+            case CHAT_MSG_SKILL:
+                return "CHAT_MSG_SKILL";
+            case CHAT_MSG_LOOT:
+                return "CHAT_MSG_LOOT";
+            case CHAT_MSG_MONEY:
+                return "CHAT_MSG_MONEY";
+            case CHAT_MSG_OPENING:
+                return "CHAT_MSG_OPENING";
+            case CHAT_MSG_TRADESKILLS:
+                return "CHAT_MSG_TRADESKILLS";
+            case CHAT_MSG_PET_INFO:
+                return "CHAT_MSG_PET_INFO";
+            case CHAT_MSG_COMBAT_MISC_INFO:
+                return "CHAT_MSG_COMBAT_MISC_INFO";
+            case CHAT_MSG_COMBAT_XP_GAIN:
+                return "CHAT_MSG_COMBAT_XP_GAIN";
+            case CHAT_MSG_COMBAT_HONOR_GAIN:
+                return "CHAT_MSG_COMBAT_HONOR_GAIN";
+            case CHAT_MSG_COMBAT_FACTION_CHANGE:
+                return "CHAT_MSG_COMBAT_FACTION_CHANGE";
+            case CHAT_MSG_BG_SYSTEM_NEUTRAL:
+                return "CHAT_MSG_BG_SYSTEM_NEUTRAL";
+            case CHAT_MSG_BG_SYSTEM_ALLIANCE:
+                return "CHAT_MSG_BG_SYSTEM_ALLIANCE";
+            case CHAT_MSG_BG_SYSTEM_HORDE:
+                return "CHAT_MSG_BG_SYSTEM_HORDE";
+            case CHAT_MSG_RAID_LEADER:
+                return "CHAT_MSG_RAID_LEADER";
+            case CHAT_MSG_RAID_WARNING:
+                return "CHAT_MSG_RAID_WARNING";
+            case CHAT_MSG_RAID_BOSS_EMOTE:
+                return "CHAT_MSG_RAID_BOSS_EMOTE";
+            case CHAT_MSG_RAID_BOSS_WHISPER:
+                return "CHAT_MSG_RAID_BOSS_WHISPER";
+            case CHAT_MSG_FILTERED:
+                return "CHAT_MSG_FILTERED";
+            case CHAT_MSG_RESTRICTED:
+                return "CHAT_MSG_RESTRICTED";
+            case CHAT_MSG_ACHIEVEMENT:
+                return "CHAT_MSG_ACHIEVEMENT";
+            case CHAT_MSG_GUILD_ACHIEVEMENT:
+                return "CHAT_MSG_GUILD_ACHIEVEMENT";
+            case CHAT_MSG_PARTY_LEADER:
+                return "CHAT_MSG_PARTY_LEADER";
+            case CHAT_MSG_TARGETICONS:
+                return "CHAT_MSG_TARGETICONS";
+            case CHAT_MSG_BN_WHISPER:
+                return "CHAT_MSG_BN_WHISPER";
+            case CHAT_MSG_BN_WHISPER_INFORM:
+                return "CHAT_MSG_BN_WHISPER_INFORM";
+            case CHAT_MSG_BN_CONVERSATION:
+                return "CHAT_MSG_BN_CONVERSATION";
+            case CHAT_MSG_BN_CONVERSATION_NOTICE:
+                return "CHAT_MSG_BN_CONVERSATION_NOTICE";
+            case CHAT_MSG_BN_CONVERSATION_LIST:
+                return "CHAT_MSG_BN_CONVERSATION_LIST";
+            case CHAT_MSG_BN_INLINE_TOAST_ALERT:
+                return "CHAT_MSG_BN_INLINE_TOAST_ALERT";
+            case CHAT_MSG_BN_INLINE_TOAST_BROADCAST:
+                return "CHAT_MSG_BN_INLINE_TOAST_BROADCAST";
+            case CHAT_MSG_BN_INLINE_TOAST_BROADCAST_INFORM:
+                return "CHAT_MSG_BN_INLINE_TOAST_BROADCAST_INFORM";
+            case CHAT_MSG_BN_INLINE_TOAST_CONVERSATION:
+                return "CHAT_MSG_BN_INLINE_TOAST_CONVERSATION";
+            case CHAT_MSG_BN_WHISPER_PLAYER_OFFLINE:
+                return "CHAT_MSG_BN_WHISPER_PLAYER_OFFLINE";
+            case CHAT_MSG_COMBAT_GUILD_XP_GAIN:
+                return "CHAT_MSG_COMBAT_GUILD_XP_GAIN";
+            case CHAT_MSG_BATTLEGROUND:
+                return "CHAT_MSG_BATTLEGROUND";
+            case CHAT_MSG_BATTLEGROUND_LEADER:
+                return "CHAT_MSG_BATTLEGROUND_LEADER";
+            case CHAT_MSG_PET_BATTLE_COMBAT_LOG:
+                return "CHAT_MSG_PET_BATTLE_COMBAT_LOG";
+            case CHAT_MSG_PET_BATTLE_INFO:
+                return "CHAT_MSG_PET_BATTLE_INFO";
+            case CHAT_MSG_INSTANCE_CHAT:
+                return "CHAT_MSG_INSTANCE_CHAT";
+            case CHAT_MSG_INSTANCE_CHAT_LEADER:
+                return "CHAT_MSG_INSTANCE_CHAT_LEADER";
+        }
+        return std::to_string(value);
+    }
+
+    inline char const* ChatTypeToVerbString(uint32 value)
+    {
+        switch (value)
+        {
+            case CHAT_MSG_WHISPER:
+            case CHAT_MSG_WHISPER_FOREIGN:
+            case CHAT_MSG_MONSTER_WHISPER:
+            case CHAT_MSG_RAID_BOSS_WHISPER:
+            case CHAT_MSG_BN_WHISPER:
+                return "whispers";
+            case CHAT_MSG_YELL:
+            case CHAT_MSG_MONSTER_YELL:
+                return "yells";
+            case CHAT_MSG_EMOTE:
+            case CHAT_MSG_TEXT_EMOTE:
+            case CHAT_MSG_MONSTER_EMOTE:
+            case CHAT_MSG_RAID_BOSS_EMOTE:
+                return "emotes";
+        }
+        return "says";
+    }
 }
 
 enum ChatNotify

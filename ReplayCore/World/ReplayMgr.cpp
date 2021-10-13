@@ -40,7 +40,11 @@ void WorldObjectData::InitializeWorldObject(WorldObject* pObject) const
     pObject->Relocate(location);
 
     // assign transport data to spawn
-    if (auto pSniffedEvent = sReplayMgr.GetFirstEventForTarget(guid, SE_WORLDOBJECT_CREATE))
+    std::shared_ptr<SniffedEvent> pSniffedEvent;
+    if (!(pSniffedEvent = sReplayMgr.GetFirstEventForTarget(guid, SE_WORLDOBJECT_CREATE2)))
+        pSniffedEvent = sReplayMgr.GetFirstEventForTarget(guid, SE_WORLDOBJECT_CREATE1);
+
+    if (pSniffedEvent)
     {
         // i think this cast is undefined behavior but it works
         auto pCreate1Event = std::static_pointer_cast<SniffedEvent_WorldObjectCreate>(pSniffedEvent);
@@ -1220,7 +1224,7 @@ void ReplayMgr::Uninitialize()
 
 std::shared_ptr<SniffedEvent> ReplayMgr::GetFirstEventForTarget(ObjectGuid guid, SniffedEventType eventType)
 {
-    for (const auto& itr : m_eventsMapBackup)
+    for (auto const& itr : m_eventsMapBackup)
     {
         if (itr.second->GetSourceGuid() == guid )
         {
@@ -1233,7 +1237,7 @@ std::shared_ptr<SniffedEvent> ReplayMgr::GetFirstEventForTarget(ObjectGuid guid,
 
 void ReplayMgr::GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList)
 {
-    for (const auto& itr : m_eventsMapBackup)
+    for (auto const& itr : m_eventsMapBackup)
     {
         // skip client movement cause there are thousands of those events
         if (itr.second->GetSourceGuid() == guid && itr.second->GetType() != SE_UNIT_CLIENTSIDE_MOVEMENT)
@@ -1243,6 +1247,27 @@ void ReplayMgr::GetEventsListForTarget(ObjectGuid guid, std::string eventName, s
 
             if (eventName.empty() || (currentEventName.find(eventName) != std::string::npos))
                 eventsList.push_back({ itr.first, itr.second->GetType() });
+        }
+    }
+}
+
+void ReplayMgr::GetEventsListForTargets(uint32 startTime, uint32 endTime, std::vector<ObjectFilterEntry> const& objectFilters, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>>& eventsList)
+{
+    for (const auto& itr : m_eventsMapBackup)
+    {
+        uint32 currentTime = itr.first / IN_MILLISECONDS;
+        if (startTime && currentTime < startTime)
+            continue;
+        if (endTime && currentTime > endTime)
+            break;
+
+        for (auto const& filter : objectFilters)
+        {
+            if (filter.IsEventFitForFilter(itr.second.get()))
+            {
+                eventsList.emplace_back(std::make_pair(itr.first, itr.second));
+                break;
+            }
         }
     }
 }

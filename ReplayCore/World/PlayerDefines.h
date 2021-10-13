@@ -47,6 +47,52 @@ enum EquipmentSlots                                         // 19 slots
     EQUIPMENT_SLOT_END          = 19
 };
 
+inline std::string EquipmentSlotToString(uint32 value)
+{
+    switch (value)
+    {
+        case EQUIPMENT_SLOT_HEAD:
+            return "Head Slot";
+        case EQUIPMENT_SLOT_NECK:
+            return "Neck Slot";
+        case EQUIPMENT_SLOT_SHOULDERS:
+            return "Shoulder Slot";
+        case EQUIPMENT_SLOT_BODY:
+            return "Body Slot";
+        case EQUIPMENT_SLOT_CHEST:
+            return "Chest Slot";
+        case EQUIPMENT_SLOT_WAIST:
+            return "Waist Slot";
+        case EQUIPMENT_SLOT_LEGS:
+            return "Leg Slot";
+        case EQUIPMENT_SLOT_FEET:
+            return "Feet Slot";
+        case EQUIPMENT_SLOT_WRISTS:
+            return "Wrist Slot";
+        case EQUIPMENT_SLOT_HANDS:
+            return "Hand Slot";
+        case EQUIPMENT_SLOT_FINGER1:
+            return "Finger Slot 1";
+        case EQUIPMENT_SLOT_FINGER2:
+            return "Finger Slot 2";
+        case EQUIPMENT_SLOT_TRINKET1:
+            return "Trinket Slot 1";
+        case EQUIPMENT_SLOT_TRINKET2:
+            return "Trinket Slot 2";
+        case EQUIPMENT_SLOT_BACK:
+            return "Back Slot";
+        case EQUIPMENT_SLOT_MAINHAND:
+            return "Main Hand Slot";
+        case EQUIPMENT_SLOT_OFFHAND:
+            return "Off Hand Slot";
+        case EQUIPMENT_SLOT_RANGED:
+            return "Ranged Slot";
+        case EQUIPMENT_SLOT_TABARD:
+            return "Tabard Slot";
+    }
+    return "Slot " + std::to_string(value);
+}
+
 enum InventorySlots                                         // 4 slots
 {
     INVENTORY_SLOT_BAG_START    = 19,

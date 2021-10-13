@@ -103,6 +103,9 @@
     <ClInclude Include="Defines\ResponseCodes.h" />
     <ClInclude Include="Defines\Utility.h" />
     <ClInclude Include="Defines\WorldPacket.h" />
+    <ClInclude Include="GUI\GUIFilters.h" />
+    <ClInclude Include="GUI\GUIOpcodes.h" />
+    <ClInclude Include="GUI\GUIServer.h" />
     <ClInclude Include="Input\CommandHandler.h" />
     <ClInclude Include="Input\Config.h" />
     <ClInclude Include="Input\INIReader.h" />
@@ -152,6 +155,8 @@
     <ClCompile Include="Database\DbField.cpp" />
     <ClCompile Include="Database\QueryObject.cpp" />
     <ClCompile Include="Database\QueryResult.cpp" />
+    <ClCompile Include="GUI\GUIFilters.cpp" />
+    <ClCompile Include="GUI\GUIServer.cpp" />
     <ClCompile Include="Input\CommandHandler.cpp" />
     <ClCompile Include="Input\Config.cpp" />
     <ClCompile Include="main.cpp" />

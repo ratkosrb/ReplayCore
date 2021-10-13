@@ -10,12 +10,14 @@ class ByteBuffer;
 
 struct JumpInfo
 {
-    JumpInfo() : zspeed(0.f), sinAngle(0.f), cosAngle(0.f), xyspeed(0.f), startClientTime(0) {}
+    JumpInfo() : zspeed(0.f), sinAngle(0.f), cosAngle(0.f), xyspeed(0.f) {}
     JumpInfo(float zspeed_, float sinAngle_, float cosAngle_, float xyspeed_) :
         zspeed(zspeed_), sinAngle(sinAngle_), cosAngle(cosAngle_), xyspeed(xyspeed_) {}
     float zspeed, sinAngle, cosAngle, xyspeed;
-    Position start;
-    uint32 startClientTime;
+    bool IsEmpty() const
+    {
+        return !zspeed && !sinAngle && !cosAngle && !xyspeed;
+    }
 };
 
 class MovementInfo

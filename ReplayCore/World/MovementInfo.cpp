@@ -33,14 +33,7 @@ void MovementInfo::Read(ByteBuffer &data)
             data >> jump.cosAngle;
             data >> jump.sinAngle;
             data >> jump.xyspeed;
-            if (!jump.startClientTime)
-            {
-                jump.startClientTime = ctime;
-                jump.start = pos;
-            }
         }
-        else
-            jump.startClientTime = 0;
 
         if (HasMovementFlag(Vanilla::MOVEFLAG_SPLINE_ELEVATION))
         {

@@ -98,6 +98,12 @@
     <ClCompile Include="World\DynamicObject.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="GUI\GUIServer.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\GUIFilters.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -277,6 +283,15 @@
     <ClInclude Include="World\WotlkDefines.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="GUI\GUIServer.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUIOpcodes.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUIFilters.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Database">
@@ -296,6 +311,9 @@
     </Filter>
     <Filter Include="Input">
       <UniqueIdentifier>{2bb783f0-c9db-4289-881b-4aaa26460276}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{0bb9b725-b0f7-4746-b000-2342c22a7722}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

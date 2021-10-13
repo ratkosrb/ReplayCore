@@ -398,9 +398,9 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
             {
                 newFlags = splineFlags;
 
-                if (splineFlags & Vanilla::Cyclic)
+                if (splineFlags & Vanilla::SplineFlags::Cyclic)
                     isCyclic = true;
-                if (splineFlags & Vanilla::Flying)
+                if (splineFlags & Vanilla::SplineFlags::Flying)
                     isCatmullrom = true;
 
                 if (finalOrientation != 100)
@@ -410,18 +410,18 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
             }
             else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
             {
-                if (splineFlags & Vanilla::Cyclic)
+                if (splineFlags & Vanilla::SplineFlags::Cyclic)
                 {
                     isCyclic = true;
-                    newFlags |= TBC::Cyclic;
+                    newFlags |= TBC::SplineFlags::Cyclic;
                 }
-                if (splineFlags & Vanilla::Flying)
+                if (splineFlags & Vanilla::SplineFlags::Flying)
                 {
-                    newFlags |= TBC::Flying;
+                    newFlags |= TBC::SplineFlags::Flying;
                     isCatmullrom = true;
                 }
-                if (splineFlags & Vanilla::Falling)
-                    newFlags |= TBC::Falling;
+                if (splineFlags & Vanilla::SplineFlags::Falling)
+                    newFlags |= TBC::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -429,18 +429,18 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
             }
             else
             {
-                if (splineFlags & Vanilla::Cyclic)
+                if (splineFlags & Vanilla::SplineFlags::Cyclic)
                 {
                     isCyclic = true;
-                    newFlags |= WotLK::Cyclic;
+                    newFlags |= WotLK::SplineFlags::Cyclic;
                 }
-                if (splineFlags & Vanilla::Flying)
+                if (splineFlags & Vanilla::SplineFlags::Flying)
                 {
-                    newFlags |= WotLK::Flying;
+                    newFlags |= WotLK::SplineFlags::Flying;
                     isCatmullrom = true;
                 }
-                if (splineFlags & Vanilla::Falling)
-                    newFlags |= WotLK::Falling;
+                if (splineFlags & Vanilla::SplineFlags::Falling)
+                    newFlags |= WotLK::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -452,33 +452,33 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
             {
-                if (splineFlags & TBC::Cyclic)
+                if (splineFlags & TBC::SplineFlags::Cyclic)
                 {
                     isCyclic = true;
-                    newFlags |= Vanilla::Cyclic;
+                    newFlags |= Vanilla::SplineFlags::Cyclic;
                 }
-                if (splineFlags & TBC::Flying)
+                if (splineFlags & TBC::SplineFlags::Flying)
                 {
-                    newFlags |= Vanilla::Flying;
+                    newFlags |= Vanilla::SplineFlags::Flying;
                     isCatmullrom = true;
                 }
-                if (splineFlags & TBC::Falling)
-                    newFlags |= Vanilla::Falling;
+                if (splineFlags & TBC::SplineFlags::Falling)
+                    newFlags |= Vanilla::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
                     splineType = SPLINE_TYPE_STOP;
                 else
-                    newFlags |= Vanilla::Runmode;
+                    newFlags |= Vanilla::SplineFlags::Runmode;
 
             }
             else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
             {
                 newFlags = splineFlags;
 
-                if (splineFlags & TBC::Cyclic)
+                if (splineFlags & TBC::SplineFlags::Cyclic)
                     isCyclic = true;
-                if (splineFlags & TBC::Flying)
+                if (splineFlags & TBC::SplineFlags::Flying)
                     isCatmullrom = true;
 
                 if (finalOrientation != 100)
@@ -488,18 +488,18 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
             }
             else
             {
-                if (splineFlags & TBC::Cyclic)
+                if (splineFlags & TBC::SplineFlags::Cyclic)
                 {
                     isCyclic = true;
-                    newFlags |= WotLK::Cyclic;
+                    newFlags |= WotLK::SplineFlags::Cyclic;
                 }
-                if (splineFlags & TBC::Flying)
+                if (splineFlags & TBC::SplineFlags::Flying)
                 {
-                    newFlags |= WotLK::Flying;
+                    newFlags |= WotLK::SplineFlags::Flying;
                     isCatmullrom = true;
                 }
-                if (splineFlags & TBC::Falling)
-                    newFlags |= WotLK::Falling;
+                if (splineFlags & TBC::SplineFlags::Falling)
+                    newFlags |= WotLK::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -511,40 +511,40 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
             {
-                if (splineFlags & WotLK::Cyclic)
+                if (splineFlags & WotLK::SplineFlags::Cyclic)
                 {
                     isCyclic = true;
-                    newFlags |= Vanilla::Cyclic;
+                    newFlags |= Vanilla::SplineFlags::Cyclic;
                 }
-                if (splineFlags & WotLK::Flying)
+                if (splineFlags & WotLK::SplineFlags::Flying)
                 {
-                    newFlags |= Vanilla::Flying;
+                    newFlags |= Vanilla::SplineFlags::Flying;
                     isCatmullrom = true;
                 }
-                if (splineFlags & WotLK::Falling)
-                    newFlags |= Vanilla::Falling;
+                if (splineFlags & WotLK::SplineFlags::Falling)
+                    newFlags |= Vanilla::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
                     splineType = SPLINE_TYPE_STOP;
                 else
-                    newFlags |= Vanilla::Runmode;
+                    newFlags |= Vanilla::SplineFlags::Runmode;
 
             }
             else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
             {
-                if (splineFlags & WotLK::Cyclic)
+                if (splineFlags & WotLK::SplineFlags::Cyclic)
                 {
                     isCyclic = true;
-                    newFlags |= TBC::Cyclic;
+                    newFlags |= TBC::SplineFlags::Cyclic;
                 }
-                if (splineFlags & WotLK::Flying)
+                if (splineFlags & WotLK::SplineFlags::Flying)
                 {
-                    newFlags |= TBC::Flying;
+                    newFlags |= TBC::SplineFlags::Flying;
                     isCatmullrom = true;
                 }
-                if (splineFlags & WotLK::Falling)
-                    newFlags |= TBC::Falling;
+                if (splineFlags & WotLK::SplineFlags::Falling)
+                    newFlags |= TBC::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -554,11 +554,11 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
             {
                 newFlags = splineFlags;
 
-                if (splineFlags & WotLK::Cyclic)
+                if (splineFlags & WotLK::SplineFlags::Cyclic)
                     isCyclic = true;
-                if (splineFlags & WotLK::Flying)
+                if (splineFlags & WotLK::SplineFlags::Flying)
                     isCatmullrom = true;
-                if (splineFlags & WotLK::Catmullrom)
+                if (splineFlags & WotLK::SplineFlags::Catmullrom)
                     isCatmullrom = true;
 
                 if (finalOrientation != 100)
@@ -572,40 +572,40 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
             {
-                if (splineFlags & Classic::Cyclic)
+                if (splineFlags & Classic::SplineFlags::Cyclic)
                 {
                     isCyclic = true;
-                    newFlags |= Vanilla::Cyclic;
+                    newFlags |= Vanilla::SplineFlags::Cyclic;
                 }
-                if (splineFlags & Classic::Flying)
+                if (splineFlags & Classic::SplineFlags::Flying)
                 {
-                    newFlags |= Vanilla::Flying;
+                    newFlags |= Vanilla::SplineFlags::Flying;
                     isCatmullrom = true;
                 }
-                if (splineFlags & Classic::Falling)
-                    newFlags |= Vanilla::Falling;
+                if (splineFlags & Classic::SplineFlags::Falling)
+                    newFlags |= Vanilla::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
                     splineType = SPLINE_TYPE_STOP;
                 else
-                    newFlags |= Vanilla::Runmode;
+                    newFlags |= Vanilla::SplineFlags::Runmode;
 
             }
             else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
             {
-                if (splineFlags & Classic::Cyclic)
+                if (splineFlags & Classic::SplineFlags::Cyclic)
                 {
                     isCyclic = true;
-                    newFlags |= TBC::Cyclic;
+                    newFlags |= TBC::SplineFlags::Cyclic;
                 }
-                if (splineFlags & Classic::Flying)
+                if (splineFlags & Classic::SplineFlags::Flying)
                 {
-                    newFlags |= TBC::Flying;
+                    newFlags |= TBC::SplineFlags::Flying;
                     isCatmullrom = true;
                 }
-                if (splineFlags & Classic::Falling)
-                    newFlags |= TBC::Falling;
+                if (splineFlags & Classic::SplineFlags::Falling)
+                    newFlags |= TBC::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -613,23 +613,23 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
             }
             else
             {
-                if (splineFlags & Classic::Cyclic)
+                if (splineFlags & Classic::SplineFlags::Cyclic)
                 {
                     isCyclic = true;
-                    newFlags |= WotLK::Cyclic;
+                    newFlags |= WotLK::SplineFlags::Cyclic;
                 }
-                if (splineFlags & Classic::Flying)
+                if (splineFlags & Classic::SplineFlags::Flying)
                 {
-                    newFlags |= WotLK::Flying;
+                    newFlags |= WotLK::SplineFlags::Flying;
                     isCatmullrom = true;
                 }
-                if (splineFlags & Classic::Catmullrom)
+                if (splineFlags & Classic::SplineFlags::Catmullrom)
                 {
-                    newFlags |= WotLK::Catmullrom;
+                    newFlags |= WotLK::SplineFlags::Catmullrom;
                     isCatmullrom = true;
                 }
-                if (splineFlags & Classic::Falling)
-                    newFlags |= WotLK::Falling;
+                if (splineFlags & Classic::SplineFlags::Falling)
+                    newFlags |= WotLK::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -743,6 +743,199 @@ uint32 GameDataMgr::ConvertHitInfoFlags(uint32 hitInfo)
         }
     }
     return hitInfo;
+}
+
+std::string GameDataMgr::ChatTypeToString(uint32 value) const
+{
+    switch (sConfig.GetSniffVersion())
+    {
+        case SNIFF_VANILLA:
+            return Vanilla::ChatTypeToString(value);
+        case SNIFF_TBC:
+            return TBC::ChatTypeToString(value);
+        case SNIFF_WOTLK:
+            return WotLK::ChatTypeToString(value);
+        case SNIFF_CLASSIC:
+            return Classic::ChatTypeToString(value);
+    }
+    return std::to_string(value);
+}
+
+std::string GameDataMgr::ChatTypeToVerbString(uint32 value) const
+{
+    switch (sConfig.GetSniffVersion())
+    {
+        case SNIFF_VANILLA:
+            return Vanilla::ChatTypeToVerbString(value);
+        case SNIFF_TBC:
+            return TBC::ChatTypeToVerbString(value);
+        case SNIFF_WOTLK:
+            return WotLK::ChatTypeToVerbString(value);
+        case SNIFF_CLASSIC:
+            return Classic::ChatTypeToVerbString(value);
+    }
+    return "says";
+}
+
+inline std::string GetHitInfoName(uint32 value)
+{
+    switch (sConfig.GetSniffVersion())
+    {
+        case SNIFF_VANILLA:
+            return Vanilla::HitInfoToString(value);
+        case SNIFF_TBC:
+            return TBC::HitInfoToString(value);
+        case SNIFF_WOTLK:
+            return WotLK::HitInfoToString(value);
+        case SNIFF_CLASSIC:
+            return Classic::HitInfoToString(value);
+    }
+    return std::to_string(value);
+}
+
+std::string GameDataMgr::HitInfoFlagsToString(uint32 value) const
+{
+    std::string flagNames;
+    for (uint32 i = 0; i < 32; i++)
+    {
+        uint32 flag = (uint32)pow(2, i);
+        if (value & flag)
+        {
+            if (!flagNames.empty())
+                flagNames += " | ";
+            flagNames += GetHitInfoName(flag);
+        }
+    }
+    return flagNames;
+}
+
+inline std::string GetMovementFlagName(uint32 value)
+{
+    switch (sConfig.GetSniffVersion())
+    {
+        case SNIFF_VANILLA:
+            return Vanilla::MovementFlagToString(value);
+        case SNIFF_TBC:
+            return TBC::MovementFlagToString(value);
+        case SNIFF_WOTLK:
+            return WotLK::MovementFlagToString(value);
+        case SNIFF_CLASSIC:
+            return Classic::MovementFlagToString(value);
+    }
+    return std::to_string(value);
+}
+
+std::string GameDataMgr::MovementFlagsToString(uint32 value) const
+{
+    std::string flagNames;
+    for (uint32 i = 0; i < 32; i++)
+    {
+        uint32 flag = (uint32)pow(2, i);
+        if (value & flag)
+        {
+            if (!flagNames.empty())
+                flagNames += " | ";
+            flagNames += GetMovementFlagName(flag);
+        }
+    }
+    return flagNames;
+}
+
+inline std::string GetSplineFlagName(uint32 value)
+{
+    switch (sConfig.GetSniffVersion())
+    {
+        case SNIFF_VANILLA:
+            return Vanilla::SplineFlagToString(value);
+        case SNIFF_TBC:
+            return TBC::SplineFlagToString(value);
+        case SNIFF_WOTLK:
+            return WotLK::SplineFlagToString(value);
+        case SNIFF_CLASSIC:
+            return Classic::SplineFlagToString(value);
+    }
+    return std::to_string(value);
+}
+
+std::string GameDataMgr::SplineFlagsToString(uint32 value) const
+{
+    std::string flagNames;
+    for (uint32 i = 0; i < 32; i++)
+    {
+        uint32 flag = (uint32)pow(2, i);
+        if (value & flag)
+        {
+            if (!flagNames.empty())
+                flagNames += " | ";
+            flagNames += GetSplineFlagName(flag);
+        }
+    }
+    return flagNames;
+}
+
+inline std::string GetNpcFlagName(uint32 value)
+{
+    switch (sConfig.GetSniffVersion())
+    {
+        case SNIFF_VANILLA:
+            return Vanilla::NpcFlagToString(value);
+        case SNIFF_TBC:
+            return TBC::NpcFlagToString(value);
+        case SNIFF_WOTLK:
+            return WotLK::NpcFlagToString(value);
+        case SNIFF_CLASSIC:
+            return Classic::NpcFlagToString(value);
+    }
+    return std::to_string(value);
+}
+
+std::string GameDataMgr::NpcFlagsToString(uint32 value) const
+{
+    std::string flagNames;
+    for (uint32 i = 0; i < 32; i++)
+    {
+        uint32 flag = (uint32)pow(2, i);
+        if (value & flag)
+        {
+            if (!flagNames.empty())
+                flagNames += " | ";
+            flagNames += GetNpcFlagName(flag);
+        }
+    }
+    return flagNames;
+}
+
+std::string GameDataMgr::FactionStandingToString(FactionEntry const* factionEntry, int32 standing, uint32 raceMask, uint32 classMask) const
+{
+    if (factionEntry)
+    {
+        standing += 42000 + GetBaseReputation(factionEntry, raceMask, classMask);
+        std::vector<std::pair<uint32, char const*>> reputationPerRank =
+        {
+            { 36000 , "Hated" },
+            { 3000 , "Hostile" },
+            { 3000 , "Unfriendly" },
+            { 3000 , "Neutral" },
+            { 6000 , "Friendly" },
+            { 12000 , "Honored" },
+            { 21000 , "Revered" },
+            { 1000 , "Exalted" },
+        };
+
+        for (auto const& itr : reputationPerRank)
+        {
+            if (standing >= itr.first)
+            {
+                standing -= itr.first;
+            }
+            else
+            {
+                return std::to_string(standing) + "/" + std::to_string(itr.first) + " " + itr.second;
+            }
+        }
+    }
+
+    return std::to_string(standing);
 }
 
 void GameDataMgr::LoadGameTele()
@@ -1318,6 +1511,42 @@ void GameDataMgr::BuildPlayerLevelInfo(uint8 race, uint8 _class, uint8 level, Pl
     }
 }
 
+void GameDataMgr::LoadBroadcastTexts()
+{
+    // For reload case
+    m_broadcastTextMap;
+    printf("[GameDataMgr] Loading broadcast texts..\n");
+
+    std::string queryString;
+    if (m_dataSource == DB_VMANGOS)
+        queryString = "SELECT `entry`, `male_text`, `female_text` FROM `broadcast_text` ORDER BY `entry`";
+    else if (m_dataSource == DB_CMANGOS_CLASSIC || m_dataSource == DB_CMANGOS_TBC || m_dataSource == DB_CMANGOS_WOTLK)
+        queryString = "SELECT `Id`, `Text`, `Text1` FROM `broadcast_text` ORDER BY `Id`";
+    else if (m_dataSource == DB_TRINITY)
+        queryString = "SELECT `ID`, `Text`, `Text1` FROM `broadcast_text` ORDER BY `ID`";
+
+    std::shared_ptr<QueryResult> result(WorldDatabase.Query(queryString.c_str()));
+    if (!result)
+    {
+        printf(">> Loaded 0 broadcast texts, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 entry = fields[0].GetUInt32();
+        BroadcastTextEntry& bct = m_broadcastTextMap[entry];
+        bct.entry = entry;
+        bct.maleText = fields[1].GetCppString();
+        bct.femaleText = fields[2].GetCppString();
+
+    } while (result->NextRow());
+
+    printf(">> Loaded %u broadcast texts.\n", (uint32)m_broadcastTextMap.size());
+}
+
 void GameDataMgr::LoadGameObjectTemplates()
 {
     // For reload case
@@ -1805,7 +2034,7 @@ void GameDataMgr::LoadFactions()
 
         if (!result)
         {
-            printf(">> Loaded 0 factions. DB table `faction` is empty.\n");
+            printf(">> Loaded 0 factions, table is empty!\n");
             return;
         }
 
@@ -1854,7 +2083,7 @@ void GameDataMgr::LoadFactions()
 
         if (!result)
         {
-            printf(">> Loaded 0 faction templates. DB table `faction_template` is empty.\n");
+            printf(">> Loaded 0 faction templates, table is empty!\n");
             return;
         }
 
@@ -1901,7 +2130,7 @@ void GameDataMgr::LoadItemPrototypes()
                               " FROM `item_template` t1 WHERE `patch`=(SELECT max(`patch`) FROM `item_template` t2 WHERE t1.`entry`=t2.`entry` && `patch` <= %u)", sConfig.GetVmangosContentPatch()));
         if (!result)
         {
-            printf(">> Loaded 0 item definitions");
+            printf(">> Loaded 0 item definitions, table is empty!\n");
             return;
         }
 
@@ -1914,10 +2143,8 @@ void GameDataMgr::LoadItemPrototypes()
             item.ItemId = entry;
             item.Class = fields[ 1].GetUInt8();
             item.SubClass = fields[ 2].GetUInt8();
-            item.Name1 = new char[strlen(fields[3].GetString()) + 1];
-            strcpy(item.Name1, fields[3].GetString());
-            item.Description = new char[strlen(fields[4].GetString()) + 1];
-            strcpy(item.Description, fields[4].GetString());
+            item.Name1 = fields[3].GetCppString();
+            item.Description = fields[4].GetCppString();
             item.DisplayInfoID = fields[ 5].GetUInt32();
             item.Quality = fields[ 6].GetUInt8();
             item.Flags = fields[ 7].GetUInt32();
@@ -2004,7 +2231,7 @@ void GameDataMgr::LoadItemPrototypes()
             " FROM `item_template`"));
         if (!result)
         {
-            printf(">> Loaded 0 item definitions");
+            printf(">> Loaded 0 item definitions, table is empty!\n");
             return;
         }
 
@@ -2017,10 +2244,8 @@ void GameDataMgr::LoadItemPrototypes()
             item.ItemId = entry;
             item.Class = fields[1].GetUInt8();
             item.SubClass = fields[2].GetUInt8();
-            item.Name1 = new char[strlen(fields[3].GetString()) + 1];
-            strcpy(item.Name1, fields[3].GetString());
-            item.Description = new char[strlen(fields[4].GetString()) + 1];
-            strcpy(item.Description, fields[4].GetString());
+            item.Name1 = fields[3].GetCppString();
+            item.Description = fields[4].GetCppString();
             item.DisplayInfoID = fields[5].GetUInt32();
             item.Quality = fields[6].GetUInt8();
             item.Flags = fields[7].GetUInt32();
@@ -2106,7 +2331,7 @@ void GameDataMgr::LoadItemPrototypes()
             " FROM `item_template`"));
         if (!result)
         {
-            printf(">> Loaded 0 item definitions");
+            printf(">> Loaded 0 item definitions, table is empty!\n");
             return;
         }
 
@@ -2119,10 +2344,8 @@ void GameDataMgr::LoadItemPrototypes()
             item.ItemId = entry;
             item.Class = fields[1].GetUInt8();
             item.SubClass = fields[2].GetUInt8();
-            item.Name1 = new char[strlen(fields[3].GetString()) + 1];
-            strcpy(item.Name1, fields[3].GetString());
-            item.Description = new char[strlen(fields[4].GetString()) + 1];
-            strcpy(item.Description, fields[4].GetString());
+            item.Name1 = fields[3].GetCppString();
+            item.Description = fields[4].GetCppString();
             item.DisplayInfoID = fields[5].GetUInt32();
             item.Quality = fields[6].GetUInt8();
             item.Flags = fields[7].GetUInt32();
@@ -2222,7 +2445,7 @@ void GameDataMgr::LoadItemPrototypes()
             " FROM `item_template`"));
         if (!result)
         {
-            printf(">> Loaded 0 item definitions");
+            printf(">> Loaded 0 item definitions, table is empty!\n");
             return;
         }
 
@@ -2235,10 +2458,8 @@ void GameDataMgr::LoadItemPrototypes()
             item.ItemId = entry;
             item.Class = fields[1].GetUInt8();
             item.SubClass = fields[2].GetUInt8();
-            item.Name1 = new char[strlen(fields[3].GetString()) + 1];
-            strcpy(item.Name1, fields[3].GetString());
-            item.Description = new char[strlen(fields[4].GetString()) + 1];
-            strcpy(item.Description, fields[4].GetString());
+            item.Name1 = fields[3].GetCppString();
+            item.Description = fields[4].GetCppString();
             item.DisplayInfoID = fields[5].GetUInt32();
             item.Quality = fields[6].GetUInt8();
             item.Flags = fields[7].GetUInt32();
@@ -2344,4 +2565,45 @@ uint32 GameDataMgr::GetItemIdWithDisplayId(uint32 displayId) const
             return itemProto.second.ItemId;
     }
     return 0;
+}
+
+void GameDataMgr::LoadSpellNames()
+{
+    std::string query;
+    switch (m_dataSource)
+    {
+        case DB_VMANGOS:
+            query = "SELECT `entry`, `name` FROM `spell_template` t1 WHERE `build`=(SELECT max(`build`) FROM `spell_template` t2 WHERE t1.`entry`=t2.`entry` && `build` <= " + std::to_string(sConfig.GetVmangosClientBuild()) + ") ORDER BY `entry`";
+            break;
+        case DB_CMANGOS_CLASSIC:
+        case DB_CMANGOS_TBC:
+        case DB_CMANGOS_WOTLK:
+            query = "SELECT `Id`, `SpellName` FROM `spell_template` ORDER BY `Id`";
+            break;
+        case DB_TRINITY:
+            query = "SELECT `Id`, `SpellName` FROM `spell_dbc` ORDER BY `Id`";
+            break;
+    }
+
+    m_spellNamesMap.clear();
+    printf("[GameDataMgr] Loading spells...\n");
+    std::shared_ptr<QueryResult> result(WorldDatabase.Query(query.c_str()));
+
+    if (!result)
+    {
+        printf(">> Loaded 0 spells, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 spellId = fields[0].GetUInt32();
+        std::string name = fields[1].GetCppString();
+
+        m_spellNamesMap[spellId] = name;
+
+    } while (result->NextRow());
+    printf(">> Loaded %u spell names.\n", (uint32)m_spellNamesMap.size());
 }

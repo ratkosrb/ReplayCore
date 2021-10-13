@@ -18,9 +18,12 @@ typedef std::unordered_map<uint32, std::unique_ptr<Quest>> QuestMap;
 typedef std::unordered_map<uint32, AreaTriggerTeleportEntry> AreaTriggerTeleportMap;
 typedef std::unordered_map<uint32, CreatureTemplate> CreatureTemplateMap;
 typedef std::unordered_map<uint32, GameObjectTemplate> GameObjectTemplateMap;
+typedef std::unordered_map<uint32, BroadcastTextEntry> BroadcastTextMap;
 typedef std::unordered_map<uint32, std::vector<uint32>> QuestRelationsMap;
 typedef std::unordered_map<uint32, float> CreatureDisplayScaleMap;
 typedef std::unordered_map<uint32, char const*> MapNamesMap;
+typedef std::unordered_map<uint32, char const*> LanguageNamesMap;
+typedef std::unordered_map<uint32, std::string> SpellNamesMap;
 
 class GameDataMgr
 {
@@ -53,6 +56,14 @@ public:
     uint8 ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags, uint32 slot);
     uint32 ConvertHitInfoFlags(uint32 hitInfo);
 
+    std::string ChatTypeToString(uint32 value) const;
+    std::string ChatTypeToVerbString(uint32 value) const;
+    std::string HitInfoFlagsToString(uint32 value) const;
+    std::string MovementFlagsToString(uint32 value) const;
+    std::string SplineFlagsToString(uint32 value) const;
+    std::string NpcFlagsToString(uint32 value) const;
+    std::string FactionStandingToString(FactionEntry const* factionEntry, int32 standing, uint32 raceMask, uint32 classMask) const;
+
     void LoadGameTele();
     GameTele const* GetGameTele(std::string name) const;
     GameTeleStore const& GetGameTeleStore() const { return m_GameTeleStore; }
@@ -68,10 +79,27 @@ public:
 
         return &iter->second;
     }
+    char const* GetAreaName(uint32 id) const
+    {
+        auto iter = m_areaTableEntryMap.find(id);
+        if (iter == m_areaTableEntryMap.end())
+            return "UNKNOWN";
+
+        return iter->second.name.c_str();
+    }
     char const* GetMapName(uint32 id) const
     {
         auto iter = m_mapNamesMap.find(id);
         if (iter == m_mapNamesMap.end())
+            return "UNKNOWN";
+
+        return iter->second;
+    }
+
+    char const* GetLanguageName(uint32 id) const
+    {
+        auto iter = m_languageNamesMap.find(id);
+        if (iter == m_languageNamesMap.end())
             return "UNKNOWN";
 
         return iter->second;
@@ -95,6 +123,21 @@ public:
     }
     void GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, PlayerLevelInfo* info) const;
 
+    // Broadcast Text
+    void LoadBroadcastTexts();
+    BroadcastTextEntry const* GetBroadcastTextEntry(uint32 id) const
+    {
+        auto itr = m_broadcastTextMap.find(id);
+        return itr != m_broadcastTextMap.end() ? &itr->second : nullptr;
+    }
+    uint32 GetMatchingBroadcastTextId(std::string const& text) const
+    {
+        for (auto const& itr : m_broadcastTextMap)
+            if (itr.second.maleText == text || itr.second.femaleText == text)
+                return itr.first;
+        return 0;
+    }
+
     // GameObjects
     void LoadGameObjectTemplates();
     GameObjectTemplate const* GetGameObjectTemplate(uint32 id) const
@@ -109,6 +152,11 @@ public:
     {
         auto itr = m_creatureTemplateMap.find(id);
         return itr != m_creatureTemplateMap.end() ? &itr->second : nullptr;
+    }
+    std::string GetCreatureName(uint32 id) const
+    {
+        auto itr = m_creatureTemplateMap.find(id);
+        return itr != m_creatureTemplateMap.end() ? itr->second.name : "UNKNOWN";
     }
     float GetCreatureDisplayScale(uint32 displayId) const
     {
@@ -126,10 +174,15 @@ public:
 
     // Quests
     void LoadQuests();
-    Quest const* GetQuestTemplate(uint32 quest_id) const
+    Quest const* GetQuestTemplate(uint32 id) const
     {
-        auto itr = m_QuestTemplatesMap.find(quest_id);
+        auto itr = m_QuestTemplatesMap.find(id);
         return itr != m_QuestTemplatesMap.end() ? itr->second.get() : nullptr;
+    }
+    std::string GetQuestName(uint32 id) const
+    {
+        auto itr = m_QuestTemplatesMap.find(id);
+        return itr != m_QuestTemplatesMap.end() ? itr->second->GetTitle() : "UNKNOWN";
     }
     QuestMap const& GetQuestTemplates() const { return m_QuestTemplatesMap; }
     void LoadQuestRelations();
@@ -172,6 +225,14 @@ public:
 
         return &iter->second;
     }
+    std::string GetItemName(uint32 id) const
+    {
+        auto iter = m_itemPrototypesMap.find(id);
+        if (iter == m_itemPrototypesMap.end())
+            return "UNKNOWN";
+
+        return iter->second.Name1;
+    }
     uint32 GetItemIdWithDisplayId(uint32 displayId) const;
     ItemPrototypeMap const& GetItemPrototypeMap() const
     {
@@ -189,6 +250,23 @@ public:
 
         return &iter->second;
     }
+    FactionEntry const* GetFactionEntryFromReputationId(uint32 id) const
+    {
+        for (auto const& itr : m_FactionsMap)
+        {
+            if (itr.second.reputationListID == id)
+                return &itr.second;
+        }
+        return nullptr;
+    }
+    std::string GetFactionName(uint32 id) const
+    {
+        auto iter = m_FactionsMap.find(id);
+        if (iter == m_FactionsMap.end())
+            return "UNKNOWN";
+
+        return iter->second.name[0];
+    }
     FactionsMap const& GetFactionMap() const
     {
         return m_FactionsMap;
@@ -201,12 +279,53 @@ public:
 
         return &iter->second;
     }
+    int32 GetBaseReputation(FactionEntry const* factionEntry, uint32 raceMask, uint32 classMask) const
+    {
+        if (!factionEntry)
+            return 0;
+
+        int idx = factionEntry->GetIndexFitTo(raceMask, classMask);
+
+        return idx >= 0 ? factionEntry->BaseRepValue[idx] : 0;
+    }
+    std::string GetReputationName(uint32 id) const
+    {
+        for (auto const& itr : m_FactionTemplatesMap)
+        {
+            if (FactionEntry const* pFaction = GetFactionEntry(itr.second.faction))
+            {
+                if (pFaction->reputationListID == id)
+                    return pFaction->name[0];
+            }
+        }
+        return "UNKNOWN";
+    }
+    std::string GetFactionTemplateName(uint32 id) const
+    {
+        auto iter = m_FactionTemplatesMap.find(id);
+        if (iter == m_FactionTemplatesMap.end())
+            return "UNKNOWN";
+
+        return GetFactionName(iter->second.faction);
+    }
     FactionTemplatesMap const& GetFactionTemplateMap() const
     {
         return m_FactionTemplatesMap;
     }
+    
+    // Spells
+    void LoadSpellNames();
+    std::string GetSpellName(uint32 id) const
+    {
+        auto iter = m_spellNamesMap.find(id);
+        if (iter == m_spellNamesMap.end())
+            return "UNKNOWN";
+
+        return iter->second;
+    }
 private:
     GameDataSource m_dataSource = DB_VMANGOS;
+    SpellNamesMap m_spellNamesMap;
     FactionsMap m_FactionsMap;
     FactionTemplatesMap m_FactionTemplatesMap;
     ItemPrototypeMap m_itemPrototypesMap;
@@ -220,12 +339,14 @@ private:
     AreaTriggerTeleportMap m_areaTriggerTeleportMap;
     CreatureTemplateMap m_creatureTemplateMap;
     GameObjectTemplateMap m_gameObjectTemplateMap;
+    BroadcastTextMap m_broadcastTextMap;
     QuestRelationsMap m_creatureQuestStarters;
     QuestRelationsMap m_creatureQuestEnders;
     QuestRelationsMap m_gameobjectQuestStarters;
     QuestRelationsMap m_gameobjectQuestEnders;
     static CreatureDisplayScaleMap const m_creatureDisplayScalesMap;
     static MapNamesMap const m_mapNamesMap;
+    static LanguageNamesMap const m_languageNamesMap;
 };
 
 #define sGameDataMgr GameDataMgr::Instance()

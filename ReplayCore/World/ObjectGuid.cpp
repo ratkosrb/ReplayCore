@@ -22,6 +22,7 @@
 #include "ObjectGuid.h"
 #include "GameDataMgr.h"
 #include "WorldServer.h"
+#include "ReplayMgr.h"
 #include <sstream>
 
 char const* ObjectGuid::GetTypeName(HighGuid high)
@@ -33,7 +34,7 @@ char const* ObjectGuid::GetTypeName(HighGuid high)
         case HIGHGUID_PLAYER:
             return "Player";
         case HIGHGUID_GAMEOBJECT:
-            return "Gameobject";
+            return "GameObject";
         case HIGHGUID_TRANSPORT:
             return "Transport";
         case HIGHGUID_UNIT:
@@ -83,19 +84,24 @@ std::string ObjectGuid::GetName() const
                 return pTemplate->name;
             break;
         }
+        case TYPEID_PLAYER:
+        {
+            return sWorld.GetPlayerName(*this);
+        }
         case TYPEID_GAMEOBJECT:
         {
             if (GameObjectTemplate const* pTemplate = sGameDataMgr.GetGameObjectTemplate(GetEntry()))
                 return pTemplate->name;
             break;
         }
-        case TYPEID_PLAYER:
+        case TYPEID_DYNAMICOBJECT:
         {
-            return sWorld.GetPlayerName(*this);
+            if (DynamicObjectData const* pData = sReplayMgr.GetDynamicObjectSpawnData(GetCounter()))
+                return sGameDataMgr.GetSpellName(pData->spellId);
         }
         default:
         {
-            printf("Error: Unsupported object type in ObjectGuid::GetName!\n");
+            printf("Error: Unsupported object type %u in ObjectGuid::GetName!\n", GetTypeId());
             break;
         }
     }

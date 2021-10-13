@@ -6397,3 +6397,24 @@ CreatureDisplayScaleMap const GameDataMgr::m_creatureDisplayScalesMap =
     { 17251, 0.75f },
     { 17445, 5.0f },
 };
+
+LanguageNamesMap const GameDataMgr::m_languageNamesMap =
+{
+    { 1, "Orcish" },
+    { 2, "Darnassian" },
+    { 3, "Taurahe" },
+    { 6, "Dwarvish" },
+    { 7, "Common" },
+    { 8, "Demonic" },
+    { 9, "Titan" },
+    { 10, "Thalassian" },
+    { 11, "Draconic" },
+    { 12, "Kalimag" },
+    { 13, "Gnomish" },
+    { 14, "Troll" },
+    { 33, "Gutterspeak" },
+    { 35, "Draenei" },
+    { 36, "Zombie" },
+    { 37, "Gnomish Binary" },
+    { 38, "Goblin Binary" },
+};

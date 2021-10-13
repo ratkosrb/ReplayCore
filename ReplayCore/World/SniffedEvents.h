@@ -28,7 +28,8 @@ enum SniffedEventType : uint8
     SE_WEATHER_UPDATE,
     SE_WORLD_TEXT,
     SE_WORLD_STATE_UPDATE,
-    SE_WORLDOBJECT_CREATE,
+    SE_WORLDOBJECT_CREATE1,
+    SE_WORLDOBJECT_CREATE2,
     SE_WORLDOBJECT_DESTROY,
     SE_UNIT_ATTACK_LOG,
     SE_UNIT_ATTACK_START,
@@ -36,7 +37,6 @@ enum SniffedEventType : uint8
     SE_UNIT_EMOTE,
     SE_UNIT_CLIENTSIDE_MOVEMENT,
     SE_UNIT_SERVERSIDE_MOVEMENT,
-    SE_UNIT_UPDATE_ORIENTATION,
     SE_UNIT_UPDATE_ENTRY,
     SE_UNIT_UPDATE_SCALE,
     SE_UNIT_UPDATE_DISPLAY_ID,
@@ -72,7 +72,6 @@ enum SniffedEventType : uint8
     SE_CREATURE_EQUIPMENT_UPDATE,
     SE_PLAYER_CHAT,
     SE_PLAYER_EQUIPMENT_UPDATE,
-    SE_DYNAMICOBJECT_CREATE,
     SE_GAMEOBJECT_CUSTOM_ANIM,
     SE_GAMEOBJECT_DESPAWN_ANIM,
     SE_GAMEOBJECT_UPDATE_FLAGS,
@@ -103,6 +102,7 @@ enum SniffedEventType : uint8
     SE_LOGOUT,
     SE_CINEMATIC_BEGIN,
     SE_CINEMATIC_END,
+    MAX_EVENT_TYPE,
 };
 
 inline char const* GetSniffedEventName(SniffedEventType eventType)
@@ -115,8 +115,10 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "World Text";
         case SE_WORLD_STATE_UPDATE:
             return "World State Update";
-        case SE_WORLDOBJECT_CREATE:
-            return "WorldObject Create";
+        case SE_WORLDOBJECT_CREATE1:
+            return "WorldObject Create 1";
+        case SE_WORLDOBJECT_CREATE2:
+            return "WorldObject Create 2";
         case SE_WORLDOBJECT_DESTROY:
             return "WorldObject Destroy";
         case SE_UNIT_ATTACK_LOG:
@@ -131,8 +133,6 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Unit Client Movement";
         case SE_UNIT_SERVERSIDE_MOVEMENT:
             return "Unit Server-side Movement";
-        case SE_UNIT_UPDATE_ORIENTATION:
-            return "Unit Update Orientation";
         case SE_UNIT_UPDATE_ENTRY:
             return "Unit Update Entry";
         case SE_UNIT_UPDATE_SCALE:
@@ -203,8 +203,6 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Player Chat";
         case SE_PLAYER_EQUIPMENT_UPDATE:
             return "Player Equipment Update";
-        case SE_DYNAMICOBJECT_CREATE:
-            return "DynamicObject Create";
         case SE_GAMEOBJECT_CUSTOM_ANIM:
             return "GameObject Custom Anim";
         case SE_GAMEOBJECT_DESPAWN_ANIM:
@@ -269,11 +267,176 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
     return "Unknown Event";
 }
 
+// Used by the GUI. Thats the order images are inserted into the image list in FormSniffBrowser::Form1_Load
+inline uint32 GetSniffedEventIcon(uint32 eventType)
+{
+    switch (eventType)
+    {
+        case SE_WEATHER_UPDATE:
+            return 1;
+        case SE_WORLD_TEXT:
+            return 2;
+        case SE_WORLD_STATE_UPDATE:
+            return 3;
+        case SE_WORLDOBJECT_CREATE1:
+            return 4;
+        case SE_WORLDOBJECT_CREATE2:
+            return 5;
+        case SE_WORLDOBJECT_DESTROY:
+            return 6;
+        case SE_UNIT_ATTACK_LOG:
+            return 7;
+        case SE_UNIT_ATTACK_START:
+            return 8;
+        case SE_UNIT_ATTACK_STOP:
+            return 9;
+        case SE_UNIT_EMOTE:
+            return 10;
+        case SE_UNIT_CLIENTSIDE_MOVEMENT:
+            return 11;
+        case SE_UNIT_SERVERSIDE_MOVEMENT:
+            return 12;
+        case SE_UNIT_UPDATE_ENTRY:
+            return 13;
+        case SE_UNIT_UPDATE_SCALE:
+            return 14;
+        case SE_UNIT_UPDATE_DISPLAY_ID:
+            return 15;
+        case SE_UNIT_UPDATE_MOUNT:
+            return 16;
+        case SE_UNIT_UPDATE_FACTION:
+            return 17;
+        case SE_UNIT_UPDATE_LEVEL:
+            return 18;
+        case SE_UNIT_UPDATE_AURA_STATE:
+            return 19;
+        case SE_UNIT_UPDATE_EMOTE_STATE:
+            return 20;
+        case SE_UNIT_UPDATE_STAND_STATE:
+            return 21;
+        case SE_UNIT_UPDATE_VIS_FLAGS:
+            return 22;
+        case SE_UNIT_UPDATE_SHEATH_STATE:
+            return 23;
+        case SE_UNIT_UPDATE_SHAPESHIFT_FORM:
+            return 24;
+        case SE_UNIT_UPDATE_NPC_FLAGS:
+            return 25;
+        case SE_UNIT_UPDATE_UNIT_FLAGS:
+            return 26;
+        case SE_UNIT_UPDATE_UNIT_FLAGS2:
+            return 26;
+        case SE_UNIT_UPDATE_DYNAMIC_FLAGS:
+            return 27;
+        case SE_UNIT_UPDATE_CURRENT_HEALTH:
+            return 28;
+        case SE_UNIT_UPDATE_MAX_HEALTH:
+            return 28;
+        case SE_UNIT_UPDATE_CURRENT_MANA:
+            return 29;
+        case SE_UNIT_UPDATE_MAX_MANA:
+            return 29;
+        case SE_UNIT_UPDATE_BOUNDING_RADIUS:
+            return 30;
+        case SE_UNIT_UPDATE_COMBAT_REACH:
+            return 31;
+        case SE_UNIT_UPDATE_MAIN_HAND_ATTACK_TIME:
+            return 32;
+        case SE_UNIT_UPDATE_OFF_HAND_ATTACK_TIME:
+            return 33;
+        case SE_UNIT_UPDATE_CHANNEL_SPELL:
+            return 34;
+        case SE_UNIT_UPDATE_GUID_VALUE:
+            return 35;
+        case SE_UNIT_UPDATE_SPEED:
+            return 36;
+        case SE_UNIT_UPDATE_AURAS:
+            return 37;
+        case SE_CREATURE_TEXT:
+            return 38;
+        case SE_CREATURE_THREAT_CLEAR:
+            return 39;
+        case SE_CREATURE_THREAT_REMOVE:
+            return 39;
+        case SE_CREATURE_THREAT_UPDATE:
+            return 40;
+        case SE_CREATURE_EQUIPMENT_UPDATE:
+            return 41;
+        case SE_PLAYER_CHAT:
+            return 42;
+        case SE_PLAYER_EQUIPMENT_UPDATE:
+            return 43;
+        case SE_GAMEOBJECT_CUSTOM_ANIM:
+            return 44;
+        case SE_GAMEOBJECT_DESPAWN_ANIM:
+            return 45;
+        case SE_GAMEOBJECT_UPDATE_FLAGS:
+            return 46;
+        case SE_GAMEOBJECT_UPDATE_STATE:
+            return 47;
+        case SE_GAMEOBJECT_UPDATE_ARTKIT:
+            return 48;
+        case SE_GAMEOBJECT_UPDATE_DYNAMIC_FLAGS:
+            return 49;
+        case SE_GAMEOBJECT_UPDATE_PATH_PROGRESS:
+            return 50;
+        case SE_PLAY_MUSIC:
+            return 51;
+        case SE_PLAY_SOUND:
+            return 52;
+        case SE_PLAY_SPELL_VISUAL_KIT:
+            return 53;
+        case SE_SPELL_CAST_FAILED:
+            return 54;
+        case SE_SPELL_CAST_START:
+            return 55;
+        case SE_SPELL_CAST_GO:
+            return 56;
+        case SE_SPELL_CHANNEL_START:
+            return 34;
+        case SE_SPELL_CHANNEL_UPDATE:
+            return 34;
+        case SE_CLIENT_QUEST_ACCEPT:
+            return 57;
+        case SE_CLIENT_QUEST_COMPLETE:
+            return 58;
+        case SE_CLIENT_CREATURE_INTERACT:
+            return 59;
+        case SE_CLIENT_GAMEOBJECT_USE:
+            return 60;
+        case SE_CLIENT_ITEM_USE:
+            return 61;
+        case SE_CLIENT_RECLAIM_CORPSE:
+            return 62;
+        case SE_CLIENT_RELEASE_SPIRIT:
+            return 63;
+        case SE_QUEST_UPDATE_COMPLETE:
+            return 64;
+        case SE_QUEST_UPDATE_FAILED:
+            return 65;
+        case SE_XP_GAIN_LOG:
+            return 66;
+        case SE_FACTION_STANDING_UPDATE:
+            return 67;
+        case SE_LOGIN:
+            return 68;
+        case SE_LOGOUT:
+            return 69;
+        case SE_CINEMATIC_BEGIN:
+            return 70;
+        case SE_CINEMATIC_END:
+            return 71;
+    }
+    return 0;
+}
+
 struct SniffedEvent
 {
     bool m_disabled = false;
     virtual void Execute() const = 0;
     virtual void PepareForCurrentClient() { };
+    virtual std::string GetShortDescription() const = 0;
+    virtual std::string GetLongDescription() const = 0;
     virtual SniffedEventType GetType() const = 0;
     virtual ObjectGuid GetSourceGuid() const { return ObjectGuid(); };
     virtual ObjectGuid GetTargetGuid() const { return ObjectGuid(); };
@@ -301,6 +464,8 @@ struct SniffedEvent_WeatherUpdate : SniffedEventCRTP<SniffedEvent_WeatherUpdate>
     bool m_instant = false;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_WEATHER_UPDATE;
@@ -316,6 +481,8 @@ struct SniffedEvent_WorldText : SniffedEventCRTP<SniffedEvent_WorldText>
     uint32 m_language = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_WORLD_TEXT;
@@ -329,6 +496,8 @@ struct SniffedEvent_WorldStateUpdate : SniffedEventCRTP<SniffedEvent_WorldStateU
     uint32 m_variable = 0;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_WORLD_STATE_UPDATE;
@@ -346,9 +515,11 @@ struct SniffedEvent_WorldObjectCreate_Base : SniffedEventCRTP<Derived>
     ObjectGuid m_transportGuid;
     Position m_transportPosition;
     void Execute() const override;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
-        return SE_WORLDOBJECT_CREATE;
+        return m_isSpawn ? SE_WORLDOBJECT_CREATE2 : SE_WORLDOBJECT_CREATE1;
     }
     ObjectGuid GetSourceGuid() const final
     {
@@ -391,6 +562,8 @@ struct SniffedEvent_WorldObjectDestroy : SniffedEventCRTP<SniffedEvent_WorldObje
         m_objectGuid(objectGuid) {};
     ObjectGuid m_objectGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_WORLDOBJECT_DESTROY;
@@ -408,6 +581,8 @@ struct SniffedEvent_UnitAttackStart : SniffedEventCRTP<SniffedEvent_UnitAttackSt
     ObjectGuid m_attackerGuid;
     ObjectGuid m_victimGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_ATTACK_START;
@@ -429,6 +604,8 @@ struct SniffedEvent_UnitAttackStop : SniffedEventCRTP<SniffedEvent_UnitAttackSto
     ObjectGuid m_attackerGuid;
     ObjectGuid m_victimGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_ATTACK_STOP;
@@ -462,6 +639,8 @@ struct SniffedEvent_UnitAttackLog : SniffedEventCRTP<SniffedEvent_UnitAttackLog>
     uint32 m_spellId = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_ATTACK_LOG;
@@ -478,12 +657,15 @@ struct SniffedEvent_UnitAttackLog : SniffedEventCRTP<SniffedEvent_UnitAttackLog>
 
 struct SniffedEvent_UnitEmote : SniffedEventCRTP<SniffedEvent_UnitEmote>
 {
-    SniffedEvent_UnitEmote(ObjectGuid objectGuid, uint32 emoteId) :
-        m_objectGuid(objectGuid), m_emoteId(emoteId) {};
+    SniffedEvent_UnitEmote(ObjectGuid objectGuid, uint32 emoteId, std::string emoteName) :
+        m_objectGuid(objectGuid), m_emoteId(emoteId), m_emoteName(emoteName) {};
     ObjectGuid m_objectGuid;
     uint32 m_emoteId = 0;
+    std::string m_emoteName;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_EMOTE;
@@ -513,6 +695,8 @@ struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSid
     JumpInfo m_jumpInfo;
     float m_splineElevation = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_CLIENTSIDE_MOVEMENT;
@@ -540,6 +724,8 @@ struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSid
     bool m_catmullrom = false;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_SERVERSIDE_MOVEMENT;
@@ -558,6 +744,8 @@ struct SniffedEvent_UnitUpdate_entry : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_ENTRY;
@@ -575,6 +763,8 @@ struct SniffedEvent_UnitUpdate_scale : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     ObjectGuid m_objectGuid;
     float m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_SCALE;
@@ -593,6 +783,8 @@ struct SniffedEvent_UnitUpdate_display_id : SniffedEventCRTP<SniffedEvent_UnitUp
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_DISPLAY_ID;
@@ -611,6 +803,8 @@ struct SniffedEvent_UnitUpdate_mount : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_MOUNT;
@@ -629,6 +823,8 @@ struct SniffedEvent_UnitUpdate_faction : SniffedEventCRTP<SniffedEvent_UnitUpdat
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_FACTION;
@@ -647,6 +843,8 @@ struct SniffedEvent_UnitUpdate_level : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_LEVEL;
@@ -664,6 +862,8 @@ struct SniffedEvent_UnitUpdate_aura_state : SniffedEventCRTP<SniffedEvent_UnitUp
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_AURA_STATE;
@@ -682,6 +882,8 @@ struct SniffedEvent_UnitUpdate_emote_state : SniffedEventCRTP<SniffedEvent_UnitU
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_EMOTE_STATE;
@@ -700,6 +902,8 @@ struct SniffedEvent_UnitUpdate_stand_state : SniffedEventCRTP<SniffedEvent_UnitU
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_STAND_STATE;
@@ -717,6 +921,8 @@ struct SniffedEvent_UnitUpdate_vis_flags : SniffedEventCRTP<SniffedEvent_UnitUpd
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_VIS_FLAGS;
@@ -735,6 +941,8 @@ struct SniffedEvent_UnitUpdate_sheath_state : SniffedEventCRTP<SniffedEvent_Unit
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_SHEATH_STATE;
@@ -753,6 +961,8 @@ struct SniffedEvent_UnitUpdate_shapeshift_form : SniffedEventCRTP<SniffedEvent_U
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_SHAPESHIFT_FORM;
@@ -771,6 +981,8 @@ struct SniffedEvent_UnitUpdate_npc_flags : SniffedEventCRTP<SniffedEvent_UnitUpd
     uint32 m_value = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_NPC_FLAGS;
@@ -788,6 +1000,8 @@ struct SniffedEvent_UnitUpdate_unit_flags : SniffedEventCRTP<SniffedEvent_UnitUp
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_UNIT_FLAGS;
@@ -805,6 +1019,8 @@ struct SniffedEvent_UnitUpdate_unit_flags2 : SniffedEventCRTP<SniffedEvent_UnitU
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_UNIT_FLAGS2;
@@ -822,6 +1038,8 @@ struct SniffedEvent_UnitUpdate_dynamic_flags : SniffedEventCRTP<SniffedEvent_Uni
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_DYNAMIC_FLAGS;
@@ -839,6 +1057,8 @@ struct SniffedEvent_UnitUpdate_current_health : SniffedEventCRTP<SniffedEvent_Un
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_CURRENT_HEALTH;
@@ -856,6 +1076,8 @@ struct SniffedEvent_UnitUpdate_max_health : SniffedEventCRTP<SniffedEvent_UnitUp
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_MAX_HEALTH;
@@ -873,6 +1095,8 @@ struct SniffedEvent_UnitUpdate_current_mana : SniffedEventCRTP<SniffedEvent_Unit
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_CURRENT_MANA;
@@ -890,6 +1114,8 @@ struct SniffedEvent_UnitUpdate_max_mana : SniffedEventCRTP<SniffedEvent_UnitUpda
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_MAX_MANA;
@@ -907,6 +1133,8 @@ struct SniffedEvent_UnitUpdate_bounding_radius : SniffedEventCRTP<SniffedEvent_U
     ObjectGuid m_objectGuid;
     float m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_BOUNDING_RADIUS;
@@ -924,6 +1152,8 @@ struct SniffedEvent_UnitUpdate_combat_reach : SniffedEventCRTP<SniffedEvent_Unit
     ObjectGuid m_objectGuid;
     float m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_COMBAT_REACH;
@@ -941,6 +1171,8 @@ struct SniffedEvent_UnitUpdate_main_hand_attack_time : SniffedEventCRTP<SniffedE
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_MAIN_HAND_ATTACK_TIME;
@@ -958,6 +1190,8 @@ struct SniffedEvent_UnitUpdate_off_hand_attack_time : SniffedEventCRTP<SniffedEv
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_OFF_HAND_ATTACK_TIME;
@@ -975,6 +1209,8 @@ struct SniffedEvent_UnitUpdate_channel_spell : SniffedEventCRTP<SniffedEvent_Uni
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     void PepareForCurrentClient() final;
     SniffedEventType GetType() const final
     {
@@ -994,6 +1230,8 @@ struct SniffedEvent_UnitUpdate_guid_value : SniffedEventCRTP<SniffedEvent_UnitUp
     ObjectGuid m_targetGuid;
     char const* m_updateField;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_GUID_VALUE;
@@ -1017,6 +1255,8 @@ struct SniffedEvent_UnitUpdate_speed : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     float m_speedRate = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_SPEED;
@@ -1036,6 +1276,8 @@ struct SniffedEvent_UnitUpdate_auras : SniffedEventCRTP<SniffedEvent_UnitUpdate_
     Aura m_aura;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_AURAS;
@@ -1059,6 +1301,8 @@ struct SniffedEvent_CreatureText : SniffedEventCRTP<SniffedEvent_CreatureText>
     std::string m_targetName;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CREATURE_TEXT;
@@ -1075,6 +1319,8 @@ struct SniffedEvent_CreatureThreatClear : SniffedEventCRTP<SniffedEvent_Creature
         m_creatureGuid(creatureGuid) {};
     ObjectGuid m_creatureGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CREATURE_THREAT_CLEAR;
@@ -1092,6 +1338,8 @@ struct SniffedEvent_CreatureThreatRemove : SniffedEventCRTP<SniffedEvent_Creatur
     ObjectGuid m_creatureGuid;
     ObjectGuid m_targetGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CREATURE_THREAT_REMOVE;
@@ -1113,6 +1361,8 @@ struct SniffedEvent_CreatureThreatUpdate : SniffedEventCRTP<SniffedEvent_Creatur
     ObjectGuid m_creatureGuid;
     std::vector<std::pair<ObjectGuid, uint32>> m_threatList;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CREATURE_THREAT_UPDATE;
@@ -1131,6 +1381,8 @@ struct SniffedEvent_CreatureEquipmentUpdate : SniffedEventCRTP<SniffedEvent_Crea
     uint32 m_slot = 0;
     uint32 m_itemId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CREATURE_EQUIPMENT_UPDATE;
@@ -1152,6 +1404,8 @@ struct SniffedEvent_PlayerChat : SniffedEventCRTP<SniffedEvent_PlayerChat>
     std::string m_channelName;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_PLAYER_CHAT;
@@ -1170,6 +1424,8 @@ struct SniffedEvent_PlayerEquipmentUpdate : SniffedEventCRTP<SniffedEvent_Player
     uint32 m_slot = 0;
     uint32 m_itemId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_PLAYER_EQUIPMENT_UPDATE;
@@ -1187,6 +1443,8 @@ struct SniffedEvent_GameObjectCustomAnim : SniffedEventCRTP<SniffedEvent_GameObj
     ObjectGuid m_objectGuid;
     uint32 m_animId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_CUSTOM_ANIM;
@@ -1203,6 +1461,8 @@ struct SniffedEvent_GameObjectDespawnAnim : SniffedEventCRTP<SniffedEvent_GameOb
         m_objectGuid(objectGuid) {};
     ObjectGuid m_objectGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_DESPAWN_ANIM;
@@ -1220,6 +1480,8 @@ struct SniffedEvent_GameObjectUpdate_flags : SniffedEventCRTP<SniffedEvent_GameO
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_UPDATE_FLAGS;
@@ -1237,6 +1499,8 @@ struct SniffedEvent_GameObjectUpdate_state : SniffedEventCRTP<SniffedEvent_GameO
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_UPDATE_STATE;
@@ -1254,6 +1518,8 @@ struct SniffedEvent_GameObjectUpdate_artkit : SniffedEventCRTP<SniffedEvent_Game
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_UPDATE_ARTKIT;
@@ -1271,6 +1537,8 @@ struct SniffedEvent_GameObjectUpdate_dynamic_flags : SniffedEventCRTP<SniffedEve
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_UPDATE_DYNAMIC_FLAGS;
@@ -1288,6 +1556,8 @@ struct SniffedEvent_GameObjectUpdate_path_progress : SniffedEventCRTP<SniffedEve
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_UPDATE_PATH_PROGRESS;
@@ -1304,6 +1574,8 @@ struct SniffedEvent_PlayMusic : SniffedEventCRTP<SniffedEvent_PlayMusic>
         m_musicId(musicId) {};
     uint32 m_musicId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_PLAY_MUSIC;
@@ -1317,6 +1589,8 @@ struct SniffedEvent_PlaySound : SniffedEventCRTP<SniffedEvent_PlaySound>
     ObjectGuid m_sourceGuid;
     uint32 m_soundId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_PLAY_SOUND;
@@ -1334,6 +1608,8 @@ struct SniffedEvent_PlaySpellVisualKit : SniffedEventCRTP<SniffedEvent_PlaySpell
     ObjectGuid m_casterGuid;
     uint32 m_kitId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_PLAY_SPELL_VISUAL_KIT;
@@ -1353,6 +1629,8 @@ struct SniffedEvent_SpellCastFailed : SniffedEventCRTP<SniffedEvent_SpellCastFai
     uint32 m_reason = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_SPELL_CAST_FAILED;
@@ -1377,6 +1655,8 @@ struct SniffedEvent_SpellCastStart : SniffedEventCRTP<SniffedEvent_SpellCastStar
     uint32 m_ammoInventoryType = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_SPELL_CAST_START;
@@ -1408,6 +1688,8 @@ struct SniffedEvent_SpellCastGo : SniffedEventCRTP<SniffedEvent_SpellCastGo>
     Vector3 m_destinationPosition;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_SPELL_CAST_GO;
@@ -1431,6 +1713,8 @@ struct SniffedEvent_SpellChannelStart : SniffedEventCRTP<SniffedEvent_SpellChann
     int32 m_duration = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_SPELL_CHANNEL_START;
@@ -1448,6 +1732,8 @@ struct SniffedEvent_SpellChannelUpdate : SniffedEventCRTP<SniffedEvent_SpellChan
     ObjectGuid m_casterGuid;
     int32 m_duration = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_SPELL_CHANNEL_UPDATE;
@@ -1465,9 +1751,15 @@ struct SniffedEvent_Client_QuestAccept : SniffedEventCRTP<SniffedEvent_Client_Qu
     uint32 m_questId = 0;
     ObjectGuid m_questStarterGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CLIENT_QUEST_ACCEPT;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_questStarterGuid;
     }
 };
 
@@ -1478,9 +1770,15 @@ struct SniffedEvent_Client_QuestComplete : SniffedEventCRTP<SniffedEvent_Client_
     uint32 m_questId = 0;
     ObjectGuid m_questEnderGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CLIENT_QUEST_COMPLETE;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_questEnderGuid;
     }
 };
 
@@ -1490,9 +1788,15 @@ struct SniffedEvent_Client_CreatureInteract : SniffedEventCRTP<SniffedEvent_Clie
         m_creatureGuid(creatureGuid) {};
     ObjectGuid m_creatureGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CLIENT_CREATURE_INTERACT;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_creatureGuid;
     }
 };
 
@@ -1502,9 +1806,15 @@ struct SniffedEvent_Client_GameObjectUse : SniffedEventCRTP<SniffedEvent_Client_
         m_objectGuid(objectGuid) {};
     ObjectGuid m_objectGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CLIENT_GAMEOBJECT_USE;
+    }
+    ObjectGuid GetTargetGuid() const final
+    {
+        return m_objectGuid;
     }
 };
 
@@ -1514,6 +1824,8 @@ struct SniffedEvent_Client_ItemUse : SniffedEventCRTP<SniffedEvent_Client_ItemUs
         m_itemId(itemId) {};
     uint32 m_itemId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CLIENT_ITEM_USE;
@@ -1524,6 +1836,8 @@ struct SniffedEvent_Client_ReclaimCorpse : SniffedEventCRTP<SniffedEvent_Client_
 {
     SniffedEvent_Client_ReclaimCorpse() {};
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CLIENT_RECLAIM_CORPSE;
@@ -1534,6 +1848,8 @@ struct SniffedEvent_Client_ReleaseSpirit : SniffedEventCRTP<SniffedEvent_Client_
 {
     SniffedEvent_Client_ReleaseSpirit() {};
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CLIENT_RELEASE_SPIRIT;
@@ -1545,6 +1861,8 @@ struct SniffedEvent_QuestUpdateComplete : SniffedEventCRTP<SniffedEvent_QuestUpd
     SniffedEvent_QuestUpdateComplete(uint32 questId) : m_questId(questId) {};
     uint32 m_questId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_QUEST_UPDATE_COMPLETE;
@@ -1556,6 +1874,8 @@ struct SniffedEvent_QuestUpdateFailed : SniffedEventCRTP<SniffedEvent_QuestUpdat
     SniffedEvent_QuestUpdateFailed(uint32 questId) : m_questId(questId) {};
     uint32 m_questId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_QUEST_UPDATE_FAILED;
@@ -1572,6 +1892,8 @@ struct SniffedEvent_XPGainLog : SniffedEventCRTP<SniffedEvent_XPGainLog>
     float m_groupBonus = 0.0f;
     bool m_rafBonus = false;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_XP_GAIN_LOG;
@@ -1584,13 +1906,15 @@ struct SniffedEvent_XPGainLog : SniffedEventCRTP<SniffedEvent_XPGainLog>
 
 struct SniffedEvent_FactionStandingUpdate : SniffedEventCRTP<SniffedEvent_FactionStandingUpdate>
 {
-    SniffedEvent_FactionStandingUpdate(uint32 reputationListId, uint32 standing, float rafBonus, bool showVisual) :
+    SniffedEvent_FactionStandingUpdate(uint32 reputationListId, int32 standing, float rafBonus, bool showVisual) :
         m_reputationListId(reputationListId), m_standing(standing), m_rafBonus(rafBonus), m_showVisual(showVisual) {};
     uint32 m_reputationListId = 0;
-    uint32 m_standing = 0;
+    int32 m_standing = 0;
     float m_rafBonus = 0.0f;
     bool m_showVisual = false;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_FACTION_STANDING_UPDATE;
@@ -1603,6 +1927,8 @@ struct SniffedEvent_Login : SniffedEventCRTP<SniffedEvent_Login>
         m_playerGuid(playerGuid) {};
     ObjectGuid m_playerGuid;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_LOGIN;
@@ -1617,6 +1943,8 @@ struct SniffedEvent_Logout : SniffedEventCRTP<SniffedEvent_Logout>
 {
     SniffedEvent_Logout() = default;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_LOGOUT;
@@ -1630,6 +1958,8 @@ struct SniffedEvent_CinematicBegin : SniffedEventCRTP<SniffedEvent_CinematicBegi
         m_cinematicId(cinematicId) {};
     uint32 m_cinematicId = 0;
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CINEMATIC_BEGIN;
@@ -1640,6 +1970,8 @@ struct SniffedEvent_CinematicEnd : SniffedEventCRTP<SniffedEvent_CinematicEnd>
 {
     SniffedEvent_CinematicEnd() {};
     void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
         return SE_CINEMATIC_END;

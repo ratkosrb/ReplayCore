@@ -544,7 +544,7 @@ bool CommandHandler::SetSpeedCommandsHelper(UnitMoveType moveType)
 
     pPlayer->SetSpeedRate(moveType, speedRate);
     sWorld.SendSplineSetSpeed(pPlayer->GetObjectGuid(), moveType, speedRate * baseMoveSpeed[moveType]);
-    PSendSysMessage("%s speed set to %g times normal.", GetUnitMovementTypeName(moveType), speedRate);
+    PSendSysMessage("%s speed set to %g times normal.", UnitMoveTypeToString(moveType), speedRate);
     return true;
 }
 

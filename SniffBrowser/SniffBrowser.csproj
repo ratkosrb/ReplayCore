@@ -1,0 +1,323 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A2AA04DE-D9FD-4557-B8E5-A5C384EC8FCD}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SniffBrowser</RootNamespace>
+    <AssemblyName>SniffBrowser</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ByteBuffer.cs" />
+    <Compile Include="FormConnectionDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormConnectionDialog.Designer.cs">
+      <DependentUpon>FormConnectionDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormSniffBrowser.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormSniffBrowser.Designer.cs">
+      <DependentUpon>FormSniffBrowser.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ObjectGuid.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utility.cs" />
+    <Compile Include="Vector2.cs" />
+    <Compile Include="Vector3.cs" />
+    <Compile Include="Vector4.cs" />
+    <EmbeddedResource Include="FormConnectionDialog.resx">
+      <DependentUpon>FormConnectionDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormSniffBrowser.resx">
+      <DependentUpon>FormSniffBrowser.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Image1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cinematic_begin.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cinematic_end.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\client_creature_interact.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\client_gameobject_use.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\client_item_use.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\client_quest_accept.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\client_quest_complete.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\client_reclaim_corpse.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\client_release_spirit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\creature_equipment_update.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\creature_text.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\dynamicobject_create.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\faction_standing_update.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\gameobject_custom_anim.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\gameobject_despawn_anim.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\gameobject_update_artkit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\gameobject_update_dynamic_flags.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\gameobject_update_flags.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\gameobject_update_path_progress.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\gameobject_update_state.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\login.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\logout.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\play_music.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\play_sound.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\play_spell_visual_kit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\player_chat.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\player_equipment_update.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\quest_update_complete.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\quest_update_failed.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\spell_cast_failed.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\spell_cast_go.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\spell_cast_start.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_attack_log.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_attack_start.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_attack_stop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_clientside_movement.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_emote.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_serverside_movement.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_threat_clear.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_threat_update.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_auras.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_aurastate.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_bounding_radius.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_channel_spell.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_combat_reach.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_displayid.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_dynamic_flags.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_emotestate.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_entry.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_faction.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_guid_value.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_health.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_level.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_main_hand_attack_time.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_mana.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_mount.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_npc_flags.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_off_hand_attack_time.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_scale.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_shapeshift_form.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_sheath_state.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_speed.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_stand_state.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_unit_flags.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\unit_update_vis_flags.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\weather_update.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\world_object_create1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\world_object_create2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\world_object_destroy.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\world_state_update.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\world_text.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\xp_gain.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\placeholder.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

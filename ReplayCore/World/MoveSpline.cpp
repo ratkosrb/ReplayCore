@@ -54,7 +54,7 @@ void MoveSpline::WriteMove(WorldPacket& data) const
 
     data << uint32(m_flags);
 
-    if ((sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2) && (m_flags & WotLK::Animation))
+    if ((sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2) && (m_flags & WotLK::SplineFlags::Animation))
     {
         data << uint8(0);  // Animation State
         data << uint32(0); // Async-time in ms
@@ -62,7 +62,7 @@ void MoveSpline::WriteMove(WorldPacket& data) const
 
     data << uint32(m_moveTimeMs);
 
-    if ((sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2) && (m_flags & WotLK::Parabolic))
+    if ((sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2) && (m_flags & WotLK::SplineFlags::Parabolic))
     {
         data << float(1.0f); // Vertical Speed
         data << uint32(0);   // Async-time in ms
@@ -126,11 +126,11 @@ void MoveSpline::WriteCreate(ByteBuffer& data) const
     if (m_type == SPLINE_TYPE_FACING_ANGLE)
     {
         if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            splineFlags |= Vanilla::Final_Angle;
+            splineFlags |= Vanilla::SplineFlags::Final_Angle;
         else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            splineFlags |= TBC::Final_Angle;
+            splineFlags |= TBC::SplineFlags::Final_Angle;
         else
-            splineFlags |= WotLK::Final_Angle;
+            splineFlags |= WotLK::SplineFlags::Final_Angle;
     }
     data << uint32(splineFlags);
     if (m_type == SPLINE_TYPE_FACING_ANGLE)

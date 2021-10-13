@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "Database\Database.h"
+#include "GUI\GUIServer.h"
 #include "Auth\AuthServer.h"
 #include "World\WorldServer.h"
 #include "World\ReplayMgr.h"
@@ -128,6 +129,7 @@ int main()
 
     sGameDataMgr.LoadQuests();
     sGameDataMgr.LoadQuestRelations();
+    sGameDataMgr.LoadSpellNames();
     sGameDataMgr.LoadFactions();
     sGameDataMgr.LoadItemPrototypes();
     sGameDataMgr.LoadPlayerInfo();
@@ -135,6 +137,7 @@ int main()
     sGameDataMgr.LoadAreaTriggerTeleports();
     sGameDataMgr.LoadCreatureTemplates();
     sGameDataMgr.LoadGameObjectTemplates();
+    sGameDataMgr.LoadBroadcastTexts();
     sReplayMgr.LoadEverything();
 
     Opcodes::SetupOpcodeNamesMaps();
@@ -149,6 +152,7 @@ int main()
         return 1;
     }
 
+    sGUI.StartNetwork();
     sAuth.StartNetwork();
     sWorld.StartNetwork();
 
@@ -170,6 +174,8 @@ int main()
         }
     }
 
+    if (sGUI.m_networkThread.joinable())
+        sGUI.m_networkThread.join();
     if (sAuth.m_networkThread.joinable())
         sAuth.m_networkThread.join();
     if (sWorld.m_networkThread.joinable())
