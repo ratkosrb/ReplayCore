@@ -130,6 +130,8 @@
     <ClInclude Include="World\PlayerDefines.h" />
     <ClInclude Include="World\QuestTemplate.h" />
     <ClInclude Include="World\ReplayMgr.h" />
+    <ClInclude Include="World\ScriptCommands.h" />
+    <ClInclude Include="World\ScriptMaker.h" />
     <ClInclude Include="World\SniffedEvents.h" />
     <ClInclude Include="World\SpellCastTargets.h" />
     <ClInclude Include="World\SpellDefines.h" />
@@ -173,6 +175,7 @@
     <ClCompile Include="World\Player.cpp" />
     <ClCompile Include="World\QuestTemplate.cpp" />
     <ClCompile Include="World\ReplayMgr.cpp" />
+    <ClCompile Include="World\ScriptMaker.cpp" />
     <ClCompile Include="World\SniffedEvents.cpp" />
     <ClCompile Include="World\SpellCastTargets.cpp" />
     <ClCompile Include="World\Unit.cpp" />

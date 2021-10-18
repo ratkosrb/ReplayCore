@@ -38,6 +38,7 @@ private:
     void SendEventDataList(std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
     void HandleSetTime(ByteBuffer& buffer);
     void HandleGoToGuid(ByteBuffer& buffer);
+    void HandleMakeScript(ByteBuffer& buffer);
 };
 
 #define sGUI GUIServer::Instance()

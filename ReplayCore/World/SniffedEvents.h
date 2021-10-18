@@ -430,9 +430,13 @@ inline uint32 GetSniffedEventIcon(uint32 eventType)
     return 0;
 }
 
+extern uint32 g_sniffedEventCounter;
+
 struct SniffedEvent
 {
-    bool m_disabled = false;
+    SniffedEvent() : m_uniqueIdentifier(++g_sniffedEventCounter)
+    {
+    }
     virtual void Execute() const = 0;
     virtual void PepareForCurrentClient() { };
     virtual std::string GetShortDescription() const = 0;
@@ -441,6 +445,8 @@ struct SniffedEvent
     virtual ObjectGuid GetSourceGuid() const { return ObjectGuid(); };
     virtual ObjectGuid GetTargetGuid() const { return ObjectGuid(); };
     virtual std::shared_ptr<SniffedEvent> clone() const = 0;
+    uint32 const m_uniqueIdentifier = 0;
+    bool m_disabled = false;
 };
 
 template <class Derived>

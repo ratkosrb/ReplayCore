@@ -104,6 +104,9 @@
     <ClCompile Include="GUI\GUIFilters.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="World\ScriptMaker.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -291,6 +294,12 @@
     </ClInclude>
     <ClInclude Include="GUI\GUIFilters.h">
       <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ScriptMaker.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ScriptCommands.h">
+      <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -9,6 +9,7 @@ enum GUIOpcodes
     SMSG_EVENT_DATA_END = 4,
     CMSG_SET_TIME = 5,
     CMSG_GOTO_GUID = 6,
+    CMSG_MAKE_SCRIPT = 7,
 };
 
 #endif

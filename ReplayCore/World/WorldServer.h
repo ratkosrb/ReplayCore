@@ -219,6 +219,10 @@ public:
         m_weather[mapId][zoneId] = weatherData;
     }
     void SendWeatherForCurrentZone();
+    void SetPendingChatCommand(std::string command)
+    {
+        m_sessionData.pendingChatCommand = command;
+    }
 
     bool IsEnabled() const { return m_enabled; }
     void StartNetwork();

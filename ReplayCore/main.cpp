@@ -129,6 +129,7 @@ int main()
 
     sGameDataMgr.LoadQuests();
     sGameDataMgr.LoadQuestRelations();
+    sGameDataMgr.LoadSoundNames();
     sGameDataMgr.LoadSpellNames();
     sGameDataMgr.LoadFactions();
     sGameDataMgr.LoadItemPrototypes();

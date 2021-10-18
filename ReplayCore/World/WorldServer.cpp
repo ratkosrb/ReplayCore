@@ -55,17 +55,21 @@ void WorldServer::WorldLoop()
         if (!m_sessionData.isConnected || !m_sessionData.isInWorld || m_sessionData.isTeleportPending || !m_clientPlayer)
             continue;
 
-        uint64 ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        uint32 diff = uint32(m_lastUpdateTimeMs ? ms - m_lastUpdateTimeMs : 0);
-        m_msTimeSinceServerStart += diff;
-        m_lastUpdateTimeMs = ms;
-
         if (!m_sessionData.pendingChatCommand.empty())
         {
             CommandHandler handler(m_sessionData.pendingChatCommand, false);
             handler.HandleCommand();
             m_sessionData.pendingChatCommand.clear();
+
+            // Need to check again, because command could have teleported player.
+            if (!m_sessionData.isConnected || !m_sessionData.isInWorld || m_sessionData.isTeleportPending || !m_clientPlayer)
+                continue;
         }
+
+        uint64 ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        uint32 diff = uint32(m_lastUpdateTimeMs ? ms - m_lastUpdateTimeMs : 0);
+        m_msTimeSinceServerStart += diff;
+        m_lastUpdateTimeMs = ms;
 
         BuildAndSendObjectUpdates<std::map<ObjectGuid, GameObject>>(m_gameObjects);
         BuildAndSendObjectUpdates<std::map<ObjectGuid, Player>>(m_players);

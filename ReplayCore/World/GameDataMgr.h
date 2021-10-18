@@ -24,6 +24,7 @@ typedef std::unordered_map<uint32, float> CreatureDisplayScaleMap;
 typedef std::unordered_map<uint32, char const*> MapNamesMap;
 typedef std::unordered_map<uint32, char const*> LanguageNamesMap;
 typedef std::unordered_map<uint32, std::string> SpellNamesMap;
+typedef std::unordered_map<uint32, std::string> SoundNamesMap;
 
 class GameDataMgr
 {
@@ -53,6 +54,7 @@ public:
     uint32 ConvertClassicChatType(uint32 chatType) const;
     void ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, bool& isCyclic, bool& isCatmullrom, float finalOrientation, bool hasDestination);
     uint32 ConvertNpcFlags(uint32 npcFlags);
+    uint32 ConvertNpcFlagsForBuild(uint32 npcFlags, uint32 build);
     uint8 ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags, uint32 slot);
     uint32 ConvertHitInfoFlags(uint32 hitInfo);
 
@@ -144,6 +146,11 @@ public:
     {
         auto itr = m_gameObjectTemplateMap.find(id);
         return itr != m_gameObjectTemplateMap.end() ? &itr->second : nullptr;
+    }
+    std::string GetGameObjectName(uint32 id) const
+    {
+        auto itr = m_gameObjectTemplateMap.find(id);
+        return itr != m_gameObjectTemplateMap.end() ? itr->second.name : "UNKNOWN";
     }
 
     // Creatures
@@ -312,6 +319,17 @@ public:
     {
         return m_FactionTemplatesMap;
     }
+
+    // Sounds
+    void LoadSoundNames();
+    std::string GetSoundName(uint32 id) const
+    {
+        auto iter = m_spellNamesMap.find(id);
+        if (iter == m_spellNamesMap.end())
+            return "UNKNOWN";
+
+        return iter->second;
+    }
     
     // Spells
     void LoadSpellNames();
@@ -325,6 +343,7 @@ public:
     }
 private:
     GameDataSource m_dataSource = DB_VMANGOS;
+    SoundNamesMap m_soundNamesMap;
     SpellNamesMap m_spellNamesMap;
     FactionsMap m_FactionsMap;
     FactionTemplatesMap m_FactionTemplatesMap;

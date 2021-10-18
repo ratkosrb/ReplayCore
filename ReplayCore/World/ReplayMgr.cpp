@@ -1272,6 +1272,20 @@ void ReplayMgr::GetEventsListForTargets(uint32 startTime, uint32 endTime, std::v
     }
 }
 
+void ReplayMgr::GetEventsListFromIdentifiers(std::set<uint32> eventIdentifiers, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>>& eventsList)
+{
+    for (const auto& itr : m_eventsMapBackup)
+    {
+        if (eventIdentifiers.find(itr.second->m_uniqueIdentifier) != eventIdentifiers.end())
+        {
+            eventsList.emplace_back(std::make_pair(itr.first, itr.second));
+
+            if (eventIdentifiers.size() == eventsList.size())
+                return;
+        }
+    }
+}
+
 void ReplayMgr::GetWaypointsForCreature(uint32 guid, std::vector<WaypointData>& waypoints, bool useStartPosition)
 {
     std::map<uint32 /*point*/, std::vector<Position>> splinesMap;

@@ -7,6 +7,7 @@
 #include "../World/SniffedEvents.h"
 #include "../World/ReplayMgr.h"
 #include "../World/WorldServer.h"
+#include "../World/ScriptMaker.h"
 
 #pragma comment(lib,"WS2_32")
 
@@ -110,6 +111,7 @@ void GUIServer::SetupOpcodeHandlers()
     m_opcodeHandlers[CMSG_REQUEST_EVENT_DATA] = &GUIServer::HandleRequestEventData;
     m_opcodeHandlers[CMSG_SET_TIME] = &GUIServer::HandleSetTime;
     m_opcodeHandlers[CMSG_GOTO_GUID] = &GUIServer::HandleGoToGuid;
+    m_opcodeHandlers[CMSG_MAKE_SCRIPT] = &GUIServer::HandleMakeScript;
 }
 
 void GUIServer::HandlePacket(ByteBuffer& buffer)
@@ -197,6 +199,7 @@ void GUIServer::SendEventDataList(std::vector<std::pair<uint64, std::shared_ptr<
             std::string longDescription = itr.second->GetLongDescription();
 
             uint32 neededSpace =
+                sizeof(uint32) + // unique identifier
                 sizeof(uint32) + // event type
                 sizeof(uint64) + // unit time ms
                 sizeof(uint64) + // source guid
@@ -207,6 +210,7 @@ void GUIServer::SendEventDataList(std::vector<std::pair<uint64, std::shared_ptr<
             if (packetSize + neededSpace >= MAX_PACKET_SIZE)
                 break;
 
+            buffer << uint32(itr.second->m_uniqueIdentifier);
             buffer << uint32(itr.second->GetType());
             buffer << uint64(itr.first);
             buffer << uint64(itr.second->GetSourceGuid().GetRawValue());
@@ -235,7 +239,8 @@ void GUIServer::HandleSetTime(ByteBuffer& buffer)
 {
     uint32 unixTime;
     buffer >> unixTime;
-    sReplayMgr.ChangeTime(unixTime);
+    std::string command = "settime " + std::to_string(unixTime);
+    sWorld.SetPendingChatCommand(command);
 }
 
 void GUIServer::HandleGoToGuid(ByteBuffer& buffer)
@@ -249,4 +254,38 @@ void GUIServer::HandleGoToGuid(ByteBuffer& buffer)
         sWorld.TeleportClient(pData->GetLocation());
     else
         printf("[GUI] Cannot teleport to unknown guid %s.\n", guid.GetString().c_str());
+}
+
+void GUIServer::HandleMakeScript(ByteBuffer& buffer)
+{
+    uint32 mainScriptId;
+    buffer >> mainScriptId;
+    std::string tableName;
+    buffer >> tableName;
+    ObjectGuid sourceGuid;
+    buffer >> sourceGuid;
+    ObjectGuid targetGuid;
+    buffer >> targetGuid;
+    uint32 eventsCount;
+    buffer >> eventsCount;
+
+    std::set<uint32> eventIdentifiers;
+    for (uint32 i = 0; i < eventsCount; i++)
+    {
+        uint32 uniqueIdentifier;
+        buffer >> uniqueIdentifier;
+        eventIdentifiers.insert(uniqueIdentifier);
+    }
+
+    std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> eventsList;
+    sReplayMgr.GetEventsListFromIdentifiers(eventIdentifiers, eventsList);
+
+    if (eventsList.empty())
+    {
+        printf("[GUI] Cannot make script from empty event list.\n");
+        return;
+    }
+
+    ScriptMaker scriptMaker;
+    scriptMaker.MakeScript(mainScriptId, tableName, sourceGuid, targetGuid, eventsList);
 }

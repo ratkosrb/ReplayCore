@@ -1047,6 +1047,20 @@ enum UnitFlags : uint32
     UNIT_FLAG_IMMUNE                = 0x80000000,           // Immune to damage
 };
 
+// If the flag should be changed in script commands.
+inline bool IsScriptRelevantUnitFlag(uint32 flag)
+{
+    switch (flag)
+    {
+        case UNIT_FLAG_IMMUNE_TO_PC:
+        case UNIT_FLAG_IMMUNE_TO_NPC:
+        case UNIT_FLAG_PVP:
+        case UNIT_FLAG_NOT_SELECTABLE:
+            return true;
+    }
+    return false;
+}
+
 inline std::string UnitFlagToString(uint32 value)
 {
     switch (value)

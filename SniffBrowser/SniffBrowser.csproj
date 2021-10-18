@@ -51,6 +51,12 @@
     <Compile Include="FormConnectionDialog.Designer.cs">
       <DependentUpon>FormConnectionDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormListSelector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormListSelector.Designer.cs">
+      <DependentUpon>FormListSelector.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormSniffBrowser.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -66,6 +72,9 @@
     <Compile Include="Vector4.cs" />
     <EmbeddedResource Include="FormConnectionDialog.resx">
       <DependentUpon>FormConnectionDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormListSelector.resx">
+      <DependentUpon>FormListSelector.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormSniffBrowser.resx">
       <DependentUpon>FormSniffBrowser.cs</DependentUpon>

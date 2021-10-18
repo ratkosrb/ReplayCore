@@ -11,6 +11,8 @@
 #include "../Defines/ClientVersions.h"
 #include <map>
 
+uint32 g_sniffedEventCounter = 0;
+
 void ReplayMgr::LoadSniffedEvents()
 {
     printf("[ReplayMgr] Loading sniffed events...\n");
@@ -3114,14 +3116,14 @@ void SniffedEvent_PlaySound::Execute() const
 std::string SniffedEvent_PlaySound::GetShortDescription() const
 {
     if (m_sourceGuid.IsEmpty())
-        return "Sound Id " + std::to_string(m_soundId) + " plays.";
+        return "Sound " + sGameDataMgr.GetSoundName(m_soundId) + " (" + std::to_string(m_soundId) + ") plays.";
 
-    return m_sourceGuid.GetString(true) + " plays sound Id " + std::to_string(m_soundId) + ".";
+    return m_sourceGuid.GetString(true) + " plays sound " + sGameDataMgr.GetSoundName(m_soundId) + " (" + std::to_string(m_soundId) + ").";
 }
 
 std::string SniffedEvent_PlaySound::GetLongDescription() const
 {
-    return "Sound Id: " + std::to_string(m_soundId);
+    return "Sound: " + sGameDataMgr.GetSoundName(m_soundId) + " (" + std::to_string(m_soundId) + ")";
 }
 
 void ReplayMgr::LoadPlaySpellVisualKit()

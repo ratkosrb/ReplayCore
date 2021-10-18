@@ -644,12 +644,17 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
 
 uint32 GameDataMgr::ConvertNpcFlags(uint32 npcFlags)
 {
+    return ConvertNpcFlagsForBuild(npcFlags, sWorld.GetClientBuild());
+}
+
+uint32 GameDataMgr::ConvertNpcFlagsForBuild(uint32 npcFlags, uint32 build)
+{
     // tbc, wotlk and classic have same flags
     switch (sConfig.GetSniffVersion())
     {
         case SNIFF_VANILLA:
         {
-            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            if (build < CLIENT_BUILD_2_0_1)
                 return npcFlags;
             else
                 return ConvertVanillaNpcFlagsToWotLK(npcFlags);
@@ -659,7 +664,7 @@ uint32 GameDataMgr::ConvertNpcFlags(uint32 npcFlags)
         case SNIFF_WOTLK:
         case SNIFF_CLASSIC:
         {
-            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            if (build < CLIENT_BUILD_2_0_1)
                 return ConvertClassicNpcFlagsToVanilla(npcFlags);
             else
                 return npcFlags;
@@ -2565,6 +2570,34 @@ uint32 GameDataMgr::GetItemIdWithDisplayId(uint32 displayId) const
             return itemProto.second.ItemId;
     }
     return 0;
+}
+
+void GameDataMgr::LoadSoundNames()
+{
+    if (m_dataSource != DB_VMANGOS)
+        return;
+
+    m_soundNamesMap.clear();
+    printf("[GameDataMgr] Loading sounds...\n");
+    std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `id`, `name` FROM `sound_entries` ORDER BY `id`"));
+
+    if (!result)
+    {
+        printf(">> Loaded 0 sounds, table is empty!\n");
+        return;
+    }
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 soundId = fields[0].GetUInt32();
+        std::string name = fields[1].GetCppString();
+
+        m_soundNamesMap[soundId] = name;
+
+    } while (result->NextRow());
+    printf(">> Loaded %u sound names.\n", (uint32)m_soundNamesMap.size());
 }
 
 void GameDataMgr::LoadSpellNames()

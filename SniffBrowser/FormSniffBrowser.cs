@@ -34,6 +34,7 @@ namespace SniffBrowser
             SMSG_EVENT_DATA_END = 4,
             CMSG_SET_TIME = 5,
             CMSG_GOTO_GUID = 6,
+            CMSG_MAKE_SCRIPT = 7,
         }
 
         private Socket clientSocket;
@@ -77,6 +78,7 @@ namespace SniffBrowser
 
         class SniffedEvent
         {
+            public uint uniqueIdentifier;
             public uint eventType;
             public ulong eventTime;
             public ObjectGuid sourceGuid;
@@ -90,6 +92,8 @@ namespace SniffBrowser
             
         }
 
+        
+
         private void Form1_Load(object sender, EventArgs e)
         {
             ShowScrollBar(lstEvents.Handle, (int)ScrollBarDirection.SB_VERT, true);
@@ -97,6 +101,8 @@ namespace SniffBrowser
             cmbEventTypes.SelectedIndex = 0;
             cmbObjectType.DataSource = GetValues<ObjectTypeFilter>();
             cmbObjectType.SelectedIndex = 0;
+            cmbTimeType.SelectedIndex = 0;
+            cmbTimeDisplay.SelectedIndex = 0;
             if (lstObjectFilters.Items.Count > 0)
             {
                 lstObjectFilters.Items[0].Selected = true;
@@ -429,9 +435,12 @@ namespace SniffBrowser
                 case GUIOpcode.SMSG_EVENT_DATA_LIST:
                 {
                     uint eventsCount = packet.ReadUInt32();
+                    ulong firstEventTime = 0;
+                    ulong previousEventTime = 0;
                     for (uint i = 0; i < eventsCount; i++)
                     {
                         SniffedEvent eventData = new SniffedEvent();
+                        eventData.uniqueIdentifier = packet.ReadUInt32();
                         eventData.eventType = packet.ReadUInt32();
                         eventData.eventTime = packet.ReadUInt64();
                         eventData.sourceGuid = new ObjectGuid(packet.ReadUInt64());
@@ -439,13 +448,21 @@ namespace SniffBrowser
                         string shortDescription = packet.ReadCString();
                         eventData.longDescription = packet.ReadCString();
 
+                        if (i == 0)
+                        {
+                            firstEventTime = eventData.eventTime;
+                            previousEventTime = eventData.eventTime;
+                        }
+
                         ListViewItem newItem = new ListViewItem();
                         newItem.Text = "";
-                        newItem.SubItems.Add(String.Format("{0:n0}", eventData.eventTime));
+                        newItem.SubItems.Add(FormatTimeString(eventData.eventTime, firstEventTime, previousEventTime));
                         newItem.SubItems.Add(shortDescription);
                         newItem.ImageIndex = SniffedEventImagesDict[eventData.eventType];
                         newItem.Tag = eventData;
                         lstEvents.Items.Add(newItem);
+
+                        previousEventTime = eventData.eventTime;
                     }
                     
                     break;
@@ -481,6 +498,56 @@ namespace SniffBrowser
             {
                 MessageBox.Show(ex.Message, "Packet Write Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private string FormatTimeString(ulong unixTimeMs, ulong firstEventTime, ulong previousEventTime)
+        {
+            ulong displayTime = 0;
+            switch (cmbTimeType.SelectedIndex)
+            {
+                case 0: // Exact Time
+                {
+                    displayTime = unixTimeMs;
+                    break;
+                }
+                case 1: // Time Since First Event
+                {
+                    displayTime = unixTimeMs - firstEventTime;
+                    break;
+                }
+                case 2: // Time Since Previous Event
+                {
+                    displayTime = unixTimeMs - previousEventTime;
+                    break;
+                }
+            }
+
+            string timeString = "";
+            switch (cmbTimeDisplay.SelectedIndex)
+            {
+                case 0: // Milliseconds
+                {
+                    timeString = String.Format("{0:n0}", displayTime);
+                    break;
+                }
+                case 1: // Seconds
+                {
+                    displayTime = displayTime / 1000;
+                    timeString = String.Format("{0:n0}", displayTime);
+                    break;
+                }
+                case 2: // Formatted
+                {
+                    TimeSpan t = TimeSpan.FromMilliseconds(displayTime);
+                    timeString = string.Format("{0:D2}h:{1:D2}m:{2:D2}s:{3:D3}ms",
+                                    t.Hours,
+                                    t.Minutes,
+                                    t.Seconds,
+                                    t.Milliseconds);
+                    break;
+                }
+            }
+            return timeString;
         }
 
         private void UpdateEventTypesList()
@@ -748,7 +815,7 @@ namespace SniffBrowser
             txtEventDescription.Text += "-- Event Specific Data --" + Environment.NewLine + sniffedEvent.longDescription;
         }
 
-        private void btnJumpToEventTime_Click(object sender, EventArgs e)
+        private void btnReplayJumpToEventTime_Click(object sender, EventArgs e)
         {
             if (lstEvents.SelectedItems.Count == 0)
             {
@@ -766,7 +833,7 @@ namespace SniffBrowser
             SendPacket(packet);
         }
 
-        private void btnJumpToEventSource_Click(object sender, EventArgs e)
+        private void btnReplayJumpToEventSource_Click(object sender, EventArgs e)
         {
             if (lstEvents.SelectedItems.Count == 0)
             {
@@ -787,6 +854,172 @@ namespace SniffBrowser
             packet.WriteUInt32((uint)GUIOpcode.CMSG_GOTO_GUID);
             packet.WriteUInt64(sniffedEvent.sourceGuid.RawGuid);
             SendPacket(packet);
+        }
+
+        private void btnMakeScript_Click(object sender, EventArgs e)
+        {
+            if (lstEvents.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("No event selected.");
+                return;
+            }
+
+            string mainScriptIdStr = "1";
+            if (Utility.ShowInputDialog(ref mainScriptIdStr, "Main Script Id") != DialogResult.OK)
+                return;
+            uint mainScriptId = UInt32.Parse(mainScriptIdStr);
+
+            string tableName = "generic_scripts";
+            if (Utility.ShowInputDialog(ref tableName, "Table Name") != DialogResult.OK)
+                return;
+
+            List<object> guidList = new List<object>();
+            guidList.Add(ObjectGuid.Empty);
+            foreach (ListViewItem lvi in lstEvents.SelectedItems)
+            {
+                SniffedEvent sniffedEvent = (SniffedEvent)lvi.Tag;
+                if (!sniffedEvent.sourceGuid.IsEmpty() && 
+                    !guidList.Contains(sniffedEvent.sourceGuid))
+                {
+                    guidList.Add(sniffedEvent.sourceGuid);
+                }
+                if (!sniffedEvent.targetGuid.IsEmpty() &&
+                    !guidList.Contains(sniffedEvent.targetGuid))
+                {
+                    guidList.Add(sniffedEvent.targetGuid);
+                }
+            }
+
+            FormListSelector frmListSelector1 = new FormListSelector(guidList, "Make Script", "Select source object:");
+            if (frmListSelector1.ShowDialog() != DialogResult.OK)
+                return;
+
+            ObjectGuid sourceGuid = (ObjectGuid)guidList[frmListSelector1.ReturnValue];
+
+            FormListSelector frmListSelector2 = new FormListSelector(guidList, "Make Script", "Select target object:");
+            if (frmListSelector2.ShowDialog() != DialogResult.OK)
+                return;
+
+            ObjectGuid targetGuid = (ObjectGuid)guidList[frmListSelector1.ReturnValue];
+
+            ByteBuffer packet = new ByteBuffer();
+            packet.WriteUInt32((uint)GUIOpcode.CMSG_MAKE_SCRIPT);
+            packet.WriteUInt32(mainScriptId);
+            packet.WriteCString(tableName);
+            packet.WriteUInt64(sourceGuid.RawGuid);
+            packet.WriteUInt64(targetGuid.RawGuid);
+            packet.WriteUInt32((uint)lstEvents.SelectedItems.Count);
+            foreach (ListViewItem lvi in lstEvents.SelectedItems)
+            {
+                SniffedEvent sniffedEvent = (SniffedEvent)lvi.Tag;
+                packet.WriteUInt32(sniffedEvent.uniqueIdentifier);
+            }
+            SendPacket(packet);
+        }
+
+        private void lstEvents_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                foreach (ListViewItem item in lstEvents.Items)
+                {
+                    if (item.Bounds.Contains(new Point(e.X, e.Y)))
+                    {
+                        ContextMenu eventListContextMenu = new ContextMenu();
+                        eventListContextMenu.MenuItems.Add("Copy Event Time",
+                            delegate (object sender2, EventArgs e2)
+                            {
+                                CopyEventTime(sender, e, (SniffedEvent)item.Tag);
+                            });
+                        eventListContextMenu.MenuItems.Add("Copy Event Source",
+                            delegate (object sender2, EventArgs e2)
+                            {
+                                CopyEventSource(sender, e, (SniffedEvent)item.Tag);
+                            });
+                        eventListContextMenu.MenuItems.Add("Copy Event Target",
+                            delegate (object sender2, EventArgs e2)
+                            {
+                                CopyEventTarget(sender, e, (SniffedEvent)item.Tag);
+                            });
+                        eventListContextMenu.Show(lstEvents, new Point(e.X, e.Y));
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void SetObjectFilterFieldsFromGuid(ObjectGuid guid)
+        {
+            int index = (int)GetObjectTypeFilterValueFromString(guid.GetObjectType().ToString());
+            cmbObjectType.SelectedIndex = index;
+            txtObjectGuid.Text = guid.GetCounter().ToString();
+            txtObjectId.Text = guid.GetEntry().ToString();
+        }
+
+        private void CopyEventTime(object sender, MouseEventArgs e, SniffedEvent sniffedEvent)
+        {
+            string unixTime = (sniffedEvent.eventTime / 1000).ToString();
+            txtStartTime.Text = unixTime;
+            txtEndTime.Text = unixTime;
+        }
+
+        private void CopyEventSource(object sender, MouseEventArgs e, SniffedEvent sniffedEvent)
+        {
+            if (sniffedEvent.sourceGuid.IsEmpty())
+            {
+                MessageBox.Show("Event has no source!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            SetObjectFilterFieldsFromGuid(sniffedEvent.sourceGuid);
+        }
+
+        private void CopyEventTarget(object sender, MouseEventArgs e, SniffedEvent sniffedEvent)
+        {
+            if (sniffedEvent.targetGuid.IsEmpty())
+            {
+                MessageBox.Show("Event has no target!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            SetObjectFilterFieldsFromGuid(sniffedEvent.targetGuid);
+        }
+
+        private void lstEvents_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyData == (Keys.A | Keys.Control))
+                foreach (ListViewItem item in lstEvents.Items)
+                    item.Selected = true;
+        }
+
+        private void UpdateTimeDisplayForAllEvents()
+        {
+            ulong firstEventTime = 0;
+            ulong previousEventTime = 0;
+            for (int i = 0; i < lstEvents.Items.Count; i++)
+            {
+                ListViewItem lvi = lstEvents.Items[i];
+                SniffedEvent sniffedEvent = (SniffedEvent)lvi.Tag;
+
+                if (i == 0)
+                {
+                    firstEventTime = sniffedEvent.eventTime;
+                    previousEventTime = sniffedEvent.eventTime;
+                }
+
+                lvi.SubItems[1].Text = FormatTimeString(sniffedEvent.eventTime, firstEventTime, previousEventTime);
+                previousEventTime = sniffedEvent.eventTime;
+            }
+        }
+
+        private void cmbTimeType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateTimeDisplayForAllEvents();
+        }
+
+        private void cmbTimeDisplay_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateTimeDisplayForAllEvents();
         }
     }
 }

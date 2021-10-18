@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SniffBrowser
 {
-    class ObjectGuid
+    public class ObjectGuid : IEquatable<ObjectGuid>
     {
         public enum HighGuid
         {

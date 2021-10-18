@@ -58,14 +58,26 @@
             this.lstEventFilters = new System.Windows.Forms.ListView();
             this.txtEventDescription = new System.Windows.Forms.TextBox();
             this.btnRefresh = new System.Windows.Forms.Button();
-            this.btnJumpToEventTime = new System.Windows.Forms.Button();
-            this.btnJumpToEventSource = new System.Windows.Forms.Button();
+            this.btnReplayJumpToEventTime = new System.Windows.Forms.Button();
+            this.btnReplayJumpToEventSource = new System.Windows.Forms.Button();
             this.btnMakeScript = new System.Windows.Forms.Button();
             this.btnMakeWaypoints = new System.Windows.Forms.Button();
             this.txtStartTimeDate = new System.Windows.Forms.TextBox();
             this.txtEndTimeDate = new System.Windows.Forms.TextBox();
+            this.grpReplayControl = new System.Windows.Forms.GroupBox();
+            this.btnJumpToEventTarget = new System.Windows.Forms.Button();
+            this.btnReplayResetTime = new System.Windows.Forms.Button();
+            this.btnReplayPause = new System.Windows.Forms.Button();
+            this.btnReplayPlay = new System.Windows.Forms.Button();
+            this.grpOptions = new System.Windows.Forms.GroupBox();
+            this.cmbTimeDisplay = new System.Windows.Forms.ComboBox();
+            this.lblTimeDisplay = new System.Windows.Forms.Label();
+            this.cmbTimeType = new System.Windows.Forms.ComboBox();
+            this.lblTimeType = new System.Windows.Forms.Label();
             this.grpObjectFilters.SuspendLayout();
             this.grpEventFilters.SuspendLayout();
+            this.grpReplayControl.SuspendLayout();
+            this.grpOptions.SuspendLayout();
             this.SuspendLayout();
             // 
             // lstEvents
@@ -76,6 +88,7 @@
             this.clmDescription});
             this.lstEvents.FullRowSelect = true;
             this.lstEvents.GridLines = true;
+            this.lstEvents.HideSelection = false;
             this.lstEvents.Location = new System.Drawing.Point(12, 12);
             this.lstEvents.Name = "lstEvents";
             this.lstEvents.Size = new System.Drawing.Size(823, 350);
@@ -83,6 +96,8 @@
             this.lstEvents.UseCompatibleStateImageBehavior = false;
             this.lstEvents.View = System.Windows.Forms.View.Details;
             this.lstEvents.SelectedIndexChanged += new System.EventHandler(this.lstEvents_SelectedIndexChanged);
+            this.lstEvents.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstEvents_KeyDown);
+            this.lstEvents.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lstEvents_MouseClick);
             // 
             // clmEventType
             // 
@@ -345,7 +360,7 @@
             this.txtEventDescription.Name = "txtEventDescription";
             this.txtEventDescription.ReadOnly = true;
             this.txtEventDescription.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtEventDescription.Size = new System.Drawing.Size(823, 285);
+            this.txtEventDescription.Size = new System.Drawing.Size(530, 285);
             this.txtEventDescription.TabIndex = 7;
             // 
             // btnRefresh
@@ -358,38 +373,39 @@
             this.btnRefresh.UseVisualStyleBackColor = true;
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             // 
-            // btnJumpToEventTime
+            // btnReplayJumpToEventTime
             // 
-            this.btnJumpToEventTime.Location = new System.Drawing.Point(12, 663);
-            this.btnJumpToEventTime.Name = "btnJumpToEventTime";
-            this.btnJumpToEventTime.Size = new System.Drawing.Size(131, 23);
-            this.btnJumpToEventTime.TabIndex = 9;
-            this.btnJumpToEventTime.Text = "Jump to Event Time";
-            this.btnJumpToEventTime.UseVisualStyleBackColor = true;
-            this.btnJumpToEventTime.Click += new System.EventHandler(this.btnJumpToEventTime_Click);
+            this.btnReplayJumpToEventTime.Location = new System.Drawing.Point(148, 48);
+            this.btnReplayJumpToEventTime.Name = "btnReplayJumpToEventTime";
+            this.btnReplayJumpToEventTime.Size = new System.Drawing.Size(131, 23);
+            this.btnReplayJumpToEventTime.TabIndex = 9;
+            this.btnReplayJumpToEventTime.Text = "Jump to Event Time";
+            this.btnReplayJumpToEventTime.UseVisualStyleBackColor = true;
+            this.btnReplayJumpToEventTime.Click += new System.EventHandler(this.btnReplayJumpToEventTime_Click);
             // 
-            // btnJumpToEventSource
+            // btnReplayJumpToEventSource
             // 
-            this.btnJumpToEventSource.Location = new System.Drawing.Point(149, 663);
-            this.btnJumpToEventSource.Name = "btnJumpToEventSource";
-            this.btnJumpToEventSource.Size = new System.Drawing.Size(131, 23);
-            this.btnJumpToEventSource.TabIndex = 10;
-            this.btnJumpToEventSource.Text = "Jump to Event Source";
-            this.btnJumpToEventSource.UseVisualStyleBackColor = true;
-            this.btnJumpToEventSource.Click += new System.EventHandler(this.btnJumpToEventSource_Click);
+            this.btnReplayJumpToEventSource.Location = new System.Drawing.Point(8, 77);
+            this.btnReplayJumpToEventSource.Name = "btnReplayJumpToEventSource";
+            this.btnReplayJumpToEventSource.Size = new System.Drawing.Size(131, 23);
+            this.btnReplayJumpToEventSource.TabIndex = 10;
+            this.btnReplayJumpToEventSource.Text = "Jump to Event Source";
+            this.btnReplayJumpToEventSource.UseVisualStyleBackColor = true;
+            this.btnReplayJumpToEventSource.Click += new System.EventHandler(this.btnReplayJumpToEventSource_Click);
             // 
             // btnMakeScript
             // 
-            this.btnMakeScript.Location = new System.Drawing.Point(629, 663);
+            this.btnMakeScript.Location = new System.Drawing.Point(12, 663);
             this.btnMakeScript.Name = "btnMakeScript";
             this.btnMakeScript.Size = new System.Drawing.Size(100, 23);
             this.btnMakeScript.TabIndex = 11;
             this.btnMakeScript.Text = "Make Script";
             this.btnMakeScript.UseVisualStyleBackColor = true;
+            this.btnMakeScript.Click += new System.EventHandler(this.btnMakeScript_Click);
             // 
             // btnMakeWaypoints
             // 
-            this.btnMakeWaypoints.Location = new System.Drawing.Point(735, 663);
+            this.btnMakeWaypoints.Location = new System.Drawing.Point(118, 663);
             this.btnMakeWaypoints.Name = "btnMakeWaypoints";
             this.btnMakeWaypoints.Size = new System.Drawing.Size(100, 23);
             this.btnMakeWaypoints.TabIndex = 12;
@@ -412,17 +428,127 @@
             this.txtEndTimeDate.Size = new System.Drawing.Size(203, 20);
             this.txtEndTimeDate.TabIndex = 14;
             // 
+            // grpReplayControl
+            // 
+            this.grpReplayControl.Controls.Add(this.btnJumpToEventTarget);
+            this.grpReplayControl.Controls.Add(this.btnReplayResetTime);
+            this.grpReplayControl.Controls.Add(this.btnReplayPause);
+            this.grpReplayControl.Controls.Add(this.btnReplayPlay);
+            this.grpReplayControl.Controls.Add(this.btnReplayJumpToEventTime);
+            this.grpReplayControl.Controls.Add(this.btnReplayJumpToEventSource);
+            this.grpReplayControl.Location = new System.Drawing.Point(548, 368);
+            this.grpReplayControl.Name = "grpReplayControl";
+            this.grpReplayControl.Size = new System.Drawing.Size(287, 109);
+            this.grpReplayControl.TabIndex = 15;
+            this.grpReplayControl.TabStop = false;
+            this.grpReplayControl.Text = "Replay Control";
+            // 
+            // btnJumpToEventTarget
+            // 
+            this.btnJumpToEventTarget.Location = new System.Drawing.Point(148, 77);
+            this.btnJumpToEventTarget.Name = "btnJumpToEventTarget";
+            this.btnJumpToEventTarget.Size = new System.Drawing.Size(131, 23);
+            this.btnJumpToEventTarget.TabIndex = 14;
+            this.btnJumpToEventTarget.Text = "Jump to Event Target";
+            this.btnJumpToEventTarget.UseVisualStyleBackColor = true;
+            // 
+            // btnReplayResetTime
+            // 
+            this.btnReplayResetTime.Location = new System.Drawing.Point(8, 48);
+            this.btnReplayResetTime.Name = "btnReplayResetTime";
+            this.btnReplayResetTime.Size = new System.Drawing.Size(131, 23);
+            this.btnReplayResetTime.TabIndex = 13;
+            this.btnReplayResetTime.Text = "Reset Time";
+            this.btnReplayResetTime.UseVisualStyleBackColor = true;
+            // 
+            // btnReplayPause
+            // 
+            this.btnReplayPause.Location = new System.Drawing.Point(148, 19);
+            this.btnReplayPause.Name = "btnReplayPause";
+            this.btnReplayPause.Size = new System.Drawing.Size(131, 23);
+            this.btnReplayPause.TabIndex = 12;
+            this.btnReplayPause.Text = "Pause";
+            this.btnReplayPause.UseVisualStyleBackColor = true;
+            // 
+            // btnReplayPlay
+            // 
+            this.btnReplayPlay.Location = new System.Drawing.Point(8, 19);
+            this.btnReplayPlay.Name = "btnReplayPlay";
+            this.btnReplayPlay.Size = new System.Drawing.Size(131, 23);
+            this.btnReplayPlay.TabIndex = 11;
+            this.btnReplayPlay.Text = "Play";
+            this.btnReplayPlay.UseVisualStyleBackColor = true;
+            // 
+            // grpOptions
+            // 
+            this.grpOptions.Controls.Add(this.cmbTimeDisplay);
+            this.grpOptions.Controls.Add(this.lblTimeDisplay);
+            this.grpOptions.Controls.Add(this.cmbTimeType);
+            this.grpOptions.Controls.Add(this.lblTimeType);
+            this.grpOptions.Location = new System.Drawing.Point(548, 483);
+            this.grpOptions.Name = "grpOptions";
+            this.grpOptions.Size = new System.Drawing.Size(287, 170);
+            this.grpOptions.TabIndex = 16;
+            this.grpOptions.TabStop = false;
+            this.grpOptions.Text = "Options";
+            // 
+            // cmbTimeDisplay
+            // 
+            this.cmbTimeDisplay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbTimeDisplay.FormattingEnabled = true;
+            this.cmbTimeDisplay.Items.AddRange(new object[] {
+            "Milliseconds",
+            "Seconds",
+            "Formatted"});
+            this.cmbTimeDisplay.Location = new System.Drawing.Point(96, 51);
+            this.cmbTimeDisplay.Name = "cmbTimeDisplay";
+            this.cmbTimeDisplay.Size = new System.Drawing.Size(183, 21);
+            this.cmbTimeDisplay.TabIndex = 3;
+            this.cmbTimeDisplay.SelectedIndexChanged += new System.EventHandler(this.cmbTimeDisplay_SelectedIndexChanged);
+            // 
+            // lblTimeDisplay
+            // 
+            this.lblTimeDisplay.AutoSize = true;
+            this.lblTimeDisplay.Location = new System.Drawing.Point(6, 54);
+            this.lblTimeDisplay.Name = "lblTimeDisplay";
+            this.lblTimeDisplay.Size = new System.Drawing.Size(67, 13);
+            this.lblTimeDisplay.TabIndex = 2;
+            this.lblTimeDisplay.Text = "Time Display";
+            // 
+            // cmbTimeType
+            // 
+            this.cmbTimeType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbTimeType.FormattingEnabled = true;
+            this.cmbTimeType.Items.AddRange(new object[] {
+            "Exact Time",
+            "Time Since First Event",
+            "Time Since Previous Event"});
+            this.cmbTimeType.Location = new System.Drawing.Point(96, 24);
+            this.cmbTimeType.Name = "cmbTimeType";
+            this.cmbTimeType.Size = new System.Drawing.Size(183, 21);
+            this.cmbTimeType.TabIndex = 1;
+            this.cmbTimeType.SelectedIndexChanged += new System.EventHandler(this.cmbTimeType_SelectedIndexChanged);
+            // 
+            // lblTimeType
+            // 
+            this.lblTimeType.AutoSize = true;
+            this.lblTimeType.Location = new System.Drawing.Point(6, 27);
+            this.lblTimeType.Name = "lblTimeType";
+            this.lblTimeType.Size = new System.Drawing.Size(57, 13);
+            this.lblTimeType.TabIndex = 0;
+            this.lblTimeType.Text = "Time Type";
+            // 
             // FormSniffBrowser
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1272, 693);
+            this.Controls.Add(this.grpOptions);
+            this.Controls.Add(this.grpReplayControl);
             this.Controls.Add(this.txtEndTimeDate);
             this.Controls.Add(this.txtStartTimeDate);
             this.Controls.Add(this.btnMakeWaypoints);
             this.Controls.Add(this.btnMakeScript);
-            this.Controls.Add(this.btnJumpToEventSource);
-            this.Controls.Add(this.btnJumpToEventTime);
             this.Controls.Add(this.btnRefresh);
             this.Controls.Add(this.txtEventDescription);
             this.Controls.Add(this.grpEventFilters);
@@ -441,6 +567,9 @@
             this.grpObjectFilters.PerformLayout();
             this.grpEventFilters.ResumeLayout(false);
             this.grpEventFilters.PerformLayout();
+            this.grpReplayControl.ResumeLayout(false);
+            this.grpOptions.ResumeLayout(false);
+            this.grpOptions.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -474,8 +603,8 @@
         private System.Windows.Forms.ListView lstEventFilters;
         private System.Windows.Forms.TextBox txtEventDescription;
         private System.Windows.Forms.Button btnRefresh;
-        private System.Windows.Forms.Button btnJumpToEventTime;
-        private System.Windows.Forms.Button btnJumpToEventSource;
+        private System.Windows.Forms.Button btnReplayJumpToEventTime;
+        private System.Windows.Forms.Button btnReplayJumpToEventSource;
         private System.Windows.Forms.Button btnMakeScript;
         private System.Windows.Forms.Button btnMakeWaypoints;
         private System.Windows.Forms.ComboBox cmbEventTypes;
@@ -484,6 +613,16 @@
         private System.Windows.Forms.Button btnSelectAll;
         private System.Windows.Forms.TextBox txtStartTimeDate;
         private System.Windows.Forms.TextBox txtEndTimeDate;
+        private System.Windows.Forms.GroupBox grpReplayControl;
+        private System.Windows.Forms.Button btnReplayResetTime;
+        private System.Windows.Forms.Button btnReplayPause;
+        private System.Windows.Forms.Button btnReplayPlay;
+        private System.Windows.Forms.Button btnJumpToEventTarget;
+        private System.Windows.Forms.GroupBox grpOptions;
+        private System.Windows.Forms.ComboBox cmbTimeDisplay;
+        private System.Windows.Forms.Label lblTimeDisplay;
+        private System.Windows.Forms.ComboBox cmbTimeType;
+        private System.Windows.Forms.Label lblTimeType;
     }
 }
 

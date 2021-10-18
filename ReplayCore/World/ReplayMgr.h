@@ -390,6 +390,7 @@ public:
     std::shared_ptr<SniffedEvent> GetFirstEventForTarget(ObjectGuid guid, SniffedEventType eventType);
     void GetEventsListForTarget(ObjectGuid guid, std::string eventName, std::vector<std::pair<uint64, SniffedEventType>>& eventsList);
     void GetEventsListForTargets(uint32 startTime, uint32 endTime, std::vector<ObjectFilterEntry> const& objectFilters, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>>& eventsList);
+    void GetEventsListFromIdentifiers(std::set<uint32> eventIdentifiers, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>>& eventsList);
 
 #pragma endregion SniffedEvents
     
