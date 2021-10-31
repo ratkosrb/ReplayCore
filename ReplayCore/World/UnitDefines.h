@@ -179,7 +179,9 @@ enum WeaponAttackType                                       // The different wea
 
 #define MAX_ATTACK  3
 
-#define MAX_AURA_SLOTS 48
+#define MAX_AURA_SLOTS_VANILLA 48
+#define MAX_AURA_SLOTS_TBC 56
+#define MAX_AURA_SLOTS 128
 
 #define MAX_FACTION_TEMPLATE_VANILLA 1677
 #define MAX_FACTION_TEMPLATE_TBC 2074

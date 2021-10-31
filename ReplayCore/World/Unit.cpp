@@ -141,6 +141,16 @@ void Unit::SetTargetGuid(ObjectGuid guid)
     SetGuidValue("UNIT_FIELD_TARGET", guid);
 }
 
+ObjectGuid Unit::GetChannelObjectGuid() const
+{
+    return GetGuidValue("UNIT_FIELD_CHANNEL_OBJECT");
+}
+
+void Unit::SetChannelObjectGuid(ObjectGuid guid)
+{
+    SetGuidValue("UNIT_FIELD_CHANNEL_OBJECT", guid);
+}
+
 uint32 Unit::GetHealth() const
 {
     return GetUInt32Value("UNIT_FIELD_HEALTH");

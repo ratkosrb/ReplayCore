@@ -36,7 +36,7 @@ private:
     void SendEventTypesList();
     void HandleRequestEventData(ByteBuffer& buffer);
     void SendEventDataList(std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
-    void HandleSetTime(ByteBuffer& buffer);
+    void HandleChatCommand(ByteBuffer& buffer);
     void HandleGoToGuid(ByteBuffer& buffer);
     void HandleMakeScript(ByteBuffer& buffer);
 };

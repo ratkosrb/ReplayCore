@@ -76,25 +76,32 @@ std::string ObjectGuid::GetName() const
     if (IsEmpty())
         return std::string();
 
-    switch (GetTypeId())
+    switch (GetHigh())
     {
-        case TYPEID_UNIT:
+        case HIGHGUID_UNIT:
         {
             if (CreatureTemplate const* pTemplate = sGameDataMgr.GetCreatureTemplate(GetEntry()))
                 return pTemplate->name;
             break;
         }
-        case TYPEID_PLAYER:
+        case HIGHGUID_PET:
+        {
+            if (CreatureData const* pSpawnData = sReplayMgr.GetCreatureSpawnData(GetCounter()))
+                return sGameDataMgr.GetCreatureName(pSpawnData->entry);
+            break;
+        }
+        case HIGHGUID_PLAYER:
         {
             return sWorld.GetPlayerName(*this);
         }
-        case TYPEID_GAMEOBJECT:
+        case HIGHGUID_GAMEOBJECT:
+        case HIGHGUID_MO_TRANSPORT:
         {
             if (GameObjectTemplate const* pTemplate = sGameDataMgr.GetGameObjectTemplate(GetEntry()))
                 return pTemplate->name;
             break;
         }
-        case TYPEID_DYNAMICOBJECT:
+        case HIGHGUID_DYNAMICOBJECT:
         {
             if (DynamicObjectData const* pData = sReplayMgr.GetDynamicObjectSpawnData(GetCounter()))
                 return sGameDataMgr.GetSpellName(pData->spellId);

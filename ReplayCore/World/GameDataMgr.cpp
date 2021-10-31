@@ -126,6 +126,18 @@ uint8 GameDataMgr::GetMoveSpeedsCount() const
     return MAX_MOVE_TYPE_WOTLK;
 }
 
+uint8 GameDataMgr::GetAuraSlotsCount() const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        return MAX_AURA_SLOTS_VANILLA;
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return MAX_AURA_SLOTS_TBC;
+    else
+        return MAX_AURA_SLOTS;
+
+    return MAX_MOVE_TYPE_WOTLK;
+}
+
 uint32 GameDataMgr::GetTransportMoveFlag() const
 {
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)

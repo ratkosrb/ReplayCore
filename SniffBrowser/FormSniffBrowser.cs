@@ -26,13 +26,16 @@ namespace SniffBrowser
             SB_BOTH = 3
         }
 
+        // for SMSG packets header contains uint16 size, then uint8 opcode
+        // for CMSG packets header contains only the uint8 opcode
+
         private enum GUIOpcode
         {
             SMSG_EVENT_TYPE_LIST = 1,
             CMSG_REQUEST_EVENT_DATA = 2,
             SMSG_EVENT_DATA_LIST = 3,
             SMSG_EVENT_DATA_END = 4,
-            CMSG_SET_TIME = 5,
+            CMSG_CHAT_COMMAND = 5,
             CMSG_GOTO_GUID = 6,
             CMSG_MAKE_SCRIPT = 7,
         }
@@ -91,8 +94,6 @@ namespace SniffBrowser
             InitializeComponent();
             
         }
-
-        
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -356,7 +357,7 @@ namespace SniffBrowser
             {
                 clientSocket.EndConnect(AR);
                 clientSocket.ReceiveBufferSize = 65535;
-                byte[] buffer = new byte[clientSocket.ReceiveBufferSize];
+                byte[] buffer = new byte[sizeof(ushort)];
                 clientSocket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, ReceiveCallback, buffer);
             }
             catch (Exception ex)
@@ -380,18 +381,47 @@ namespace SniffBrowser
                 int received = clientSocket.EndReceive(AR);
 
                 if (received == 0)
+                    return;
+
+                if (received != sizeof(ushort))
                 {
+                    MessageBox.Show("Received " + received + " bytes when reading header!", "Packet Read Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
                 byte[] buffer = (byte[])AR.AsyncState;
+                ushort packetSize = BitConverter.ToUInt16(buffer, 0);
 
-                Invoke((Action)delegate
+                if (packetSize != 0)
                 {
-                    HandlePacket(buffer);
-                });
+                    if (packetSize > clientSocket.ReceiveBufferSize)
+                    {
+                        MessageBox.Show("Packet size is greater than max buffer size!", "Packet Read Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
 
-                buffer = new byte[clientSocket.ReceiveBufferSize];
+                    buffer = new byte[packetSize];
+                    received = 0;
+                    while (received != packetSize)
+                    {
+                        int receivedNow = clientSocket.Receive(buffer, received, packetSize - received, SocketFlags.None);
+                        if (receivedNow == 0)
+                            return;
+
+                        received += receivedNow;
+                    }
+
+                    Invoke((Action)delegate
+                    {
+                        HandlePacket(buffer);
+                    });
+                }
+                else
+                {
+                    MessageBox.Show("Received an empty packet!", "Packet Read Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                buffer = new byte[sizeof(ushort)];
 
                 // Start receiving data again.
                 clientSocket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, ReceiveCallback, buffer);
@@ -406,7 +436,7 @@ namespace SniffBrowser
         private void HandlePacket(byte[] buffer)
         {
             ByteBuffer packet = new ByteBuffer(buffer);
-            uint opcode = packet.ReadUInt32();
+            byte opcode = packet.ReadUInt8();
             
             switch ((GUIOpcode)opcode)
             {
@@ -730,7 +760,7 @@ namespace SniffBrowser
             lstEvents.Items.Clear();
 
             ByteBuffer packet = new ByteBuffer();
-            packet.WriteUInt32((uint)GUIOpcode.CMSG_REQUEST_EVENT_DATA);
+            packet.WriteUInt8((byte)GUIOpcode.CMSG_REQUEST_EVENT_DATA);
             packet.WriteUInt32(UInt32.Parse(txtStartTime.Text));
             packet.WriteUInt32(UInt32.Parse(txtEndTime.Text));
             packet.WriteUInt32((uint)lstObjectFilters.Items.Count);
@@ -813,108 +843,6 @@ namespace SniffBrowser
             txtEventDescription.Text += "Source: " + sniffedEvent.sourceGuid.ToString() + Environment.NewLine;
             txtEventDescription.Text += "Target: " + sniffedEvent.targetGuid.ToString() + Environment.NewLine + Environment.NewLine;
             txtEventDescription.Text += "-- Event Specific Data --" + Environment.NewLine + sniffedEvent.longDescription;
-        }
-
-        private void btnReplayJumpToEventTime_Click(object sender, EventArgs e)
-        {
-            if (lstEvents.SelectedItems.Count == 0)
-            {
-                MessageBox.Show("No event selected.");
-                return;
-            }
-
-            ListViewItem selectedItem = lstEvents.SelectedItems[0];
-            SniffedEvent sniffedEvent = (SniffedEvent)selectedItem.Tag;
-            uint unixTime = (uint)(sniffedEvent.eventTime / 1000);
-
-            ByteBuffer packet = new ByteBuffer();
-            packet.WriteUInt32((uint)GUIOpcode.CMSG_SET_TIME);
-            packet.WriteUInt32(unixTime);
-            SendPacket(packet);
-        }
-
-        private void btnReplayJumpToEventSource_Click(object sender, EventArgs e)
-        {
-            if (lstEvents.SelectedItems.Count == 0)
-            {
-                MessageBox.Show("No event selected.");
-                return;
-            }
-
-            ListViewItem selectedItem = lstEvents.SelectedItems[0];
-            SniffedEvent sniffedEvent = (SniffedEvent)selectedItem.Tag;
-            
-            if (sniffedEvent.sourceGuid.IsEmpty())
-            {
-                MessageBox.Show("Event has no source.");
-                return;
-            }
-
-            ByteBuffer packet = new ByteBuffer();
-            packet.WriteUInt32((uint)GUIOpcode.CMSG_GOTO_GUID);
-            packet.WriteUInt64(sniffedEvent.sourceGuid.RawGuid);
-            SendPacket(packet);
-        }
-
-        private void btnMakeScript_Click(object sender, EventArgs e)
-        {
-            if (lstEvents.SelectedItems.Count == 0)
-            {
-                MessageBox.Show("No event selected.");
-                return;
-            }
-
-            string mainScriptIdStr = "1";
-            if (Utility.ShowInputDialog(ref mainScriptIdStr, "Main Script Id") != DialogResult.OK)
-                return;
-            uint mainScriptId = UInt32.Parse(mainScriptIdStr);
-
-            string tableName = "generic_scripts";
-            if (Utility.ShowInputDialog(ref tableName, "Table Name") != DialogResult.OK)
-                return;
-
-            List<object> guidList = new List<object>();
-            guidList.Add(ObjectGuid.Empty);
-            foreach (ListViewItem lvi in lstEvents.SelectedItems)
-            {
-                SniffedEvent sniffedEvent = (SniffedEvent)lvi.Tag;
-                if (!sniffedEvent.sourceGuid.IsEmpty() && 
-                    !guidList.Contains(sniffedEvent.sourceGuid))
-                {
-                    guidList.Add(sniffedEvent.sourceGuid);
-                }
-                if (!sniffedEvent.targetGuid.IsEmpty() &&
-                    !guidList.Contains(sniffedEvent.targetGuid))
-                {
-                    guidList.Add(sniffedEvent.targetGuid);
-                }
-            }
-
-            FormListSelector frmListSelector1 = new FormListSelector(guidList, "Make Script", "Select source object:");
-            if (frmListSelector1.ShowDialog() != DialogResult.OK)
-                return;
-
-            ObjectGuid sourceGuid = (ObjectGuid)guidList[frmListSelector1.ReturnValue];
-
-            FormListSelector frmListSelector2 = new FormListSelector(guidList, "Make Script", "Select target object:");
-            if (frmListSelector2.ShowDialog() != DialogResult.OK)
-                return;
-
-            ObjectGuid targetGuid = (ObjectGuid)guidList[frmListSelector1.ReturnValue];
-
-            ByteBuffer packet = new ByteBuffer();
-            packet.WriteUInt32((uint)GUIOpcode.CMSG_MAKE_SCRIPT);
-            packet.WriteUInt32(mainScriptId);
-            packet.WriteCString(tableName);
-            packet.WriteUInt64(sourceGuid.RawGuid);
-            packet.WriteUInt64(targetGuid.RawGuid);
-            packet.WriteUInt32((uint)lstEvents.SelectedItems.Count);
-            foreach (ListViewItem lvi in lstEvents.SelectedItems)
-            {
-                SniffedEvent sniffedEvent = (SniffedEvent)lvi.Tag;
-                packet.WriteUInt32(sniffedEvent.uniqueIdentifier);
-            }
-            SendPacket(packet);
         }
 
         private void lstEvents_MouseClick(object sender, MouseEventArgs e)
@@ -1020,6 +948,171 @@ namespace SniffBrowser
         private void cmbTimeDisplay_SelectedIndexChanged(object sender, EventArgs e)
         {
             UpdateTimeDisplayForAllEvents();
+        }
+
+        // Replay Controls
+
+        private void SendChatCommand(string command)
+        {
+            ByteBuffer packet = new ByteBuffer();
+            packet.WriteUInt8((byte)GUIOpcode.CMSG_CHAT_COMMAND);
+            packet.WriteCString(command);
+            SendPacket(packet);
+        }
+
+        private void btnReplayPlay_Click(object sender, EventArgs e)
+        {
+            SendChatCommand("play");
+        }
+
+        private void btnReplayPause_Click(object sender, EventArgs e)
+        {
+            SendChatCommand("stop");
+        }
+
+        private void btnReplayResetTime_Click(object sender, EventArgs e)
+        {
+            SendChatCommand("resettime");
+        }
+
+        private void btnReplayGoToClientPosition_Click(object sender, EventArgs e)
+        {
+            SendChatCommand("gotoclient");
+        }
+
+        private void btnReplayJumpForwardInTime_Click(object sender, EventArgs e)
+        {
+            SendChatCommand("addtime");
+        }
+
+        private void btnReplayJumpToEventTime_Click(object sender, EventArgs e)
+        {
+            if (lstEvents.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("No event selected.");
+                return;
+            }
+
+            ListViewItem selectedItem = lstEvents.SelectedItems[0];
+            SniffedEvent sniffedEvent = (SniffedEvent)selectedItem.Tag;
+            uint unixTime = (uint)(sniffedEvent.eventTime / 1000);
+            SendChatCommand("settime " + unixTime.ToString());
+        }
+
+        private void SendTeleportToGuid(ObjectGuid guid)
+        {
+            ByteBuffer packet = new ByteBuffer();
+            packet.WriteUInt8((byte)GUIOpcode.CMSG_GOTO_GUID);
+            packet.WriteUInt64(guid.RawGuid);
+            SendPacket(packet);
+        }
+
+        private void btnReplayJumpToEventSource_Click(object sender, EventArgs e)
+        {
+            if (lstEvents.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("No event selected.");
+                return;
+            }
+
+            ListViewItem selectedItem = lstEvents.SelectedItems[0];
+            SniffedEvent sniffedEvent = (SniffedEvent)selectedItem.Tag;
+
+            if (sniffedEvent.sourceGuid.IsEmpty())
+            {
+                MessageBox.Show("Event has no source.");
+                return;
+            }
+
+            SendTeleportToGuid(sniffedEvent.sourceGuid);
+        }
+
+        private void btnReplayJumpToEventTarget_Click(object sender, EventArgs e)
+        {
+            if (lstEvents.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("No event selected.");
+                return;
+            }
+
+            ListViewItem selectedItem = lstEvents.SelectedItems[0];
+            SniffedEvent sniffedEvent = (SniffedEvent)selectedItem.Tag;
+
+            if (sniffedEvent.targetGuid.IsEmpty())
+            {
+                MessageBox.Show("Event has no target.");
+                return;
+            }
+
+            SendTeleportToGuid(sniffedEvent.targetGuid);
+        }
+
+        // Script And Waypoint Making
+
+        private void btnMakeScript_Click(object sender, EventArgs e)
+        {
+            if (lstEvents.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("No event selected.");
+                return;
+            }
+
+            string mainScriptIdStr = "1";
+            if (Utility.ShowInputDialog(ref mainScriptIdStr, "Main Script Id") != DialogResult.OK)
+                return;
+            uint mainScriptId = UInt32.Parse(mainScriptIdStr);
+
+            string tableName = "generic_scripts";
+            if (Utility.ShowInputDialog(ref tableName, "Table Name") != DialogResult.OK)
+                return;
+
+            List<object> guidList = new List<object>();
+            guidList.Add(ObjectGuid.Empty);
+            foreach (ListViewItem lvi in lstEvents.SelectedItems)
+            {
+                SniffedEvent sniffedEvent = (SniffedEvent)lvi.Tag;
+                if (!sniffedEvent.sourceGuid.IsEmpty() &&
+                    !guidList.Contains(sniffedEvent.sourceGuid))
+                {
+                    guidList.Add(sniffedEvent.sourceGuid);
+                }
+                if (!sniffedEvent.targetGuid.IsEmpty() &&
+                    !guidList.Contains(sniffedEvent.targetGuid))
+                {
+                    guidList.Add(sniffedEvent.targetGuid);
+                }
+            }
+
+            FormListSelector frmListSelector1 = new FormListSelector(guidList, "Make Script", "Select source object:");
+            if (frmListSelector1.ShowDialog() != DialogResult.OK)
+                return;
+
+            ObjectGuid sourceGuid = (ObjectGuid)guidList[frmListSelector1.ReturnValue];
+
+            FormListSelector frmListSelector2 = new FormListSelector(guidList, "Make Script", "Select target object:");
+            if (frmListSelector2.ShowDialog() != DialogResult.OK)
+                return;
+
+            ObjectGuid targetGuid = (ObjectGuid)guidList[frmListSelector1.ReturnValue];
+
+            ByteBuffer packet = new ByteBuffer();
+            packet.WriteUInt8((byte)GUIOpcode.CMSG_MAKE_SCRIPT);
+            packet.WriteUInt32(mainScriptId);
+            packet.WriteCString(tableName);
+            packet.WriteUInt64(sourceGuid.RawGuid);
+            packet.WriteUInt64(targetGuid.RawGuid);
+            packet.WriteUInt32((uint)lstEvents.SelectedItems.Count);
+            foreach (ListViewItem lvi in lstEvents.SelectedItems)
+            {
+                SniffedEvent sniffedEvent = (SniffedEvent)lvi.Tag;
+                packet.WriteUInt32(sniffedEvent.uniqueIdentifier);
+            }
+            SendPacket(packet);
+        }
+
+        private void btnMakeWaypoints_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Not Yet Implemented");
         }
     }
 }

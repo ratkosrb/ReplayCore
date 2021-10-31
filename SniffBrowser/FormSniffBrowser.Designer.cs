@@ -65,7 +65,9 @@
             this.txtStartTimeDate = new System.Windows.Forms.TextBox();
             this.txtEndTimeDate = new System.Windows.Forms.TextBox();
             this.grpReplayControl = new System.Windows.Forms.GroupBox();
-            this.btnJumpToEventTarget = new System.Windows.Forms.Button();
+            this.btnReplayJumpForwardInTime = new System.Windows.Forms.Button();
+            this.btnReplayGoToClientPosition = new System.Windows.Forms.Button();
+            this.btnReplayJumpToEventTarget = new System.Windows.Forms.Button();
             this.btnReplayResetTime = new System.Windows.Forms.Button();
             this.btnReplayPause = new System.Windows.Forms.Button();
             this.btnReplayPlay = new System.Windows.Forms.Button();
@@ -375,7 +377,7 @@
             // 
             // btnReplayJumpToEventTime
             // 
-            this.btnReplayJumpToEventTime.Location = new System.Drawing.Point(148, 48);
+            this.btnReplayJumpToEventTime.Location = new System.Drawing.Point(148, 77);
             this.btnReplayJumpToEventTime.Name = "btnReplayJumpToEventTime";
             this.btnReplayJumpToEventTime.Size = new System.Drawing.Size(131, 23);
             this.btnReplayJumpToEventTime.TabIndex = 9;
@@ -385,7 +387,7 @@
             // 
             // btnReplayJumpToEventSource
             // 
-            this.btnReplayJumpToEventSource.Location = new System.Drawing.Point(8, 77);
+            this.btnReplayJumpToEventSource.Location = new System.Drawing.Point(8, 106);
             this.btnReplayJumpToEventSource.Name = "btnReplayJumpToEventSource";
             this.btnReplayJumpToEventSource.Size = new System.Drawing.Size(131, 23);
             this.btnReplayJumpToEventSource.TabIndex = 10;
@@ -411,6 +413,7 @@
             this.btnMakeWaypoints.TabIndex = 12;
             this.btnMakeWaypoints.Text = "Make Waypoints";
             this.btnMakeWaypoints.UseVisualStyleBackColor = true;
+            this.btnMakeWaypoints.Click += new System.EventHandler(this.btnMakeWaypoints_Click);
             // 
             // txtStartTimeDate
             // 
@@ -430,27 +433,50 @@
             // 
             // grpReplayControl
             // 
-            this.grpReplayControl.Controls.Add(this.btnJumpToEventTarget);
+            this.grpReplayControl.Controls.Add(this.btnReplayJumpForwardInTime);
+            this.grpReplayControl.Controls.Add(this.btnReplayGoToClientPosition);
+            this.grpReplayControl.Controls.Add(this.btnReplayJumpToEventTarget);
             this.grpReplayControl.Controls.Add(this.btnReplayResetTime);
             this.grpReplayControl.Controls.Add(this.btnReplayPause);
             this.grpReplayControl.Controls.Add(this.btnReplayPlay);
             this.grpReplayControl.Controls.Add(this.btnReplayJumpToEventTime);
             this.grpReplayControl.Controls.Add(this.btnReplayJumpToEventSource);
-            this.grpReplayControl.Location = new System.Drawing.Point(548, 368);
+            this.grpReplayControl.Location = new System.Drawing.Point(548, 512);
             this.grpReplayControl.Name = "grpReplayControl";
-            this.grpReplayControl.Size = new System.Drawing.Size(287, 109);
+            this.grpReplayControl.Size = new System.Drawing.Size(287, 141);
             this.grpReplayControl.TabIndex = 15;
             this.grpReplayControl.TabStop = false;
             this.grpReplayControl.Text = "Replay Control";
             // 
-            // btnJumpToEventTarget
+            // btnReplayJumpForwardInTime
             // 
-            this.btnJumpToEventTarget.Location = new System.Drawing.Point(148, 77);
-            this.btnJumpToEventTarget.Name = "btnJumpToEventTarget";
-            this.btnJumpToEventTarget.Size = new System.Drawing.Size(131, 23);
-            this.btnJumpToEventTarget.TabIndex = 14;
-            this.btnJumpToEventTarget.Text = "Jump to Event Target";
-            this.btnJumpToEventTarget.UseVisualStyleBackColor = true;
+            this.btnReplayJumpForwardInTime.Location = new System.Drawing.Point(9, 77);
+            this.btnReplayJumpForwardInTime.Name = "btnReplayJumpForwardInTime";
+            this.btnReplayJumpForwardInTime.Size = new System.Drawing.Size(130, 23);
+            this.btnReplayJumpForwardInTime.TabIndex = 16;
+            this.btnReplayJumpForwardInTime.Text = "Jump Forward in Time";
+            this.btnReplayJumpForwardInTime.UseVisualStyleBackColor = true;
+            this.btnReplayJumpForwardInTime.Click += new System.EventHandler(this.btnReplayJumpForwardInTime_Click);
+            // 
+            // btnReplayGoToClientPosition
+            // 
+            this.btnReplayGoToClientPosition.Location = new System.Drawing.Point(148, 48);
+            this.btnReplayGoToClientPosition.Name = "btnReplayGoToClientPosition";
+            this.btnReplayGoToClientPosition.Size = new System.Drawing.Size(131, 23);
+            this.btnReplayGoToClientPosition.TabIndex = 15;
+            this.btnReplayGoToClientPosition.Text = "Go to Client Position";
+            this.btnReplayGoToClientPosition.UseVisualStyleBackColor = true;
+            this.btnReplayGoToClientPosition.Click += new System.EventHandler(this.btnReplayGoToClientPosition_Click);
+            // 
+            // btnReplayJumpToEventTarget
+            // 
+            this.btnReplayJumpToEventTarget.Location = new System.Drawing.Point(148, 106);
+            this.btnReplayJumpToEventTarget.Name = "btnReplayJumpToEventTarget";
+            this.btnReplayJumpToEventTarget.Size = new System.Drawing.Size(131, 23);
+            this.btnReplayJumpToEventTarget.TabIndex = 14;
+            this.btnReplayJumpToEventTarget.Text = "Jump to Event Target";
+            this.btnReplayJumpToEventTarget.UseVisualStyleBackColor = true;
+            this.btnReplayJumpToEventTarget.Click += new System.EventHandler(this.btnReplayJumpToEventTarget_Click);
             // 
             // btnReplayResetTime
             // 
@@ -460,6 +486,7 @@
             this.btnReplayResetTime.TabIndex = 13;
             this.btnReplayResetTime.Text = "Reset Time";
             this.btnReplayResetTime.UseVisualStyleBackColor = true;
+            this.btnReplayResetTime.Click += new System.EventHandler(this.btnReplayResetTime_Click);
             // 
             // btnReplayPause
             // 
@@ -469,6 +496,7 @@
             this.btnReplayPause.TabIndex = 12;
             this.btnReplayPause.Text = "Pause";
             this.btnReplayPause.UseVisualStyleBackColor = true;
+            this.btnReplayPause.Click += new System.EventHandler(this.btnReplayPause_Click);
             // 
             // btnReplayPlay
             // 
@@ -478,6 +506,7 @@
             this.btnReplayPlay.TabIndex = 11;
             this.btnReplayPlay.Text = "Play";
             this.btnReplayPlay.UseVisualStyleBackColor = true;
+            this.btnReplayPlay.Click += new System.EventHandler(this.btnReplayPlay_Click);
             // 
             // grpOptions
             // 
@@ -485,9 +514,9 @@
             this.grpOptions.Controls.Add(this.lblTimeDisplay);
             this.grpOptions.Controls.Add(this.cmbTimeType);
             this.grpOptions.Controls.Add(this.lblTimeType);
-            this.grpOptions.Location = new System.Drawing.Point(548, 483);
+            this.grpOptions.Location = new System.Drawing.Point(548, 368);
             this.grpOptions.Name = "grpOptions";
-            this.grpOptions.Size = new System.Drawing.Size(287, 170);
+            this.grpOptions.Size = new System.Drawing.Size(287, 138);
             this.grpOptions.TabIndex = 16;
             this.grpOptions.TabStop = false;
             this.grpOptions.Text = "Options";
@@ -617,12 +646,14 @@
         private System.Windows.Forms.Button btnReplayResetTime;
         private System.Windows.Forms.Button btnReplayPause;
         private System.Windows.Forms.Button btnReplayPlay;
-        private System.Windows.Forms.Button btnJumpToEventTarget;
+        private System.Windows.Forms.Button btnReplayJumpToEventTarget;
         private System.Windows.Forms.GroupBox grpOptions;
         private System.Windows.Forms.ComboBox cmbTimeDisplay;
         private System.Windows.Forms.Label lblTimeDisplay;
         private System.Windows.Forms.ComboBox cmbTimeType;
         private System.Windows.Forms.Label lblTimeType;
+        private System.Windows.Forms.Button btnReplayJumpForwardInTime;
+        private System.Windows.Forms.Button btnReplayGoToClientPosition;
     }
 }
 

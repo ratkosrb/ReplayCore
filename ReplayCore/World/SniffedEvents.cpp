@@ -1953,6 +1953,11 @@ void SniffedEvent_UnitUpdate_channel_spell::Execute() const
         return;
     }
 
+    if (m_value)
+        pUnit->SetChannelObjectGuid(pUnit->GetTargetGuid());
+    else
+        pUnit->SetChannelObjectGuid(ObjectGuid());
+
     pUnit->SetChannelSpell(m_value);
 }
 
@@ -2309,6 +2314,9 @@ void SniffedEvent_UnitUpdate_auras::PepareForCurrentClient()
 {
     if (m_aura.spellId && !sGameDataMgr.IsValidSpellId(m_aura.spellId))
         m_disabled = true;
+
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2 && m_slot > MAX_AURA_SLOTS_VANILLA)
+        return;
 
     m_aura.auraFlags = sGameDataMgr.ConvertAuraFlags(m_aura.auraFlags, m_aura.activeFlags, m_slot);
 }
@@ -2830,7 +2838,7 @@ std::string SniffedEvent_PlayerChat::GetShortDescription() const
     }
     std::string returnString;
     if (!channelName.empty())
-        returnString = "[" + m_channelName + "] ";
+        returnString = "[" + channelName + "] ";
     returnString += "[" + m_senderName + "] " + sGameDataMgr.ChatTypeToVerbString(m_chatType) + ": " + m_text;
     return returnString;
 }

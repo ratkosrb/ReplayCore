@@ -203,8 +203,8 @@ void ScriptMaker::SaveScriptToFile(std::ofstream& log, uint32 scriptId, std::str
         log << "(" << scriptId << ", " << script->delay - delayOffset << ", " << script->command << ", "
             << script->raw.data[0] << ", " << script->raw.data[1] << ", " << script->raw.data[2] << ", " << script->raw.data[3] << ", "
             << script->target_param1 << ", " << script->target_param2 << ", " << script->target_type << ", "
-            << script->raw.data[4] << ", " << script->raw.data[5] << ", " << script->raw.data[6] << ", " << script->raw.data[7] << ", "
-            << script->raw.data[8] << ", " << script->x << ", " << script->y << ", " << script->z << ", " << script->o << ", "
+            << script->raw.data[4] << ", " << (int32)script->raw.data[5] << ", " << (int32)script->raw.data[6] << ", " << (int32)script->raw.data[7] << ", "
+            << (int32)script->raw.data[8] << ", " << script->x << ", " << script->y << ", " << script->z << ", " << script->o << ", "
             << script->condition << ", '" << script->comment << "')";
 
         count++;

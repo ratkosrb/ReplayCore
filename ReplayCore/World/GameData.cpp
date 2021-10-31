@@ -6400,6 +6400,7 @@ CreatureDisplayScaleMap const GameDataMgr::m_creatureDisplayScalesMap =
 
 LanguageNamesMap const GameDataMgr::m_languageNamesMap =
 {
+    { 0, "Universal" },
     { 1, "Orcish" },
     { 2, "Darnassian" },
     { 3, "Taurahe" },

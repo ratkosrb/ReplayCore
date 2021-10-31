@@ -109,14 +109,14 @@ void GUIServer::ResetClientData()
 void GUIServer::SetupOpcodeHandlers()
 {
     m_opcodeHandlers[CMSG_REQUEST_EVENT_DATA] = &GUIServer::HandleRequestEventData;
-    m_opcodeHandlers[CMSG_SET_TIME] = &GUIServer::HandleSetTime;
+    m_opcodeHandlers[CMSG_CHAT_COMMAND] = &GUIServer::HandleChatCommand;
     m_opcodeHandlers[CMSG_GOTO_GUID] = &GUIServer::HandleGoToGuid;
     m_opcodeHandlers[CMSG_MAKE_SCRIPT] = &GUIServer::HandleMakeScript;
 }
 
 void GUIServer::HandlePacket(ByteBuffer& buffer)
 {
-    uint32 opcode;
+    uint8 opcode;
     buffer >> opcode;
 
     auto itr = m_opcodeHandlers.find(opcode);
@@ -132,16 +132,37 @@ void GUIServer::HandlePacket(ByteBuffer& buffer)
 void GUIServer::SendEventTypesList()
 {
     ByteBuffer buffer;
-    buffer << uint32(SMSG_EVENT_TYPE_LIST);
+    uint32 sizePos = buffer.wpos();
+    buffer << uint16(0);
+
+    size_t packetSize = 0;
+    buffer << uint8(SMSG_EVENT_TYPE_LIST);
+    packetSize += sizeof(uint8);
+
     buffer << uint32(sReplayMgr.GetFirstEventTime());
+    packetSize += sizeof(uint32);
+
     buffer << uint32(sReplayMgr.GetLastEventTime());
+    packetSize += sizeof(uint32);
+
     buffer << uint32(MAX_EVENT_TYPE);
+    packetSize += sizeof(uint32);
+
     for (uint32 i = 0; i < MAX_EVENT_TYPE; i++)
     {
         buffer << uint32(i);
+        packetSize += sizeof(uint32);
         buffer << uint32(GetSniffedEventIcon(i));
-        buffer << GetSniffedEventName(SniffedEventType(i));
+        packetSize += sizeof(uint32);
+
+        char const* eventName = GetSniffedEventName(SniffedEventType(i));
+        buffer << eventName;
+        packetSize += strlen(eventName) + sizeof(char);
     }
+
+    assert(packetSize <= MAX_PACKET_SIZE);
+
+    buffer.put<uint16>(sizePos, packetSize);
     send(m_guiSocket, (const char*)buffer.contents(), buffer.size(), 0);
 }
 
@@ -185,13 +206,18 @@ void GUIServer::SendEventDataList(std::vector<std::pair<uint64, std::shared_ptr<
     while (eventsWrittenTotal < eventsList.size())
     {
         ByteBuffer buffer;
-        buffer << uint32(SMSG_EVENT_DATA_LIST);
+        uint32 sizePos = buffer.wpos();
+        buffer << uint16(0);
+
+        size_t packetSize = 0;
+        buffer << uint8(SMSG_EVENT_DATA_LIST);
+        packetSize += sizeof(uint8);
 
         uint32 countPos = buffer.wpos();
         buffer << uint32(0);
+        packetSize += sizeof(uint32);
 
         uint32 eventsWritten = 0;
-        uint32 packetSize = sizeof(uint32) + sizeof(uint32);
         for (uint32 i = eventsWrittenTotal; i < eventsList.size(); i++)
         {
             std::pair<uint64, std::shared_ptr<SniffedEvent>> const& itr = eventsList[i];
@@ -207,7 +233,7 @@ void GUIServer::SendEventDataList(std::vector<std::pair<uint64, std::shared_ptr<
                 shortDescription.size() + sizeof(uint8) +
                 longDescription.size() + sizeof(uint8);
 
-            if (packetSize + neededSpace >= MAX_PACKET_SIZE)
+            if (sizeof(uint16) /*headerSize*/ + packetSize + neededSpace >= MAX_PACKET_SIZE)
                 break;
 
             buffer << uint32(itr.second->m_uniqueIdentifier);
@@ -223,23 +249,24 @@ void GUIServer::SendEventDataList(std::vector<std::pair<uint64, std::shared_ptr<
         }
 
         printf("[GUI] Sending %u bytes of data.\n", buffer.size());
+        buffer.put<uint16>(sizePos, packetSize);
         buffer.put<uint32>(countPos, eventsWritten);
         send(m_guiSocket, (const char*)buffer.contents(), buffer.size(), 0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     ByteBuffer buffer;
-    buffer << uint32(SMSG_EVENT_DATA_END);
+    buffer << uint16(sizeof(uint8));
+    buffer << uint8(SMSG_EVENT_DATA_END);
     send(m_guiSocket, (const char*)buffer.contents(), buffer.size(), 0);
+    printf("[GUI] Finished sending %u events.\n", eventsWrittenTotal);
 }
 
-void GUIServer::HandleSetTime(ByteBuffer& buffer)
+void GUIServer::HandleChatCommand(ByteBuffer& buffer)
 {
-    uint32 unixTime;
-    buffer >> unixTime;
-    std::string command = "settime " + std::to_string(unixTime);
+    std::string command;
+    buffer >> command;
     sWorld.SetPendingChatCommand(command);
 }
 

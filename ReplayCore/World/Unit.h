@@ -38,6 +38,8 @@ public :
     void SetCreatedByGuid(ObjectGuid guid);
     ObjectGuid GetTargetGuid() const;
     void SetTargetGuid(ObjectGuid guid);
+    ObjectGuid GetChannelObjectGuid() const;
+    void SetChannelObjectGuid(ObjectGuid guid);
     uint32 GetHealth() const;
     void SetHealth(uint32 health);
     uint32 GetMaxHealth() const;
