@@ -31,6 +31,24 @@
     output = szQuery;                           \
 }
 
+inline std::string EscapeString(char* unescapedString)
+{
+    char* escapedString = new char[strlen(unescapedString) * 2 + 1];
+    mysql_escape_string(escapedString, unescapedString, strlen(unescapedString));
+    std::string returnString = escapedString;
+    delete[] escapedString;
+    return returnString;
+}
+
+inline std::string EscapeString(std::string unescapedString)
+{
+    char* escapedString = new char[unescapedString.length() * 2 + 1];
+    mysql_escape_string(escapedString, unescapedString.c_str(), unescapedString.length());
+    std::string returnString = escapedString;
+    delete[] escapedString;
+    return returnString;
+}
+
 // Callback results are in the same queue as QueueExecuteQuery and CommitManyQueries
 // ::Query and ::ExecuteQueryInstant are asynchronous with m_queueQueries
 class Database

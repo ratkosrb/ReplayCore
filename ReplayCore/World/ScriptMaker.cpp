@@ -205,7 +205,7 @@ void ScriptMaker::SaveScriptToFile(std::ofstream& log, uint32 scriptId, std::str
             << script->target_param1 << ", " << script->target_param2 << ", " << script->target_type << ", "
             << script->raw.data[4] << ", " << (int32)script->raw.data[5] << ", " << (int32)script->raw.data[6] << ", " << (int32)script->raw.data[7] << ", "
             << (int32)script->raw.data[8] << ", " << script->x << ", " << script->y << ", " << script->z << ", " << script->o << ", "
-            << script->condition << ", '" << script->comment << "')";
+            << script->condition << ", '" << EscapeString(script->comment) << "')";
 
         count++;
     }
@@ -214,6 +214,7 @@ void ScriptMaker::SaveScriptToFile(std::ofstream& log, uint32 scriptId, std::str
 
 void ScriptMaker::CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList)
 {
+    std::set<ObjectGuid> summonedByScript;
     std::map<uint32 /*typeId*/, std::map<uint32 /*entry*/, std::set<ObjectGuid>>> sameEntrySpawns;
     for (auto const& itr : eventsList)
     {
@@ -236,6 +237,13 @@ void ScriptMaker::CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, Obj
         {
             m_separateScriptGuids.insert(source);
         }
+        else if (!source.IsEmpty() &&
+                 source != defaultSource &&
+                 itr.second->GetType() == SE_WORLDOBJECT_CREATE1 ||
+                 itr.second->GetType() == SE_WORLDOBJECT_CREATE2)
+        {
+            summonedByScript.insert(source);
+        }
 
         sameEntrySpawns[source.GetTypeId()][source.GetEntry()].insert(source);
 
@@ -254,6 +262,11 @@ void ScriptMaker::CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, Obj
                 for (auto const& itr3 : itr2.second)
                 {
                     m_targetByGuidGuids.insert(itr3);
+
+                    // if its summoned by script then we can't target the creature by guid
+                    // instead we need a separate generic script attached to summon command
+                    if (summonedByScript.find(itr3) != summonedByScript.end())
+                        m_separateScriptGuids.insert(itr3);
                 }
             }
         }
@@ -325,7 +338,7 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
             auto script = std::make_shared<ScriptInfo>();
             script->command = SCRIPT_COMMAND_SUMMON_OBJECT;
             script->summonObject.gameobject_entry = ptr->GetSourceGuid().GetEntry();
-            script->summonObject.respawn_time = 60000;
+            script->summonObject.respawn_time = 60;
             script->x = ptr->m_location.x;
             script->y = ptr->m_location.y;
             script->z = ptr->m_location.z;
@@ -359,7 +372,9 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
             {
                 assert(spawnScript->second->command == SCRIPT_COMMAND_SUMMON_OBJECT);
                 assert(unixtimems > spawnScript->first);
-                spawnScript->second->summonObject.respawn_time = unixtimems - spawnScript->first;
+                
+                float respawnTimeSecs = ceilf(float(unixtimems - spawnScript->first) / float(IN_MILLISECONDS));
+                spawnScript->second->summonObject.respawn_time = (uint32)respawnTimeSecs;
             }
             else
             {
