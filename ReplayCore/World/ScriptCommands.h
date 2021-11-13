@@ -331,14 +331,7 @@ enum eScriptCommand
 #define MAX_TEXT_ID 4                                       // used for SCRIPT_COMMAND_TALK
 static constexpr uint32 MAX_EMOTE_ID = 4;                   // used for SCRIPT_COMMAND_EMOTE
 
-// Flags used by SCRIPT_COMMAND_MOVE_TO
-enum eMoveToFlags
-{
-    SF_MOVETO_FORCED        = 0x1,                          // No check if creature can move.
-    SF_MOVETO_POINT_MOVEGEN = 0x2,                          // Changes movement generator to point movement.
-};
-
-// Possible datalong3 values for SCRIPT_COMMAND_MOVE_TO
+// Possible datalong values for SCRIPT_COMMAND_MOVE_TO
 enum eMoveToCoordinateTypes
 {
     SO_MOVETO_COORDINATES_NORMAL               = 0,
@@ -347,6 +340,28 @@ enum eMoveToCoordinateTypes
     SO_MOVETO_COORDINATES_RANDOM_POINT         = 3,            // O is max distance from coordinates
 
     MOVETO_COORDINATES_MAX
+};
+
+// Possible datalong3 values for SCRIPT_COMMAND_MOVE_TO
+enum MoveOptions
+{
+    MOVE_NONE                = 0x000,
+    MOVE_PATHFINDING         = 0x001,
+    MOVE_WALK_MODE           = 0x002,
+    MOVE_RUN_MODE            = 0x004,
+    MOVE_FLY_MODE            = 0x008,
+    MOVE_CYCLIC              = 0x010,
+    MOVE_FALLING             = 0x020,
+    MOVE_FORCE_DESTINATION   = 0x040,
+    MOVE_EXCLUDE_STEEP_SLOPES= 0x080,
+    MOVE_STRAIGHT_PATH       = 0x100,
+};
+
+// Possible datalong4 values for SCRIPT_COMMAND_MOVE_TO
+enum eMoveToFlags
+{
+    SF_MOVETO_FORCED        = 0x1,                          // No check if creature can move.
+    SF_MOVETO_POINT_MOVEGEN = 0x2,                          // Changes movement generator to point movement.
 };
 
 // Possible datalong3 values for SCRIPT_COMMAND_MODIFY_FLAGS

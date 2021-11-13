@@ -1062,8 +1062,17 @@ namespace SniffBrowser
                 return;
             uint mainScriptId = UInt32.Parse(mainScriptIdStr);
 
+            string genericScriptIdStr = "50000";
+            if (Utility.ShowInputDialog(ref genericScriptIdStr, "Generic Script Id") != DialogResult.OK)
+                return;
+            uint genericScriptId = UInt32.Parse(genericScriptIdStr);
+
             string tableName = "generic_scripts";
             if (Utility.ShowInputDialog(ref tableName, "Table Name") != DialogResult.OK)
+                return;
+
+            string commentPrefix = "";
+            if (Utility.ShowInputDialog(ref commentPrefix, "Comment Prefix") != DialogResult.OK)
                 return;
 
             List<object> guidList = new List<object>();
@@ -1098,7 +1107,9 @@ namespace SniffBrowser
             ByteBuffer packet = new ByteBuffer();
             packet.WriteUInt8((byte)GUIOpcode.CMSG_MAKE_SCRIPT);
             packet.WriteUInt32(mainScriptId);
+            packet.WriteUInt32(genericScriptId);
             packet.WriteCString(tableName);
+            packet.WriteCString(commentPrefix);
             packet.WriteUInt64(sourceGuid.RawGuid);
             packet.WriteUInt64(targetGuid.RawGuid);
             packet.WriteUInt32((uint)lstEvents.SelectedItems.Count);

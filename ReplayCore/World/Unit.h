@@ -86,6 +86,8 @@ public :
     void SetVisFlags(uint8 visFlags);
     uint8 GetShapeShiftForm() const;
     void SetShapeShiftForm(uint8 shapeShiftForm);
+    bool GetPvP() const;
+    void SetPvP(bool enabled);
     uint32 GetNpcFlags() const;
     void SetNpcFlags(uint32 npcFlags);
     uint32 GetUnitFlags() const;

@@ -42,6 +42,7 @@ public:
     bool IsValidSpellId(uint32 id) const;
     uint8 GetMoveSpeedsCount() const;
     uint8 GetAuraSlotsCount() const;
+    uint8 GetPowersCount() const;
     uint32 GetTransportMoveFlag() const;
     uint32 ConvertMovementFlags(uint32 moveFlags, bool onTransport) const;
     uint32 ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const;

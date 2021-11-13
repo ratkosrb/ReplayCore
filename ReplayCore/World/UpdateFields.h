@@ -88,6 +88,7 @@ namespace UpdateFields
     uint16 GetUpdateFieldValue(std::string name, uint16 build);
     std::string GetUpdateFieldName(uint16 id, uint16 build);
     uint16 GetUpdateFieldFlags(uint8 objectTypeId, uint16 id, uint16 build);
+    UpdateFieldDefinition const* GetUpdateFieldDefinitionByName(std::string name, uint16 build);
 }
 
 #endif

@@ -25,6 +25,8 @@ public:
     void SetPlayerBytes2(uint32 bytes2);
     uint32 GetPlayerFlags() const;
     void SetPlayerFlags(uint32 flags);
+    uint8 GetComboPoints() const;
+    void SetComboPoints(uint8 points);
 
     uint8 GetSkinColor() const;
     uint8 GetFace() const;

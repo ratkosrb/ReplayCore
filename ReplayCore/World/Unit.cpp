@@ -48,14 +48,10 @@ Unit::Unit(CreatureData const& unitData) : WorldObject(unitData.guid)
 
 void Unit::InitializePlaceholderUnitFields()
 {
-    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1)
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1 &&
+        sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
         SetDebuffLimit(16);
 
-    SetUInt32Value("UNIT_FIELD_MAXPOWER2", 1000);
-    SetUInt32Value("UNIT_FIELD_MAXPOWER3", 100);
-    SetUInt32Value("UNIT_FIELD_MAXPOWER4", 100);
-    SetUInt32Value("UNIT_FIELD_MAXPOWER6", 8);
-    SetUInt32Value("UNIT_FIELD_MAXPOWER7", 1000);
     SetFloatValue("UNIT_FIELD_HOVERHEIGHT", 1.0f);
     SetUInt32Value("UNIT_FIELD_FLAGS_2", 2048);
     SetFloatValue("UNIT_MOD_CAST_SPEED", 1);
@@ -387,6 +383,32 @@ void Unit::SetShapeShiftForm(uint8 shapeShiftForm)
         SetByteValue("UNIT_FIELD_BYTES_1", 2, shapeShiftForm);
     else
         SetByteValue("UNIT_FIELD_BYTES_2", 3, shapeShiftForm);
+}
+
+bool Unit::GetPvP() const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return HasFlag("UNIT_FIELD_FLAGS", UNIT_FLAG_PVP);
+
+    return HasByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_PVP);
+}
+
+void Unit::SetPvP(bool enabled)
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        if (enabled)
+            SetFlag("UNIT_FIELD_FLAGS", UNIT_FLAG_PVP);
+        else
+            RemoveFlag("UNIT_FIELD_FLAGS", UNIT_FLAG_PVP);
+    }
+    else
+    {
+        if (enabled)
+            SetByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_PVP);
+        else
+            RemoveByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_PVP);
+    }
 }
 
 uint32 Unit::GetNpcFlags() const

@@ -973,3 +973,106 @@ bool CommandHandler::HandleMoveInfo()
 
     return true;
 }
+
+bool CommandHandler::HandleGetValue()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    Unit* pTarget = pPlayer->GetTarget();
+    if (!pTarget)
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    std::string fieldName;
+    if (!ExtractString(fieldName))
+        return false;
+    std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), ::toupper);
+
+    if (UpdateFieldDefinition const* pField = UpdateFields::GetUpdateFieldDefinitionByName(fieldName, sWorld.GetClientBuild()))
+    {
+        if ((pField->objectTypeMask & pTarget->GetTypeMask()) == 0)
+        {
+            SendSysMessage("Target does have that field.");
+            return true;
+        }
+        PSendSysMessage("Update field info for %s", pTarget->GetGuidStr().c_str());
+        ShowUpdateFieldHelper(pTarget, pField);
+    }
+    else
+        SendSysMessage("Wrong field name.");
+
+    return true;
+}
+
+void CommandHandler::ShowUpdateFieldHelper(Object const* pTarget, UpdateFieldDefinition const* pField)
+{
+    char const* fieldName = pField->name;
+
+    switch (pField->valueType)
+    {
+        case UF_TYPE_INT:
+            PSendSysMessage("%s: %u", fieldName, pTarget->GetUInt32Value(fieldName));
+            break;
+        case UF_TYPE_TWO_SHORT:
+            PSendSysMessage("%s: %u/%u", fieldName, pTarget->GetUInt16Value(fieldName, 0), pTarget->GetUInt16Value(fieldName, 1));
+            break;
+        case UF_TYPE_FLOAT:
+            PSendSysMessage("%s: %g", fieldName, pTarget->GetFloatValue(fieldName));
+            break;
+        case UF_TYPE_GUID:
+            PSendSysMessage("%s: %s", fieldName, pTarget->GetGuidValue(fieldName).GetString().c_str());
+            break;
+        case UF_TYPE_BYTES:
+        case UF_TYPE_BYTES2:
+            PSendSysMessage("%s: %u/%u/%u/%u", fieldName, pTarget->GetByteValue(fieldName, 0), pTarget->GetByteValue(fieldName, 1), pTarget->GetByteValue(fieldName, 2), pTarget->GetByteValue(fieldName, 3));
+            break;
+        default:
+            SendSysMessage("Unsupported field type.");
+            break;
+    }
+}
+
+bool CommandHandler::HandleSetValue()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    Unit* pTarget = pPlayer->GetTarget();
+    if (!pTarget)
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    std::string fieldName;
+    if (!ExtractString(fieldName))
+        return false;
+
+    uint32 value;
+    if (!ExtractUInt32(value))
+        return false;
+
+    std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), ::toupper);
+
+    if (uint16 uf = sWorld.GetUpdateField(fieldName))
+    {
+        pTarget->SetUInt32Value(fieldName.c_str(), value);
+        pTarget->SendDirectValueUpdate(uf);
+        PSendSysMessage("Field %s set to %u.", fieldName.c_str(), pTarget->GetUInt32Value(fieldName.c_str()));
+    }
+    else
+        SendSysMessage("No update field with that name.");
+
+    return true;
+}

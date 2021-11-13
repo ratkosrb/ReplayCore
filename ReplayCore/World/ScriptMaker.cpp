@@ -57,7 +57,7 @@ void ScriptMaker::SetScriptTargetParams(ScriptInfo& script, ObjectGuid target)
 
 #define UNKNOWN_TEXTS_START 200000
 
-void ScriptMaker::MakeScript(uint32 defaultScriptId, std::string tableName, ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList)
+void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList)
 {
     CheckGuidsThatNeedSeparateScript(defaultSource, defaultTarget, eventsList);
 
@@ -140,16 +140,16 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, std::string tableName, Obje
 
     if (!m_unknownScriptTexts.empty())
     {
-        log << "-- Following texts are using a placeholder id:\n";
+        log << "/*\nFollowing texts are using a placeholder id:\n";
         for (uint32 i = 0; i < m_unknownScriptTexts.size(); i++)
         {
             log << uint32(UNKNOWN_TEXTS_START + i + 1) << " - " << m_unknownScriptTexts[i] << "\n";
         }
-        log << "\n";
+        log << "*/\n";
     }
 
     std::vector<std::pair<ObjectGuid, uint32>> genericScriptsThatNeedStartScriptCommand;
-    uint32 currentGenericScriptId = 50000;
+    uint32 currentGenericScriptId = genericScriptStartId;
     for (auto const& itr : m_genericScripts)
     {
         uint32 delayOffset = 0;
@@ -168,7 +168,7 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, std::string tableName, Obje
             genericScriptsThatNeedStartScriptCommand.insert(genericScriptsThatNeedStartScriptCommand.begin(), std::make_pair(itr.first, currentGenericScriptId));
 
         log << "-- Generic script for " + itr.first.GetString(true) + "\n";
-        SaveScriptToFile(log, currentGenericScriptId, "generic_scripts", itr.second, delayOffset);
+        SaveScriptToFile(log, currentGenericScriptId, "generic_scripts", commentPrefix, itr.second, delayOffset);
         currentGenericScriptId++;
     }
 
@@ -187,17 +187,22 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, std::string tableName, Obje
     }
 
     log << "-- Main script\n";
-    SaveScriptToFile(log, defaultScriptId, tableName, m_mainScript, 0);
+    SaveScriptToFile(log, defaultScriptId, tableName, commentPrefix, m_mainScript, 0);
     printf("[ScriptMaker] Script saved to file.\n");
 }
 
-void ScriptMaker::SaveScriptToFile(std::ofstream& log, uint32 scriptId, std::string tableName, std::vector<std::shared_ptr<ScriptInfo>>const& vScripts, uint32 delayOffset)
+void ScriptMaker::SaveScriptToFile(std::ofstream& log, uint32 scriptId, std::string tableName, std::string commentPrefix, std::vector<std::shared_ptr<ScriptInfo>>const& vScripts, uint32 delayOffset)
 {
+    if (!commentPrefix.empty())
+        commentPrefix += ": ";
+
     uint32 count = 0;
     log << "DELETE FROM `" << tableName << "` WHERE `id`=" << scriptId << ";\n";
     log << "INSERT INTO `" << tableName << "` (`id`, `delay`, `command`, `datalong`, `datalong2`, `datalong3`, `datalong4`, `target_param1`, `target_param2`, `target_type`, `data_flags`, `dataint`, `dataint2`, `dataint3`, `dataint4`, `x`, `y`, `z`, `o`, `condition_id`, `comments`) VALUES\n";
     for (const auto& script : vScripts)
     {
+        std::string comment = commentPrefix + script->comment;
+
         if (count > 0)
             log << ",\n";
         log << "(" << scriptId << ", " << script->delay - delayOffset << ", " << script->command << ", "
@@ -205,7 +210,7 @@ void ScriptMaker::SaveScriptToFile(std::ofstream& log, uint32 scriptId, std::str
             << script->target_param1 << ", " << script->target_param2 << ", " << script->target_type << ", "
             << script->raw.data[4] << ", " << (int32)script->raw.data[5] << ", " << (int32)script->raw.data[6] << ", " << (int32)script->raw.data[7] << ", "
             << (int32)script->raw.data[8] << ", " << script->x << ", " << script->y << ", " << script->z << ", " << script->o << ", "
-            << script->condition << ", '" << EscapeString(script->comment) << "')";
+            << script->condition << ", '" << EscapeString(comment) << "')";
 
         count++;
     }
@@ -462,6 +467,9 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
             script->y = ptr->m_splines.rbegin()->y;
             script->z = ptr->m_splines.rbegin()->z;
 
+            if (ptr->m_splines.size() > 1)
+                script->moveTo.movementOptions = MOVE_PATHFINDING;
+
             if (ptr->m_finalOrientation != 100)
                 script->o = ptr->m_finalOrientation;
 
@@ -614,6 +622,8 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
         auto script = std::make_shared<ScriptInfo>();
         script->command = SCRIPT_COMMAND_CAST_SPELL;
         script->castSpell.spellId = ptr->m_spellId;
+        if (ptr->GetTargetGuid().IsEmpty())
+            script->raw.data[4] = SF_GENERAL_TARGET_SELF;
         script->comment = "Cast Spell " + sGameDataMgr.GetSpellName(ptr->m_spellId);
         scriptActions.push_back(script);
     }
@@ -622,6 +632,8 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
         auto script = std::make_shared<ScriptInfo>();
         script->command = SCRIPT_COMMAND_CAST_SPELL;
         script->castSpell.spellId = ptr->m_spellId;
+        if (ptr->GetTargetGuid().IsEmpty() && (ptr->m_hitTargets.empty() || (std::find(ptr->m_hitTargets.begin(), ptr->m_hitTargets.end(), ptr->GetSourceGuid()) != ptr->m_hitTargets.end())))
+            script->raw.data[4] = SF_GENERAL_TARGET_SELF;
         script->comment = "Cast Spell " + sGameDataMgr.GetSpellName(ptr->m_spellId);
         scriptActions.push_back(script);
     }

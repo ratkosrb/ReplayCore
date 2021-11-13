@@ -34,6 +34,7 @@ public:
 
     uint8 GetTypeId() const { return m_objectTypeId; }
     bool IsType(TypeMask mask) const { return (mask & m_objectTypeMask) != 0; }
+    uint8 GetTypeMask() const { return m_objectTypeMask; }
     virtual void Update() {};
 
     bool IsVisible() const { return m_isVisible; }
@@ -57,6 +58,8 @@ public:
     ObjectGuid const& GetObjectGuid() const { return m_guid; }
     uint32 GetGUIDLow() const { return GetObjectGuid().GetCounter(); }
     PackedGuid const& GetPackGUID() const { return m_packGuid; }
+    bool HasFlag(const char* index, uint32 flag) const;
+    bool HasByteFlag(const char* index, uint8 offset, uint8 flag) const;
 
     void SetInt32Value(const char* index, int32  value);
     void SetUInt32Value(const char* index, uint32  value);
@@ -67,6 +70,10 @@ public:
     void SetInt16Value(const char* index, uint8 offset, int16 value) { SetUInt16Value(index, offset, (uint16)value); }
     void SetGuidValue(const char* index, ObjectGuid const& value) { SetUInt64Value(index, value.GetRawValue()); }
     void SetObjectGuid(ObjectGuid const value) { SetUInt64Value(OBJECT_FIELD_GUID, value.GetRawValue()); m_packGuid.Set(value); }
+    void SetFlag(const char* index, uint32 newFlag);
+    void RemoveFlag(const char* index, uint32 oldFlag);
+    void SetByteFlag(const char* index, uint8 offset, uint8 newFlag);
+    void RemoveByteFlag(const char* index, uint8 offset, uint8 newFlag);
 
     uint32 GetEntry() const;
     void SetEntry(uint32 entry);
@@ -177,6 +184,10 @@ protected:
     void SetUInt16Value(uint16 index, uint8 offset, uint16 value);
     void SetInt16Value(uint16 index, uint8 offset, int16 value) { SetUInt16Value(index, offset, (uint16)value); }
     void SetGuidValue(uint16 index, ObjectGuid const& value) { SetUInt64Value(index, value.GetRawValue()); }
+    void SetFlag(uint16 index, uint32 newFlag);
+    void RemoveFlag(uint16 index, uint32 oldFlag);
+    void SetByteFlag(uint16 index, uint8 offset, uint8 newFlag);
+    void RemoveByteFlag(uint16 index, uint8 offset, uint8 newFlag);
     bool PrintIndexError(uint32 index, bool set) const;
 };
 

@@ -173,6 +173,16 @@ void Player::SetPlayerFlags(uint32 flags)
     SetUInt32Value("PLAYER_FLAGS", flags);
 }
 
+uint8 Player::GetComboPoints() const
+{
+    return GetByteValue("PLAYER_FIELD_BYTES", 1);
+}
+
+void Player::SetComboPoints(uint8 points)
+{
+    SetByteValue("PLAYER_FIELD_BYTES", 1, points);
+}
+
 uint8 Player::GetSkinColor() const
 {
     return GetPlayerBytes() & 0xFF;

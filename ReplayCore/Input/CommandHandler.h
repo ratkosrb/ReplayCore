@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+class Object;
+struct UpdateFieldDefinition;
+
 class CommandHandler;
 typedef bool(CommandHandler::*ChatCommandFunction) ();
 
@@ -59,8 +62,11 @@ public:
     bool HandleWaypointInfo();
     bool HandleDistance();
     bool HandleMoveInfo();
+    bool HandleGetValue();
+    void ShowUpdateFieldHelper(Object const* pTarget, UpdateFieldDefinition const* pField);
+    bool HandleSetValue();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[37] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[39] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -99,6 +105,8 @@ private:
         { "wpinfo", &CommandHandler::HandleWaypointInfo },
         { "distance", &CommandHandler::HandleDistance },
         { "moveinfo", &CommandHandler::HandleMoveInfo },
+        { "getvalue", &CommandHandler::HandleGetValue },
+        { "setvalue", &CommandHandler::HandleSetValue },
     };
 
     bool m_console = true;

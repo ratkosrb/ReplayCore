@@ -55,8 +55,8 @@ enum SniffedEventType : uint8
     SE_UNIT_UPDATE_DYNAMIC_FLAGS,
     SE_UNIT_UPDATE_CURRENT_HEALTH,
     SE_UNIT_UPDATE_MAX_HEALTH,
-    SE_UNIT_UPDATE_CURRENT_MANA,
-    SE_UNIT_UPDATE_MAX_MANA,
+    SE_UNIT_UPDATE_CURRENT_POWER,
+    SE_UNIT_UPDATE_MAX_POWER,
     SE_UNIT_UPDATE_BOUNDING_RADIUS,
     SE_UNIT_UPDATE_COMBAT_REACH,
     SE_UNIT_UPDATE_MAIN_HAND_ATTACK_TIME,
@@ -169,10 +169,10 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Unit Update Current Health";
         case SE_UNIT_UPDATE_MAX_HEALTH:
             return "Unit Update Max Health";
-        case SE_UNIT_UPDATE_CURRENT_MANA:
-            return "Unit Update Current Mana";
-        case SE_UNIT_UPDATE_MAX_MANA:
-            return "Unit Update Max Mana";
+        case SE_UNIT_UPDATE_CURRENT_POWER:
+            return "Unit Update Current Power";
+        case SE_UNIT_UPDATE_MAX_POWER:
+            return "Unit Update Max Power";
         case SE_UNIT_UPDATE_BOUNDING_RADIUS:
             return "Unit Update Bounding Radius";
         case SE_UNIT_UPDATE_COMBAT_REACH:
@@ -332,9 +332,9 @@ inline uint32 GetSniffedEventIcon(uint32 eventType)
             return 28;
         case SE_UNIT_UPDATE_MAX_HEALTH:
             return 28;
-        case SE_UNIT_UPDATE_CURRENT_MANA:
+        case SE_UNIT_UPDATE_CURRENT_POWER:
             return 29;
-        case SE_UNIT_UPDATE_MAX_MANA:
+        case SE_UNIT_UPDATE_MAX_POWER:
             return 29;
         case SE_UNIT_UPDATE_BOUNDING_RADIUS:
             return 30;
@@ -1094,18 +1094,20 @@ struct SniffedEvent_UnitUpdate_max_health : SniffedEventCRTP<SniffedEvent_UnitUp
     }
 };
 
-struct SniffedEvent_UnitUpdate_current_mana : SniffedEventCRTP<SniffedEvent_UnitUpdate_current_mana>
+struct SniffedEvent_UnitUpdate_current_power : SniffedEventCRTP<SniffedEvent_UnitUpdate_current_power>
 {
-    SniffedEvent_UnitUpdate_current_mana(ObjectGuid objectGuid, uint32 value) :
-        m_objectGuid(objectGuid), m_value(value) {};
+    SniffedEvent_UnitUpdate_current_power(ObjectGuid objectGuid, uint32 powerType, uint32 value) :
+        m_objectGuid(objectGuid), m_powerType(powerType), m_value(value) {};
     ObjectGuid m_objectGuid;
+    uint32 m_powerType = 0;
     uint32 m_value = 0;
     void Execute() const final;
+    void PepareForCurrentClient() final;
     std::string GetShortDescription() const final;
     std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
-        return SE_UNIT_UPDATE_CURRENT_MANA;
+        return SE_UNIT_UPDATE_CURRENT_POWER;
     }
     ObjectGuid GetSourceGuid() const final
     {
@@ -1113,18 +1115,20 @@ struct SniffedEvent_UnitUpdate_current_mana : SniffedEventCRTP<SniffedEvent_Unit
     }
 };
 
-struct SniffedEvent_UnitUpdate_max_mana : SniffedEventCRTP<SniffedEvent_UnitUpdate_max_mana>
+struct SniffedEvent_UnitUpdate_max_power : SniffedEventCRTP<SniffedEvent_UnitUpdate_max_power>
 {
-    SniffedEvent_UnitUpdate_max_mana(ObjectGuid objectGuid, uint32 value) :
-        m_objectGuid(objectGuid), m_value(value) {};
+    SniffedEvent_UnitUpdate_max_power(ObjectGuid objectGuid, uint32 powerType, uint32 value) :
+        m_objectGuid(objectGuid), m_powerType(powerType), m_value(value) {};
     ObjectGuid m_objectGuid;
+    uint32 m_powerType = 0;
     uint32 m_value = 0;
     void Execute() const final;
+    void PepareForCurrentClient() final;
     std::string GetShortDescription() const final;
     std::string GetLongDescription() const final;
     SniffedEventType GetType() const final
     {
-        return SE_UNIT_UPDATE_MAX_MANA;
+        return SE_UNIT_UPDATE_MAX_POWER;
     }
     ObjectGuid GetSourceGuid() const final
     {

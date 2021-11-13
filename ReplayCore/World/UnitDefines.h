@@ -142,10 +142,36 @@ enum Powers
     POWER_HAPPINESS                     = 4,            // UNIT_FIELD_POWER5
     POWER_RUNE                          = 5,            // UNIT_FIELD_POWER6
     POWER_RUNIC_POWER                   = 6,            // UNIT_FIELD_POWER7
+    POWER_COMBO_POINTS                  = 100,          // not real, so we know to set PLAYER_FIELD_BYTES,1
     POWER_HEALTH                        = 0xFFFFFFFE    // (-2 as signed value)
 };
 
-#define MAX_POWERS                        5                 // not count POWER_RUNES for now
+#define MAX_POWERS_VANILLA  5
+#define MAX_POWERS_WOTLK  7
+
+inline std::string PowerToString(uint32 value)
+{
+    switch (value)
+    {
+        case POWER_MANA:
+            return "Mana";
+        case POWER_RAGE:
+            return "Rage";
+        case POWER_FOCUS:
+            return "Focus";
+        case POWER_ENERGY:
+            return "Energy";
+        case POWER_HAPPINESS:
+            return "Happiness";
+        case POWER_RUNE:
+            return "Runes";
+        case POWER_RUNIC_POWER:
+            return "Runic Power";
+        case POWER_COMBO_POINTS:
+            return "Combo Points";
+    }
+    return "Power " + std::to_string(value);
+}
 
 enum VirtualItemSlot
 {
@@ -835,6 +861,50 @@ inline std::string VisFlagsToString(uint32 value)
             if (!flagNames.empty())
                 flagNames += " | ";
             flagNames += VisFlagToString(flag);
+        }
+    }
+    return flagNames;
+}
+
+enum UnitPVPStateFlags
+{
+    UNIT_BYTE2_FLAG_PVP         = 0x01,
+    UNIT_BYTE2_FLAG_UNK1        = 0x02,
+    UNIT_BYTE2_FLAG_FFA_PVP     = 0x04,
+    UNIT_BYTE2_FLAG_SANCTUARY   = 0x08,
+    UNIT_BYTE2_FLAG_AURAS       = 0x10,                     // show positive auras as positive, and allow its dispel
+    UNIT_BYTE2_FLAG_UNK5        = 0x20,                     // show negative auras as positive, *not* allowing dispel (at least for pets)
+    UNIT_BYTE2_FLAG_UNK6        = 0x40,
+    UNIT_BYTE2_FLAG_UNK7        = 0x80
+};
+
+inline std::string PvPFlagToString(uint32 value)
+{
+    switch (value)
+    {
+        case UNIT_BYTE2_FLAG_PVP:
+            return "UNIT_BYTE2_FLAG_PVP";
+        case UNIT_BYTE2_FLAG_FFA_PVP:
+            return "UNIT_BYTE2_FLAG_FFA_PVP";
+        case UNIT_BYTE2_FLAG_SANCTUARY:
+            return "UNIT_BYTE2_FLAG_SANCTUARY";
+        case UNIT_BYTE2_FLAG_AURAS:
+            return "UNIT_BYTE2_FLAG_AURAS";
+    }
+    return std::to_string(value);
+}
+
+inline std::string PVPFlagsToString(uint32 value)
+{
+    std::string flagNames;
+    for (uint32 i = 0; i < 32; i++)
+    {
+        uint32 flag = (uint32)pow(2, i);
+        if (value & flag)
+        {
+            if (!flagNames.empty())
+                flagNames += " | ";
+            flagNames += PvPFlagToString(flag);
         }
     }
     return flagNames;
@@ -1908,6 +1978,98 @@ namespace Classic
                 return "UNIT_NPC_FLAG_BLACK_MARKET";
         }
         return std::to_string(value);
+    }
+
+    // ChrClassesXPowerTypes.db2
+    inline uint8 GetPowerInSlotForClass(uint8 classId, uint8 powerIndex)
+    {
+        switch (classId)
+        {
+            case CLASS_WARRIOR:
+            {
+                switch (powerIndex)
+                {
+                    case 0:
+                        return POWER_RAGE;
+                    case 1:
+                        return POWER_COMBO_POINTS;
+                }
+            }
+            case CLASS_PALADIN:
+            {
+                switch (powerIndex)
+                {
+                    case 0:
+                        return POWER_MANA;
+                }
+            }
+            case CLASS_HUNTER:
+            {
+                switch (powerIndex)
+                {
+                    case 0:
+                        return POWER_MANA;
+                }
+            }
+            case CLASS_ROGUE:
+            {
+                switch (powerIndex)
+                {
+                    case 0:
+                        return POWER_ENERGY;
+                    case 1:
+                        return POWER_COMBO_POINTS;
+                }
+            }
+            case CLASS_PRIEST:
+            {
+                switch (powerIndex)
+                {
+                    case 0:
+                        return POWER_MANA;
+                }
+            }
+            case CLASS_SHAMAN:
+            {
+                switch (powerIndex)
+                {
+                    case 0:
+                        return POWER_MANA;
+                }
+            }
+            case CLASS_MAGE:
+            {
+                switch (powerIndex)
+                {
+                    case 0:
+                        return POWER_MANA;
+                }
+            }
+            case CLASS_WARLOCK:
+            {
+                switch (powerIndex)
+                {
+                    case 0:
+                        return POWER_MANA;
+                }
+            }
+            case CLASS_DRUID:
+            {
+                switch (powerIndex)
+                {
+                    case 0:
+                        return POWER_MANA;
+                    case 1:
+                        return POWER_RAGE;
+                    case 2:
+                        return POWER_ENERGY;
+                    case 3:
+                        return POWER_COMBO_POINTS;
+                }
+            }
+        }
+
+        return MAX_POWERS_WOTLK;
     }
 }
 

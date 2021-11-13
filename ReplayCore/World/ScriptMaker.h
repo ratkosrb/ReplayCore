@@ -11,14 +11,14 @@
 class ScriptMaker
 {
 public:
-    void MakeScript(uint32 defaultScriptId, std::string tableName, ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
+    void MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
 private:
     void CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
     uint32 GetCreatureFieldValueBeforeTime(uint32 guid, uint64 unixtimems, char const* fieldName);
     uint32 GetTemporaryIdForUnknownBroadcastText(std::string text);
     void GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_ptr<SniffedEvent> sniffedEvent, std::vector<std::shared_ptr<ScriptInfo>>& scriptActions);
     void SetScriptTargetParams(ScriptInfo& script, ObjectGuid target);
-    void SaveScriptToFile(std::ofstream& log, uint32 scriptId, std::string tableName, std::vector<std::shared_ptr<ScriptInfo>> const& vScripts, uint32 delayOffset);
+    void SaveScriptToFile(std::ofstream& log, uint32 scriptId, std::string tableName, std::string commentPrefix, std::vector<std::shared_ptr<ScriptInfo>> const& vScripts, uint32 delayOffset);
     std::pair<uint64 /*unixtimems*/, std::shared_ptr<ScriptInfo>>* GetSpawnScriptForGuid(ObjectGuid guid)
     {
         auto itr = m_spawnScripts.find(guid);

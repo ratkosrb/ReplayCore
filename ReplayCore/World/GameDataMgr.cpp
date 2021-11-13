@@ -132,10 +132,16 @@ uint8 GameDataMgr::GetAuraSlotsCount() const
         return MAX_AURA_SLOTS_VANILLA;
     else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
         return MAX_AURA_SLOTS_TBC;
-    else
-        return MAX_AURA_SLOTS;
 
-    return MAX_MOVE_TYPE_WOTLK;
+    return MAX_AURA_SLOTS;
+}
+
+uint8 GameDataMgr::GetPowersCount() const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return MAX_POWERS_VANILLA;
+
+    return MAX_POWERS_WOTLK;
 }
 
 uint32 GameDataMgr::GetTransportMoveFlag() const

@@ -34,6 +34,8 @@ struct ObjectData
 struct WorldObjectData : public ObjectData
 {
     WorldLocation location;
+    ObjectGuid transportGuid;
+    Position transportPosition;
 
     void InitializeWorldObject(WorldObject* pObject) const;
 
@@ -87,8 +89,8 @@ struct UnitData : public WorldObjectData
     ObjectGuid target;
     uint32 currentHealth = 1;
     uint32 maxHealth = 1;
-    uint32 currentPowers[MAX_POWERS] = {};
-    uint32 maxPowers[MAX_POWERS] = {};
+    uint32 currentPowers[MAX_POWERS_WOTLK] = {};
+    uint32 maxPowers[MAX_POWERS_WOTLK] = {};
     uint32 level = 1;
     uint32 faction = 35;
     uint8 raceId = 0;
@@ -148,6 +150,7 @@ struct PlayerData : public UnitData
     uint32 bytes1 = 0;
     uint32 bytes2 = 0;
     uint32 flags = 0;
+    uint8 comboPoints = 0;
     uint32 visibleItems[EQUIPMENT_SLOT_END] = {};
     uint32 visibleItemEnchants[EQUIPMENT_SLOT_END] = {};
 
@@ -189,6 +192,7 @@ public:
         LoadActivePlayers();
         LoadInitialWorldStates();
         LoadSniffedEvents();
+        AssignTransportDataToWorldObjects();
 
         if (m_eventsMapBackup.empty())
             EnterMassParseMode();
@@ -257,6 +261,9 @@ public:
     void LoadCreaturePetNames();
     template<class T>
     void LoadInitialGuidValues(const char* tableName, T& spawnsMap);
+    template<class T>
+    void LoadInitialPowerValues(const char* tableName, T& spawnsMap, TypeID typeId);
+    void AssignTransportDataToWorldObjects();
     CreatureData* GetCreatureSpawnData(uint32 guid)
     {
         auto itr = m_creatureSpawns.find(guid);
@@ -351,6 +358,8 @@ public:
     template <class T>
     void LoadObjectValuesUpdate_float(char const* tableName, char const* fieldName, uint32 typeId);
     void LoadUnitGuidValuesUpdate(char const* tableName, uint32 typeId);
+    template <class T>
+    void LoadUnitPowerValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId);
     void LoadUnitSpeedUpdate(char const* tableName, uint32 typeId);
     void LoadUnitAurasUpdate(char const* tableName, uint32 typeId);
     void LoadCreatureTextTemplate();

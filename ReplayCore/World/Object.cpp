@@ -140,6 +140,16 @@ uint16 Object::GetUInt16Value(const char* index, uint8 offset) const
     return 0;
 }
 
+bool Object::HasFlag(const char* index, uint32 flag) const
+{
+    return (GetUInt32Value(index) & flag) != 0;
+}
+
+bool Object::HasByteFlag(const char* index, uint8 offset, uint8 flag) const
+{
+    return (GetByteValue(index, offset) & flag) != 0;
+}
+
 void Object::SetInt32Value(const char* index, int32  value)
 {
     if (uint16 uf = sWorld.GetUpdateField(index))
@@ -176,6 +186,30 @@ void Object::SetUInt16Value(const char* index, uint8 offset, uint16 value)
         SetUInt16Value(uf, offset, value);
 }
 
+void Object::SetFlag(const char* index, uint32 newFlag)
+{
+    if (uint16 uf = sWorld.GetUpdateField(index))
+        SetFlag(uf, newFlag);
+}
+
+void Object::RemoveFlag(const char* index, uint32 oldFlag)
+{
+    if (uint16 uf = sWorld.GetUpdateField(index))
+        RemoveFlag(uf, oldFlag);
+}
+
+void Object::SetByteFlag(const char* index, uint8 offset, uint8 newFlag)
+{
+    if (uint16 uf = sWorld.GetUpdateField(index))
+        SetByteFlag(uf, offset, newFlag);
+}
+
+void Object::RemoveByteFlag(const char* index, uint8 offset, uint8 newFlag)
+{
+    if (uint16 uf = sWorld.GetUpdateField(index))
+        RemoveByteFlag(uf, offset, newFlag);
+}
+
 bool Object::PrintIndexError(uint32 index, bool set) const
 {
     printf("%s nonexistent value field: %u (count: %u) for object typeid: %u type mask: %u\n",
@@ -199,6 +233,9 @@ void Object::SetInt32Value(uint16 index, int32 value)
 void Object::SetUInt32Value(uint16 index, uint32 value)
 {
     assert(index < m_valuesCount || PrintIndexError(index, true));
+
+    if (value == 15696)
+        printf("Set in %u\n", index);
 
     if (m_uint32Values[index] != value)
     {
@@ -280,6 +317,66 @@ void Object::SetUInt16Value(uint16 index, uint8 offset, uint16 value)
         MarkForClientUpdate();
         m_uint32Values[index] &= ~uint32(uint32(0xFFFF) << (offset * 16));
         m_uint32Values[index] |= uint32(uint32(value) << (offset * 16));
+    }
+}
+
+void Object::SetFlag(uint16 index, uint32 newFlag)
+{
+    assert(index < m_valuesCount || PrintIndexError(index, true));
+    uint32 oldval = m_uint32Values[index];
+    uint32 newval = oldval | newFlag;
+
+    if (oldval != newval)
+    {
+        m_uint32Values[index] = newval;
+        MarkForClientUpdate();
+    }
+}
+
+void Object::RemoveFlag(uint16 index, uint32 oldFlag)
+{
+    assert(index < m_valuesCount || PrintIndexError(index, true));
+    uint32 oldval = m_uint32Values[index];
+    uint32 newval = oldval & ~oldFlag;
+
+    if (oldval != newval)
+    {
+        m_uint32Values[index] = newval;
+        MarkForClientUpdate();
+    }
+}
+
+void Object::SetByteFlag(uint16 index, uint8 offset, uint8 newFlag)
+{
+    assert(index < m_valuesCount || PrintIndexError(index, true));
+
+    if (offset > 4)
+    {
+        printf("Object::SetByteFlag: wrong offset %u\n", offset);
+        return;
+    }
+
+    if (!(uint8(m_uint32Values[index] >> (offset * 8)) & newFlag))
+    {
+        m_uint32Values[index] |= uint32(uint32(newFlag) << (offset * 8));
+        MarkForClientUpdate();
+    }
+}
+
+void Object::RemoveByteFlag(uint16 index, uint8 offset, uint8 oldFlag)
+{
+    assert(index < m_valuesCount || PrintIndexError(index, true));
+
+    if (offset > 4)
+    {
+        printf("Object::RemoveByteFlag: wrong offset %u\n", offset);
+        return;
+    }
+
+    if (uint8(m_uint32Values[index] >> (offset * 8)) & oldFlag)
+    {
+        m_uint32Values[index] &= ~uint32(uint32(oldFlag) << (offset * 8));
+        MarkForClientUpdate();
     }
 }
 

@@ -62,8 +62,8 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_dynamic_flags>("creature_values_update", "dynamic_flags", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_health>("creature_values_update", "max_health", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_health>("creature_values_update", "current_health", TYPEID_UNIT);
-    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_mana>("creature_values_update", "max_mana", TYPEID_UNIT);
-    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_mana>("creature_values_update", "current_mana", TYPEID_UNIT);
+    LoadUnitPowerValuesUpdate<SniffedEvent_UnitUpdate_max_power>("creature_power_values_update", "max_power", TYPEID_UNIT);
+    LoadUnitPowerValuesUpdate<SniffedEvent_UnitUpdate_current_power>("creature_power_values_update", "current_power", TYPEID_UNIT);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_bounding_radius>("creature_values_update", "bounding_radius", TYPEID_UNIT);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_combat_reach>("creature_values_update", "combat_reach", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_main_hand_attack_time>("creature_values_update", "main_hand_attack_time", TYPEID_UNIT);
@@ -90,8 +90,8 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_dynamic_flags>("player_values_update", "dynamic_flags", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_health>("player_values_update", "max_health", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_health>("player_values_update", "current_health", TYPEID_PLAYER);
-    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_mana>("player_values_update", "max_mana", TYPEID_PLAYER);
-    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_mana>("player_values_update", "current_mana", TYPEID_PLAYER);
+    LoadUnitPowerValuesUpdate<SniffedEvent_UnitUpdate_max_power>("player_power_values_update", "max_power", TYPEID_PLAYER);
+    LoadUnitPowerValuesUpdate<SniffedEvent_UnitUpdate_current_power>("player_power_values_update", "current_power", TYPEID_PLAYER);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_bounding_radius>("player_values_update", "bounding_radius", TYPEID_PLAYER);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_combat_reach>("player_values_update", "combat_reach", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_main_hand_attack_time>("player_values_update", "main_hand_attack_time", TYPEID_PLAYER);
@@ -1806,50 +1806,6 @@ std::string SniffedEvent_UnitUpdate_max_health::GetLongDescription() const
     return "Max Health: " + std::to_string(m_value);
 }
 
-void SniffedEvent_UnitUpdate_current_mana::Execute() const
-{
-    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
-    if (!pUnit)
-    {
-        printf("SniffedEvent_UnitUpdate_current_mana: Cannot find source unit!\n");
-        return;
-    }
-
-    pUnit->SetPower(POWER_MANA, m_value);
-}
-
-std::string SniffedEvent_UnitUpdate_current_mana::GetShortDescription() const
-{
-    return m_objectGuid.GetString(true) + " updates current_mana to " + std::to_string(m_value) + ".";
-}
-
-std::string SniffedEvent_UnitUpdate_current_mana::GetLongDescription() const
-{
-    return "Current Mana: " + std::to_string(m_value);
-}
-
-void SniffedEvent_UnitUpdate_max_mana::Execute() const
-{
-    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
-    if (!pUnit)
-    {
-        printf("SniffedEvent_UnitUpdate_max_mana: Cannot find source unit!\n");
-        return;
-    }
-
-    pUnit->SetMaxPower(POWER_MANA, m_value);
-}
-
-std::string SniffedEvent_UnitUpdate_max_mana::GetShortDescription() const
-{
-    return m_objectGuid.GetString(true) + " updates max_mana to " + std::to_string(m_value) + ".";
-}
-
-std::string SniffedEvent_UnitUpdate_max_mana::GetLongDescription() const
-{
-    return "Max Mana: " + std::to_string(m_value);
-}
-
 void SniffedEvent_UnitUpdate_bounding_radius::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
@@ -2183,6 +2139,116 @@ std::string SniffedEvent_UnitUpdate_guid_value::GetLongDescription() const
     return returnString;
 }
 
+template <class T>
+void ReplayMgr::LoadUnitPowerValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId)
+{
+    //                                             0             1       2             3
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `power_type`, `%s` FROM `%s` WHERE `%s` IS NOT NULL ORDER BY `unixtimems`", fieldName, tableName, fieldName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guid = fields[1].GetUInt32();
+            ObjectGuid objectGuid;
+            ObjectData const* pSpawnData = GetObjectSpawnData(guid, typeId);
+            if (pSpawnData)
+                objectGuid = pSpawnData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guid, tableName);
+                continue;
+            }
+
+            uint32 powerType = fields[2].GetUInt32();
+            uint32 powerValue = fields[3].GetUInt32();
+
+            // powers are per class in modern wow
+            if (sConfig.GetSniffVersion() == SNIFF_CLASSIC && typeId == TYPEID_PLAYER)
+            {
+                powerType = Classic::GetPowerInSlotForClass(static_cast<UnitData const*>(pSpawnData)->classId, powerType);
+
+                if (powerType == MAX_POWERS_WOTLK)
+                {
+                    printf("[ReplayMgr] Error: Unknown power for guid %u in table `%s`.\n", guid, tableName);
+                    continue;
+                }
+            }
+            
+            std::shared_ptr<T> newEvent = std::make_shared<T>(objectGuid, powerType, powerValue);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_UnitUpdate_current_power::PepareForCurrentClient()
+{
+    if (m_powerType >= sGameDataMgr.GetPowersCount())
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_current_power::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_current_power: Cannot find source unit!\n");
+        return;
+    }
+
+    if (m_powerType == POWER_COMBO_POINTS)
+    {
+        if (Player* pPlayer = pUnit->ToPlayer())
+            pPlayer->SetComboPoints(m_value);
+        return;
+    }
+
+    pUnit->SetPower(Powers(m_powerType), m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_current_power::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates current " + PowerToString(m_powerType) + " to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_current_power::GetLongDescription() const
+{
+    return "Current " + PowerToString(m_powerType) + ": " + std::to_string(m_value);
+}
+
+void SniffedEvent_UnitUpdate_max_power::PepareForCurrentClient()
+{
+    if (m_powerType >= sGameDataMgr.GetPowersCount())
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_max_power::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_max_power: Cannot find source unit!\n");
+        return;
+    }
+
+    if (m_powerType == POWER_COMBO_POINTS)
+        return;
+
+    pUnit->SetMaxPower(Powers(m_powerType), m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_max_power::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates max " + PowerToString(m_powerType) + " to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_UnitUpdate_max_power::GetLongDescription() const
+{
+    return "Max " + PowerToString(m_powerType) + ": " + std::to_string(m_value);
+}
+
 void ReplayMgr::LoadUnitSpeedUpdate(char const* tableName, uint32 typeId)
 {
     //                                             0             1       2             3
@@ -2315,8 +2381,8 @@ void SniffedEvent_UnitUpdate_auras::PepareForCurrentClient()
     if (m_aura.spellId && !sGameDataMgr.IsValidSpellId(m_aura.spellId))
         m_disabled = true;
 
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2 && m_slot > MAX_AURA_SLOTS_VANILLA)
-        return;
+    if (m_slot > sGameDataMgr.GetAuraSlotsCount())
+        m_disabled = true;
 
     m_aura.auraFlags = sGameDataMgr.ConvertAuraFlags(m_aura.auraFlags, m_aura.activeFlags, m_slot);
 }

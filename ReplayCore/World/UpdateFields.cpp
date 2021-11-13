@@ -1243,6 +1243,20 @@ void UpdateFields::SetupUpdateFieldFlagsVector(uint8 objectTypeMask, std::vector
     }
 }
 
+std::vector<UpdateFieldDefinition>* GetUpdateFieldDefinitionsForBuild(uint16 build)
+{
+    switch (build)
+    {
+        case 5875:
+            return &UpdateFields::g_updateFieldDefinitions5875;
+        case 8606:
+            return &UpdateFields::g_updateFieldDefinitions8606;
+        case 12340:
+            return &UpdateFields::g_updateFieldDefinitions12340;
+    }
+    return nullptr;
+}
+
 std::map<std::string, uint16>* UpdateFields::GetUpdateFieldsMapForBuild(uint16 build)
 {
     switch (build)
@@ -1386,4 +1400,18 @@ uint16 UpdateFields::GetUpdateFieldFlags(uint8 objectTypeId, uint16 id, uint16 b
         }
     }
     return 0;
+}
+
+UpdateFieldDefinition const* UpdateFields::GetUpdateFieldDefinitionByName(std::string name, uint16 build)
+{
+    auto definitions = GetUpdateFieldDefinitionsForBuild(build);
+    if (definitions)
+    {
+        for (const auto& itr : *definitions)
+        {
+            if (name == itr.name)
+                return &itr;
+        }
+    }
+    return nullptr;
 }

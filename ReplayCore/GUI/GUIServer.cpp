@@ -287,8 +287,12 @@ void GUIServer::HandleMakeScript(ByteBuffer& buffer)
 {
     uint32 mainScriptId;
     buffer >> mainScriptId;
+    uint32 genericScriptId;
+    buffer >> genericScriptId;
     std::string tableName;
     buffer >> tableName;
+    std::string commentPrefix;
+    buffer >> commentPrefix;
     ObjectGuid sourceGuid;
     buffer >> sourceGuid;
     ObjectGuid targetGuid;
@@ -314,5 +318,5 @@ void GUIServer::HandleMakeScript(ByteBuffer& buffer)
     }
 
     ScriptMaker scriptMaker;
-    scriptMaker.MakeScript(mainScriptId, tableName, sourceGuid, targetGuid, eventsList);
+    scriptMaker.MakeScript(mainScriptId, genericScriptId, tableName, commentPrefix, sourceGuid, targetGuid, eventsList);
 }
