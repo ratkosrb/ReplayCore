@@ -7,7 +7,7 @@
 
 uint32 MoveSpline::m_maxId = 0;
 
-void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, bool isCyclic, bool isCatmullrom)
+void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, int8 transportSeat, bool isCyclic, bool isCatmullrom)
 {
     m_id = m_maxId++;
     m_startTimeMs = sReplayMgr.GetCurrentSniffTimeMs();
@@ -20,6 +20,7 @@ void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8
     if (m_destinationPoints.empty() && m_type != SPLINE_TYPE_STOP)
         m_destinationPoints.push_back(startPosition);
     m_transportGuid = transportGuid;
+    m_transportSeat = transportSeat;
     m_cyclic = isCyclic;
     m_catmullrom = isCatmullrom;
     m_initialized = true;

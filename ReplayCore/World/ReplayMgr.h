@@ -139,6 +139,7 @@ struct CreatureData : public UnitData
     uint32 movementType = 0;
     bool isTemporary = false;
     bool isPet = false;
+    bool isVehicle = false;
     bool isHovering = false;
 
     void InitializeCreature(Unit* pUnit) const;

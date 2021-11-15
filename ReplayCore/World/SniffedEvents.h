@@ -48,6 +48,7 @@ enum SniffedEventType : uint8
     SE_UNIT_UPDATE_STAND_STATE,
     SE_UNIT_UPDATE_VIS_FLAGS,
     SE_UNIT_UPDATE_SHEATH_STATE,
+    SE_UNIT_UPDATE_PVP_FLAGS,
     SE_UNIT_UPDATE_SHAPESHIFT_FORM,
     SE_UNIT_UPDATE_NPC_FLAGS,
     SE_UNIT_UPDATE_UNIT_FLAGS,
@@ -55,6 +56,7 @@ enum SniffedEventType : uint8
     SE_UNIT_UPDATE_DYNAMIC_FLAGS,
     SE_UNIT_UPDATE_CURRENT_HEALTH,
     SE_UNIT_UPDATE_MAX_HEALTH,
+    SE_UNIT_UPDATE_POWER_TYPE,
     SE_UNIT_UPDATE_CURRENT_POWER,
     SE_UNIT_UPDATE_MAX_POWER,
     SE_UNIT_UPDATE_BOUNDING_RADIUS,
@@ -77,6 +79,7 @@ enum SniffedEventType : uint8
     SE_GAMEOBJECT_UPDATE_FLAGS,
     SE_GAMEOBJECT_UPDATE_STATE,
     SE_GAMEOBJECT_UPDATE_ARTKIT,
+    SE_GAMEOBJECT_UPDATE_ANIMPROGRESS,
     SE_GAMEOBJECT_UPDATE_DYNAMIC_FLAGS,
     SE_GAMEOBJECT_UPDATE_PATH_PROGRESS,
     SE_PLAY_MUSIC,
@@ -155,6 +158,8 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Unit Update Vis Flags";
         case SE_UNIT_UPDATE_SHEATH_STATE:
             return "Unit Update Sheath State";
+        case SE_UNIT_UPDATE_PVP_FLAGS:
+            return "Unit Update PvP Flags";
         case SE_UNIT_UPDATE_SHAPESHIFT_FORM:
             return "Unit Update Shapeshift Form";
         case SE_UNIT_UPDATE_NPC_FLAGS:
@@ -169,6 +174,8 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Unit Update Current Health";
         case SE_UNIT_UPDATE_MAX_HEALTH:
             return "Unit Update Max Health";
+        case SE_UNIT_UPDATE_POWER_TYPE:
+            return "Unit Update Power Type";
         case SE_UNIT_UPDATE_CURRENT_POWER:
             return "Unit Update Current Power";
         case SE_UNIT_UPDATE_MAX_POWER:
@@ -212,7 +219,9 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
         case SE_GAMEOBJECT_UPDATE_STATE:
             return "GameObject Update State";
         case SE_GAMEOBJECT_UPDATE_ARTKIT:
-            return "GameObject Update ArtKit";
+            return "GameObject Update Art Kit";
+        case SE_GAMEOBJECT_UPDATE_ANIMPROGRESS:
+            return "GameObject Update Anim Progress";
         case SE_GAMEOBJECT_UPDATE_DYNAMIC_FLAGS:
             return "GameObject Update Dynamic Flags";
         case SE_GAMEOBJECT_UPDATE_PATH_PROGRESS:
@@ -549,8 +558,8 @@ struct SniffedEvent_GameObjectCreate : SniffedEvent_WorldObjectCreate_Base<Sniff
 
 struct SniffedEvent_UnitCreate : SniffedEvent_WorldObjectCreate_Base<SniffedEvent_UnitCreate>
 {
-    SniffedEvent_UnitCreate(ObjectGuid objectGuid, bool isSpawn, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation) :
-        SniffedEvent_WorldObjectCreate_Base(objectGuid, isSpawn, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(moveFlags2), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
+    SniffedEvent_UnitCreate(ObjectGuid objectGuid, bool isSpawn, uint32 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation, uint32 vehicleId, float vehicleOrientation, uint32 transportTime, int8 transportSeat) :
+        SniffedEvent_WorldObjectCreate_Base(objectGuid, isSpawn, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(moveFlags2), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation), m_vehicleId(vehicleId), m_vehicleOrientation(vehicleOrientation), m_transportTime(transportTime), m_transportSeat(transportSeat) {};
     uint32 m_moveTime = 0;
     uint32 m_moveFlags = 0;
     uint32 m_moveFlags2 = 0;
@@ -558,6 +567,10 @@ struct SniffedEvent_UnitCreate : SniffedEvent_WorldObjectCreate_Base<SniffedEven
     uint32 m_fallTime = 0;
     JumpInfo m_jumpInfo;
     float m_splineElevation = 0;
+    uint32 m_vehicleId = 0;
+    float m_vehicleOrientation = 0.0f;
+    uint32 m_transportTime = 0;
+    int8 m_transportSeat = 0;
     void Execute() const final;
     void PepareForCurrentClient() final;
 };
@@ -684,8 +697,8 @@ struct SniffedEvent_UnitEmote : SniffedEventCRTP<SniffedEvent_UnitEmote>
 
 struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSideMovement>
 {
-    SniffedEvent_ClientSideMovement(ObjectGuid moverGuid, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, uint16 mapId, float x, float y, float z, float o, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation) :
-        m_moverGuid(moverGuid), m_opcodeName(opcodeName), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(moveFlags2), m_location(mapId, x, y, z, o), m_transportGuid(transportGuid), m_transportPosition(transportX, transportY, transportZ, transportO), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation) {};
+    SniffedEvent_ClientSideMovement(ObjectGuid moverGuid, std::string opcodeName, uint32 moveTime, uint32 moveFlags, uint32 moveFlags2, uint16 mapId, float x, float y, float z, float o, float swimPitch, uint32 fallTime, float jumpSpeedXY, float jumpSpeedZ, float jumpCosAngle, float jumpSinAngle, float splineElevation, ObjectGuid transportGuid, float transportX, float transportY, float transportZ, float transportO, uint32 transportTime, int8 transportSeat) :
+        m_moverGuid(moverGuid), m_opcodeName(opcodeName), m_moveTime(moveTime), m_moveFlags(moveFlags), m_moveFlags2(moveFlags2), m_location(mapId, x, y, z, o), m_swimPitch(swimPitch), m_fallTime(fallTime), m_jumpInfo(jumpSpeedZ, jumpCosAngle, jumpSinAngle, jumpSpeedXY), m_splineElevation(splineElevation), m_transportGuid(transportGuid), m_transportPosition(transportX, transportY, transportZ, transportO), m_transportTime(transportTime), m_transportSeat(transportSeat) {};
 
     ObjectGuid m_moverGuid;
     uint32 m_opcode = 0;
@@ -694,12 +707,14 @@ struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSid
     uint32 m_moveFlags = 0;
     uint32 m_moveFlags2 = 0;
     WorldLocation m_location;
-    ObjectGuid m_transportGuid;
-    Position m_transportPosition;
     float m_swimPitch = 0;
     uint32 m_fallTime = 0;
     JumpInfo m_jumpInfo;
     float m_splineElevation = 0;
+    ObjectGuid m_transportGuid;
+    Position m_transportPosition;
+    uint32 m_transportTime = 0;
+    int8 m_transportSeat = 0;
     void Execute() const final;
     std::string GetShortDescription() const final;
     std::string GetLongDescription() const final;
@@ -715,8 +730,8 @@ struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSid
 
 struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSideMovement>
 {
-    SniffedEvent_ServerSideMovement(ObjectGuid moverGuid, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines, ObjectGuid transportGuid) :
-        m_moverGuid(moverGuid), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines), m_transportGuid(transportGuid) {};
+    SniffedEvent_ServerSideMovement(ObjectGuid moverGuid, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines, ObjectGuid transportGuid, int8 transportSeat) :
+        m_moverGuid(moverGuid), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines), m_transportGuid(transportGuid), m_transportSeat(transportSeat) {};
     
     ObjectGuid m_moverGuid;
     Vector3 m_startPosition;
@@ -726,6 +741,7 @@ struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSid
     float m_finalOrientation = 0.0f;
     std::vector<Vector3> const m_splines;
     ObjectGuid m_transportGuid;
+    int8 m_transportSeat = 0;
     bool m_cyclic = false;
     bool m_catmullrom = false;
     void Execute() const final;
@@ -959,6 +975,25 @@ struct SniffedEvent_UnitUpdate_sheath_state : SniffedEventCRTP<SniffedEvent_Unit
     }
 };
 
+struct SniffedEvent_UnitUpdate_pvp_flags : SniffedEventCRTP<SniffedEvent_UnitUpdate_pvp_flags>
+{
+    SniffedEvent_UnitUpdate_pvp_flags(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
+    uint32 m_value = 0;
+    void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_PVP_FLAGS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_objectGuid;
+    }
+};
+
 struct SniffedEvent_UnitUpdate_shapeshift_form : SniffedEventCRTP<SniffedEvent_UnitUpdate_shapeshift_form>
 {
     SniffedEvent_UnitUpdate_shapeshift_form(ObjectGuid objectGuid, uint32 value) :
@@ -1087,6 +1122,26 @@ struct SniffedEvent_UnitUpdate_max_health : SniffedEventCRTP<SniffedEvent_UnitUp
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_MAX_HEALTH;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_objectGuid;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_power_type : SniffedEventCRTP<SniffedEvent_UnitUpdate_power_type>
+{
+    SniffedEvent_UnitUpdate_power_type(ObjectGuid objectGuid, uint32 powerType) :
+        m_objectGuid(objectGuid), m_powerType(powerType) {};
+    ObjectGuid m_objectGuid;
+    uint32 m_powerType = 0;
+    void Execute() const final;
+    void PepareForCurrentClient() final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_POWER_TYPE;
     }
     ObjectGuid GetSourceGuid() const final
     {
@@ -1533,6 +1588,25 @@ struct SniffedEvent_GameObjectUpdate_artkit : SniffedEventCRTP<SniffedEvent_Game
     SniffedEventType GetType() const final
     {
         return SE_GAMEOBJECT_UPDATE_ARTKIT;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_objectGuid;
+    }
+};
+
+struct SniffedEvent_GameObjectUpdate_animprogress : SniffedEventCRTP<SniffedEvent_GameObjectUpdate_animprogress>
+{
+    SniffedEvent_GameObjectUpdate_animprogress(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
+    uint32 m_value = 0;
+    void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_GAMEOBJECT_UPDATE_ANIMPROGRESS;
     }
     ObjectGuid GetSourceGuid() const final
     {

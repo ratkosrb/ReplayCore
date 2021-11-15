@@ -43,7 +43,11 @@ Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : U
     memcpy(m_uint32Values, otherPlayer.m_uint32Values, sizeof(uint32) * m_valuesCount);
     SetGuidValue(OBJECT_FIELD_GUID, guid);
     SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
+
+    // change some fields
     SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", 0);
+    SetHealth(GetMaxHealth());
+    RemoveFlag("PLAYER_FLAGS", PLAYER_FLAGS_GHOST);
 }
 
 static std::vector<std::pair<uint32, uint32>> const g_playerSkills =

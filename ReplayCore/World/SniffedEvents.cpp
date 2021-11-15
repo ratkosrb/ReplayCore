@@ -55,6 +55,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_stand_state>("creature_values_update", "stand_state", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_vis_flags>("creature_values_update", "vis_flags", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_sheath_state>("creature_values_update", "sheath_state", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_pvp_flags>("creature_values_update", "pvp_flags", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_shapeshift_form>("creature_values_update", "shapeshift_form", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_npc_flags>("creature_values_update", "npc_flags", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_unit_flags>("creature_values_update", "unit_flags", TYPEID_UNIT);
@@ -62,6 +63,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_dynamic_flags>("creature_values_update", "dynamic_flags", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_health>("creature_values_update", "max_health", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_health>("creature_values_update", "current_health", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_power_type>("creature_values_update", "power_type", TYPEID_UNIT);
     LoadUnitPowerValuesUpdate<SniffedEvent_UnitUpdate_max_power>("creature_power_values_update", "max_power", TYPEID_UNIT);
     LoadUnitPowerValuesUpdate<SniffedEvent_UnitUpdate_current_power>("creature_power_values_update", "current_power", TYPEID_UNIT);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_bounding_radius>("creature_values_update", "bounding_radius", TYPEID_UNIT);
@@ -83,6 +85,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_stand_state>("player_values_update", "stand_state", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_vis_flags>("player_values_update", "vis_flags", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_sheath_state>("player_values_update", "sheath_state", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_pvp_flags>("player_values_update", "pvp_flags", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_shapeshift_form>("player_values_update", "shapeshift_form", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_npc_flags>("player_values_update", "npc_flags", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_unit_flags>("player_values_update", "unit_flags", TYPEID_PLAYER);
@@ -90,6 +93,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_dynamic_flags>("player_values_update", "dynamic_flags", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_max_health>("player_values_update", "max_health", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_current_health>("player_values_update", "current_health", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_power_type>("player_values_update", "power_type", TYPEID_PLAYER);
     LoadUnitPowerValuesUpdate<SniffedEvent_UnitUpdate_max_power>("player_power_values_update", "max_power", TYPEID_PLAYER);
     LoadUnitPowerValuesUpdate<SniffedEvent_UnitUpdate_current_power>("player_power_values_update", "current_power", TYPEID_PLAYER);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_bounding_radius>("player_values_update", "bounding_radius", TYPEID_PLAYER);
@@ -112,7 +116,8 @@ void ReplayMgr::LoadSniffedEvents()
     LoadGameObjectDespawnAnim();
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_flags>("gameobject_values_update", "flags", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_state>("gameobject_values_update", "state", TYPEID_GAMEOBJECT);
-    LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_artkit>("gameobject_values_update", "artkit", TYPEID_GAMEOBJECT);
+    LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_artkit>("gameobject_values_update", "art_kit", TYPEID_GAMEOBJECT);
+    LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_animprogress>("gameobject_values_update", "anim_progress", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_dynamic_flags>("gameobject_values_update", "dynamic_flags", TYPEID_GAMEOBJECT);
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_path_progress>("gameobject_values_update", "path_progress", TYPEID_GAMEOBJECT);
     LoadPlayMusic();
@@ -453,8 +458,8 @@ std::string SniffedEvent_WorldStateUpdate::GetLongDescription() const
 
 void ReplayMgr::LoadWorldObjectCreate(char const* tableName, uint32 typeId, bool isSpawn)
 {
-    //                                             0             1       2      3             4             5             6              7                 8              9              10             11
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `transport_guid`, `transport_x`, `transport_y`, `transport_z`, `transport_o` FROM `%s` ORDER BY `unixtimems`", tableName))
+    //                                             0             1       2      3             4             5             6              7                 8              9                 10             11             12             13
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `transport_guid`, `transport_id`,`transport_type`, `transport_x`, `transport_y`, `transport_z`, `transport_o` FROM `%s` ORDER BY `unixtimems`", tableName))
     {
         do
         {
@@ -480,18 +485,14 @@ void ReplayMgr::LoadWorldObjectCreate(char const* tableName, uint32 typeId, bool
             ObjectGuid transportGuid;
             if (uint32 transportGuidLow = fields[7].GetUInt32())
             {
-                if (ObjectData const* pData = GetObjectSpawnData(transportGuidLow, TYPEID_GAMEOBJECT))
-                    transportGuid = pData->guid;
-                else
-                {
-                    printf("[ReplayMgr] Error: Unknown transport guid %u in table `%s`.\n", transportGuidLow, tableName);
-                    continue;
-                }
+                uint32 transportId = fields[8].GetUInt32();
+                std::string transportType = fields[9].GetCppString();
+                transportGuid = MakeObjectGuidFromSniffData(transportGuidLow, transportId, transportType);
             }
-            float transportX = fields[8].GetFloat();
-            float transportY = fields[9].GetFloat();
-            float transportZ = fields[10].GetFloat();
-            float transportO = fields[11].GetFloat();
+            float transportX = fields[10].GetFloat();
+            float transportY = fields[11].GetFloat();
+            float transportZ = fields[12].GetFloat();
+            float transportO = fields[13].GetFloat();
 
             std::shared_ptr<SniffedEvent_WorldObjectCreate> newEvent = std::make_shared<SniffedEvent_WorldObjectCreate>(sourceGuid, isSpawn, mapId, position_x, position_y, position_z, orientation, transportGuid, transportX, transportY, transportZ, transportO);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
@@ -550,8 +551,8 @@ std::string SniffedEvent_WorldObjectCreate_Base<T>::GetLongDescription() const
 
 void ReplayMgr::LoadGameObjectCreate(char const* tableName, uint32 typeId, bool isSpawn)
 {
-    //                                             0             1       2      3             4             5             6              7                 8              9              10             11             12
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `transport_guid`, `transport_x`, `transport_y`, `transport_z`, `transport_o`, `transport_path_timer` FROM `%s` ORDER BY `unixtimems`", tableName))
+    //                                             0             1       2      3             4             5             6              7                 8               9                 10             11             12             13             14
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `transport_guid`, `transport_id`, `transport_type`, `transport_x`, `transport_y`, `transport_z`, `transport_o`, `transport_path_timer` FROM `%s` ORDER BY `unixtimems`", tableName))
     {
         do
         {
@@ -577,20 +578,16 @@ void ReplayMgr::LoadGameObjectCreate(char const* tableName, uint32 typeId, bool 
             ObjectGuid transportGuid;
             if (uint32 transportGuidLow = fields[7].GetUInt32())
             {
-                if (ObjectData const* pData = GetObjectSpawnData(transportGuidLow, TYPEID_GAMEOBJECT))
-                    transportGuid = pData->guid;
-                else
-                {
-                    printf("[ReplayMgr] Error: Unknown transport guid %u in table `%s`.\n", transportGuidLow, tableName);
-                    continue;
-                }
+                uint32 transportId = fields[8].GetUInt32();
+                std::string transportType = fields[9].GetCppString();
+                transportGuid = MakeObjectGuidFromSniffData(transportGuidLow, transportId, transportType);
             }
-            float transportX = fields[8].GetFloat();
-            float transportY = fields[9].GetFloat();
-            float transportZ = fields[10].GetFloat();
-            float transportO = fields[11].GetFloat();
+            float transportX = fields[10].GetFloat();
+            float transportY = fields[11].GetFloat();
+            float transportZ = fields[12].GetFloat();
+            float transportO = fields[13].GetFloat();
 
-            uint32 transportPathTimer = fields[12].GetUInt32();
+            uint32 transportPathTimer = fields[14].GetUInt32();
 
             std::shared_ptr<SniffedEvent_GameObjectCreate> newEvent = std::make_shared<SniffedEvent_GameObjectCreate>(sourceGuid, isSpawn, mapId, position_x, position_y, position_z, orientation, transportGuid, transportX, transportY, transportZ, transportO, transportPathTimer);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
@@ -614,8 +611,8 @@ void SniffedEvent_GameObjectCreate::Execute() const
 
 void ReplayMgr::LoadUnitCreate(char const* tableName, uint32 typeId, bool isSpawn)
 {
-    //                                             0             1       2      3             4             5             6              7                 8              9              10             11             12           13            14             15            16           17                       18                     19                20                21
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `transport_guid`, `transport_x`, `transport_y`, `transport_z`, `transport_o`, `move_time`, `move_flags`, `move_flags2`, `swim_pitch`, `fall_time`, `jump_horizontal_speed`, `jump_vertical_speed`, `jump_cos_angle`, `jump_sin_angle`, `spline_elevation` FROM `%s` ORDER BY `unixtimems`", tableName))
+    //                                             0             1       2      3             4             5             6              7            8             9              10            11           12                       13                     14                15                16                  17            18                     19                20              21                22             23             24             25             26                27
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `move_time`, `move_flags`, `move_flags2`, `swim_pitch`, `fall_time`, `jump_horizontal_speed`, `jump_vertical_speed`, `jump_cos_angle`, `jump_sin_angle`, `spline_elevation`, `vehicle_id`, `vehicle_orientation`, `transport_guid`, `transport_id`, `transport_type`, `transport_x`, `transport_y`, `transport_z`, `transport_o`, `transport_time`, `transport_seat` FROM `%s` ORDER BY `unixtimems`", tableName))
     {
         do
         {
@@ -637,35 +634,34 @@ void ReplayMgr::LoadUnitCreate(char const* tableName, uint32 typeId, bool isSpaw
             float position_y = fields[4].GetFloat();
             float position_z = fields[5].GetFloat();
             float orientation = fields[6].GetFloat();
+            uint32 moveTime = fields[7].GetUInt32();
+            uint32 moveFlags = fields[8].GetUInt32();
+            uint32 moveFlags2 = fields[9].GetUInt32();
+            float swimPitch = fields[10].GetFloat();
+            uint32 fallTime = fields[11].GetUInt32();
+            float jumpSpeedXY = fields[12].GetFloat();
+            float jumpSpeedZ = fields[13].GetFloat();
+            float jumpCosAngle = fields[14].GetFloat();
+            float jumpSinAngle = fields[15].GetFloat();
+            float splineElevation = fields[16].GetFloat();
+            uint32 vehicleId = fields[17].GetUInt32();
+            float vehicleOrientation = fields[18].GetFloat();
 
             ObjectGuid transportGuid;
-            if (uint32 transportGuidLow = fields[7].GetUInt32())
+            if (uint32 transportGuidLow = fields[19].GetUInt32())
             {
-                if (ObjectData const* pData = GetObjectSpawnData(transportGuidLow, TYPEID_GAMEOBJECT))
-                    transportGuid = pData->guid;
-                else
-                {
-                    printf("[ReplayMgr] Error: Unknown transport guid %u in table `%s`.\n", transportGuidLow, tableName);
-                    continue;
-                }
+                uint32 transportId = fields[20].GetUInt32();
+                std::string transportType = fields[21].GetCppString();
+                transportGuid = MakeObjectGuidFromSniffData(transportGuidLow, transportId, transportType);
             }
-            float transportX = fields[8].GetFloat();
-            float transportY = fields[9].GetFloat();
-            float transportZ = fields[10].GetFloat();
-            float transportO = fields[11].GetFloat();
+            float transportX = fields[22].GetFloat();
+            float transportY = fields[23].GetFloat();
+            float transportZ = fields[24].GetFloat();
+            float transportO = fields[25].GetFloat();
+            uint32 transportTime = fields[26].GetUInt32();
+            int8 transportSeat = fields[27].GetInt8();
 
-            uint32 moveTime = fields[12].GetUInt32();
-            uint32 moveFlags = fields[13].GetUInt32();
-            uint32 moveFlags2 = fields[14].GetUInt32();
-            float swimPitch = fields[15].GetFloat();
-            uint32 fallTime = fields[16].GetUInt32();
-            float jumpSpeedXY = fields[17].GetFloat();
-            float jumpSpeedZ = fields[18].GetFloat();
-            float jumpCosAngle = fields[19].GetFloat();
-            float jumpSinAngle = fields[20].GetFloat();
-            float splineElevation = fields[21].GetFloat();
-
-            std::shared_ptr<SniffedEvent_UnitCreate> newEvent = std::make_shared<SniffedEvent_UnitCreate>(sourceGuid, isSpawn, mapId, position_x, position_y, position_z, orientation, transportGuid, transportX, transportY, transportZ, transportO, moveTime, moveFlags, moveFlags2, swimPitch, fallTime, jumpSpeedXY, jumpSpeedZ, jumpCosAngle, jumpSinAngle, splineElevation);
+            std::shared_ptr<SniffedEvent_UnitCreate> newEvent = std::make_shared<SniffedEvent_UnitCreate>(sourceGuid, isSpawn, mapId, position_x, position_y, position_z, orientation, transportGuid, transportX, transportY, transportZ, transportO, moveTime, moveFlags, moveFlags2, swimPitch, fallTime, jumpSpeedXY, jumpSpeedZ, jumpCosAngle, jumpSinAngle, splineElevation, vehicleId, vehicleOrientation, transportTime, transportSeat);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());
@@ -691,10 +687,14 @@ void SniffedEvent_UnitCreate::Execute() const
     pUnit->GetMovementInfo().UpdateTime(m_moveTime);
     pUnit->GetMovementInfo().t_guid = m_transportGuid;
     pUnit->GetMovementInfo().t_pos = m_transportPosition;
+    pUnit->GetMovementInfo().t_time = m_transportTime;
+    pUnit->GetMovementInfo().t_seat = m_transportSeat;
     pUnit->GetMovementInfo().s_pitch = m_swimPitch;
     pUnit->GetMovementInfo().fallTime = m_fallTime;
     pUnit->GetMovementInfo().jump = m_jumpInfo;
     pUnit->GetMovementInfo().splineElevation = m_splineElevation;
+    pUnit->m_vehicleId = m_vehicleId;
+    pUnit->m_vehicleOrientation = m_vehicleOrientation;
     SniffedEvent_WorldObjectCreate_Base::Execute();
 }
 
@@ -998,8 +998,8 @@ std::string SniffedEvent_UnitEmote::GetLongDescription() const
 
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
 {
-    //                                                               0             1       2         3            4             5              6      7             8             9             10             11                12             13             14             15             16            17           18                       19                     20                21                22
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `move_flags2`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `transport_guid`, `transport_x`, `transport_y`, `transport_z`, `transport_o`, `swim_pitch`, `fall_time`, `jump_horizontal_speed`, `jump_vertical_speed`, `jump_cos_angle`, `jump_sin_angle`, `spline_elevation` FROM `%s` ORDER BY `packet_id` ASC", tableName));
+    //                                                               0             1       2         3            4             5              6      7             8             9             10             11            12           13                       14                     15                16                17                  18                19              20                21             22             23             24             25                26
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `move_flags2`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `swim_pitch`, `fall_time`, `jump_horizontal_speed`, `jump_vertical_speed`, `jump_cos_angle`, `jump_sin_angle`, `spline_elevation`, `transport_guid`, `transport_id`, `transport_type`, `transport_x`, `transport_y`, `transport_z`, `transport_o`, `transport_time`, `transport_seat` FROM `%s` ORDER BY `packet_id` ASC", tableName));
     if (!result)
         return;
 
@@ -1027,32 +1027,29 @@ void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
         float y = fields[8].GetFloat();
         float z = fields[9].GetFloat();
         float o = fields[10].GetFloat();
+        float swimPitch = fields[11].GetFloat();
+        uint32 fallTime = fields[12].GetUInt32();
+        float jumpSpeedXY = fields[13].GetFloat();
+        float jumpSpeedZ = fields[14].GetFloat();
+        float jumpCosAngle = fields[15].GetFloat();
+        float jumpSinAngle = fields[16].GetFloat();
+        float splineElevation = fields[17].GetFloat();
 
         ObjectGuid transportGuid;
-        if (uint32 transportGuidLow = fields[11].GetUInt32())
+        if (uint32 transportGuidLow = fields[18].GetUInt32())
         {
-            if (ObjectData const* pData = GetObjectSpawnData(transportGuidLow, TYPEID_GAMEOBJECT))
-                transportGuid = pData->guid;
-            else
-            {
-                printf("[ReplayMgr] Error: Unknown transport guid %u in table `%s`.\n", transportGuidLow, tableName);
-                continue;
-            }
+            uint32 transportId = fields[19].GetUInt32();
+            std::string transportType = fields[20].GetCppString();
+            transportGuid = MakeObjectGuidFromSniffData(transportGuidLow, transportId, transportType);
         }
-        float transportX = fields[12].GetFloat();
-        float transportY = fields[13].GetFloat();
-        float transportZ = fields[14].GetFloat();
-        float transportO = fields[15].GetFloat();
+        float transportX = fields[21].GetFloat();
+        float transportY = fields[22].GetFloat();
+        float transportZ = fields[23].GetFloat();
+        float transportO = fields[24].GetFloat();
+        uint32 transportTime = fields[25].GetUInt32();
+        int8 transportSeat = fields[26].GetInt8();
 
-        float swimPitch = fields[16].GetFloat();
-        uint32 fallTime = fields[17].GetUInt32();
-        float jumpSpeedXY = fields[18].GetFloat();
-        float jumpSpeedZ = fields[19].GetFloat();
-        float jumpCosAngle = fields[20].GetFloat();
-        float jumpSinAngle = fields[21].GetFloat();
-        float splineElevation = fields[22].GetFloat();
-
-        std::shared_ptr<SniffedEvent_ClientSideMovement> newEvent = std::make_shared<SniffedEvent_ClientSideMovement>(sourceGuid, opcodeName, moveTime, moveFlags, moveFlags2, mapId, x, y, z, o, transportGuid, transportX, transportY, transportZ, transportO, swimPitch, fallTime, jumpSpeedXY, jumpSpeedZ, jumpCosAngle, jumpSinAngle, splineElevation);
+        std::shared_ptr<SniffedEvent_ClientSideMovement> newEvent = std::make_shared<SniffedEvent_ClientSideMovement>(sourceGuid, opcodeName, moveTime, moveFlags, moveFlags2, mapId, x, y, z, o, swimPitch, fallTime, jumpSpeedXY, jumpSpeedZ, jumpCosAngle, jumpSinAngle, splineElevation, transportGuid, transportX, transportY, transportZ, transportO, transportTime, transportSeat);
         m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
     } while (result->NextRow());
@@ -1074,6 +1071,8 @@ void SniffedEvent_ClientSideMovement::Execute() const
     pUnit->SetUnitMovementFlags2(m_moveFlags2);
     pUnit->GetMovementInfo().UpdateTime(m_moveTime);
     pUnit->GetMovementInfo().t_guid = m_transportGuid;
+    pUnit->GetMovementInfo().t_time = m_transportTime;
+    pUnit->GetMovementInfo().t_seat = m_transportSeat;
     pUnit->GetMovementInfo().t_pos = m_transportPosition;
     pUnit->GetMovementInfo().s_pitch = m_swimPitch;
     pUnit->GetMovementInfo().fallTime = m_fallTime;
@@ -1110,6 +1109,8 @@ std::string SniffedEvent_ClientSideMovement::GetLongDescription() const
     {
         returnString += "Transport Guid: " + m_transportGuid.GetString(true) + "\r\n";
         returnString += "Transport Position: " + std::to_string(m_transportPosition.x) + " " + std::to_string(m_transportPosition.y) + " " + std::to_string(m_transportPosition.z) + " " + std::to_string(m_transportPosition.o) + "\r\n";
+        returnString += "Transport Time: " + std::to_string(m_transportTime) + "\r\n";
+        returnString += "Transport Seat: " + std::to_string(m_transportSeat) + "\r\n";
     }
     if (m_swimPitch)
         returnString += "Swim Pitch: " + std::to_string(m_swimPitch) + "\r\n";
@@ -1152,8 +1153,8 @@ void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap&
 
 void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap)
 {
-    //                                             0             1       2        3            4               5               6                   7                   8                   9                 10                11                12             13
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation`, `transport_guid` FROM `%s` ORDER BY `unixtimems`, `point`", tableName))
+    //                                             0             1       2        3            4               5               6                   7                   8                   9                 10                11                12             13                14              15                16
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation`, `transport_guid`, `transport_id`, `transport_type`, `transport_seat` FROM `%s` ORDER BY `unixtimems`, `point`", tableName))
     {
         do
         {
@@ -1187,14 +1188,11 @@ void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, Spl
             ObjectGuid transportGuid;
             if (uint32 transportGuidLow = fields[13].GetUInt32())
             {
-                if (ObjectData const* pData = GetObjectSpawnData(transportGuidLow, TYPEID_GAMEOBJECT))
-                    transportGuid = pData->guid;
-                else
-                {
-                    printf("[ReplayMgr] Error: Unknown transport guid %u in table `%s`.\n", transportGuidLow, tableName);
-                    continue;
-                }
+                uint32 transportId = fields[14].GetUInt32();
+                std::string transportType = fields[15].GetCppString();
+                transportGuid = MakeObjectGuidFromSniffData(transportGuidLow, transportId, transportType);
             }
+            int8 transportSeat = fields[16].GetInt8();
 
             std::vector<Vector3> const* pSplines = nullptr;
             if (splineCount > 1)
@@ -1210,13 +1208,13 @@ void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, Spl
 
             std::shared_ptr<SniffedEvent_ServerSideMovement> newEvent;
             if (pSplines)
-                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, *pSplines, transportGuid);
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, *pSplines, transportGuid, transportSeat);
             else
             {
                 std::vector<Vector3> points;
                 if (splineCount)
                     points.push_back(endPosition);
-                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, points, transportGuid);
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, points, transportGuid, transportSeat);
             }
 
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
@@ -1242,13 +1240,15 @@ void SniffedEvent_ServerSideMovement::Execute() const
         pUnit->Relocate(m_startPosition.x, m_startPosition.y, m_startPosition.z);
     else
     {
-        pUnit->GetMovementInfo().t_guid = m_transportGuid;
         pUnit->GetMovementInfo().t_pos.x = m_startPosition.x;
         pUnit->GetMovementInfo().t_pos.y = m_startPosition.y;
         pUnit->GetMovementInfo().t_pos.z = m_startPosition.z;
     }
+
+    pUnit->GetMovementInfo().t_guid = m_transportGuid;
+    pUnit->GetMovementInfo().t_seat = m_transportSeat;
     pUnit->SetLastPositionUpdate(sReplayMgr.GetCurrentSniffTime());
-    pUnit->m_moveSpline.Initialize(m_startPosition, m_moveTime, m_splineType, m_splineFlags, m_finalOrientation, m_splines, m_transportGuid, m_cyclic, m_catmullrom);
+    pUnit->m_moveSpline.Initialize(m_startPosition, m_moveTime, m_splineType, m_splineFlags, m_finalOrientation, m_splines, m_transportGuid, m_transportSeat, m_cyclic, m_catmullrom);
 
     if (sReplayMgr.IsPlaying())
     {
@@ -1282,7 +1282,10 @@ std::string SniffedEvent_ServerSideMovement::GetLongDescription() const
     returnString += "Move Time: " + std::to_string(m_moveTime) + "\r\n";
     returnString += "Spline Flags: " + std::to_string(m_splineFlags) + " (" + sGameDataMgr.SplineFlagsToString(m_splineFlags) + ")\r\n";
     if (!m_transportGuid.IsEmpty())
+    {
         returnString += "Transport Guid: " + m_transportGuid.GetString(true) + "\r\n";
+        returnString += "Transport Seat: " + std::to_string(m_transportSeat) + "\r\n";
+    }
     returnString += "Waypoints Count: " + std::to_string(m_splines.size()) + "\r\n";
     for (uint32 i = 0; i < m_splines.size(); i++)
     {
@@ -1641,6 +1644,28 @@ std::string SniffedEvent_UnitUpdate_sheath_state::GetLongDescription() const
     return "Sheath State: " + SheathStateToString(m_value) + " (" + std::to_string(m_value) + ")";
 }
 
+void SniffedEvent_UnitUpdate_pvp_flags::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_pvp_flags: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetPvPFlags(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_pvp_flags::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates pvp_flags to " + PVPFlagsToString(m_value) + " (" + std::to_string(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_pvp_flags::GetLongDescription() const
+{
+    return "PvP Flags: " + PVPFlagsToString(m_value) + " (" + std::to_string(m_value) + ")";
+}
+
 void SniffedEvent_UnitUpdate_shapeshift_form::PepareForCurrentClient()
 {
     if (m_value >= MAX_SHAPESHIFT_FORM)
@@ -1804,6 +1829,34 @@ std::string SniffedEvent_UnitUpdate_max_health::GetShortDescription() const
 std::string SniffedEvent_UnitUpdate_max_health::GetLongDescription() const
 {
     return "Max Health: " + std::to_string(m_value);
+}
+
+void SniffedEvent_UnitUpdate_power_type::PepareForCurrentClient()
+{
+    if (m_powerType >= sGameDataMgr.GetPowersCount())
+        m_disabled = true;
+}
+
+void SniffedEvent_UnitUpdate_power_type::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_power_type: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetPowerType(m_powerType);
+}
+
+std::string SniffedEvent_UnitUpdate_power_type::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates power_type to " + PowerToString(m_powerType) + "(" + std::to_string(m_powerType) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_power_type::GetLongDescription() const
+{
+    return  "Power Type: " + PowerToString(m_powerType) + "(" + std::to_string(m_powerType) + ")";
 }
 
 void SniffedEvent_UnitUpdate_bounding_radius::Execute() const
@@ -1995,6 +2048,28 @@ std::string SniffedEvent_GameObjectUpdate_artkit::GetShortDescription() const
 std::string SniffedEvent_GameObjectUpdate_artkit::GetLongDescription() const
 {
     return "Art Kit: " + std::to_string(m_value);
+}
+
+void SniffedEvent_GameObjectUpdate_animprogress::Execute() const
+{
+    GameObject* pGo = sWorld.FindGameObject(GetSourceGuid());
+    if (!pGo)
+    {
+        printf("SniffedEvent_GameObjectUpdate_animprogress: Cannot find source unit!\n");
+        return;
+    }
+
+    pGo->SetAnimProgress(m_value);
+}
+
+std::string SniffedEvent_GameObjectUpdate_animprogress::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates animprogress to " + std::to_string(m_value) + ".";
+}
+
+std::string SniffedEvent_GameObjectUpdate_animprogress::GetLongDescription() const
+{
+    return "Anim Progress: " + std::to_string(m_value);
 }
 
 void SniffedEvent_GameObjectUpdate_dynamic_flags::Execute() const
@@ -3357,7 +3432,7 @@ void ReplayMgr::LoadSpellCastStart()
             ObjectGuid casterGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
             if (casterGuid.IsEmpty())
             {
-                printf("[ReplayMgr] Error: Unknown guid %u in table `spell_cast_start`.\n", casterGuidLow);
+                printf("[ReplayMgr] Error: Unknown guid %s (Entry: %u Guid: %u) in table `spell_cast_start`.\n", casterType.c_str(), casterId, casterGuidLow);
                 continue;
             }
 
@@ -3509,7 +3584,7 @@ void ReplayMgr::LoadSpellCastGo()
             ObjectGuid casterGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
             if (casterGuid.IsEmpty())
             {
-                printf("[ReplayMgr] Error: Unknown guid %u in table `spell_cast_go`.\n", casterGuidLow);
+                printf("[ReplayMgr] Error: Unknown guid %s (Entry: %u Guid: %u) in table `spell_cast_go`.\n", casterType.c_str(), casterId, casterGuidLow);
                 continue;
             }
 

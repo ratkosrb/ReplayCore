@@ -328,8 +328,8 @@ void Object::SetFlag(uint16 index, uint32 newFlag)
 
     if (oldval != newval)
     {
-        m_uint32Values[index] = newval;
         MarkForClientUpdate();
+        m_uint32Values[index] = newval;
     }
 }
 
@@ -341,8 +341,8 @@ void Object::RemoveFlag(uint16 index, uint32 oldFlag)
 
     if (oldval != newval)
     {
-        m_uint32Values[index] = newval;
         MarkForClientUpdate();
+        m_uint32Values[index] = newval;
     }
 }
 
@@ -358,8 +358,8 @@ void Object::SetByteFlag(uint16 index, uint8 offset, uint8 newFlag)
 
     if (!(uint8(m_uint32Values[index] >> (offset * 8)) & newFlag))
     {
-        m_uint32Values[index] |= uint32(uint32(newFlag) << (offset * 8));
         MarkForClientUpdate();
+        m_uint32Values[index] |= uint32(uint32(newFlag) << (offset * 8));
     }
 }
 
@@ -375,8 +375,8 @@ void Object::RemoveByteFlag(uint16 index, uint8 offset, uint8 oldFlag)
 
     if (uint8(m_uint32Values[index] >> (offset * 8)) & oldFlag)
     {
-        m_uint32Values[index] &= ~uint32(uint32(oldFlag) << (offset * 8));
         MarkForClientUpdate();
+        m_uint32Values[index] &= ~uint32(uint32(oldFlag) << (offset * 8));
     }
 }
 
@@ -543,6 +543,10 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
 
     if (IsTransport())
         updateFlags |= UPDATEFLAG_TRANSPORT;
+
+    if (Unit const* pUnit = ToUnit())
+        if (pUnit->m_vehicleId)
+            updateFlags |= UPDATEFLAG_VEHICLE;
 
     if (m_isNewObject)
     {
@@ -782,8 +786,8 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
     // 0x80
     if (updateFlags & UPDATEFLAG_VEHICLE)
     {
-        *data << uint32(0); // vehicle id
-        *data << float(((WorldObject*)this)->GetOrientation());
+        *data << uint32(((Unit*)this)->m_vehicleId);
+        *data << float(((Unit*)this)->m_vehicleOrientation);
     }
 
     // 0x200

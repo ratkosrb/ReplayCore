@@ -385,7 +385,7 @@ void Unit::SetShapeShiftForm(uint8 shapeShiftForm)
         SetByteValue("UNIT_FIELD_BYTES_2", 3, shapeShiftForm);
 }
 
-bool Unit::GetPvP() const
+bool Unit::IsPvP() const
 {
     if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
         return HasFlag("UNIT_FIELD_FLAGS", UNIT_FLAG_PVP);
@@ -409,6 +409,77 @@ void Unit::SetPvP(bool enabled)
         else
             RemoveByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_PVP);
     }
+}
+
+bool Unit::IsFFA() const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return IsPlayer() ? HasFlag("PLAYER_FLAGS", PLAYER_FLAGS_FFA_PVP) : false;
+
+    return HasByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_FFA_PVP);
+}
+
+void Unit::SetFFA(bool enabled)
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        if (!IsPlayer())
+            return;
+
+        if (enabled)
+            SetFlag("PLAYER_FLAGS", PLAYER_FLAGS_FFA_PVP);
+        else
+            RemoveFlag("PLAYER_FLAGS", PLAYER_FLAGS_FFA_PVP);
+    }
+    else
+    {
+        if (enabled)
+            SetByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_FFA_PVP);
+        else
+            RemoveByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_FFA_PVP);
+    }
+}
+
+bool Unit::IsSanctuary() const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        return IsPlayer() ? HasFlag("PLAYER_FLAGS", PLAYER_FLAGS_SANCTUARY) : false;
+
+    return HasByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_SANCTUARY);
+}
+
+void Unit::SetSanctuary(bool enabled)
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        if (!IsPlayer())
+            return;
+
+        if (enabled)
+            SetFlag("PLAYER_FLAGS", PLAYER_FLAGS_SANCTUARY);
+        else
+            RemoveFlag("PLAYER_FLAGS", PLAYER_FLAGS_SANCTUARY);
+    }
+    else
+    {
+        if (enabled)
+            SetByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_SANCTUARY);
+        else
+            RemoveByteFlag("UNIT_FIELD_BYTES_2", 1, UNIT_BYTE2_FLAG_SANCTUARY);
+    }
+}
+
+void Unit::SetPvPFlags(uint8 flags)
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        SetPvP(flags & UNIT_BYTE2_FLAG_PVP);
+        SetFFA(flags & UNIT_BYTE2_FLAG_FFA_PVP);
+        SetSanctuary(flags & UNIT_BYTE2_FLAG_SANCTUARY);
+        return;
+    }
+
+    SetByteValue("UNIT_FIELD_BYTES_2", 1, flags);
 }
 
 uint32 Unit::GetNpcFlags() const

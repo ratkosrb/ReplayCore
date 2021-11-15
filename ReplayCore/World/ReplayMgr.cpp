@@ -76,10 +76,13 @@ void GameObjectData::InitializeGameObject(GameObject* pGo) const
     
     pGo->SetLevel(level);
     pGo->SetArtKit(artKit);
-    pGo->SetAnimProgress(animProgress);
 
-    //if (pGo->GetType() == GAMEOBJECT_TYPE_MO_TRANSPORT)
-    //    pGo->SetObjectGuid(ObjectGuid(HIGHGUID_MO_TRANSPORT, 0, guid.GetEntry()));
+    if (sConfig.GetSniffVersion() == SNIFF_VANILLA ||
+        sConfig.GetSniffVersion() == SNIFF_TBC ||
+        sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        pGo->SetAnimProgress(animProgress);
+    else
+        pGo->SetAnimProgress(100);
 }
 
 void DynamicObjectData::InitializeDynamicObject(DynamicObject* pDynObject) const
@@ -175,6 +178,10 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     pUnit->SetUnitFlags2(unitFlags2);
     pUnit->SetDynamicFlags(dynamicFlags);
 
+    if (sConfig.GetSniffVersion() != SNIFF_VANILLA &&
+        sConfig.GetSniffVersion() != SNIFF_TBC)
+        pUnit->SetPvPFlags(pvpFlags);
+
     if (sGameDataMgr.IsValidSpellId(channelSpell))
         pUnit->SetChannelSpell(channelSpell);
 
@@ -222,6 +229,10 @@ void PlayerData::InitializePlayer(Player* pPlayer) const
     pPlayer->SetPlayerBytes2(bytes2);
     pPlayer->SetPlayerFlags(flags);
     pPlayer->SetComboPoints(comboPoints);
+
+    if (sConfig.GetSniffVersion() != SNIFF_VANILLA &&
+        sConfig.GetSniffVersion() != SNIFF_TBC)
+        pPlayer->SetPvPFlags(pvpFlags); // needs to be done again
 
     for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
         pPlayer->SetVisibleItemSlot(i, visibleItems[i], visibleItemEnchants[i]);
@@ -287,9 +298,13 @@ ObjectGuid ReplayMgr::MakeObjectGuidFromSniffData(uint32 guid, uint32 entry, std
     else if (type == "Creature" || type == "Unit")
         return ObjectGuid(HIGHGUID_UNIT, entry, guid);
     else if (type == "Pet")
-        return ObjectGuid(HIGHGUID_PET, guid, guid);
+        return ObjectGuid(HIGHGUID_PET, entry, guid);
+    else if (type == "Vehicle")
+        return ObjectGuid(HIGHGUID_VEHICLE, entry, guid);
     else if (type == "GameObject")
         return ObjectGuid(HIGHGUID_GAMEOBJECT, entry, guid);
+    else if (type == "Transport")
+        return ObjectGuid(HIGHGUID_TRANSPORT, entry, guid);
 
     return ObjectGuid();
 }
@@ -406,12 +421,12 @@ std::map<uint32, uint32> ReplayMgr::GetInitialWorldStatesForCurrentTime()
 void ReplayMgr::LoadGameObjects()
 {
     printf("[ReplayMgr] Loading gameobject spawns...\n");
-    //                                                               0       1     2      3             4             5             6
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, "
-    //    7            8            9            10           11              12              13            14              15
-        "`rotation0`, `rotation1`, `rotation2`, `rotation3`, `is_temporary`, `creator_guid`, `creator_id`, `creator_type`, `display_id`, "
-    //    16       17         18       19               20               21       22      23        24
-        "`level`, `faction`, `flags`, `dynamic_flags`, `path_progress`, `state`, `type`, `artkit`, `sniff_id` FROM `gameobject`"));
+    //                                                               0       1              2     3      4             5             6             7
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, "
+    //    8            9            10           11           12              13              14              15            16
+        "`rotation0`, `rotation1`, `rotation2`, `rotation3`, `is_transport`, `is_temporary`, `creator_guid`, `creator_id`, `creator_type`, "
+    //    17            18       19         20       21               22               23       24      25         26               27
+        "`display_id`, `level`, `faction`, `flags`, `dynamic_flags`, `path_progress`, `state`, `type`, `art_kit`, `anim_progress`, `sniff_id` FROM `gameobject`"));
 
     if (!result)
     {
@@ -423,18 +438,20 @@ void ReplayMgr::LoadGameObjects()
     {
         DbField* fields = result->fetchCurrentRow();
 
-        uint32 guid = fields[0].GetUInt32();
-        uint32 entry = fields[1].GetUInt32();
+        uint32 guidCounter = fields[0].GetUInt32();
+        uint32 guidEntry = fields[1].GetUInt32();
+        uint32 entry = fields[2].GetUInt32();
 
         GameObjectTemplate const* gInfo = sGameDataMgr.GetGameObjectTemplate(entry);
         if (!gInfo)
         {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u) with non existing gameobject entry %u, skipped.\n", guid, entry);
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u) with non existing gameobject entry %u, skipped.\n", guidCounter, entry);
             //continue;
         }
 
-        GameObjectData& data = m_gameObjectSpawns[guid];
-        ObjectGuid objectGuid = ObjectGuid(HIGHGUID_GAMEOBJECT, entry, guid);
+        GameObjectData& data = m_gameObjectSpawns[guidCounter];
+        HighGuid highGuid = fields[12].GetUInt32() ? HIGHGUID_TRANSPORT : HIGHGUID_GAMEOBJECT;
+        ObjectGuid objectGuid = ObjectGuid(highGuid, guidEntry, guidCounter);
 
         data.guid = objectGuid;
         data.entry = entry;
@@ -442,81 +459,75 @@ void ReplayMgr::LoadGameObjects()
         if (gInfo)
             data.scale = gInfo->scale;
 
-        data.location.mapId = fields[2].GetUInt32();
-        data.location.x = fields[3].GetFloat();
-        data.location.y = fields[4].GetFloat();
-        data.location.z = fields[5].GetFloat();
-        data.location.o = fields[6].GetFloat();
+        data.location.mapId = fields[3].GetUInt32();
+        data.location.x = fields[4].GetFloat();
+        data.location.y = fields[5].GetFloat();
+        data.location.z = fields[6].GetFloat();
+        data.location.o = fields[7].GetFloat();
 
-        data.rotation[0] = fields[7].GetFloat();
+        data.rotation[0] = fields[8].GetFloat();
         if (data.rotation[0] < -1.0f || data.rotation[0] > 1.0f)
         {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation0 (%f) value.\n", guid, entry, data.rotation[0]);
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation0 (%f) value.\n", guidCounter, entry, data.rotation[0]);
             data.rotation[0] = 0.0f;
         }
 
-        data.rotation[1] = fields[8].GetFloat();
+        data.rotation[1] = fields[9].GetFloat();
         if (data.rotation[1] < -1.0f || data.rotation[1] > 1.0f)
         {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation1 (%f) value.\n", guid, entry, data.rotation[1]);
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation1 (%f) value.\n", guidCounter, entry, data.rotation[1]);
             data.rotation[1] = 0.0f;
         }
 
-        data.rotation[2] = fields[9].GetFloat();
+        data.rotation[2] = fields[10].GetFloat();
         if (data.rotation[2] < -1.0f || data.rotation[2] > 1.0f)
         {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation2 (%f) value.\n", guid, entry, data.rotation[2]);
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation2 (%f) value.\n", guidCounter, entry, data.rotation[2]);
             data.rotation[2] = 0.0f;
         }
 
-        data.rotation[3] = fields[10].GetFloat();
+        data.rotation[3] = fields[11].GetFloat();
         if (data.rotation[3] < -1.0f || data.rotation[3] > 1.0f)
         {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation3 (%f) value.\n", guid, entry, data.rotation[3]);
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid rotation3 (%f) value.\n", guidCounter, entry, data.rotation[3]);
             data.rotation[3] = 0.0f;
         }
 
-        data.isTemporary = fields[11].GetBool();
-        uint32 creatorGuid = fields[12].GetUInt32();
-        uint32 creatorId = fields[13].GetUInt32();
-        std::string creatorType = fields[14].GetCppString();
+        data.isTemporary = fields[13].GetBool();
+        uint32 creatorGuid = fields[14].GetUInt32();
+        uint32 creatorId = fields[15].GetUInt32();
+        std::string creatorType = fields[16].GetCppString();
         data.createdBy = MakeObjectGuidFromSniffData(creatorGuid, creatorId, creatorType);
 
-        data.displayId = fields[15].GetUInt32();
+        data.displayId = fields[17].GetUInt32();
         if (data.displayId > MAX_GAMEOBJECT_DISPLAY_ID_WOTLK)
         {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `displayId` (%u) value.\n", guid, entry, data.displayId);
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `displayId` (%u) value.\n", guidCounter, entry, data.displayId);
             data.displayId = gInfo ? gInfo->displayId : GAMEOBJECT_DISPLAY_ID_CHEST;
         }
 
-        data.level = fields[16].GetInt32();
-        data.faction = fields[17].GetUInt32();
+        data.level = fields[18].GetInt32();
+        data.faction = fields[19].GetUInt32();
         if (data.faction > MAX_FACTION_TEMPLATE_WOTLK)
         {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `faction` (%u) value.\n", guid, entry, data.faction);
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `faction` (%u) value.\n", guidCounter, entry, data.faction);
             data.faction = 35;
         }
 
-        data.flags = fields[18].GetUInt32();
-        data.dynamicFlags = fields[19].GetUInt32();
-        data.pathProgress = fields[20].GetUInt32();
-
-        data.state = fields[21].GetUInt32();
-        if (data.state >= MAX_GO_STATE)
-        {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `state` (%u) value.\n", guid, entry, data.state);
-            data.state = GO_STATE_READY;
-        }
-
-        data.type = fields[22].GetUInt32();
+        data.flags = fields[20].GetUInt32();
+        data.dynamicFlags = fields[21].GetUInt32();
+        data.pathProgress = fields[22].GetUInt32();
+        data.state = fields[23].GetUInt32();
+        data.type = fields[24].GetUInt32();
         if (data.type >= MAX_GAMEOBJECT_TYPE_WOTLK)
         {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `type` (%u) value.\n", guid, entry, data.state);
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `type` (%u) value.\n", guidCounter, entry, data.state);
             data.type = gInfo ? gInfo->type : GAMEOBJECT_TYPE_GENERIC;
         }
 
-        data.artKit = fields[23].GetUInt32();
-        data.sourceSniffId = fields[24].GetUInt32();
+        data.artKit = fields[25].GetUInt32();
+        data.animProgress = fields[26].GetUInt32();
+        data.sourceSniffId = fields[27].GetUInt32();
 
     } while (result->NextRow());
 
@@ -569,8 +580,8 @@ void ReplayMgr::LoadDynamicObjects()
 void ReplayMgr::LoadCreatures()
 {
     printf("[ReplayMgr] Loading creature spawns...\n");
-    //                                                               0       1     2      3             4             5             6              7                  8                9              10              11        12              13       14            15                   16                  17       18        19         20       21           22            23             24               25                26            27            28               29           30            31             32             33           34              35           36                 37            38           39                40            41                 42           43                44                 45              46                       47                      48                     49                    50                  51                  52       53
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `wander_distance`, `movement_type`, `is_hovering`, `is_temporary`, `is_pet`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
+    //                                                               0       1              2     3      4             5             6             7              8                  9                10             11        12            13              14              15       16            17                   18                  19       20        21         22       23           24            25             26               27                28            29            30               31           32            33             34             35           36              37           38                 39            40           41                42            43                 44           45                46                 47              48                       49                      50                     51                    52                  53                  54       55
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `wander_distance`, `movement_type`, `is_hovering`, `is_pet`, `is_vehicle`, `is_temporary`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
 
     if (!result)
     {
@@ -581,79 +592,88 @@ void ReplayMgr::LoadCreatures()
     {
         DbField* fields = result->fetchCurrentRow();
 
-        uint32 guid = fields[0].GetUInt32();
-        uint32 entry = fields[1].GetUInt32();
-        bool isPet = fields[11].GetBool();
+        uint32 guidCounter = fields[0].GetUInt32();
+        uint32 guidEntry = fields[1].GetUInt32();
+        uint32 entry = fields[2].GetUInt32();
 
-        ObjectGuid objectGuid(isPet ? HIGHGUID_PET : HIGHGUID_UNIT, isPet ? guid : entry, guid);
+        HighGuid highGuid = HIGHGUID_UNIT;
+        bool isPet = fields[11].GetBool();
+        if (isPet)
+            highGuid = HIGHGUID_PET;
+        bool isVehicle = fields[12].GetBool();
+        if (isVehicle)
+            highGuid = HIGHGUID_VEHICLE;
+
+        ObjectGuid objectGuid = ObjectGuid(highGuid, guidEntry, guidCounter);
 
         CreatureTemplate const* cInfo = sGameDataMgr.GetCreatureTemplate(entry);
         if (!cInfo)
         {
-            printf("[ReplayMgr] Error: Table `creature` has creature (GUID: %u) with non existing creature entry %u, skipped.\n", guid, entry);
+            printf("[ReplayMgr] Error: Table `creature` has creature (GUID: %u) with non existing creature entry %u, skipped.\n", guidCounter, entry);
             continue;
         }
 
-        CreatureData& data = m_creatureSpawns[guid];
+        CreatureData& data = m_creatureSpawns[guidCounter];
         data.guid = objectGuid;
         data.entry = entry;
-        data.location.mapId = fields[2].GetUInt16();
-        data.location.x = fields[3].GetFloat();
-        data.location.y = fields[4].GetFloat();
-        data.location.z = fields[5].GetFloat();
-        data.location.o = fields[6].GetFloat();
-        data.wanderDistance = fields[7].GetFloat();
-        data.movementType = fields[8].GetUInt8();
-        data.isHovering = fields[9].GetBool();
-        data.isTemporary = fields[10].GetBool();
+        data.location.mapId = fields[3].GetUInt16();
+        data.location.x = fields[4].GetFloat();
+        data.location.y = fields[5].GetFloat();
+        data.location.z = fields[6].GetFloat();
+        data.location.o = fields[7].GetFloat();
+        data.wanderDistance = fields[8].GetFloat();
+        data.movementType = fields[9].GetUInt8();
+        data.isHovering = fields[10].GetBool();
         data.isPet = fields[11].GetBool();
-        data.createdBySpell = fields[12].GetUInt32();
-        data.scale = fields[13].GetFloat();
-        data.displayId = fields[14].GetUInt32();
-        data.nativeDisplayId = fields[15].GetUInt32();
-        data.mountDisplayId = fields[16].GetUInt32();
-        data.classId = fields[17].GetUInt32();
-        data.gender = fields[18].GetUInt32();
-        data.faction = fields[19].GetUInt32();
-        data.level = fields[20].GetUInt32();
-        data.npcFlags = fields[21].GetUInt32();
-        data.unitFlags = fields[22].GetUInt32();
-        data.unitFlags2 = fields[23].GetUInt32();
-        data.dynamicFlags = fields[24].GetUInt32();
-        data.currentHealth = fields[25].GetUInt32();
-        data.maxHealth = fields[26].GetUInt32();
-        data.powerType = fields[27].GetUInt8();
+        data.isVehicle = fields[12].GetBool();
+        data.isTemporary = fields[13].GetBool();
+        data.createdBySpell = fields[14].GetUInt32();
+        data.scale = fields[15].GetFloat();
+        data.displayId = fields[16].GetUInt32();
+        data.nativeDisplayId = fields[17].GetUInt32();
+        data.mountDisplayId = fields[18].GetUInt32();
+        data.classId = fields[19].GetUInt32();
+        data.gender = fields[20].GetUInt32();
+        data.faction = fields[21].GetUInt32();
+        data.level = fields[22].GetUInt32();
+        data.npcFlags = fields[23].GetUInt32();
+        data.unitFlags = fields[24].GetUInt32();
+        data.unitFlags2 = fields[25].GetUInt32();
+        data.dynamicFlags = fields[26].GetUInt32();
+        data.currentHealth = fields[27].GetUInt32();
+        data.maxHealth = fields[28].GetUInt32();
+        data.powerType = fields[29].GetUInt8();
         if (data.powerType < MAX_POWERS_WOTLK)
         {
-            data.currentPowers[data.powerType] = fields[28].GetUInt32();
-            data.maxPowers[data.powerType] = fields[29].GetUInt32();
+            data.currentPowers[data.powerType] = fields[30].GetUInt32();
+            data.maxPowers[data.powerType] = fields[31].GetUInt32();
         }
         else
         {
-            printf("[ReplayMgr] LoadCreatures: Invalid power type for creature (GUID %u, Entry %u)\n", guid, entry);
+            printf("[ReplayMgr] LoadCreatures: Invalid power type for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.powerType = POWER_MANA;
         }
-        data.auraState = fields[30].GetUInt32();
-        data.emoteState = fields[31].GetUInt32();
-        data.standState = fields[32].GetUInt32();
-        data.visFlags = fields[33].GetUInt32();
-        data.sheathState = fields[34].GetUInt32();
-        data.pvpFlags = fields[35].GetUInt32();
-        data.shapeShiftForm = fields[36].GetUInt32();
-        data.speedRate[MOVE_WALK] = fields[37].GetFloat();
-        data.speedRate[MOVE_RUN] = fields[38].GetFloat();
-        data.speedRate[MOVE_RUN_BACK] = fields[39].GetFloat();
-        data.speedRate[MOVE_SWIM] = fields[40].GetFloat();
-        data.speedRate[MOVE_SWIM_BACK] = fields[41].GetFloat();
-        data.speedRate[MOVE_FLIGHT] = fields[42].GetFloat();
-        data.speedRate[MOVE_FLIGHT_BACK] = fields[43].GetFloat();
-        data.boundingRadius = fields[44].GetFloat();
-        data.combatReach = fields[45].GetFloat();
-        data.mainHandAttackTime = fields[46].GetUInt32();
-        data.offHandAttackTime = fields[47].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_0] = fields[48].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_1] = fields[49].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_2] = fields[50].GetUInt32();
+        data.auraState = fields[32].GetUInt32();
+        data.emoteState = fields[33].GetUInt32();
+        data.standState = fields[34].GetUInt32();
+        data.visFlags = fields[35].GetUInt32();
+        data.sheathState = fields[36].GetUInt32();
+        data.pvpFlags = fields[37].GetUInt32();
+        data.shapeShiftForm = fields[38].GetUInt32();
+        data.speedRate[MOVE_WALK] = fields[39].GetFloat();
+        data.speedRate[MOVE_RUN] = fields[40].GetFloat();
+        data.speedRate[MOVE_RUN_BACK] = fields[41].GetFloat();
+        data.speedRate[MOVE_SWIM] = fields[42].GetFloat();
+        data.speedRate[MOVE_SWIM_BACK] = fields[43].GetFloat();
+        data.speedRate[MOVE_FLIGHT] = fields[44].GetFloat();
+        data.speedRate[MOVE_FLIGHT_BACK] = fields[45].GetFloat();
+        data.boundingRadius = fields[46].GetFloat();
+        data.combatReach = fields[47].GetFloat();
+        data.mainHandAttackTime = fields[48].GetUInt32();
+        data.offHandAttackTime = fields[49].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_0] = fields[50].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_1] = fields[51].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_2] = fields[52].GetUInt32();
 
         if (sConfig.GetSniffVersion() == SNIFF_VANILLA ||
             sConfig.GetSniffVersion() == SNIFF_TBC)
@@ -666,32 +686,32 @@ void ReplayMgr::LoadCreatures()
             }
         }
 
-        data.channelSpell = fields[51].GetUInt32();
-        std::string auras = fields[52].GetCppString();
+        data.channelSpell = fields[53].GetUInt32();
+        std::string auras = fields[54].GetCppString();
         ParseStringIntoVector(auras, data.auras);
-        data.sourceSniffId = fields[53].GetUInt32();
+        data.sourceSniffId = fields[55].GetUInt32();
 
         if (data.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
-            printf("[ReplayMgr] LoadCreatures: Invalid display id for creature (GUID %u, Entry %u)\n", guid, entry);
+            printf("[ReplayMgr] LoadCreatures: Invalid display id for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.displayId = cInfo->displayId[0];
         }
 
         if (data.nativeDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
-            printf("[ReplayMgr] LoadCreatures: Invalid native display id for creature (GUID %u, Entry %u)\n", guid, entry);
+            printf("[ReplayMgr] LoadCreatures: Invalid native display id for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.nativeDisplayId = cInfo->displayId[0];
         }
 
         if (data.mountDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
-            printf("[ReplayMgr] LoadCreatures: Invalid mount display id for creature (GUID %u, Entry %u)\n", guid, entry);
+            printf("[ReplayMgr] LoadCreatures: Invalid mount display id for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.mountDisplayId = 0;
         }
 
         if (data.faction > MAX_FACTION_TEMPLATE_WOTLK)
         {
-            printf("[ReplayMgr] LoadCreatures: Invalid faction id for creature (GUID %u, Entry %u)\n", guid, entry);
+            printf("[ReplayMgr] LoadCreatures: Invalid faction id for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.faction = 35;
         }
 
@@ -699,25 +719,25 @@ void ReplayMgr::LoadCreatures()
             data.emoteState = EMOTE_STATE_DANCE;
         if (data.emoteState && data.emoteState > MAX_EMOTE_WOTLK)
         {
-            printf("[ReplayMgr] LoadCreatures: Invalid emote state for creature (GUID %u, Entry %u)\n", guid, entry);
+            printf("[ReplayMgr] LoadCreatures: Invalid emote state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.emoteState = 0;
         }
 
         if (data.standState >= MAX_UNIT_STAND_STATE_TBC)
         {
-            printf("[ReplayMgr] LoadPlayers: Invalid stand state for creature (GUID %u, Entry %u)\n", guid, entry);
+            printf("[ReplayMgr] LoadPlayers: Invalid stand state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.standState = UNIT_STAND_STATE_STAND;
         }
 
         if (data.sheathState >= MAX_SHEATH_STATE)
         {
-            printf("[ReplayMgr] LoadPlayers: Invalid sheath state for creature (GUID %u, Entry %u)\n", guid, entry);
+            printf("[ReplayMgr] LoadPlayers: Invalid sheath state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.sheathState = SHEATH_STATE_UNARMED;
         }
 
         if (data.shapeShiftForm >= MAX_SHAPESHIFT_FORM)
         {
-            printf("[ReplayMgr] LoadPlayers: Invalid shapeshift form for creature (GUID %u, Entry %u)\n", guid, entry);
+            printf("[ReplayMgr] LoadPlayers: Invalid shapeshift form for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.shapeShiftForm = FORM_NONE;
         }
 

@@ -41,6 +41,8 @@ char const* ObjectGuid::GetTypeName(HighGuid high)
             return "Creature";
         case HIGHGUID_PET:
             return "Pet";
+        case HIGHGUID_VEHICLE:
+            return "Vehicle";
         case HIGHGUID_DYNAMICOBJECT:
             return "DynObject";
         case HIGHGUID_CORPSE:
@@ -79,6 +81,7 @@ std::string ObjectGuid::GetName() const
     switch (GetHigh())
     {
         case HIGHGUID_UNIT:
+        case HIGHGUID_VEHICLE:
         {
             if (CreatureTemplate const* pTemplate = sGameDataMgr.GetCreatureTemplate(GetEntry()))
                 return pTemplate->name;
@@ -95,6 +98,7 @@ std::string ObjectGuid::GetName() const
             return sWorld.GetPlayerName(*this);
         }
         case HIGHGUID_GAMEOBJECT:
+        case HIGHGUID_TRANSPORT:
         case HIGHGUID_MO_TRANSPORT:
         {
             if (GameObjectTemplate const* pTemplate = sGameDataMgr.GetGameObjectTemplate(GetEntry()))

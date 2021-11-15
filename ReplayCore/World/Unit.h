@@ -86,8 +86,6 @@ public :
     void SetVisFlags(uint8 visFlags);
     uint8 GetShapeShiftForm() const;
     void SetShapeShiftForm(uint8 shapeShiftForm);
-    bool GetPvP() const;
-    void SetPvP(bool enabled);
     uint32 GetNpcFlags() const;
     void SetNpcFlags(uint32 npcFlags);
     uint32 GetUnitFlags() const;
@@ -106,6 +104,14 @@ public :
     void SetPetNumber(uint32 petNumber);
     uint32 GetPetNameTimestamp() const;
     void SetPetNameTimestamp(uint32 timestamp);
+
+    bool IsPvP() const;
+    void SetPvP(bool enabled);
+    bool IsFFA() const;
+    void SetFFA(bool enabled);
+    bool IsSanctuary() const;
+    void SetSanctuary(bool enabled);
+    void SetPvPFlags(uint8 flags);
 
     void SetVirtualItem(uint8 slot, uint32 item_id);
     uint32 GetAttackTime(WeaponAttackType att) const;
@@ -146,6 +152,8 @@ public :
     }
 
     MoveSpline m_moveSpline;
+    uint32 m_vehicleId = 0;
+    float m_vehicleOrientation = 0.0f;
 protected:
     ObjectGuid m_meleeVictim;
     float m_speedRate[MAX_MOVE_TYPE_WOTLK] = {};

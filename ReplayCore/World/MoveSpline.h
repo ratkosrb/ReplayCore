@@ -14,7 +14,7 @@ struct MoveSpline
 {
     MoveSpline() = default;
     MoveSpline(const MoveSpline&) = delete;
-    void Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, bool isCyclic, bool isCatmullrom);
+    void Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, int8 transportSeat, bool isCyclic, bool isCatmullrom);
     void Reset()
     {
         m_initialized = false;;
@@ -25,6 +25,7 @@ struct MoveSpline
         m_finalOrientation = 0.0f;
         m_flags = 0;
         m_moveTimeMs = 0;
+        m_transportSeat = 0;
         m_destinationPoints.clear();
     }
     void WriteMove(WorldPacket& data) const;
@@ -41,6 +42,7 @@ struct MoveSpline
     uint32 m_moveTimeMs = 0; // how long the movement should take
     std::vector<Vector3> m_destinationPoints;
     ObjectGuid m_transportGuid;
+    int8 m_transportSeat;
     bool m_cyclic = false;
     bool m_catmullrom = false;
 };

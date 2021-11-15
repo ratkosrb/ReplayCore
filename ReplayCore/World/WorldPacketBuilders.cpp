@@ -2026,7 +2026,7 @@ void WorldServer::SendMonsterMove(Unit* pUnit)
         data << pUnit->m_moveSpline.m_transportGuid.WriteAsPacked();
 
         if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
-            data << uint8(0); // Transport Seat
+            data << int8(pUnit->m_moveSpline.m_transportSeat); // Transport Seat
     }
 
     if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)

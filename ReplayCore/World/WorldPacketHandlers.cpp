@@ -198,7 +198,7 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
     response << uint8(0);                                     // BillingPlanFlags
     response << uint32(0);                                    // BillingTimeRested
     if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
-        response << uint8(1);                                 // Expansion
+        response << uint8(m_sessionData.build >= CLIENT_BUILD_3_0_2 ? 2 : 1); // Expansion
     SendPacket(response);
 }
 
@@ -463,7 +463,17 @@ void WorldServer::HandleCharCreate(WorldPacket& packet)
 
     playerData.displayId = GetDefaultDisplayIdForPlayerRace(raceId, gender);
     playerData.nativeDisplayId = playerData.displayId;
+    playerData.unitFlags = UNIT_FLAG_PLAYER_CONTROLLED;
+
     playerData.powerType = GetDefaultPowerTypeForPlayerClass(classId);
+    playerData.currentPowers[POWER_MANA] = 10000;
+    playerData.maxPowers[POWER_MANA] = 10000;
+    playerData.currentPowers[POWER_RAGE] = 1000;
+    playerData.maxPowers[POWER_RAGE] = 1000;
+    playerData.currentPowers[POWER_RUNIC_POWER] = 1000;
+    playerData.maxPowers[POWER_RUNIC_POWER] = 1000;
+    playerData.currentPowers[POWER_ENERGY] = 100;
+    playerData.maxPowers[POWER_ENERGY] = 100;
 
     if (!m_worldSpawned)
         ResetAndSpawnWorld();
