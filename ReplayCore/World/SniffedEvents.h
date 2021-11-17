@@ -47,6 +47,7 @@ enum SniffedEventType : uint8
     SE_UNIT_UPDATE_EMOTE_STATE,
     SE_UNIT_UPDATE_STAND_STATE,
     SE_UNIT_UPDATE_VIS_FLAGS,
+    SE_UNIT_UPDATE_ANIM_TIER,
     SE_UNIT_UPDATE_SHEATH_STATE,
     SE_UNIT_UPDATE_PVP_FLAGS,
     SE_UNIT_UPDATE_SHAPESHIFT_FORM,
@@ -156,6 +157,8 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Unit Update Stand State";
         case SE_UNIT_UPDATE_VIS_FLAGS:
             return "Unit Update Vis Flags";
+        case SE_UNIT_UPDATE_ANIM_TIER:
+            return "Unit Update Anim Tier";
         case SE_UNIT_UPDATE_SHEATH_STATE:
             return "Unit Update Sheath State";
         case SE_UNIT_UPDATE_PVP_FLAGS:
@@ -948,6 +951,25 @@ struct SniffedEvent_UnitUpdate_vis_flags : SniffedEventCRTP<SniffedEvent_UnitUpd
     SniffedEventType GetType() const final
     {
         return SE_UNIT_UPDATE_VIS_FLAGS;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_objectGuid;
+    }
+};
+
+struct SniffedEvent_UnitUpdate_anim_tier : SniffedEventCRTP<SniffedEvent_UnitUpdate_anim_tier>
+{
+    SniffedEvent_UnitUpdate_anim_tier(ObjectGuid objectGuid, uint32 value) :
+        m_objectGuid(objectGuid), m_value(value) {};
+    ObjectGuid m_objectGuid;
+    uint32 m_value = 0;
+    void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_UPDATE_ANIM_TIER;
     }
     ObjectGuid GetSourceGuid() const final
     {

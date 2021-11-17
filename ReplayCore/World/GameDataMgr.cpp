@@ -76,6 +76,7 @@ bool GameDataMgr::IsValidClass(uint32 classId) const
     return (classId && (((1 << (classId - 1)) & maxClassMask) != 0));
 }
 
+/*
 bool GameDataMgr::IsValidUnitDisplayId(uint32 id) const
 {
     if (sWorld.GetClientBuild() <= CLIENT_BUILD_1_12_1)
@@ -84,6 +85,17 @@ bool GameDataMgr::IsValidUnitDisplayId(uint32 id) const
         return id <= MAX_UNIT_DISPLAY_ID_TBC;
     else
         return id <= MAX_UNIT_DISPLAY_ID_WOTLK;
+}
+*/
+
+bool GameDataMgr::IsValidUnitDisplayId(uint32 id) const
+{
+    return IsValidUnitDisplayId(id, sWorld.GetClientBuild());
+}
+
+float GameDataMgr::GetCreatureDisplayScale(uint32 displayId) const
+{
+    return GetCreatureDisplayScale(displayId, sWorld.GetClientBuild());
 }
 
 bool GameDataMgr::IsValidGameObjectDisplayId(uint32 id) const
@@ -1534,6 +1546,32 @@ void GameDataMgr::BuildPlayerLevelInfo(uint8 race, uint8 _class, uint8 level, Pl
     }
 }
 
+uint32 GameDataMgr::GetReplacementUnitDisplayId(uint32 displayId) const
+{
+    switch (displayId)
+    {
+        case 29422: // male worgen
+            return 203;
+        case 29423: // female worgen
+            return 729;
+        case 15475: // female blood elf
+            return 6631;
+        case 15476: // male blood elf
+            return 6630;
+        case 16125: // male draenei
+            return 11650;
+        case 16126: // female draenei
+            return 152;
+        case 38551: // male pandaren
+        case 38552: // female pandaren
+            if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_3_5)
+                return 30414;
+            break;
+    }
+
+    return UNIT_DISPLAY_ID_BOX;
+}
+
 void GameDataMgr::LoadBroadcastTexts()
 {
     // For reload case
@@ -1655,6 +1693,27 @@ void GameDataMgr::LoadGameObjectTemplates()
         } while (result->NextRow());
         printf(">> Loaded %u gameobject quest items.\n", count);
     }
+}
+
+GameObjectTemplate const* GameDataMgr::AddPlaceholderGameObjectTemplate(uint32 id)
+{
+    GameObjectTemplate& goTemplate = m_gameObjectTemplateMap[id];
+    goTemplate.entry = id;
+    goTemplate.name = "GO " + std::to_string(id);
+    goTemplate.iconName = "PH";
+    goTemplate.displayId = 327;
+    goTemplate.type = GAMEOBJECT_TYPE_GENERIC;
+    return &goTemplate;
+}
+
+CreatureDisplayScaleMap const& GameDataMgr::GetCreatureDisplayScaleMapForBuild(uint32 build)
+{
+    if (build < CLIENT_BUILD_2_0_1)
+        return m_creatureDisplayScalesMap5875;
+    else if (build < CLIENT_BUILD_3_0_2)
+        return m_creatureDisplayScalesMap8606;
+
+    return m_creatureDisplayScalesMap12340;
 }
 
 void GameDataMgr::LoadCreatureTemplates()
@@ -1811,6 +1870,17 @@ void GameDataMgr::LoadCreatureTemplates()
         } while (result->NextRow());
     }
     printf(">> Loaded %u creature templates.\n", (uint32)m_creatureTemplateMap.size());
+}
+
+CreatureTemplate const* GameDataMgr::AddPlaceholderCreatureTemplate(uint32 id)
+{
+    CreatureTemplate& creatureTemplate = m_creatureTemplateMap[id];
+    creatureTemplate.entry = id;
+    creatureTemplate.name = "NPC " + std::to_string(id);
+    creatureTemplate.subName = "PH";
+    creatureTemplate.type = 10;
+    creatureTemplate.killCredit[0] = UNIT_DISPLAY_ID_BOX;
+    return &creatureTemplate;
 }
 
 void GameDataMgr::LoadAreaTriggerTeleports()

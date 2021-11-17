@@ -156,12 +156,12 @@ void UnitData::InitializeUnit(Unit* pUnit) const
             pUnit->SetScale(scale * sGameDataMgr.GetCreatureDisplayScale(displayId));
     }
     else
-        pUnit->SetDisplayId(UNIT_DISPLAY_ID_BOX);
+        pUnit->SetDisplayId(sGameDataMgr.GetReplacementUnitDisplayId(displayId));
 
     if (sGameDataMgr.IsValidUnitDisplayId(nativeDisplayId))
         pUnit->SetNativeDisplayId(nativeDisplayId);
     else
-        pUnit->SetNativeDisplayId(UNIT_DISPLAY_ID_BOX);
+        pUnit->SetNativeDisplayId(sGameDataMgr.GetReplacementUnitDisplayId(nativeDisplayId));
 
     if (sGameDataMgr.IsValidUnitDisplayId(mountDisplayId))
         pUnit->SetMountDisplayId(mountDisplayId);
@@ -172,6 +172,7 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     pUnit->SetSheathState(sheathState);
     pUnit->SetShapeShiftForm(shapeShiftForm);
     pUnit->SetVisFlags(visFlags);
+    pUnit->SetAnimTier(animTier);
     pUnit->SetNpcFlags(sGameDataMgr.ConvertNpcFlags(npcFlags));
 
     pUnit->SetUnitFlags(unitFlags);
@@ -446,6 +447,7 @@ void ReplayMgr::LoadGameObjects()
         if (!gInfo)
         {
             printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u) with non existing gameobject entry %u, skipped.\n", guidCounter, entry);
+            gInfo = sGameDataMgr.AddPlaceholderGameObjectTemplate(entry);
             //continue;
         }
 
@@ -580,8 +582,8 @@ void ReplayMgr::LoadDynamicObjects()
 void ReplayMgr::LoadCreatures()
 {
     printf("[ReplayMgr] Loading creature spawns...\n");
-    //                                                               0       1              2     3      4             5             6             7              8                  9                10             11        12            13              14              15       16            17                   18                  19       20        21         22       23           24            25             26               27                28            29            30               31           32            33             34             35           36              37           38                 39            40           41                42            43                 44           45                46                 47              48                       49                      50                     51                    52                  53                  54       55
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `wander_distance`, `movement_type`, `is_hovering`, `is_pet`, `is_vehicle`, `is_temporary`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
+    //                                                               0       1              2     3      4             5             6             7              8                  9                10             11        12            13              14              15       16            17                   18                  19       20        21         22       23           24            25             26               27                28            29            30               31           32            33             34             35           36           37              38           39                 40            41           42                43            44                 45           46                47                 48              49                       50                      51                     52                    53                  54                  55       56
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `wander_distance`, `movement_type`, `is_hovering`, `is_pet`, `is_vehicle`, `is_temporary`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `anim_tier`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
 
     if (!result)
     {
@@ -610,7 +612,8 @@ void ReplayMgr::LoadCreatures()
         if (!cInfo)
         {
             printf("[ReplayMgr] Error: Table `creature` has creature (GUID: %u) with non existing creature entry %u, skipped.\n", guidCounter, entry);
-            continue;
+            cInfo = sGameDataMgr.AddPlaceholderCreatureTemplate(entry);
+            //continue;
         }
 
         CreatureData& data = m_creatureSpawns[guidCounter];
@@ -657,23 +660,24 @@ void ReplayMgr::LoadCreatures()
         data.emoteState = fields[33].GetUInt32();
         data.standState = fields[34].GetUInt32();
         data.visFlags = fields[35].GetUInt32();
-        data.sheathState = fields[36].GetUInt32();
-        data.pvpFlags = fields[37].GetUInt32();
-        data.shapeShiftForm = fields[38].GetUInt32();
-        data.speedRate[MOVE_WALK] = fields[39].GetFloat();
-        data.speedRate[MOVE_RUN] = fields[40].GetFloat();
-        data.speedRate[MOVE_RUN_BACK] = fields[41].GetFloat();
-        data.speedRate[MOVE_SWIM] = fields[42].GetFloat();
-        data.speedRate[MOVE_SWIM_BACK] = fields[43].GetFloat();
-        data.speedRate[MOVE_FLIGHT] = fields[44].GetFloat();
-        data.speedRate[MOVE_FLIGHT_BACK] = fields[45].GetFloat();
-        data.boundingRadius = fields[46].GetFloat();
-        data.combatReach = fields[47].GetFloat();
-        data.mainHandAttackTime = fields[48].GetUInt32();
-        data.offHandAttackTime = fields[49].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_0] = fields[50].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_1] = fields[51].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_2] = fields[52].GetUInt32();
+        data.animTier = fields[36].GetUInt32();
+        data.sheathState = fields[37].GetUInt32();
+        data.pvpFlags = fields[38].GetUInt32();
+        data.shapeShiftForm = fields[39].GetUInt32();
+        data.speedRate[MOVE_WALK] = fields[40].GetFloat();
+        data.speedRate[MOVE_RUN] = fields[41].GetFloat();
+        data.speedRate[MOVE_RUN_BACK] = fields[42].GetFloat();
+        data.speedRate[MOVE_SWIM] = fields[43].GetFloat();
+        data.speedRate[MOVE_SWIM_BACK] = fields[44].GetFloat();
+        data.speedRate[MOVE_FLIGHT] = fields[45].GetFloat();
+        data.speedRate[MOVE_FLIGHT_BACK] = fields[46].GetFloat();
+        data.boundingRadius = fields[47].GetFloat();
+        data.combatReach = fields[48].GetFloat();
+        data.mainHandAttackTime = fields[49].GetUInt32();
+        data.offHandAttackTime = fields[50].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_0] = fields[51].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_1] = fields[52].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_2] = fields[53].GetUInt32();
 
         if (sConfig.GetSniffVersion() == SNIFF_VANILLA ||
             sConfig.GetSniffVersion() == SNIFF_TBC)
@@ -686,10 +690,10 @@ void ReplayMgr::LoadCreatures()
             }
         }
 
-        data.channelSpell = fields[53].GetUInt32();
-        std::string auras = fields[54].GetCppString();
+        data.channelSpell = fields[54].GetUInt32();
+        std::string auras = fields[55].GetCppString();
         ParseStringIntoVector(auras, data.auras);
-        data.sourceSniffId = fields[55].GetUInt32();
+        data.sourceSniffId = fields[56].GetUInt32();
 
         if (data.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
@@ -717,7 +721,7 @@ void ReplayMgr::LoadCreatures()
 
         if (data.emoteState == CLASSIC_STATE_DANCE)
             data.emoteState = EMOTE_STATE_DANCE;
-        if (data.emoteState && data.emoteState > MAX_EMOTE_WOTLK)
+        if (data.emoteState > MAX_EMOTE_WOTLK)
         {
             printf("[ReplayMgr] LoadCreatures: Invalid emote state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.emoteState = 0;
@@ -725,19 +729,19 @@ void ReplayMgr::LoadCreatures()
 
         if (data.standState >= MAX_UNIT_STAND_STATE_TBC)
         {
-            printf("[ReplayMgr] LoadPlayers: Invalid stand state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
+            printf("[ReplayMgr] LoadCreatures: Invalid stand state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.standState = UNIT_STAND_STATE_STAND;
         }
 
         if (data.sheathState >= MAX_SHEATH_STATE)
         {
-            printf("[ReplayMgr] LoadPlayers: Invalid sheath state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
+            printf("[ReplayMgr] LoadCreatures: Invalid sheath state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.sheathState = SHEATH_STATE_UNARMED;
         }
 
         if (data.shapeShiftForm >= MAX_SHAPESHIFT_FORM)
         {
-            printf("[ReplayMgr] LoadPlayers: Invalid shapeshift form for creature (GUID %u, Entry %u)\n", guidCounter, entry);
+            printf("[ReplayMgr] LoadCreatures: Invalid shapeshift form for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.shapeShiftForm = FORM_NONE;
         }
 
@@ -899,8 +903,8 @@ void ReplayMgr::LoadPlayers()
 {
     printf("[ReplayMgr] Loading player spawns...\n");
 
-    //                                                               0       1      2             3             4             5              6       7       8        9         10       11    12       13               14               15              16       17            18                   19                  20         21            22             23                24            25            26               27           28            29             30             31           32              33           34                 35            36           37                38            39                 40           41                42                 43              44                       45                      46                    47                 48
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `name`, `race`, `class`, `gender`, `level`, `xp`, `money`, `player_bytes1`, `player_bytes2`, `player_flags`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `faction`, `unit_flags`, `unit_flags2`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `ranged_attack_time`, `equipment_cache`, `auras` FROM `player`"));
+    //                                                               0       1      2             3             4             5              6       7       8        9         10       11    12       13               14               15              16       17            18                   19                  20         21            22             23                24            25            26               27           28            29             30             31           32           33              34           35                 36           37            38                39            40                 41           42                43                 44              45                       46                      47                    48                 49
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `name`, `race`, `class`, `gender`, `level`, `xp`, `money`, `player_bytes1`, `player_bytes2`, `player_flags`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `faction`, `unit_flags`, `unit_flags2`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `anim_tier`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `ranged_attack_time`, `equipment_cache`, `auras` FROM `player`"));
 
     if (!result)
     {
@@ -958,17 +962,17 @@ void ReplayMgr::LoadPlayers()
         if (playerData.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid display id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            playerData.displayId = UNIT_DISPLAY_ID_BOX;
+            playerData.displayId = sGameDataMgr.GetReplacementUnitDisplayId(playerData.displayId);
         }
         playerData.nativeDisplayId = fields[18].GetUInt32();
         if (playerData.nativeDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid native display id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            playerData.nativeDisplayId = UNIT_DISPLAY_ID_BOX;
+            playerData.nativeDisplayId = sGameDataMgr.GetReplacementUnitDisplayId(playerData.nativeDisplayId);
         }
 
         playerData.mountDisplayId = fields[19].GetUInt32();
-        if (playerData.mountDisplayId && playerData.mountDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        if (playerData.mountDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid mount display id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.mountDisplayId = 0;
@@ -1000,7 +1004,7 @@ void ReplayMgr::LoadPlayers()
         playerData.emoteState = fields[29].GetUInt32();
         if (playerData.emoteState == CLASSIC_STATE_DANCE)
             playerData.emoteState = EMOTE_STATE_DANCE;
-        if (playerData.emoteState && playerData.emoteState > MAX_EMOTE_WOTLK)
+        if (playerData.emoteState > MAX_EMOTE_WOTLK)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid emote state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.emoteState = 0;
@@ -1014,34 +1018,35 @@ void ReplayMgr::LoadPlayers()
         }
 
         playerData.visFlags = fields[31].GetUInt8();
-        playerData.sheathState = fields[32].GetUInt8();
+        playerData.animTier = fields[32].GetUInt8();
+        playerData.sheathState = fields[33].GetUInt8();
         if (playerData.sheathState >= MAX_SHEATH_STATE)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid sheath state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.sheathState = SHEATH_STATE_UNARMED;
         }
 
-        playerData.pvpFlags = fields[33].GetUInt8();
-        playerData.shapeShiftForm = fields[34].GetUInt8();
+        playerData.pvpFlags = fields[34].GetUInt8();
+        playerData.shapeShiftForm = fields[35].GetUInt8();
         if (playerData.shapeShiftForm >= MAX_SHAPESHIFT_FORM)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid shapeshift form for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.shapeShiftForm = FORM_NONE;
         }
 
-        playerData.speedRate[MOVE_WALK] = fields[35].GetFloat();
-        playerData.speedRate[MOVE_RUN] = fields[36].GetFloat();
-        playerData.speedRate[MOVE_RUN_BACK] = fields[37].GetFloat();
-        playerData.speedRate[MOVE_SWIM] = fields[38].GetFloat();
-        playerData.speedRate[MOVE_SWIM_BACK] = fields[39].GetFloat();
-        playerData.speedRate[MOVE_FLIGHT] = fields[40].GetFloat();
-        playerData.speedRate[MOVE_FLIGHT_BACK] = fields[41].GetFloat();
-        playerData.boundingRadius = fields[42].GetFloat();
-        playerData.combatReach = fields[43].GetFloat();
-        playerData.mainHandAttackTime = fields[44].GetUInt32();
-        playerData.offHandAttackTime = fields[45].GetUInt32();
-        playerData.rangedAttackTime = fields[46].GetUInt32() ? fields[46].GetUInt32() : 2000;
-        std::string equipmentCache = fields[47].GetCppString();
+        playerData.speedRate[MOVE_WALK] = fields[36].GetFloat();
+        playerData.speedRate[MOVE_RUN] = fields[37].GetFloat();
+        playerData.speedRate[MOVE_RUN_BACK] = fields[38].GetFloat();
+        playerData.speedRate[MOVE_SWIM] = fields[39].GetFloat();
+        playerData.speedRate[MOVE_SWIM_BACK] = fields[40].GetFloat();
+        playerData.speedRate[MOVE_FLIGHT] = fields[41].GetFloat();
+        playerData.speedRate[MOVE_FLIGHT_BACK] = fields[42].GetFloat();
+        playerData.boundingRadius = fields[43].GetFloat();
+        playerData.combatReach = fields[44].GetFloat();
+        playerData.mainHandAttackTime = fields[45].GetUInt32();
+        playerData.offHandAttackTime = fields[46].GetUInt32();
+        playerData.rangedAttackTime = fields[47].GetUInt32() ? fields[47].GetUInt32() : 2000;
+        std::string equipmentCache = fields[48].GetCppString();
 
         std::string temp;
         bool isItemId = true;

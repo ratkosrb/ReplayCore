@@ -369,6 +369,20 @@ void Unit::SetVisFlags(uint8 visFlags)
         SetByteValue("UNIT_FIELD_BYTES_1", 2, visFlags);
 }
 
+uint8 Unit::GetAnimTier() const
+{
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_4_0)
+        return GetByteValue("UNIT_FIELD_BYTES_1", 3);
+
+    return 0;
+}
+
+void Unit::SetAnimTier(uint8 animTier)
+{
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_4_0)
+        SetByteValue("UNIT_FIELD_BYTES_1", 3, animTier);
+}
+
 uint8 Unit::GetShapeShiftForm() const
 {
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)

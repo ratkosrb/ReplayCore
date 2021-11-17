@@ -84,6 +84,8 @@ public :
     void SetSheathState(uint8 sheathState);
     uint8 GetVisFlags() const;
     void SetVisFlags(uint8 visFlags);
+    uint8 GetAnimTier() const;
+    void SetAnimTier(uint8 animTier);
     uint8 GetShapeShiftForm() const;
     void SetShapeShiftForm(uint8 shapeShiftForm);
     uint32 GetNpcFlags() const;

@@ -110,6 +110,7 @@ struct UnitData : public WorldObjectData
     uint8 standState = 0;
     uint8 shapeShiftForm = 0;
     uint8 visFlags = 0;
+    uint8 animTier = 0;
     uint8 pvpFlags = 0;
     uint32 npcFlags = 0;
     uint32 unitFlags = 0;

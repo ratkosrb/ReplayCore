@@ -54,6 +54,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_emote_state>("creature_values_update", "emote_state", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_stand_state>("creature_values_update", "stand_state", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_vis_flags>("creature_values_update", "vis_flags", TYPEID_UNIT);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_anim_tier>("creature_values_update", "anim_tier", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_sheath_state>("creature_values_update", "sheath_state", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_pvp_flags>("creature_values_update", "pvp_flags", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_shapeshift_form>("creature_values_update", "shapeshift_form", TYPEID_UNIT);
@@ -84,6 +85,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_emote_state>("player_values_update", "emote_state", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_stand_state>("player_values_update", "stand_state", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_vis_flags>("player_values_update", "vis_flags", TYPEID_PLAYER);
+    LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_anim_tier>("player_values_update", "anim_tier", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_sheath_state>("player_values_update", "sheath_state", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_pvp_flags>("player_values_update", "pvp_flags", TYPEID_PLAYER);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_shapeshift_form>("player_values_update", "shapeshift_form", TYPEID_PLAYER);
@@ -1632,6 +1634,28 @@ void SniffedEvent_UnitUpdate_sheath_state::Execute() const
     }
 
     pUnit->SetSheathState(m_value);
+}
+
+std::string SniffedEvent_UnitUpdate_anim_tier::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " updates anim_tier to " + AnimTierToString(m_value) + " (" + std::to_string(m_value) + ").";
+}
+
+std::string SniffedEvent_UnitUpdate_anim_tier::GetLongDescription() const
+{
+    return "Anim Tier: " + AnimTierToString(m_value) + " (" + std::to_string(m_value) + ")";
+}
+
+void SniffedEvent_UnitUpdate_anim_tier::Execute() const
+{
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitUpdate_anim_tier: Cannot find source unit!\n");
+        return;
+    }
+
+    pUnit->SetAnimTier(m_value);
 }
 
 std::string SniffedEvent_UnitUpdate_sheath_state::GetShortDescription() const

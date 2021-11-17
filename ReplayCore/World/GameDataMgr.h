@@ -126,6 +126,7 @@ public:
         return info;
     }
     void GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, PlayerLevelInfo* info) const;
+    uint32 GetReplacementUnitDisplayId(uint32 displayId) const;
 
     // Broadcast Text
     void LoadBroadcastTexts();
@@ -144,6 +145,7 @@ public:
 
     // GameObjects
     void LoadGameObjectTemplates();
+    GameObjectTemplate const* AddPlaceholderGameObjectTemplate(uint32 id);
     GameObjectTemplate const* GetGameObjectTemplate(uint32 id) const
     {
         auto itr = m_gameObjectTemplateMap.find(id);
@@ -157,6 +159,7 @@ public:
 
     // Creatures
     void LoadCreatureTemplates();
+    CreatureTemplate const* AddPlaceholderCreatureTemplate(uint32 id);
     CreatureTemplate const* GetCreatureTemplate(uint32 id) const
     {
         auto itr = m_creatureTemplateMap.find(id);
@@ -167,10 +170,20 @@ public:
         auto itr = m_creatureTemplateMap.find(id);
         return itr != m_creatureTemplateMap.end() ? itr->second.name : "UNKNOWN";
     }
-    float GetCreatureDisplayScale(uint32 displayId) const
+    bool IsValidUnitDisplayId(uint32 displayId, uint32 build) const
     {
-        auto itr = m_creatureDisplayScalesMap.find(displayId);
-        return itr != m_creatureDisplayScalesMap.end() ? itr->second : 1.0f;
+        CreatureDisplayScaleMap const& displayMap = GetCreatureDisplayScaleMapForBuild(build);
+        return displayMap.find(displayId) != displayMap.end();
+    }
+    float GetCreatureDisplayScale(uint32 displayId) const;
+    float GetCreatureDisplayScale(uint32 displayId, uint32 build) const
+    {
+        CreatureDisplayScaleMap const& displayMap = GetCreatureDisplayScaleMapForBuild(build);
+        auto itr = displayMap.find(displayId);
+        if (itr == displayMap.end())
+            return 1.0f;
+
+        return itr->second != 0.0f ? itr->second : 1.0f;
     }
 
     // AreaTriggers
@@ -344,6 +357,7 @@ public:
         return iter->second;
     }
 private:
+    static CreatureDisplayScaleMap const& GetCreatureDisplayScaleMapForBuild(uint32 build);
     GameDataSource m_dataSource = DB_VMANGOS;
     SoundNamesMap m_soundNamesMap;
     SpellNamesMap m_spellNamesMap;
@@ -365,7 +379,9 @@ private:
     QuestRelationsMap m_creatureQuestEnders;
     QuestRelationsMap m_gameobjectQuestStarters;
     QuestRelationsMap m_gameobjectQuestEnders;
-    static CreatureDisplayScaleMap const m_creatureDisplayScalesMap;
+    static CreatureDisplayScaleMap const m_creatureDisplayScalesMap5875;
+    static CreatureDisplayScaleMap const m_creatureDisplayScalesMap8606;
+    static CreatureDisplayScaleMap const m_creatureDisplayScalesMap12340;
     static MapNamesMap const m_mapNamesMap;
     static LanguageNamesMap const m_languageNamesMap;
 };

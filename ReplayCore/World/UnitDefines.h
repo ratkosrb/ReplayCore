@@ -866,6 +866,34 @@ inline std::string VisFlagsToString(uint32 value)
     return flagNames;
 }
 
+// UNIT_FIELD_BYTES_1 (UNIT_BYTES_1_OFFSET_ANIM_TIER)
+enum AnimationTier : uint8
+{
+    ANIM_TIER_GROUND    = 0, // plays ground tier animations
+    ANIM_TIER_SWIM      = 1, // falls back to ground tier animations, not handled by the client, should never appear in sniffs, will prevent tier change animations from playing correctly if used
+    ANIM_TIER_HOVER     = 2, // plays flying tier animations or falls back to ground tier animations, automatically enables hover clientside when entering visibility with this value
+    ANIM_TIER_FLY       = 3, // plays flying tier animations
+    ANIM_TIER_SUBMERGED = 4
+};
+
+inline std::string AnimTierToString(uint32 value)
+{
+    switch (value)
+    {
+        case ANIM_TIER_GROUND:
+            return "Ground";
+        case ANIM_TIER_SWIM:
+            return "Swim";
+        case ANIM_TIER_HOVER:
+            return "Hover";
+        case ANIM_TIER_FLY:
+            return "Fly";
+        case ANIM_TIER_SUBMERGED:
+            return "Submerged";
+    }
+    return "UNKNOWN";
+}
+
 enum UnitPVPStateFlags
 {
     UNIT_BYTE2_FLAG_PVP         = 0x01,
