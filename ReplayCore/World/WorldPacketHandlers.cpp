@@ -613,7 +613,7 @@ void WorldServer::HandlePetNameQuery(WorldPacket& packet)
     packet >> petNumber;
     packet >> petGuid;
 
-    std::string name = sReplayMgr.GetCreaturePetName(petNumber);
+    std::string name = sReplayMgr.GetCreaturePetName(petGuid.GetCounter());
     if (!name.empty())
         SendPetNameQueryResponse(petNumber, name.c_str(), 1);
 }
