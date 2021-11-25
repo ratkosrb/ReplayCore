@@ -1059,20 +1059,89 @@ bool CommandHandler::HandleSetValue()
     if (!ExtractString(fieldName))
         return false;
 
-    uint32 value;
-    if (!ExtractUInt32(value))
-        return false;
-
     std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), ::toupper);
 
-    if (uint16 uf = sWorld.GetUpdateField(fieldName))
+    if (UpdateFieldDefinition const* pField = UpdateFields::GetUpdateFieldDefinitionByName(fieldName, sWorld.GetClientBuild()))
     {
-        pTarget->SetUInt32Value(fieldName.c_str(), value);
-        pTarget->SendDirectValueUpdate(uf);
-        PSendSysMessage("Field %s set to %u.", fieldName.c_str(), pTarget->GetUInt32Value(fieldName.c_str()));
+        if ((pField->objectTypeMask & pTarget->GetTypeMask()) == 0)
+        {
+            SendSysMessage("Target does have that field.");
+            return true;
+        }
+
+        switch (pField->valueType)
+        {
+            case UF_TYPE_INT:
+            {
+                uint32 value;
+                if (!ExtractUInt32(value))
+                    return false;
+
+                pTarget->SetUInt32Value(fieldName.c_str(), value);
+                PSendSysMessage("Field %s of %s set to %u.", pField->name, pTarget->GetGuidStr().c_str(), value);
+                break;
+            }
+            case UF_TYPE_TWO_SHORT:
+            {
+                uint32 value1;
+                if (!ExtractUInt32(value1))
+                    return false;
+
+                uint32 value2;
+                if (!ExtractUInt32(value2))
+                    return false;
+
+                pTarget->SetUInt16Value(fieldName.c_str(), 0, value1);
+                pTarget->SetUInt16Value(fieldName.c_str(), 1, value2);
+                PSendSysMessage("Field %s of %s set to %u/%u.", pField->name, pTarget->GetGuidStr().c_str(), value1, value2);
+                break;
+            }
+            case UF_TYPE_FLOAT:
+            {
+                float value;
+                if (!ExtractFloat(value))
+                    return false;
+
+                pTarget->SetFloatValue(fieldName.c_str(), value);
+                PSendSysMessage("Field %s of %s set to %g.", pField->name, pTarget->GetGuidStr().c_str(), value);
+                break;
+            }
+            case UF_TYPE_BYTES:
+            case UF_TYPE_BYTES2:
+            {
+                uint32 value1;
+                if (!ExtractUInt32(value1))
+                    return false;
+
+                uint32 value2;
+                if (!ExtractUInt32(value2))
+                    return false;
+
+                uint32 value3;
+                if (!ExtractUInt32(value3))
+                    return false;
+
+                uint32 value4;
+                if (!ExtractUInt32(value4))
+                    return false;
+
+                pTarget->SetByteValue(fieldName.c_str(), 0, value1);
+                pTarget->SetByteValue(fieldName.c_str(), 1, value2);
+                pTarget->SetByteValue(fieldName.c_str(), 2, value3);
+                pTarget->SetByteValue(fieldName.c_str(), 3, value4);
+                PSendSysMessage("Field %s of %s set to %u/%u/%u/%u.", pField->name, pTarget->GetGuidStr().c_str(), value1, value2, value3, value4);
+                break;
+            }
+            default:
+            {
+                SendSysMessage("Unsupported field type.");
+                break;
+            }
+        }
+        pTarget->SendDirectValueUpdate(pField->offset);
     }
     else
-        SendSysMessage("No update field with that name.");
+        SendSysMessage("Wrong field name.");
 
     return true;
 }

@@ -149,21 +149,25 @@ struct CreatureData : public UnitData
 struct PlayerData : public UnitData
 {
     std::string name;
-    uint32 bytes1 = 0;
-    uint32 bytes2 = 0;
+    uint8 skin = 0;
+    uint8 face = 0;
+    uint8 hairStyle = 0;
+    uint8 hairColor = 0;
+    uint8 facialHair = 0;
     uint32 flags = 0;
     uint8 comboPoints = 0;
+    int8 pvpTitle = 0;
     uint32 visibleItems[EQUIPMENT_SLOT_END] = {};
     uint32 visibleItemEnchants[EQUIPMENT_SLOT_END] = {};
 
     void InitializePlayer(Player* pPlayer) const;
 
     char const* GetName() const { return name.c_str(); }
-    uint8 GetSkinColor() const { return bytes1 & 0xFF; }
-    uint8 GetFace() const { return (bytes1 >> 8) & 0xFF; }
-    uint8 GetHairStyle() const { return (bytes1 >> 16) & 0xFF; }
-    uint8 GetHairColor() const { return (bytes1 >> 24) & 0xFF; }
-    uint8 GetFacialHair() const { return bytes2 & 0xFF; }
+    uint8 GetSkinColor() const { return skin; }
+    uint8 GetFace() const { return face; }
+    uint8 GetHairStyle() const { return hairStyle; }
+    uint8 GetHairColor() const { return hairColor; }
+    uint8 GetFacialHair() const { return facialHair; }
 
     uint32 GetVisibleItemId(uint32 slot) const { return visibleItems[slot]; }
     uint32 GetVisibleItemEnchant(uint32 slot) const { return visibleItemEnchants[slot]; }

@@ -25,13 +25,22 @@ public:
     void SetPlayerBytes2(uint32 bytes2);
     uint32 GetPlayerFlags() const;
     void SetPlayerFlags(uint32 flags);
+    int8 GetPvPTitle() const;
+    void SetPvPTitle(int8 pvpTitle);
+    uint32 GetChosenTitle() const;
+    void SetChosenTitle(uint32 title);
     uint8 GetComboPoints() const;
     void SetComboPoints(uint8 points);
 
+    void SetSkinColor(uint8 skin);
     uint8 GetSkinColor() const;
+    void SetFace(uint8 face);
     uint8 GetFace() const;
+    void SetHairStyle(uint8 hariStyle);
     uint8 GetHairStyle() const;
+    void SetHairColor(uint8 hairColo);
     uint8 GetHairColor() const;
+    void SetFacialHair(uint8 facialHair);
     uint8 GetFacialHair() const;
 
     void SetVisibleItemSlot(uint8 slot, uint32 itemId, uint32 enchantId);

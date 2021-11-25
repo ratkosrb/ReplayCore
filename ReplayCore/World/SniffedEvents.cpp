@@ -2264,7 +2264,7 @@ void ReplayMgr::LoadUnitPowerValuesUpdate(char const* tableName, char const* fie
             uint32 powerValue = fields[3].GetUInt32();
 
             // powers are per class in modern wow
-            if (sConfig.GetSniffVersion() == SNIFF_CLASSIC && typeId == TYPEID_PLAYER)
+            if (sConfig.GetSniffVersion() >= SNIFF_CLASSIC && typeId == TYPEID_PLAYER)
             {
                 powerType = Classic::GetPowerInSlotForClass(static_cast<UnitData const*>(pSpawnData)->classId, powerType);
 

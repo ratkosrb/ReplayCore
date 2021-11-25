@@ -48,6 +48,7 @@ Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : U
     SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", 0);
     SetHealth(GetMaxHealth());
     RemoveFlag("PLAYER_FLAGS", PLAYER_FLAGS_GHOST);
+    SetByteValue("PLAYER_BYTES_2", 3, REST_STATE_NORMAL);
 }
 
 static std::vector<std::pair<uint32, uint32>> const g_playerSkills =
@@ -177,6 +178,48 @@ void Player::SetPlayerFlags(uint32 flags)
     SetUInt32Value("PLAYER_FLAGS", flags);
 }
 
+int8 Player::GetPvPTitle() const
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        return GetByteValue("PLAYER_BYTES_3", 3);
+
+    if (uint32 chosenTitle = GetChosenTitle())
+    {
+        if (chosenTitle <= 28)
+        {
+            if (chosenTitle > 14)
+                return chosenTitle / 2;
+
+            return chosenTitle;
+        }
+    }
+
+    return 0;
+}
+
+void Player::SetPvPTitle(int8 pvpTitle)
+{
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        SetByteValue("PLAYER_BYTES_3", 3, pvpTitle);
+    else
+    {
+        if ((GetRaceMask() & RACEMASK_HORDE) != 0)
+            pvpTitle += 14;
+
+        SetChosenTitle(pvpTitle);
+    }
+}
+
+uint32 Player::GetChosenTitle() const
+{
+    return GetUInt32Value("PLAYER_CHOSEN_TITLE");
+}
+
+void Player::SetChosenTitle(uint32 title)
+{
+    SetUInt32Value("PLAYER_CHOSEN_TITLE", title);
+}
+
 uint8 Player::GetComboPoints() const
 {
     return GetByteValue("PLAYER_FIELD_BYTES", 1);
@@ -187,29 +230,54 @@ void Player::SetComboPoints(uint8 points)
     SetByteValue("PLAYER_FIELD_BYTES", 1, points);
 }
 
+void Player::SetSkinColor(uint8 skin)
+{
+    SetByteValue("PLAYER_BYTES", 0, skin);
+}
+
 uint8 Player::GetSkinColor() const
 {
-    return GetPlayerBytes() & 0xFF;
+    return GetByteValue("PLAYER_BYTES", 0);
+}
+
+void Player::SetFace(uint8 face)
+{
+    SetByteValue("PLAYER_BYTES", 1, face);
 }
 
 uint8 Player::GetFace() const
 {
-    return (GetPlayerBytes() >> 8) & 0xFF;
+    return GetByteValue("PLAYER_BYTES", 1);
+}
+
+void Player::SetHairStyle(uint8 hairStyle)
+{
+    SetByteValue("PLAYER_BYTES", 2, hairStyle);
 }
 
 uint8 Player::GetHairStyle() const
 {
-    return (GetPlayerBytes() >> 16) & 0xFF;
+    return GetByteValue("PLAYER_BYTES", 2);
+}
+
+void Player::SetHairColor(uint8 hairColor)
+{
+    SetByteValue("PLAYER_BYTES", 3, hairColor);
 }
 
 uint8 Player::GetHairColor() const
 {
-    return (GetPlayerBytes() >> 24) & 0xFF;
+    return GetByteValue("PLAYER_BYTES", 3);
+}
+
+void Player::SetFacialHair(uint8 facialHair)
+{
+    SetByteValue("PLAYER_BYTES_2", 0, facialHair);
 }
 
 uint8 Player::GetFacialHair() const
 {
-    return GetPlayerBytes2() & 0xFF;
+    return GetByteValue("PLAYER_BYTES_2", 0);
 }
 
 void Player::SetVisibleItemSlot(uint8 slot, uint32 itemId, uint32 enchantId)

@@ -50,6 +50,8 @@ enum Races
     (1<<(RACE_GNOME-1))     |(1<<(RACE_TROLL-1))    |(1<<(RACE_BLOODELF-1)) | \
     (1<<(RACE_DRAENEI-1)))
 
+#define RACEMASK_ALL_PLAYABLE_WOTLK RACEMASK_ALL_PLAYABLE_TBC
+
 #define RACEMASK_ALL_VANILLA \
     ((1<<(RACE_HUMAN-1))    |(1<<(RACE_ORC-1))      |(1<<(RACE_DWARF-1))   | \
     (1<<(RACE_NIGHTELF-1))  |(1<<(RACE_UNDEAD-1))   |(1<<(RACE_TAUREN-1))  | \
@@ -75,11 +77,11 @@ enum Races
 // for most cases batter use ChrRace data for team check as more safe, but when need full mask of team can be use this defines.
 #define RACEMASK_ALLIANCE \
     ((1<<(RACE_HUMAN-1))    |(1<<(RACE_DWARF-1))    |(1<<(RACE_NIGHTELF-1))| \
-    (1<<(RACE_GNOME-1)))
+    (1<<(RACE_GNOME-1))     |(1<<(RACE_DRAENEI-1)))
 
 #define RACEMASK_HORDE \
     ((1<<(RACE_ORC-1))      |(1<<(RACE_UNDEAD-1))   |(1<<(RACE_TAUREN-1))  | \
-    (1<<(RACE_TROLL-1)))
+    (1<<(RACE_TROLL-1))     |(1<<(RACE_BLOODELF-1)))
 
 // Class value is index in ChrClasses.dbc
 enum Classes
@@ -104,6 +106,8 @@ enum Classes
     ((1<<(CLASS_WARRIOR-1))|(1<<(CLASS_PALADIN-1))|(1<<(CLASS_HUNTER-1))| \
     (1<<(CLASS_ROGUE-1))  |(1<<(CLASS_PRIEST-1)) |(1<<(CLASS_SHAMAN-1))| \
     (1<<(CLASS_MAGE-1))   |(1<<(CLASS_WARLOCK-1))|(1<<(CLASS_DRUID-1))   )
+
+#define CLASSMASK_ALL_PLAYABLE_TBC CLASSMASK_ALL_PLAYABLE_VANILLA
 
 #define CLASSMASK_ALL_PLAYABLE_WOTLK \
     ((1<<(CLASS_WARRIOR-1))|(1<<(CLASS_PALADIN-1))|(1<<(CLASS_HUNTER-1))| \

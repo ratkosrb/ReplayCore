@@ -209,6 +209,7 @@ uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 client
             break;
         }
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
         {
             if (clientBuild < CLIENT_BUILD_2_0_1)
                 return ConvertClassicMovementFlagsToVanilla(moveFlags);
@@ -375,6 +376,7 @@ uint32 GameDataMgr::ConvertChatType(uint32 chatType) const
         case SNIFF_WOTLK:
             return ConvertWotLKChatType(chatType);
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
             return ConvertClassicChatType(chatType);
     }
 
@@ -599,6 +601,7 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
             break;
         }
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
             {
@@ -693,6 +696,7 @@ uint32 GameDataMgr::ConvertNpcFlagsForBuild(uint32 npcFlags, uint32 build)
         case SNIFF_TBC:
         case SNIFF_WOTLK:
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
         {
             if (build < CLIENT_BUILD_2_0_1)
                 return ConvertClassicNpcFlagsToVanilla(npcFlags);
@@ -739,6 +743,7 @@ uint8 GameDataMgr::ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags, uint32 s
             break;
         }
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
                 return ConvertClassicAuraFlagsToVanilla(auraFlags, activeFlags);
@@ -769,6 +774,7 @@ uint32 GameDataMgr::ConvertHitInfoFlags(uint32 hitInfo)
         }
         case SNIFF_WOTLK:
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
                 return ConvertClassicHitInfoFlagsToVanilla(hitInfo);
@@ -791,6 +797,7 @@ std::string GameDataMgr::ChatTypeToString(uint32 value) const
         case SNIFF_WOTLK:
             return WotLK::ChatTypeToString(value);
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
             return Classic::ChatTypeToString(value);
     }
     return std::to_string(value);
@@ -807,6 +814,7 @@ std::string GameDataMgr::ChatTypeToVerbString(uint32 value) const
         case SNIFF_WOTLK:
             return WotLK::ChatTypeToVerbString(value);
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
             return Classic::ChatTypeToVerbString(value);
     }
     return "says";
@@ -823,6 +831,7 @@ inline std::string GetHitInfoName(uint32 value)
         case SNIFF_WOTLK:
             return WotLK::HitInfoToString(value);
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
             return Classic::HitInfoToString(value);
     }
     return std::to_string(value);
@@ -855,6 +864,7 @@ inline std::string GetMovementFlagName(uint32 value)
         case SNIFF_WOTLK:
             return WotLK::MovementFlagToString(value);
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
             return Classic::MovementFlagToString(value);
     }
     return std::to_string(value);
@@ -887,6 +897,7 @@ inline std::string GetSplineFlagName(uint32 value)
         case SNIFF_WOTLK:
             return WotLK::SplineFlagToString(value);
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
             return Classic::SplineFlagToString(value);
     }
     return std::to_string(value);
@@ -919,6 +930,7 @@ inline std::string GetNpcFlagName(uint32 value)
         case SNIFF_WOTLK:
             return WotLK::NpcFlagToString(value);
         case SNIFF_CLASSIC:
+        case SNIFF_SOM:
             return Classic::NpcFlagToString(value);
     }
     return std::to_string(value);

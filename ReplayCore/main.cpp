@@ -123,6 +123,7 @@ int main()
     printf("1. TBC 2.X\n");
     printf("2. WotLK 3.X\n");
     printf("3. Classic 1.13\n");
+    printf("4. Classic 1.14\n");
     printf("> ");
     sConfig.SetSniffVersion(Console::GetUInt32());
     printf("\n");

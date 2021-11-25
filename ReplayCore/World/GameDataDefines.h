@@ -20,6 +20,7 @@ enum SniffVersion
     SNIFF_TBC,
     SNIFF_WOTLK,
     SNIFF_CLASSIC,
+    SNIFF_SOM,
 };
 
 namespace Vanilla

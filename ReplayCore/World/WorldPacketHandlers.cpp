@@ -423,43 +423,11 @@ void WorldServer::HandleCharCreate(WorldPacket& packet)
     playerData.location.z = info->positionZ;
     playerData.location.o = info->orientation;
 
-    union
-    {
-        struct
-        {
-            uint8 skin;
-            uint8 face;
-            uint8 hairStyle;
-            uint8 hairColor;
-        } bytes;
-        uint32 raw;
-    } playerBytes1;
-
-    playerBytes1.bytes.skin = skin;
-    playerBytes1.bytes.face = face;
-    playerBytes1.bytes.hairStyle = hairStyle;
-    playerBytes1.bytes.hairColor = hairColor;
-
-    playerData.bytes1 = playerBytes1.raw;
-
-    union
-    {
-        struct
-        {
-            uint8 facialHair;
-            uint8 unk1;
-            uint8 bankBagSlots;
-            uint8 restState;
-        } bytes;
-        uint32 raw;
-    } playerBytes2;
-
-    playerBytes2.bytes.facialHair = facialHair;
-    playerBytes2.bytes.unk1 = 0;
-    playerBytes2.bytes.bankBagSlots = 0;
-    playerBytes2.bytes.restState = 0x02;
-
-    playerData.bytes2 = playerBytes2.raw;
+    playerData.skin = skin;
+    playerData.face = face;
+    playerData.hairStyle = hairStyle;
+    playerData.hairColor = hairColor;
+    playerData.facialHair = facialHair;
 
     playerData.displayId = GetDefaultDisplayIdForPlayerRace(raceId, gender);
     playerData.nativeDisplayId = playerData.displayId;
