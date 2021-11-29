@@ -54,6 +54,38 @@ enum SpellMissInfo
     SPELL_MISS_REFLECT                 = 11
 };
 
+inline std::string SpellMissInfoToString(uint32 reason)
+{
+    switch (reason)
+    {
+        case SPELL_MISS_NONE:
+            return "None;";
+        case SPELL_MISS_MISS:
+            return "Miss;";
+        case SPELL_MISS_RESIST:
+            return "Resist;";
+        case SPELL_MISS_DODGE:
+            return "Dodge;";
+        case SPELL_MISS_PARRY:
+            return "Parry;";
+        case SPELL_MISS_BLOCK:
+            return "Block;";
+        case SPELL_MISS_EVADE:
+            return "Evade;";
+        case SPELL_MISS_IMMUNE:
+            return "Immmune;";
+        case SPELL_MISS_IMMUNE2:
+            return "Immune2;";
+        case SPELL_MISS_DEFLECT:
+            return "Deflect;";
+        case SPELL_MISS_ABSORB:
+            return "Absorb;";
+        case SPELL_MISS_REFLECT:
+            return "Reflect;";
+    }
+    return "UNKNOWN";
+}
+
 enum SpellSchools
 {
     SPELL_SCHOOL_NORMAL                 = 0,            // Physical, Armor

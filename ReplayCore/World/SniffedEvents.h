@@ -1779,7 +1779,7 @@ struct SniffedEvent_SpellCastStart : SniffedEventCRTP<SniffedEvent_SpellCastStar
 
 struct SniffedEvent_SpellCastGo : SniffedEventCRTP<SniffedEvent_SpellCastGo>
 {
-    SniffedEvent_SpellCastGo(ObjectGuid casterGuid, ObjectGuid casterUnitGuid, uint32 spellId, uint32 castFlags, uint32 ammoDisplayId, uint32 ammoInventoryType, ObjectGuid mainTargetGuid, std::vector<ObjectGuid> hitTargets, std::vector<ObjectGuid> missTargets, Vector3 sourcePosition, Vector3 destinationPosition) :
+    SniffedEvent_SpellCastGo(ObjectGuid casterGuid, ObjectGuid casterUnitGuid, uint32 spellId, uint32 castFlags, uint32 ammoDisplayId, uint32 ammoInventoryType, ObjectGuid mainTargetGuid, std::vector<std::pair<ObjectGuid, uint8>> hitTargets, std::vector<std::pair<ObjectGuid, uint8>> missTargets, Vector3 sourcePosition, Vector3 destinationPosition) :
         m_casterGuid(casterGuid), m_casterUnitGuid(casterUnitGuid), m_spellId(spellId), m_castFlags(castFlags), m_ammoDisplayId(ammoDisplayId), m_ammoInventoryType(ammoInventoryType), m_mainTargetGuid(mainTargetGuid), m_hitTargets(hitTargets), m_missTargets(missTargets), m_sourcePosition(sourcePosition), m_destinationPosition(destinationPosition) {};
     uint32 m_spellId = 0;
     uint32 m_castFlags = 0;
@@ -1788,14 +1788,15 @@ struct SniffedEvent_SpellCastGo : SniffedEventCRTP<SniffedEvent_SpellCastGo>
     ObjectGuid m_casterGuid;
     ObjectGuid m_casterUnitGuid;
     ObjectGuid m_mainTargetGuid;
-    std::vector<ObjectGuid> m_hitTargets;
-    std::vector<ObjectGuid> m_missTargets;
+    std::vector<std::pair<ObjectGuid, uint8>> m_hitTargets;
+    std::vector<std::pair<ObjectGuid, uint8>> m_missTargets;
     Vector3 m_sourcePosition;
     Vector3 m_destinationPosition;
     void Execute() const final;
     void PepareForCurrentClient() final;
     std::string GetShortDescription() const final;
     std::string GetLongDescription() const final;
+    bool HasHitTarget(ObjectGuid guid) const; // used by script maker
     SniffedEventType GetType() const final
     {
         return SE_SPELL_CAST_GO;

@@ -1137,16 +1137,16 @@ void WorldServer::HandleCastSpell(WorldPacket& packet)
     SendSpellCastStart(spellId, 0, 2, m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetObjectGuid(), targets);
     SendCastResult(spellId, 0, 0);
 
-    std::vector<ObjectGuid> vHitTargets;
+    std::vector<std::pair<ObjectGuid, uint8>> vHitTargets;
 
     if (!targets.getUnitTargetGuid().IsEmpty())
-        vHitTargets.push_back(targets.getUnitTargetGuid());
+        vHitTargets.push_back({ targets.getUnitTargetGuid(), 0 });
     else if (!targets.getGOTargetGuid().IsEmpty())
-        vHitTargets.push_back(targets.getGOTargetGuid());
+        vHitTargets.push_back({ targets.getGOTargetGuid(), 0 });
     else
-        vHitTargets.push_back(m_clientPlayer->GetObjectGuid());
+        vHitTargets.push_back({ m_clientPlayer->GetObjectGuid(), 0 });
 
-    std::vector<ObjectGuid> vMissTargets;
+    std::vector<std::pair<ObjectGuid, uint8>> vMissTargets;
     SendSpellCastGo(spellId, 256, m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetObjectGuid(), targets, vHitTargets, vMissTargets);
 }
 

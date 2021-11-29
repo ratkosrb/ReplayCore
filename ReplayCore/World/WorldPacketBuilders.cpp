@@ -1758,7 +1758,7 @@ void WorldServer::SendCastResult(uint32 spellId, uint32 result, uint32 reason)
     }
 }
 
-void WorldServer::SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<ObjectGuid> const& vHitTargets, std::vector<ObjectGuid> const& vMissTargets, uint32 ammoDisplayId, uint32 ammoInventoryType)
+void WorldServer::SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<std::pair<ObjectGuid, uint8>> const& vHitTargets, std::vector<std::pair<ObjectGuid, uint8>> const& vMissTargets, uint32 ammoDisplayId, uint32 ammoInventoryType)
 {
     WorldPacket data(GetOpcode("SMSG_SPELL_GO"), 53);
     data << casterGuid.WriteAsPacked();
@@ -1786,14 +1786,14 @@ void WorldServer::SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid c
     data << uint8(vHitTargets.size());
     for (auto const& itr : vHitTargets)
     {
-        data << itr;
+        data << itr.first;
     }
 
     data << uint8(vMissTargets.size());
     for (auto const& itr : vMissTargets)
     {
-        data << itr;
-        data << (uint8)SPELL_MISS_MISS;
+        data << itr.first;
+        data << uint8(itr.second);
     }
 
     data << targets;

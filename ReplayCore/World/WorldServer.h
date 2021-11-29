@@ -366,7 +366,7 @@ public:
     void SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, WorldObject const* pTarget, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
     void SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
     void SendCastResult(uint32 spellId, uint32 result, uint32 reason);
-    void SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<ObjectGuid> const& vHitTargets, std::vector<ObjectGuid> const& vMissTargets, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
+    void SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<std::pair<ObjectGuid, uint8>> const& vHitTargets, std::vector<std::pair<ObjectGuid, uint8>> const& vMissTargets, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
     void SendAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage);

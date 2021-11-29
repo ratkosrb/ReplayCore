@@ -3562,9 +3562,9 @@ void ReplayMgr::LoadSpellCastGo()
         } while (result->NextRow());
     }
 
-    std::map<uint32, std::vector<ObjectGuid>> castGoTargets;
-    //                                             0          1              2            3
-    if (auto result = SniffDatabase.Query("SELECT `list_id`, `target_guid`, `target_id`, `target_type` FROM `spell_cast_go_target`"))
+    std::map<uint32, std::vector<std::pair<ObjectGuid, uint8>>> castGoTargets;
+    //                                             0          1              2            3              4
+    if (auto result = SniffDatabase.Query("SELECT `list_id`, `target_guid`, `target_id`, `target_type`, `miss_reason` FROM `spell_cast_go_target`"))
     {
         do
         {
@@ -3577,7 +3577,8 @@ void ReplayMgr::LoadSpellCastGo()
             ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
             if (targetGuid.IsEmpty())
                 continue;
-            castGoTargets[id].push_back(targetGuid);
+            uint8 missReason = fields[4].GetUInt8();
+            castGoTargets[id].push_back({ targetGuid, missReason });
 
         } while (result->NextRow());
     }
@@ -3722,10 +3723,10 @@ std::string SniffedEvent_SpellCastGo::GetLongDescription() const
 
     returnString += "\r\nHit Targets: " + std::to_string(m_hitTargets.size());
     for (auto const& guid : m_hitTargets)
-        returnString += "\r\n- " + guid.GetString(true);
+        returnString += "\r\n- " + guid.first.GetString(true);
     returnString += "\r\nMiss Targets: " + std::to_string(m_missTargets.size());
     for (auto const& guid : m_missTargets)
-        returnString += "\r\n- " + guid.GetString(true);
+        returnString += "\r\n- " + guid.first.GetString(true) + " (Reason: " + SpellMissInfoToString(guid.second) + ")";
 
     if (!m_sourcePosition.IsEmpty())
         returnString += "\r\nSrc Position: " + std::to_string(m_sourcePosition.x) + " " + std::to_string(m_sourcePosition.y) + " " + std::to_string(m_sourcePosition.z);
@@ -3733,6 +3734,14 @@ std::string SniffedEvent_SpellCastGo::GetLongDescription() const
         returnString += "\r\nDst Position: " + std::to_string(m_destinationPosition.x) + " " + std::to_string(m_destinationPosition.y) + " " + std::to_string(m_destinationPosition.z);
 
     return returnString;
+}
+
+bool SniffedEvent_SpellCastGo::HasHitTarget(ObjectGuid guid) const
+{
+    for (auto const& itr : m_hitTargets)
+        if (itr.first == guid)
+            return true;
+    return false;
 }
 
 void ReplayMgr::LoadSpellChannelStart()

@@ -632,7 +632,7 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
         auto script = std::make_shared<ScriptInfo>();
         script->command = SCRIPT_COMMAND_CAST_SPELL;
         script->castSpell.spellId = ptr->m_spellId;
-        if (ptr->GetTargetGuid().IsEmpty() && (ptr->m_hitTargets.empty() || (std::find(ptr->m_hitTargets.begin(), ptr->m_hitTargets.end(), ptr->GetSourceGuid()) != ptr->m_hitTargets.end())))
+        if (ptr->GetTargetGuid().IsEmpty() && (ptr->m_hitTargets.empty() || ptr->HasHitTarget(ptr->GetSourceGuid())))
             script->raw.data[4] = SF_GENERAL_TARGET_SELF;
         script->comment = "Cast Spell " + sGameDataMgr.GetSpellName(ptr->m_spellId);
         scriptActions.push_back(script);
