@@ -463,7 +463,7 @@ void ReplayMgr::LoadGameObjects()
         GameObjectTemplate const* gInfo = sGameDataMgr.GetGameObjectTemplate(entry);
         if (!gInfo)
         {
-            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u) with non existing gameobject entry %u, skipped.\n", guidCounter, entry);
+            printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u) with non existing gameobject entry %u.\n", guidCounter, entry);
             gInfo = sGameDataMgr.AddPlaceholderGameObjectTemplate(entry);
             //continue;
         }
@@ -628,7 +628,7 @@ void ReplayMgr::LoadCreatures()
         CreatureTemplate const* cInfo = sGameDataMgr.GetCreatureTemplate(entry);
         if (!cInfo)
         {
-            printf("[ReplayMgr] Error: Table `creature` has creature (GUID: %u) with non existing creature entry %u, skipped.\n", guidCounter, entry);
+            printf("[ReplayMgr] Error: Table `creature` has creature (GUID: %u) with non existing creature entry %u.\n", guidCounter, entry);
             cInfo = sGameDataMgr.AddPlaceholderCreatureTemplate(entry);
             //continue;
         }

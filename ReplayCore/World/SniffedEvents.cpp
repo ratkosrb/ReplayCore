@@ -130,6 +130,8 @@ void ReplayMgr::LoadSniffedEvents()
     LoadSpellCastGo();
     LoadSpellChannelStart();
     LoadSpellChannelUpdate();
+    LoadClientAreatriggerEnter();
+    LoadClientAreatriggerLeave();
     LoadClientQuestAccept();
     LoadClientQuestComplete();
     LoadClientCreatureInteract();
@@ -2529,8 +2531,8 @@ std::string SniffedEvent_UnitUpdate_auras::GetLongDescription() const
 
 void ReplayMgr::LoadCreatureTextTemplate()
 {
-    //                                             0        1           2       3            4
-    if (auto result = SniffDatabase.Query("SELECT `entry`, `group_id`, `text`, `chat_type`, `language` FROM `creature_text_template`"))
+    //                                             0        1      2       3            4
+    if (auto result = SniffDatabase.Query("SELECT `entry`, `idx`, `text`, `chat_type`, `language` FROM `creature_text_template`"))
     {
         do
         {
@@ -2538,7 +2540,7 @@ void ReplayMgr::LoadCreatureTextTemplate()
 
             CreatureText textEntry;
             textEntry.creatureId = fields[0].GetUInt32();
-            textEntry.groupId = fields[1].GetUInt32();
+            textEntry.idx = fields[1].GetUInt32();
             textEntry.text = fields[2].GetCppString();
             textEntry.chatType = fields[3].GetUInt32();
             textEntry.language = fields[4].GetUInt32();
@@ -2550,8 +2552,8 @@ void ReplayMgr::LoadCreatureTextTemplate()
 
 void ReplayMgr::LoadCreatureText()
 {
-    //                                             0             1       2        3           4              5            6
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `entry`, `group_id`, `target_guid`, `target_id`, `target_type` FROM `creature_text` ORDER BY `unixtimems`"))
+    //                                             0             1       2        3      4              5            6
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `entry`, `idx`, `target_guid`, `target_id`, `target_type` FROM `creature_text` ORDER BY `unixtimems`"))
     {
         do
         {
@@ -2561,7 +2563,7 @@ void ReplayMgr::LoadCreatureText()
             uint32 creatureGuidLow = fields[1].GetUInt32();
             uint32 creatureId = fields[2].GetUInt32();
             ObjectGuid sourceGuid = ObjectGuid(HIGHGUID_UNIT, creatureId, creatureGuidLow);
-            uint32 groupId = fields[3].GetUInt32();
+            uint32 idx = fields[3].GetUInt32();
             uint32 targetGuidLow = fields[4].GetUInt32();
             uint32 targetId = fields[5].GetUInt32();
             std::string targetType = fields[6].GetCppString();
@@ -2574,10 +2576,10 @@ void ReplayMgr::LoadCreatureText()
                 continue;
             }
 
-            CreatureText const* pTextEntry = GetCreatureTextTemplate(creatureId, groupId);
+            CreatureText const* pTextEntry = GetCreatureTextTemplate(creatureId, idx);
             if (!pTextEntry)
             {
-                printf("[ReplayMgr] Error: Unknown text index %u for creature %u!\n", groupId, creatureId);
+                printf("[ReplayMgr] Error: Unknown text index %u for creature %u!\n", idx, creatureId);
                 continue;
             }
 
@@ -3879,6 +3881,102 @@ std::string SniffedEvent_SpellChannelUpdate::GetLongDescription() const
         returnString += "Caster: " + m_casterGuid.GetString(true) + "\r\n";
     returnString += "Duration: " + std::to_string(m_duration) + "\r\n";
     return returnString;
+}
+
+void ReplayMgr::LoadClientAreatriggerEnter()
+{
+    //                                             0             1
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `areatrigger_id` FROM `client_areatrigger_enter` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 areatriggerId = fields[1].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_Client_AreatriggerEnter> newEvent = std::make_shared<SniffedEvent_Client_AreatriggerEnter>(areatriggerId);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_Client_AreatriggerEnter::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Player* pPlayer = sReplayMgr.GetActivePlayer();
+    if (!pPlayer)
+    {
+        printf("SniffedEvent_Client_AreatriggerEnter: Cannot find active player!\n");
+        return;
+    }
+
+    if (!pPlayer->IsVisibleToClient())
+        return;
+
+    uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_Client_AreatriggerEnter::GetShortDescription() const
+{
+    return "Client enters Areatrigger " + std::to_string(m_areatriggerId) + ".";
+}
+
+std::string SniffedEvent_Client_AreatriggerEnter::GetLongDescription() const
+{
+    return "Areatrigger Id: " + std::to_string(m_areatriggerId);
+}
+
+void ReplayMgr::LoadClientAreatriggerLeave()
+{
+    //                                             0             1
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `areatrigger_id` FROM `client_areatrigger_leave` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 areatriggerId = fields[1].GetUInt32();
+
+            std::shared_ptr<SniffedEvent_Client_AreatriggerLeave> newEvent = std::make_shared<SniffedEvent_Client_AreatriggerLeave>(areatriggerId);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_Client_AreatriggerLeave::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Player* pPlayer = sReplayMgr.GetActivePlayer();
+    if (!pPlayer)
+    {
+        printf("SniffedEvent_Client_AreatriggerLeave: Cannot find active player!\n");
+        return;
+    }
+
+    if (!pPlayer->IsVisibleToClient())
+        return;
+
+    uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
+    sWorld.SendChatPacket(say, GetShortDescription().c_str(), 0, 0, pPlayer->GetObjectGuid(), pPlayer->GetName());
+}
+
+std::string SniffedEvent_Client_AreatriggerLeave::GetShortDescription() const
+{
+    return "Client leaves Areatrigger " + std::to_string(m_areatriggerId) + ".";
+}
+
+std::string SniffedEvent_Client_AreatriggerLeave::GetLongDescription() const
+{
+    return "Areatrigger Id: " + std::to_string(m_areatriggerId);
 }
 
 void ReplayMgr::LoadClientQuestAccept()

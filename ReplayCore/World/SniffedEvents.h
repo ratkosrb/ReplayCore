@@ -91,6 +91,8 @@ enum SniffedEventType : uint8
     SE_SPELL_CAST_GO,
     SE_SPELL_CHANNEL_START,
     SE_SPELL_CHANNEL_UPDATE,
+    SE_CLIENT_AREATRIGGER_ENTER,
+    SE_CLIENT_AREATRIGGER_LEAVE,
     SE_CLIENT_QUEST_ACCEPT,
     SE_CLIENT_QUEST_COMPLETE,
     SE_CLIENT_CREATURE_INTERACT,
@@ -245,6 +247,10 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Spell Channel Start";
         case SE_SPELL_CHANNEL_UPDATE:
             return "Spell Channel Update";
+        case SE_CLIENT_AREATRIGGER_ENTER:
+            return "Client Areatrigger Enter";
+        case SE_CLIENT_AREATRIGGER_LEAVE:
+            return "Client Areatrigger Leave";
         case SE_CLIENT_QUEST_ACCEPT:
             return "Client Quest Accept";
         case SE_CLIENT_QUEST_COMPLETE:
@@ -1848,6 +1854,34 @@ struct SniffedEvent_SpellChannelUpdate : SniffedEventCRTP<SniffedEvent_SpellChan
     ObjectGuid GetSourceGuid() const final
     {
         return m_casterGuid;
+    }
+};
+
+struct SniffedEvent_Client_AreatriggerEnter : SniffedEventCRTP<SniffedEvent_Client_AreatriggerEnter>
+{
+    SniffedEvent_Client_AreatriggerEnter(uint32 areatriggerId) :
+        m_areatriggerId(areatriggerId) {};
+    uint32 m_areatriggerId = 0;
+    void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CLIENT_AREATRIGGER_ENTER;
+    }
+};
+
+struct SniffedEvent_Client_AreatriggerLeave : SniffedEventCRTP<SniffedEvent_Client_AreatriggerLeave>
+{
+    SniffedEvent_Client_AreatriggerLeave(uint32 areatriggerId) :
+        m_areatriggerId(areatriggerId) {};
+    uint32 m_areatriggerId = 0;
+    void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_CLIENT_AREATRIGGER_LEAVE;
     }
 };
 

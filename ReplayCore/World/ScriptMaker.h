@@ -11,7 +11,7 @@
 class ScriptMaker
 {
 public:
-    void MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
+    void MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, bool saveGoSpawnsToDb, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
 private:
     void CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
     uint32 GetCreatureFieldValueBeforeTime(uint32 guid, uint64 unixtimems, char const* fieldName);
@@ -48,6 +48,10 @@ private:
 
     // texts that we couldn't find in broadcast table
     std::vector<std::string> m_unknownScriptTexts;
+
+    // if we generate SCRIPT_COMMAND_RESPAWN_GAMEOBJECT
+    bool m_saveGoSpawnsToDb = false;
+    std::set<uint32> m_gameObjectGuidsToExport;
 };
 
 #endif

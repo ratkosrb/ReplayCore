@@ -72,6 +72,8 @@
             this.btnReplayPause = new System.Windows.Forms.Button();
             this.btnReplayPlay = new System.Windows.Forms.Button();
             this.grpOptions = new System.Windows.Forms.GroupBox();
+            this.cmbRowColors = new System.Windows.Forms.ComboBox();
+            this.lblRowColors = new System.Windows.Forms.Label();
             this.cmbTimeDisplay = new System.Windows.Forms.ComboBox();
             this.lblTimeDisplay = new System.Windows.Forms.Label();
             this.cmbTimeType = new System.Windows.Forms.ComboBox();
@@ -92,11 +94,15 @@
             this.lstEvents.GridLines = true;
             this.lstEvents.HideSelection = false;
             this.lstEvents.Location = new System.Drawing.Point(12, 12);
+            this.lstEvents.MinimumSize = new System.Drawing.Size(823, 350);
             this.lstEvents.Name = "lstEvents";
+            this.lstEvents.OwnerDraw = true;
             this.lstEvents.Size = new System.Drawing.Size(823, 350);
             this.lstEvents.TabIndex = 0;
             this.lstEvents.UseCompatibleStateImageBehavior = false;
             this.lstEvents.View = System.Windows.Forms.View.Details;
+            this.lstEvents.DrawColumnHeader += new System.Windows.Forms.DrawListViewColumnHeaderEventHandler(this.lstEvents_DrawColumnHeader);
+            this.lstEvents.DrawItem += new System.Windows.Forms.DrawListViewItemEventHandler(this.lstEvents_DrawItem);
             this.lstEvents.SelectedIndexChanged += new System.EventHandler(this.lstEvents_SelectedIndexChanged);
             this.lstEvents.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstEvents_KeyDown);
             this.lstEvents.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lstEvents_MouseClick);
@@ -114,7 +120,7 @@
             // clmDescription
             // 
             this.clmDescription.Text = "Description";
-            this.clmDescription.Width = 620;
+            this.clmDescription.Width = 622;
             // 
             // txtStartTime
             // 
@@ -162,6 +168,7 @@
             this.grpObjectFilters.Controls.Add(this.lblObjectGuid);
             this.grpObjectFilters.Controls.Add(this.txtObjectGuid);
             this.grpObjectFilters.Location = new System.Drawing.Point(852, 64);
+            this.grpObjectFilters.MinimumSize = new System.Drawing.Size(408, 298);
             this.grpObjectFilters.Name = "grpObjectFilters";
             this.grpObjectFilters.Size = new System.Drawing.Size(408, 298);
             this.grpObjectFilters.TabIndex = 5;
@@ -358,6 +365,7 @@
             // 
             this.txtEventDescription.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtEventDescription.Location = new System.Drawing.Point(12, 368);
+            this.txtEventDescription.MinimumSize = new System.Drawing.Size(530, 285);
             this.txtEventDescription.Multiline = true;
             this.txtEventDescription.Name = "txtEventDescription";
             this.txtEventDescription.ReadOnly = true;
@@ -510,6 +518,8 @@
             // 
             // grpOptions
             // 
+            this.grpOptions.Controls.Add(this.cmbRowColors);
+            this.grpOptions.Controls.Add(this.lblRowColors);
             this.grpOptions.Controls.Add(this.cmbTimeDisplay);
             this.grpOptions.Controls.Add(this.lblTimeDisplay);
             this.grpOptions.Controls.Add(this.cmbTimeType);
@@ -520,6 +530,28 @@
             this.grpOptions.TabIndex = 16;
             this.grpOptions.TabStop = false;
             this.grpOptions.Text = "Options";
+            // 
+            // cmbRowColors
+            // 
+            this.cmbRowColors.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbRowColors.FormattingEnabled = true;
+            this.cmbRowColors.Items.AddRange(new object[] {
+            "None",
+            "Alternating",
+            "Source Based"});
+            this.cmbRowColors.Location = new System.Drawing.Point(96, 78);
+            this.cmbRowColors.Name = "cmbRowColors";
+            this.cmbRowColors.Size = new System.Drawing.Size(183, 21);
+            this.cmbRowColors.TabIndex = 5;
+            // 
+            // lblRowColors
+            // 
+            this.lblRowColors.AutoSize = true;
+            this.lblRowColors.Location = new System.Drawing.Point(6, 81);
+            this.lblRowColors.Name = "lblRowColors";
+            this.lblRowColors.Size = new System.Drawing.Size(61, 13);
+            this.lblRowColors.TabIndex = 4;
+            this.lblRowColors.Text = "Row Colors";
             // 
             // cmbTimeDisplay
             // 
@@ -571,7 +603,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1272, 693);
+            this.ClientSize = new System.Drawing.Size(1270, 691);
             this.Controls.Add(this.grpOptions);
             this.Controls.Add(this.grpReplayControl);
             this.Controls.Add(this.txtEndTimeDate);
@@ -587,11 +619,12 @@
             this.Controls.Add(this.lblStartTime);
             this.Controls.Add(this.txtStartTime);
             this.Controls.Add(this.lstEvents);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(1278, 718);
             this.Name = "FormSniffBrowser";
             this.Text = "Sniff Browser";
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.ResizeEnd += new System.EventHandler(this.FormSniffBrowser_ResizeEnd);
+            this.Resize += new System.EventHandler(this.FormSniffBrowser_Resize);
             this.grpObjectFilters.ResumeLayout(false);
             this.grpObjectFilters.PerformLayout();
             this.grpEventFilters.ResumeLayout(false);
@@ -654,6 +687,8 @@
         private System.Windows.Forms.Label lblTimeType;
         private System.Windows.Forms.Button btnReplayJumpForwardInTime;
         private System.Windows.Forms.Button btnReplayGoToClientPosition;
+        private System.Windows.Forms.ComboBox cmbRowColors;
+        private System.Windows.Forms.Label lblRowColors;
     }
 }
 

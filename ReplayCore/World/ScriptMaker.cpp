@@ -4,6 +4,7 @@
 #include "GameObjectDefines.h"
 #include "UpdateFields.h"
 #include "../Defines/ClientVersions.h"
+#include "../World/ReplayMgr.h"
 #include <iostream>
 #include <fstream>
 
@@ -57,8 +58,9 @@ void ScriptMaker::SetScriptTargetParams(ScriptInfo& script, ObjectGuid target)
 
 #define UNKNOWN_TEXTS_START 200000
 
-void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList)
+void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, bool saveGoSpawnsToDb, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList)
 {
+    m_saveGoSpawnsToDb = saveGoSpawnsToDb;
     CheckGuidsThatNeedSeparateScript(defaultSource, defaultTarget, eventsList);
 
     uint64 const firstEventTime = eventsList.begin()->first;
@@ -145,7 +147,32 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId
         {
             log << uint32(UNKNOWN_TEXTS_START + i + 1) << " - " << m_unknownScriptTexts[i] << "\n";
         }
-        log << "*/\n";
+        log << "*/\n\n";
+    }
+
+    if (!m_gameObjectGuidsToExport.empty())
+    {
+        log << "-- GameObjects spawned during script.\n";
+        log << "INSERT INTO `gameobject` (`guid`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecsmin`, `spawntimesecsmax`, `state`, `animprogress`) VALUES\n";
+        uint32 count = 0;
+        for (auto const& guid : m_gameObjectGuidsToExport)
+        {
+            if (GameObjectData const* pSpawn = sReplayMgr.GetGameObjectSpawnData(guid))
+            {
+                if (count)
+                    log << ",\n";
+
+                log << "(" << guid << ", " << pSpawn->entry << ", " << pSpawn->location.mapId << ", " <<
+                    pSpawn->location.x << ", " << pSpawn->location.y << ", " << pSpawn->location.z << ", " <<
+                    pSpawn->location.o << ", " << ", " << pSpawn->rotation[0] << ", " << pSpawn->rotation[1] << ", " <<
+                    pSpawn->rotation[2] << ", " << pSpawn->rotation[3] << ", -1, -1, 1, 100)";
+
+                count++;
+            }
+            else
+                printf("[ScriptMaker] Error: GameObject %u does not exist!\n", guid);
+        }
+        log << ";\n\n";
     }
 
     std::vector<std::pair<ObjectGuid, uint32>> genericScriptsThatNeedStartScriptCommand;
@@ -221,6 +248,8 @@ void ScriptMaker::CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, Obj
 {
     std::set<ObjectGuid> summonedByScript;
     std::map<uint32 /*typeId*/, std::map<uint32 /*entry*/, std::set<ObjectGuid>>> sameEntrySpawns;
+    std::map<ObjectGuid, std::set<uint32>> eventTypesPerGuid;
+
     for (auto const& itr : eventsList)
     {
         ObjectGuid source = itr.second->GetSourceGuid();
@@ -238,7 +267,8 @@ void ScriptMaker::CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, Obj
             target != defaultSource &&
             source != defaultTarget &&
             target != defaultTarget &&
-            !IsSniffEventTypeWithIrrelevantSource(itr.second->GetType()))
+            !IsSniffEventTypeWithIrrelevantSource(itr.second->GetType()) &&
+            !(itr.second->GetType() == SE_WORLDOBJECT_DESTROY && summonedByScript.find(source) != summonedByScript.end()))
         {
             m_separateScriptGuids.insert(source);
         }
@@ -251,9 +281,13 @@ void ScriptMaker::CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, Obj
         }
 
         sameEntrySpawns[source.GetTypeId()][source.GetEntry()].insert(source);
+        eventTypesPerGuid[source].insert(itr.second->GetType());
 
         if (!target.IsEmpty())
+        {
             sameEntrySpawns[target.GetTypeId()][target.GetEntry()].insert(target);
+            eventTypesPerGuid[target].insert(itr.second->GetType());
+        }
     }
 
     // these guids need to be targeted by guid not entry,
@@ -266,6 +300,26 @@ void ScriptMaker::CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, Obj
             {
                 for (auto const& itr3 : itr2.second)
                 {
+                    // for despawn commands for objects spawned during script we assign
+                    // the despawn time on the spawn command instead of generating separate
+                    // despawn action
+                    bool willGenerateScript = false;
+                    for (auto const& eventType : eventTypesPerGuid[itr3])
+                    {
+                        if (IsSniffEventTypeWithIrrelevantSource(eventType))
+                            continue;
+
+                        if (eventType == SE_WORLDOBJECT_DESTROY &&
+                            summonedByScript.find(itr3) != summonedByScript.end())
+                            continue;
+
+                        willGenerateScript = true;
+                        break;
+                    }
+
+                    if (!willGenerateScript)
+                        continue;
+
                     m_targetByGuidGuids.insert(itr3);
 
                     // if its summoned by script then we can't target the creature by guid
@@ -341,14 +395,25 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
         else if (ptr->GetSourceGuid().IsGameObject())
         {
             auto script = std::make_shared<ScriptInfo>();
-            script->command = SCRIPT_COMMAND_SUMMON_OBJECT;
-            script->summonObject.gameobject_entry = ptr->GetSourceGuid().GetEntry();
-            script->summonObject.respawn_time = 60;
-            script->x = ptr->m_location.x;
-            script->y = ptr->m_location.y;
-            script->z = ptr->m_location.z;
-            script->o = ptr->m_location.o;
-            script->comment = "Summon GameObject " + sGameDataMgr.GetGameObjectName(ptr->GetSourceGuid().GetEntry());
+            if (m_saveGoSpawnsToDb)
+            {
+                script->command = SCRIPT_COMMAND_RESPAWN_GAMEOBJECT;
+                script->respawnGo.goGuid = ptr->GetSourceGuid().GetCounter();
+                script->respawnGo.despawnDelay = 60;
+                script->comment = "Respawn GameObject " + sGameDataMgr.GetGameObjectName(ptr->GetSourceGuid().GetEntry());
+                m_gameObjectGuidsToExport.insert(ptr->GetSourceGuid().GetCounter());
+            }
+            else
+            {
+                script->command = SCRIPT_COMMAND_SUMMON_OBJECT;
+                script->summonObject.gameobject_entry = ptr->GetSourceGuid().GetEntry();
+                script->summonObject.respawn_time = 60;
+                script->x = ptr->m_location.x;
+                script->y = ptr->m_location.y;
+                script->z = ptr->m_location.z;
+                script->o = ptr->m_location.o;
+                script->comment = "Summon GameObject " + sGameDataMgr.GetGameObjectName(ptr->GetSourceGuid().GetEntry());
+            }
             m_spawnScripts[ptr->GetSourceGuid()] = std::make_pair(unixtimems, script);
             scriptActions.push_back(script);
         }
@@ -375,11 +440,19 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
         {
             if (auto spawnScript = GetSpawnScriptForGuid(ptr->GetSourceGuid()))
             {
-                assert(spawnScript->second->command == SCRIPT_COMMAND_SUMMON_OBJECT);
                 assert(unixtimems > spawnScript->first);
-                
                 float respawnTimeSecs = ceilf(float(unixtimems - spawnScript->first) / float(IN_MILLISECONDS));
-                spawnScript->second->summonObject.respawn_time = (uint32)respawnTimeSecs;
+
+                if (m_saveGoSpawnsToDb)
+                {
+                    assert(spawnScript->second->command == SCRIPT_COMMAND_RESPAWN_GAMEOBJECT);
+                    spawnScript->second->respawnGo.despawnDelay = (uint32)respawnTimeSecs;
+                }
+                else
+                {
+                    assert(spawnScript->second->command == SCRIPT_COMMAND_SUMMON_OBJECT);
+                    spawnScript->second->summonObject.respawn_time = (uint32)respawnTimeSecs;
+                }
             }
             else
             {
@@ -635,6 +708,14 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
         if (ptr->GetTargetGuid().IsEmpty() && (ptr->m_hitTargets.empty() || ptr->HasHitTarget(ptr->GetSourceGuid())))
             script->raw.data[4] = SF_GENERAL_TARGET_SELF;
         script->comment = "Cast Spell " + sGameDataMgr.GetSpellName(ptr->m_spellId);
+        scriptActions.push_back(script);
+    }
+    else if (auto ptr = std::dynamic_pointer_cast<SniffedEvent_QuestUpdateComplete>(sniffedEvent))
+    {
+        auto script = std::make_shared<ScriptInfo>();
+        script->command = SCRIPT_COMMAND_QUEST_EXPLORED;
+        script->questExplored.questId = ptr->m_questId;
+        script->comment = "Complete Quest " + sGameDataMgr.GetQuestName(ptr->m_questId);
         scriptActions.push_back(script);
     }
 }

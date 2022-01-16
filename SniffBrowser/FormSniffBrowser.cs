@@ -79,6 +79,21 @@ namespace SniffBrowser
             Miscellaneous
         }
 
+        Color RowColor_Grey = Color.FromArgb(240, 240, 240);
+        Color RowColor_GameObject = Color.FromArgb(255, 240, 240);
+        Color RowColor_Creature = Color.FromArgb(240, 240, 255);
+        Color RowColor_Player = Color.FromArgb(240, 255, 240);
+        Color RowColor_Misc = Color.FromArgb(255, 255, 240);
+
+        enum RowColorType
+        {
+            None = 0,
+            Alternating = 1,
+            SourceBased = 2
+        }
+
+        Dictionary<uint, EventTypeFilter> SniffedEventCategoryDict = new Dictionary<uint, EventTypeFilter>();
+
         class SniffedEvent
         {
             public uint uniqueIdentifier;
@@ -98,12 +113,17 @@ namespace SniffBrowser
         private void Form1_Load(object sender, EventArgs e)
         {
             ShowScrollBar(lstEvents.Handle, (int)ScrollBarDirection.SB_VERT, true);
+            this.MinimumSize = this.Size;
+            lstObjectFilters.MinimumSize = lstObjectFilters.Size;
+
             cmbEventTypes.DataSource = GetValues<EventTypeFilter>();
             cmbEventTypes.SelectedIndex = 0;
             cmbObjectType.DataSource = GetValues<ObjectTypeFilter>();
             cmbObjectType.SelectedIndex = 0;
             cmbTimeType.SelectedIndex = 0;
             cmbTimeDisplay.SelectedIndex = 0;
+            cmbRowColors.SelectedIndex = 1;
+
             if (lstObjectFilters.Items.Count > 0)
             {
                 lstObjectFilters.Items[0].Selected = true;
@@ -457,6 +477,7 @@ namespace SniffBrowser
                         string eventName = packet.ReadCString();
                         SniffedEventTypesDict.Add(eventId, eventName);
                         SniffedEventImagesDict.Add(eventId, imageIndex);
+                        SniffedEventCategoryDict.Add(eventId, DetermineEventCategory(eventName));
                     }
                     UpdateEventTypesList();
                     btnAdd_Click(null, null);
@@ -580,6 +601,22 @@ namespace SniffBrowser
             return timeString;
         }
 
+        private EventTypeFilter DetermineEventCategory(string eventName)
+        {
+            if (eventName.StartsWith("Client"))
+                return EventTypeFilter.Client;
+            if (eventName.StartsWith("Player"))
+                return EventTypeFilter.Player;
+            if (eventName.StartsWith("Creature"))
+                return EventTypeFilter.Creature;
+            if (eventName.StartsWith("Unit"))
+                return EventTypeFilter.Unit;
+            if (eventName.StartsWith("GameObject"))
+                return EventTypeFilter.GameObject;
+
+            return EventTypeFilter.Miscellaneous;
+        }
+
         private void UpdateEventTypesList()
         {
             lstEventFilters.Items.Clear();
@@ -592,55 +629,9 @@ namespace SniffBrowser
 
             foreach (var eventType in SniffedEventTypesDict)
             {
-                bool isGameObject = eventType.Value.Contains("GameObject");
-                bool isUnit = eventType.Value.Contains("Unit");
-                bool isCreature = eventType.Value.Contains("Creature");
-                bool isPlayer = eventType.Value.Contains("Player");
-                bool isClient = eventType.Value.Contains("Client");
-
-                switch ((EventTypeFilter)cmbEventTypes.SelectedIndex)
-                {
-                    case EventTypeFilter.All:
-                    {
-                        break;
-                    }
-                    case EventTypeFilter.GameObject:
-                    {
-                        if (!isGameObject)
-                            continue;
-                        break;
-                    }
-                    case EventTypeFilter.Unit:
-                    {
-                        if (!isUnit)
-                            continue;
-                        break;
-                    }
-                    case EventTypeFilter.Creature:
-                    {
-                        if (!isCreature)
-                            continue;
-                        break;
-                    }
-                    case EventTypeFilter.Player:
-                    {
-                        if (!isPlayer)
-                            continue;
-                        break;
-                    }
-                    case EventTypeFilter.Client:
-                    {
-                        if (!isClient)
-                            continue;
-                        break;
-                    }
-                    case EventTypeFilter.Miscellaneous:
-                    {
-                        if (isGameObject || isUnit || isCreature || isPlayer || isClient)
-                            continue;
-                        break;
-                    }
-                }
+                if ((EventTypeFilter)cmbEventTypes.SelectedIndex != EventTypeFilter.All &&
+                    SniffedEventCategoryDict[eventType.Key] != (EventTypeFilter)cmbEventTypes.SelectedIndex)
+                    continue;
 
                 ListViewItem newItem = new ListViewItem();
                 newItem.Text = eventType.Value;
@@ -729,12 +720,21 @@ namespace SniffBrowser
             newItem.Text = objectGuid;
             newItem.SubItems.Add(objectId);
             newItem.SubItems.Add(objectType);
-            newItem.SubItems.Add("All");
 
-            HashSet<uint> eventTypesList = new HashSet<uint>();
-            foreach (var eventType in SniffedEventTypesDict)
-                eventTypesList.Add(eventType.Key);
-            newItem.Tag = eventTypesList;
+            if (lstObjectFilters.SelectedItems.Count > 0)
+            {
+                ListViewItem selectedItem = lstObjectFilters.SelectedItems[0];
+                newItem.SubItems.Add(selectedItem.SubItems[3].Text);
+                newItem.Tag = new HashSet<uint>((HashSet<uint>)selectedItem.Tag);
+            }
+            else
+            {
+                newItem.SubItems.Add("All");
+                HashSet<uint> eventTypesList = new HashSet<uint>();
+                foreach (var eventType in SniffedEventTypesDict)
+                    eventTypesList.Add(eventType.Key);
+                newItem.Tag = eventTypesList;
+            }
 
             lstObjectFilters.Items.Add(newItem);
             lstObjectFilters.FocusedItem = newItem;
@@ -826,6 +826,52 @@ namespace SniffBrowser
                 item.Checked = true;
         }
 
+
+        private void lstEvents_DrawItem(object sender, DrawListViewItemEventArgs e)
+        {
+            e.DrawDefault = true;
+
+            switch ((RowColorType)cmbRowColors.SelectedIndex)
+            {
+                case RowColorType.None:
+                {
+                    e.Item.BackColor = Color.White;
+                    e.Item.UseItemStyleForSubItems = true;
+                    return;
+                }
+                case RowColorType.Alternating:
+                {
+                    if ((e.ItemIndex % 2) == 1)
+                    {
+                        e.Item.BackColor = RowColor_Grey;
+                        e.Item.UseItemStyleForSubItems = true;
+                    }
+                    return;
+                }
+                case RowColorType.SourceBased:
+                {
+                    SniffedEvent sniffedEvent = e.Item.Tag as SniffedEvent;
+                    if (sniffedEvent.sourceGuid.IsEmpty())
+                        e.Item.BackColor = Color.White;
+                    else if (sniffedEvent.sourceGuid.GetObjectType() == ObjectType.GameObject)
+                        e.Item.BackColor = RowColor_GameObject;
+                    else if (sniffedEvent.sourceGuid.GetObjectType() == ObjectType.Creature)
+                        e.Item.BackColor = RowColor_Creature;
+                    else if (sniffedEvent.sourceGuid.GetObjectType() == ObjectType.Player)
+                        e.Item.BackColor = RowColor_Player;
+                    else
+                        e.Item.BackColor = RowColor_Misc;
+                    e.Item.UseItemStyleForSubItems = true;
+                    return;
+                }
+            }
+        }
+
+        private void lstEvents_DrawColumnHeader(object sender, DrawListViewColumnHeaderEventArgs e)
+        {
+            e.DrawDefault = true;
+        }
+
         private void lstEvents_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lstEvents.SelectedItems.Count == 0)
@@ -869,6 +915,21 @@ namespace SniffBrowser
                             {
                                 CopyEventTarget(sender, e, (SniffedEvent)item.Tag);
                             });
+                        eventListContextMenu.MenuItems.Add("Remove This Event",
+                            delegate (object sender2, EventArgs e2)
+                            {
+                                lstEvents.Items.Remove(item);
+                            });
+                        eventListContextMenu.MenuItems.Add("Remove This Source",
+                           delegate (object sender2, EventArgs e2)
+                           {
+                               RemoveEventsWithSource(sender, e, ((SniffedEvent)item.Tag).sourceGuid);
+                           });
+                        eventListContextMenu.MenuItems.Add("Remove This Target",
+                           delegate (object sender2, EventArgs e2)
+                           {
+                               RemoveEventsWithTarget(sender, e, ((SniffedEvent)item.Tag).targetGuid);
+                           });
                         eventListContextMenu.Show(lstEvents, new Point(e.X, e.Y));
                         break;
                     }
@@ -911,6 +972,46 @@ namespace SniffBrowser
             }
 
             SetObjectFilterFieldsFromGuid(sniffedEvent.targetGuid);
+        }
+
+        private void RemoveEventsWithSource(object sender, MouseEventArgs e, ObjectGuid sourceGuid)
+        {
+            if (sourceGuid.IsEmpty())
+            {
+                MessageBox.Show("Event has no source!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            List<ListViewItem> itemsToRemove = new List<ListViewItem>();
+            for (int i = 0; i < lstEvents.Items.Count; i++)
+            {
+                SniffedEvent sniffedEvent = (SniffedEvent)lstEvents.Items[i].Tag;
+                if (sniffedEvent.sourceGuid == sourceGuid)
+                    itemsToRemove.Add(lstEvents.Items[i]);
+            }
+
+            foreach (var item in itemsToRemove)
+                lstEvents.Items.Remove(item);
+        }
+
+        private void RemoveEventsWithTarget(object sender, MouseEventArgs e, ObjectGuid targetGuid)
+        {
+            if (targetGuid.IsEmpty())
+            {
+                MessageBox.Show("Event has no target!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            List<ListViewItem> itemsToRemove = new List<ListViewItem>();
+            for (int i = 0; i < lstEvents.Items.Count; i++)
+            {
+                SniffedEvent sniffedEvent = (SniffedEvent)lstEvents.Items[i].Tag;
+                if (sniffedEvent.targetGuid == targetGuid)
+                    itemsToRemove.Add(lstEvents.Items[i]);
+            }
+
+            foreach (var item in itemsToRemove)
+                lstEvents.Items.Remove(item);
         }
 
         private void lstEvents_KeyDown(object sender, KeyEventArgs e)
@@ -1075,6 +1176,7 @@ namespace SniffBrowser
             if (Utility.ShowInputDialog(ref commentPrefix, "Comment Prefix") != DialogResult.OK)
                 return;
 
+            bool hasGameObjectSpawn = false;
             List<object> guidList = new List<object>();
             guidList.Add(ObjectGuid.Empty);
             foreach (ListViewItem lvi in lstEvents.SelectedItems)
@@ -1090,6 +1192,9 @@ namespace SniffBrowser
                 {
                     guidList.Add(sniffedEvent.targetGuid);
                 }
+                if (sniffedEvent.sourceGuid.GetObjectType() == ObjectType.GameObject &&
+                    lvi.SubItems[2].Text.Contains("spawns"))
+                    hasGameObjectSpawn = true;
             }
 
             FormListSelector frmListSelector1 = new FormListSelector(guidList, "Make Script", "Select source object:");
@@ -1102,6 +1207,11 @@ namespace SniffBrowser
             if (frmListSelector2.ShowDialog() != DialogResult.OK)
                 return;
 
+            byte saveGameObjectSpawnsToDatabase = 0;
+            if (hasGameObjectSpawn &&
+                MessageBox.Show("Save gameobject spawns to database?", "Make Script", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                saveGameObjectSpawnsToDatabase = 1;
+
             ObjectGuid targetGuid = (ObjectGuid)guidList[frmListSelector1.ReturnValue];
 
             ByteBuffer packet = new ByteBuffer();
@@ -1112,6 +1222,7 @@ namespace SniffBrowser
             packet.WriteCString(commentPrefix);
             packet.WriteUInt64(sourceGuid.RawGuid);
             packet.WriteUInt64(targetGuid.RawGuid);
+            packet.WriteUInt8(saveGameObjectSpawnsToDatabase);
             packet.WriteUInt32((uint)lstEvents.SelectedItems.Count);
             foreach (ListViewItem lvi in lstEvents.SelectedItems)
             {
@@ -1124,6 +1235,39 @@ namespace SniffBrowser
         private void btnMakeWaypoints_Click(object sender, EventArgs e)
         {
             MessageBox.Show("Not Yet Implemented");
+        }
+
+        private void FormSniffBrowser_ResizeEnd(object sender, EventArgs e)
+        {
+            lstEvents.Size = new Size(lstEvents.MinimumSize.Width + (this.Size.Width - this.MinimumSize.Width), lstEvents.MinimumSize.Height + (this.Size.Height - this.MinimumSize.Height));
+            lstEvents.Columns[2].Width = 622 + (this.Size.Width - this.MinimumSize.Width);
+            txtEventDescription.Size = new Size(txtEventDescription.MinimumSize.Width + (this.Size.Width - this.MinimumSize.Width), txtEventDescription.Size.Height);
+            txtEventDescription.Location = new Point(txtEventDescription.Location.X, lstEvents.Location.Y + lstEvents.Size.Height + 6);
+            btnMakeScript.Location = new Point(btnMakeScript.Location.X, txtEventDescription.Location.Y + txtEventDescription.Size.Height + 10);
+            btnMakeWaypoints.Location = new Point(btnMakeWaypoints.Location.X, txtEventDescription.Location.Y + txtEventDescription.Size.Height + 10);
+            grpOptions.Location = new Point(txtEventDescription.Location.X + txtEventDescription.Size.Width + 6, txtEventDescription.Location.Y);
+            grpReplayControl.Location = new Point(grpOptions.Location.X, grpOptions.Location.Y + grpOptions.Size.Height + 6);
+            lblStartTime.Location = new Point(lstEvents.Location.X + lstEvents.Size.Width + 11, lblStartTime.Location.Y);
+            lblEndTime.Location = new Point(lstEvents.Location.X + lstEvents.Size.Width + 14, lblEndTime.Location.Y);
+            txtStartTime.Location = new Point(lblStartTime.Location.X + lblStartTime.Size.Width + 6, txtStartTime.Location.Y);
+            txtEndTime.Location = new Point(lblEndTime.Location.X + lblEndTime.Size.Width + 6, txtEndTime.Location.Y);
+            txtStartTimeDate.Location = new Point(txtStartTime.Location.X + txtStartTime.Size.Width + 6, txtStartTimeDate.Location.Y);
+            txtEndTimeDate.Location = new Point(txtEndTime.Location.X + txtEndTime.Size.Width + 6, txtEndTimeDate.Location.Y);
+            grpObjectFilters.Location = new Point(lstEvents.Location.X + lstEvents.Size.Width + 17, grpObjectFilters.Location.Y);
+            grpObjectFilters.Size = new Size(grpObjectFilters.Size.Width, grpObjectFilters.MinimumSize.Height + (this.Size.Height - this.MinimumSize.Height));
+            lstObjectFilters.Size = new Size(lstObjectFilters.Size.Width, lstObjectFilters.MinimumSize.Height + (this.Size.Height - this.MinimumSize.Height));
+            grpEventFilters.Location = new Point(lstEvents.Location.X + lstEvents.Size.Width + 17, grpObjectFilters.Location.Y + grpObjectFilters.Size.Height + 6);
+            btnRefresh.Location = new Point(this.Size.Width - 93, btnMakeScript.Location.Y);
+        }
+
+        FormWindowState LastWindowState = FormWindowState.Minimized;
+        private void FormSniffBrowser_Resize(object sender, EventArgs e)
+        {
+            if (WindowState != LastWindowState)
+            {
+                LastWindowState = WindowState;
+                FormSniffBrowser_ResizeEnd(sender, e);
+            }
         }
     }
 }

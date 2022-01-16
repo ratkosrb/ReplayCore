@@ -176,7 +176,7 @@ struct PlayerData : public UnitData
 struct CreatureText
 {
     uint32 creatureId = 0;
-    uint32 groupId = 0;
+    uint32 idx = 0;
     std::string text;
     uint32 chatType = 0;
     uint32 language = 0;
@@ -284,7 +284,7 @@ public:
     {
         for (auto const& itr : m_creatureTextTemplates)
         {
-            if (itr.creatureId == creatureId && itr.groupId == groupId)
+            if (itr.creatureId == creatureId && itr.idx == groupId)
                 return &itr;
         }
         return nullptr;
@@ -386,6 +386,8 @@ public:
     void LoadSpellCastGo();
     void LoadSpellChannelStart();
     void LoadSpellChannelUpdate();
+    void LoadClientAreatriggerEnter();
+    void LoadClientAreatriggerLeave();
     void LoadClientQuestAccept();
     void LoadClientQuestComplete();
     void LoadClientCreatureInteract();

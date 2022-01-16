@@ -339,8 +339,8 @@ public:
     void LoadSoundNames();
     std::string GetSoundName(uint32 id) const
     {
-        auto iter = m_spellNamesMap.find(id);
-        if (iter == m_spellNamesMap.end())
+        auto iter = m_soundNamesMap.find(id);
+        if (iter == m_soundNamesMap.end())
             return "UNKNOWN";
 
         return iter->second;

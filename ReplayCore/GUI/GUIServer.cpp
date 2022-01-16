@@ -297,6 +297,8 @@ void GUIServer::HandleMakeScript(ByteBuffer& buffer)
     buffer >> sourceGuid;
     ObjectGuid targetGuid;
     buffer >> targetGuid;
+    uint8 saveGoSpawnsToDb;
+    buffer >> saveGoSpawnsToDb;
     uint32 eventsCount;
     buffer >> eventsCount;
 
@@ -318,5 +320,5 @@ void GUIServer::HandleMakeScript(ByteBuffer& buffer)
     }
 
     ScriptMaker scriptMaker;
-    scriptMaker.MakeScript(mainScriptId, genericScriptId, tableName, commentPrefix, sourceGuid, targetGuid, eventsList);
+    scriptMaker.MakeScript(mainScriptId, genericScriptId, tableName, commentPrefix, sourceGuid, targetGuid, saveGoSpawnsToDb != 0, eventsList);
 }
