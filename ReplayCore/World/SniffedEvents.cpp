@@ -2758,8 +2758,6 @@ void ReplayMgr::LoadCreatureThreatUpdate()
             uint32 targetId = fields[2].GetUInt32();
             std::string targetType = fields[3].GetCppString();
             ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
-            if (targetGuid.IsEmpty() && !(targetGuidLow == 0 && targetId == 0 && targetType.empty()))
-                continue;
             uint32 threat = fields[4].GetUInt32();
 
             threatListsMap[listId].push_back({ targetGuid, threat });
