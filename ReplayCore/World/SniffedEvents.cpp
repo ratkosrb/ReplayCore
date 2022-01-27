@@ -106,7 +106,6 @@ void ReplayMgr::LoadSniffedEvents()
     LoadUnitGuidValuesUpdate("player_guid_values_update", TYPEID_PLAYER);
     LoadUnitSpeedUpdate("player_speed_update", TYPEID_PLAYER);
     LoadUnitAurasUpdate("player_auras_update", TYPEID_PLAYER);
-    LoadCreatureTextTemplate();
     LoadCreatureText();
     LoadCreatureThreatClear();
     LoadCreatureThreatRemove();
@@ -2529,31 +2528,10 @@ std::string SniffedEvent_UnitUpdate_auras::GetLongDescription() const
     return returnString;
 }
 
-void ReplayMgr::LoadCreatureTextTemplate()
-{
-    //                                             0        1      2       3            4
-    if (auto result = SniffDatabase.Query("SELECT `entry`, `idx`, `text`, `chat_type`, `language` FROM `creature_text_template`"))
-    {
-        do
-        {
-            DbField* fields = result->fetchCurrentRow();
-
-            CreatureText textEntry;
-            textEntry.creatureId = fields[0].GetUInt32();
-            textEntry.idx = fields[1].GetUInt32();
-            textEntry.text = fields[2].GetCppString();
-            textEntry.chatType = fields[3].GetUInt32();
-            textEntry.language = fields[4].GetUInt32();
-
-            m_creatureTextTemplates.emplace_back(std::move(textEntry));
-        } while (result->NextRow());
-    }
-}
-
 void ReplayMgr::LoadCreatureText()
 {
-    //                                             0             1       2        3      4              5            6
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `entry`, `idx`, `target_guid`, `target_id`, `target_type` FROM `creature_text` ORDER BY `unixtimems`"))
+    //                                             0             1       2        3       4            5           6              7            8
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `entry`, `text`, `chat_type`, `language`, `target_guid`, `target_id`, `target_type` FROM `creature_text` ORDER BY `unixtimems`"))
     {
         do
         {
@@ -2563,10 +2541,12 @@ void ReplayMgr::LoadCreatureText()
             uint32 creatureGuidLow = fields[1].GetUInt32();
             uint32 creatureId = fields[2].GetUInt32();
             ObjectGuid sourceGuid = ObjectGuid(HIGHGUID_UNIT, creatureId, creatureGuidLow);
-            uint32 idx = fields[3].GetUInt32();
-            uint32 targetGuidLow = fields[4].GetUInt32();
-            uint32 targetId = fields[5].GetUInt32();
-            std::string targetType = fields[6].GetCppString();
+            std::string text = fields[3].GetCppString();
+            uint32 chatType = fields[4].GetUInt32();
+            uint32 language = fields[5].GetUInt32();
+            uint32 targetGuidLow = fields[6].GetUInt32();
+            uint32 targetId = fields[7].GetUInt32();
+            std::string targetType = fields[8].GetCppString();
             ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
 
             CreatureTemplate const* pCreatureTemplate = sGameDataMgr.GetCreatureTemplate(creatureId);
@@ -2576,14 +2556,7 @@ void ReplayMgr::LoadCreatureText()
                 continue;
             }
 
-            CreatureText const* pTextEntry = GetCreatureTextTemplate(creatureId, idx);
-            if (!pTextEntry)
-            {
-                printf("[ReplayMgr] Error: Unknown text index %u for creature %u!\n", idx, creatureId);
-                continue;
-            }
-
-            std::shared_ptr<SniffedEvent_CreatureText> newEvent = std::make_shared<SniffedEvent_CreatureText>(sourceGuid, pCreatureTemplate->name, pTextEntry->text, pTextEntry->chatType, pTextEntry->language, targetGuid, targetGuid.GetName());
+            std::shared_ptr<SniffedEvent_CreatureText> newEvent = std::make_shared<SniffedEvent_CreatureText>(sourceGuid, pCreatureTemplate->name, text, chatType, language, targetGuid, targetGuid.GetName());
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());

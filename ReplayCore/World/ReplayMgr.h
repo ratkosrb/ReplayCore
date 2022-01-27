@@ -173,15 +173,6 @@ struct PlayerData : public UnitData
     uint32 GetVisibleItemEnchant(uint32 slot) const { return visibleItemEnchants[slot]; }
 };
 
-struct CreatureText
-{
-    uint32 creatureId = 0;
-    uint32 idx = 0;
-    std::string text;
-    uint32 chatType = 0;
-    uint32 language = 0;
-};
-
 typedef std::map<uint32 /*guid*/, std::map<uint32 /*parent_point*/, std::vector<Vector3>>> SplinesMap;
 
 class ReplayMgr
@@ -280,15 +271,6 @@ public:
 
         return &itr->second;
     }
-    CreatureText const* GetCreatureTextTemplate(uint32 creatureId, uint32 groupId)
-    {
-        for (auto const& itr : m_creatureTextTemplates)
-        {
-            if (itr.creatureId == creatureId && itr.idx == groupId)
-                return &itr;
-        }
-        return nullptr;
-    }
     std::string GetCreaturePetName(uint32 guid)
     {
         auto itr = m_creaturePetNames.find(guid);
@@ -368,7 +350,6 @@ public:
     void LoadUnitPowerValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId);
     void LoadUnitSpeedUpdate(char const* tableName, uint32 typeId);
     void LoadUnitAurasUpdate(char const* tableName, uint32 typeId);
-    void LoadCreatureTextTemplate();
     void LoadCreatureText();
     void LoadCreatureThreatClear();
     void LoadCreatureThreatRemove();
@@ -452,7 +433,6 @@ private:
     std::map<uint32 /*guid*/, GameObjectData> m_gameObjectSpawns;
     std::map<uint32 /*guid*/, DynamicObjectData> m_dynamicObjectSpawns;
     std::map<uint64 /*unixtimems*/, std::map<uint32 /*variable*/, uint32 /*value*/>> m_initialWorldStates;
-    std::vector<CreatureText> m_creatureTextTemplates;
     std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMap;       // prepared data in the current client's format
     std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMapBackup; // stores the original data in sniff client format
 };
