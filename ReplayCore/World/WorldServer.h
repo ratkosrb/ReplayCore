@@ -380,6 +380,8 @@ public:
     void SendSpellFailedOther(ObjectGuid casterGuid, uint32 spellId, uint32 reason);
     void SendSpellChannelStart(ObjectGuid casterGuid, uint32 spellId, int32 duration);
     void SendSpellChannelUpdate(ObjectGuid casterGuid, int32 duration);
+    void SendPlayerMinimapPing(ObjectGuid guid, float x, float y);
+    void SendRaidTargetIconUpdate(bool isFullUpdate, std::map<uint8, ObjectGuid> const& iconsMap);
     void SendGameObjectDespawnAnim(ObjectGuid guid);
     void SendGameObjectCustomAnim(ObjectGuid guid, uint32 animId);
     void SendPlayMusic(uint32 musicId);

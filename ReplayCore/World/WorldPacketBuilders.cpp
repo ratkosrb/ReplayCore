@@ -1600,7 +1600,7 @@ void WorldServer::SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 cas
 
 void WorldServer::SendCastResult(uint32 spellId, uint32 result, uint32 reason)
 {
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
     {
         WorldPacket data(GetOpcode("SMSG_CAST_RESULT"), (4 + 1 + 1));
         data << uint32(spellId);
@@ -1610,7 +1610,7 @@ void WorldServer::SendCastResult(uint32 spellId, uint32 result, uint32 reason)
 
         SendPacket(data);
     }
-    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
     {
         if (result == 0)
             return;
@@ -2025,11 +2025,11 @@ void WorldServer::SendMonsterMove(Unit* pUnit)
     {
         data << pUnit->m_moveSpline.m_transportGuid.WriteAsPacked();
 
-        if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
+        if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
             data << int8(pUnit->m_moveSpline.m_transportSeat); // Transport Seat
     }
 
-    if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
         data << uint8(0); // Toggle AnimTierInTrans
     pUnit->m_moveSpline.WriteMove(data);
     SendPacket(data);
@@ -2085,7 +2085,7 @@ void WorldServer::SendSpellFailedOther(ObjectGuid casterGuid, uint32 spellId, ui
 void WorldServer::SendSpellChannelStart(ObjectGuid casterGuid, uint32 spellId, int32 duration)
 {
     WorldPacket data(GetOpcode("MSG_CHANNEL_START"), (8 + 4 + 4));
-    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1)
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
         data << casterGuid.WriteAsPacked();
     data << uint32(spellId);
     data << int32(duration);
@@ -2095,9 +2095,34 @@ void WorldServer::SendSpellChannelStart(ObjectGuid casterGuid, uint32 spellId, i
 void WorldServer::SendSpellChannelUpdate(ObjectGuid casterGuid, int32 duration)
 {
     WorldPacket data(GetOpcode("MSG_CHANNEL_UPDATE"), 8 + 4);
-    if (sWorld.GetClientBuild() >= CLIENT_BUILD_2_0_1)
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
         data << casterGuid.WriteAsPacked();
     data << int32(duration);
+    SendPacket(data);
+}
+
+void WorldServer::SendPlayerMinimapPing(ObjectGuid guid, float x, float y)
+{
+    WorldPacket data(GetOpcode("MSG_MINIMAP_PING"), 8 + 4 + 4);
+    data << ObjectGuid(guid);
+    data << float(x);
+    data << float(y);
+    SendPacket(data);
+}
+
+void WorldServer::SendRaidTargetIconUpdate(bool isFullUpdate, std::map<uint8, ObjectGuid> const& iconsMap)
+{
+    assert(isFullUpdate || iconsMap.size() == 1);
+
+    WorldPacket data(GetOpcode("MSG_RAID_TARGET_UPDATE"), (1 + TARGET_ICON_COUNT * 9));
+    data << uint8(isFullUpdate);
+    if (!isFullUpdate && GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        data << m_clientPlayer->GetObjectGuid();
+    for (auto const& itr : iconsMap)
+    {
+        data << uint8(itr.first);
+        data << ObjectGuid(itr.second);
+    }
     SendPacket(data);
 }
 

@@ -113,6 +113,8 @@ void ReplayMgr::LoadSniffedEvents()
     LoadCreatureEquipmentUpdate();
     LoadPlayerChat();
     LoadPlayerEquipmentUpdate();
+    LoadPlayerMinimapPing();
+    LoadRaidTargetIconUpdates();
     LoadGameObjectCustomAnim();
     LoadGameObjectDespawnAnim();
     LoadObjectValuesUpdate<SniffedEvent_GameObjectUpdate_flags>("gameobject_values_update", "flags", TYPEID_GAMEOBJECT);
@@ -3053,6 +3055,178 @@ std::string SniffedEvent_PlayerEquipmentUpdate::GetLongDescription() const
     std::string returnString;
     returnString += "Item: " + sGameDataMgr.GetItemName(m_itemId) + " (" + std::to_string(m_itemId) + ")\r\n";
     returnString += "Slot: " + std::to_string(m_slot);
+    return returnString;
+}
+
+void ReplayMgr::LoadPlayerMinimapPing()
+{
+    //                                             0             1       2             3
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `position_x`, `position_y` FROM `player_minimap_ping` ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, TYPEID_PLAYER))
+                sourceGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `player_minimap_ping`.\n", guidLow);
+                continue;
+            }
+
+            float x = fields[2].GetFloat();
+            float y = fields[3].GetFloat();
+
+            std::shared_ptr<SniffedEvent_PlayerMinimapPing> newEvent = std::make_shared<SniffedEvent_PlayerMinimapPing>(sourceGuid, x, y);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_PlayerMinimapPing::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Player* pPlayer = sWorld.FindPlayer(GetSourceGuid());
+    if (!pPlayer)
+    {
+        printf("SniffedEvent_PlayerMinimapPing: Cannot find source player!\n");
+        return;
+    }
+
+    if (!pPlayer->IsVisibleToClient())
+        return;
+
+    sWorld.SendPlayerMinimapPing(GetSourceGuid(), m_positionX, m_positionY);
+}
+
+std::string SniffedEvent_PlayerMinimapPing::GetShortDescription() const
+{
+    return m_objectGuid.GetString(true) + " pings the minimap at position " + std::to_string(m_positionX) + " " + std::to_string(m_positionY) + ".";
+}
+
+std::string SniffedEvent_PlayerMinimapPing::GetLongDescription() const
+{
+    return "PositionX: " + std::to_string(m_positionX) + "\r\n"
+          +"PositionY: " + std::to_string(m_positionY);
+}
+
+void ReplayMgr::LoadRaidTargetIconUpdates()
+{
+    std::map<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent_RaidTargetIconUpdate>> fullUpdates;
+
+    //                                             0             1       2              3            4
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `icon`, `target_guid`, `target_id`, `target_type` FROM `raid_target_icon_update` WHERE `is_full_update`=1 ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            auto itr = fullUpdates.find(unixtimems);
+            if (itr == fullUpdates.end())
+            {
+                std::shared_ptr<SniffedEvent_RaidTargetIconUpdate> newEvent = std::make_shared<SniffedEvent_RaidTargetIconUpdate>(true, std::map<uint8, ObjectGuid>());
+                auto result = fullUpdates.insert(std::make_pair(unixtimems, newEvent));
+                itr = result.first;
+            }
+
+            int8 icon = fields[1].GetInt8();
+            if (icon < 0)
+                continue;
+
+            if (icon >= TARGET_ICON_COUNT)
+            {
+                printf("[ReplayMgr] Error: Invalid raid target icon %i in table `raid_target_icon_update`.\n", icon);
+                continue;
+            }
+
+            uint32 targetGuidLow = fields[2].GetUInt32();
+            uint32 targetId = fields[3].GetUInt32();
+            std::string targetType = fields[4].GetCppString();
+            ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
+
+            itr->second->m_icons[icon] = targetGuid;
+
+        } while (result->NextRow());
+    }
+
+    for (auto const& itr : fullUpdates)
+        m_eventsMapBackup.insert(std::make_pair(itr.first, itr.second));
+
+    //                                             0             2       3              4            5
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `icon`, `target_guid`, `target_id`, `target_type` FROM `raid_target_icon_update` WHERE `is_full_update`=0 ORDER BY `unixtimems`"))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            int8 icon = fields[1].GetInt8();
+
+            if (icon < 0 || icon >= TARGET_ICON_COUNT)
+            {
+                printf("[ReplayMgr] Error: Invalid raid target icon %i in table `raid_target_icon_update`.\n", icon);
+                continue;
+            }
+
+            uint32 targetGuidLow = fields[2].GetUInt32();
+            uint32 targetId = fields[3].GetUInt32();
+            std::string targetType = fields[4].GetCppString();
+            ObjectGuid targetGuid = MakeObjectGuidFromSniffData(targetGuidLow, targetId, targetType);
+            if (targetGuid.IsEmpty())
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `raid_target_icon_update` for non-full update.\n", targetGuidLow);
+                continue;
+            }
+
+            std::map<uint8, ObjectGuid> iconsMap;
+            iconsMap[icon] = targetGuid;
+
+            std::shared_ptr<SniffedEvent_RaidTargetIconUpdate> newEvent = std::make_shared<SniffedEvent_RaidTargetIconUpdate>(false, iconsMap);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+void SniffedEvent_RaidTargetIconUpdate::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    if (!sWorld.IsClientInWorld())
+        return;
+
+    sWorld.SendRaidTargetIconUpdate(m_isFullUpdate, m_icons);
+}
+
+std::string SniffedEvent_RaidTargetIconUpdate::GetShortDescription() const
+{
+    if (!m_icons.empty())
+        return (*m_icons.begin()).second.GetString(true) + " is marked as " + RaidTargetIconToString((*m_icons.begin()).first) + ".";
+
+    return "Raid target icons are reset.";
+}
+
+std::string SniffedEvent_RaidTargetIconUpdate::GetLongDescription() const
+{
+    std::string returnString;
+    returnString += "Is Full Update: " + std::to_string(m_isFullUpdate) + "\r\n";
+    returnString += "Marked Targets: " + std::to_string(m_icons.size());
+
+    if (!m_icons.empty())
+        returnString += "\r\n";
+
+    for (auto const& icon : m_icons)
+        returnString += "\r\n" + std::string(RaidTargetIconToString(icon.first)) + " = " + icon.second.GetString(true);
+
     return returnString;
 }
 

@@ -5,6 +5,44 @@
 #include "UnitDefines.h"
 #include "ObjectGuid.h"
 
+enum RaidTargetIcon : uint8
+{
+    RAID_TARGET_ICON_STAR     = 0,
+    RAID_TARGET_ICON_CIRCLE   = 1,
+    RAID_TARGET_ICON_DIAMOND  = 2,
+    RAID_TARGET_ICON_TRIANGLE = 3,
+    RAID_TARGET_ICON_MOON     = 4,
+    RAID_TARGET_ICON_SQUARE   = 5,
+    RAID_TARGET_ICON_CROSS    = 6,
+    RAID_TARGET_ICON_SKULL    = 7
+};
+
+#define TARGET_ICON_COUNT 8
+
+inline char const* RaidTargetIconToString(uint8 icon)
+{
+    switch (icon)
+    {
+        case RAID_TARGET_ICON_STAR:
+            return "Star";
+        case RAID_TARGET_ICON_CIRCLE:
+            return "Circle";
+        case RAID_TARGET_ICON_DIAMOND:
+            return "Diamond";
+        case RAID_TARGET_ICON_TRIANGLE:
+            return "Triangle";
+        case RAID_TARGET_ICON_MOON:
+            return "Moon";
+        case RAID_TARGET_ICON_SQUARE:
+            return "Square";
+        case RAID_TARGET_ICON_CROSS:
+            return "Cross";
+        case RAID_TARGET_ICON_SKULL:
+            return "Skull";
+    }
+    return "UNKNOWN";
+}
+
 enum PlayerFlags
 {
     PLAYER_FLAGS_NONE                   = 0x00000000,

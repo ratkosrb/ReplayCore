@@ -357,6 +357,8 @@ public:
     void LoadCreatureEquipmentUpdate();
     void LoadPlayerChat();
     void LoadPlayerEquipmentUpdate();
+    void LoadPlayerMinimapPing();
+    void LoadRaidTargetIconUpdates();
     void LoadGameObjectCustomAnim();
     void LoadGameObjectDespawnAnim();
     void LoadPlayMusic();

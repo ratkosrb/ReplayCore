@@ -75,6 +75,8 @@ enum SniffedEventType : uint8
     SE_CREATURE_EQUIPMENT_UPDATE,
     SE_PLAYER_CHAT,
     SE_PLAYER_EQUIPMENT_UPDATE,
+    SE_PLAYER_MINIMAP_PING,
+    SE_RAID_TARGET_ICON_UPDATE,
     SE_GAMEOBJECT_CUSTOM_ANIM,
     SE_GAMEOBJECT_DESPAWN_ANIM,
     SE_GAMEOBJECT_UPDATE_FLAGS,
@@ -215,6 +217,10 @@ inline char const* GetSniffedEventName(SniffedEventType eventType)
             return "Player Chat";
         case SE_PLAYER_EQUIPMENT_UPDATE:
             return "Player Equipment Update";
+        case SE_PLAYER_MINIMAP_PING:
+            return "Player Minimap Ping";
+        case SE_RAID_TARGET_ICON_UPDATE:
+            return "Raid Target Icon Update";
         case SE_GAMEOBJECT_CUSTOM_ANIM:
             return "GameObject Custom Anim";
         case SE_GAMEOBJECT_DESPAWN_ANIM:
@@ -1528,6 +1534,47 @@ struct SniffedEvent_PlayerEquipmentUpdate : SniffedEventCRTP<SniffedEvent_Player
         return m_objectGuid;
     }
 };
+
+struct SniffedEvent_PlayerMinimapPing : SniffedEventCRTP<SniffedEvent_PlayerMinimapPing>
+{
+    SniffedEvent_PlayerMinimapPing(ObjectGuid objectGuid, float x, float y) :
+        m_objectGuid(objectGuid), m_positionX(x), m_positionY(y) {};
+    ObjectGuid m_objectGuid;
+    float m_positionX = 0;
+    float m_positionY = 0;
+    void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_PLAYER_MINIMAP_PING;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_objectGuid;
+    }
+};
+
+struct SniffedEvent_RaidTargetIconUpdate : SniffedEventCRTP<SniffedEvent_RaidTargetIconUpdate>
+{
+    SniffedEvent_RaidTargetIconUpdate(bool isFullUpdate, std::map<uint8, ObjectGuid> icons) :
+        m_isFullUpdate(isFullUpdate), m_icons(icons) {};
+    bool m_isFullUpdate = false;
+    std::map<uint8, ObjectGuid> m_icons;
+    ObjectGuid m_targetGuid;
+    void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_RAID_TARGET_ICON_UPDATE;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_targetGuid;
+    }
+};
+
 
 struct SniffedEvent_GameObjectCustomAnim : SniffedEventCRTP<SniffedEvent_GameObjectCustomAnim>
 {
