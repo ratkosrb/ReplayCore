@@ -234,9 +234,6 @@ void Object::SetUInt32Value(uint16 index, uint32 value)
 {
     assert(index < m_valuesCount || PrintIndexError(index, true));
 
-    if (value == 15696)
-        printf("Set in %u\n", index);
-
     if (m_uint32Values[index] != value)
     {
         MarkForClientUpdate();

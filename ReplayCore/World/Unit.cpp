@@ -691,6 +691,21 @@ void Unit::SendAllAurasUpdate() const
     sWorld.SendAllAurasUpdate(GetObjectGuid(), m_auras);
 }
 
+void Unit::UpdateAuras(std::map<uint8, Aura> const& auras, bool isFullUpdate, bool sendUpdate)
+{
+    if (isFullUpdate)
+    {
+        for (uint8 i = 0; i < sGameDataMgr.GetAuraSlotsCount(); i++)
+            SetAura(i, Aura(), false);
+    }
+
+    for (auto const& itr : auras)
+        SetAura(itr.first, itr.second, !isFullUpdate && sendUpdate);
+
+    if (isFullUpdate && sendUpdate)
+        SendAllAurasUpdate();
+}
+
 void Unit::SetAura(uint8 slot, Aura aura, bool sendUpdate)
 {
     m_auras[slot] = aura;

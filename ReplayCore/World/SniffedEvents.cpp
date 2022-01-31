@@ -2431,8 +2431,21 @@ std::string SniffedEvent_UnitUpdate_speed::GetLongDescription() const
 
 void ReplayMgr::LoadUnitAurasUpdate(char const* tableName, uint32 typeId)
 {
-    //                                             0             1       2       3           4             5               6        7          8           9               10             11           12
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `slot`, `spell_id`, `aura_flags`, `active_flags`, `level`, `charges`, `duration`, `max_duration`, `caster_guid`, `caster_id`, `caster_type` FROM `%s` ORDER BY `unixtimems`", tableName))
+    struct AuraUpdateData
+    {
+        AuraUpdateData() = default;
+        AuraUpdateData(uint64 unixTime, ObjectGuid sourceGuid, uint32 updateId, bool isFullUpdate) :
+            m_id(updateId), m_time(unixTime)
+        {
+            m_event = std::make_shared<SniffedEvent_UnitUpdate_auras>(sourceGuid, isFullUpdate);
+        }
+        uint32 m_id = 0;
+        uint64 m_time = 0;
+        std::shared_ptr<SniffedEvent_UnitUpdate_auras> m_event;
+    } lastAuraUpdate;
+    
+    //                                             0             1       2            3                 4       5           6             7               8        9          10          11              12             13           14
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `update_id`, `is_full_update`, `slot`, `spell_id`, `aura_flags`, `active_flags`, `level`, `charges`, `duration`, `max_duration`, `caster_guid`, `caster_id`, `caster_type` FROM `%s` ORDER BY `unixtimems`, `guid`, `update_id`", tableName))
     {
         do
         {
@@ -2449,44 +2462,68 @@ void ReplayMgr::LoadUnitAurasUpdate(char const* tableName, uint32 typeId)
                 continue;
             }
 
-            uint32 slot = fields[2].GetUInt32();
+            uint32 updateId = fields[2].GetUInt32();
+            bool isFullUpdate = fields[3].GetBool();
+            int32 slot = fields[4].GetInt32();
 
             if (slot >= MAX_AURA_SLOTS)
                 continue;
 
             Aura aura;
-            aura.spellId = fields[3].GetUInt32();
-            aura.auraFlags = fields[4].GetUInt32();
-            aura.activeFlags = fields[5].GetUInt32();
-            aura.level = fields[6].GetUInt32();
-            aura.stacks = fields[7].GetUInt32();
-            aura.duration = fields[8].GetUInt32();
-            aura.durationMax = fields[9].GetUInt32();
+            aura.spellId = fields[5].GetUInt32();
+            aura.auraFlags = fields[6].GetUInt32();
+            aura.activeFlags = fields[7].GetUInt32();
+            aura.level = fields[8].GetUInt32();
+            aura.stacks = fields[9].GetUInt32();
+            aura.duration = fields[10].GetUInt32();
+            aura.durationMax = fields[11].GetUInt32();
 
-            uint32 casterGuidLow = fields[10].GetUInt32();
-            uint32 casterId = fields[11].GetUInt32();
-            std::string casterType = fields[12].GetCppString();
+            uint32 casterGuidLow = fields[12].GetUInt32();
+            uint32 casterId = fields[13].GetUInt32();
+            std::string casterType = fields[14].GetCppString();
             aura.casterGuid = MakeObjectGuidFromSniffData(casterGuidLow, casterId, casterType);
 
             if (aura.spellId > MAX_SPELL_ID_WOTLK)
                 continue;
 
-            std::shared_ptr<SniffedEvent_UnitUpdate_auras> newEvent = std::make_shared<SniffedEvent_UnitUpdate_auras>(sourceGuid, slot, aura);
-            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+            if (lastAuraUpdate.m_time != unixtimems ||
+                lastAuraUpdate.m_id != updateId ||
+                lastAuraUpdate.m_event == nullptr ||
+                lastAuraUpdate.m_event->m_objectGuid != sourceGuid)
+            {
+                if (lastAuraUpdate.m_event != nullptr)
+                    m_eventsMapBackup.insert(std::make_pair(lastAuraUpdate.m_time, lastAuraUpdate.m_event));
+
+                lastAuraUpdate = AuraUpdateData(unixtimems, sourceGuid, updateId, isFullUpdate);
+            }
+
+            if (slot >= 0)
+                lastAuraUpdate.m_event->m_auras[slot] = aura;
 
         } while (result->NextRow());
     }
+
+    if (lastAuraUpdate.m_event != nullptr)
+        m_eventsMapBackup.insert(std::make_pair(lastAuraUpdate.m_time, lastAuraUpdate.m_event));
 }
 
 void SniffedEvent_UnitUpdate_auras::PepareForCurrentClient()
 {
-    if (m_aura.spellId && !sGameDataMgr.IsValidSpellId(m_aura.spellId))
-        m_disabled = true;
+    for (auto itr = m_auras.begin(); itr != m_auras.end();)
+    {
+        itr->second.auraFlags = sGameDataMgr.ConvertAuraFlags(itr->second.auraFlags, itr->second.activeFlags, itr->first);
 
-    if (m_slot > sGameDataMgr.GetAuraSlotsCount())
-        m_disabled = true;
+        if (itr->second.spellId && !sGameDataMgr.IsValidSpellId(itr->second.spellId) ||
+            itr->first > sGameDataMgr.GetAuraSlotsCount())
+        {
+            m_auras.erase(itr++);
+        }
+        else
+            ++itr;
+    }
 
-    m_aura.auraFlags = sGameDataMgr.ConvertAuraFlags(m_aura.auraFlags, m_aura.activeFlags, m_slot);
+    if (!m_isFullUpdate && m_auras.empty())
+        m_disabled = true; 
 }
 
 void SniffedEvent_UnitUpdate_auras::Execute() const
@@ -2498,35 +2535,58 @@ void SniffedEvent_UnitUpdate_auras::Execute() const
         return;
     }
 
-    pUnit->SetAura(m_slot, m_aura, sReplayMgr.IsPlaying() && pUnit->IsVisibleToClient());
+    pUnit->UpdateAuras(m_auras, m_isFullUpdate, sReplayMgr.IsPlaying() && pUnit->IsVisibleToClient());
 }
 
 std::string SniffedEvent_UnitUpdate_auras::GetShortDescription() const
 {
-    std::string returnString;
-    returnString += m_objectGuid.GetString(true) + " updates aura slot " + std::to_string(m_slot) + " to ";
-    if (m_aura.spellId)
-        returnString += sGameDataMgr.GetSpellName(m_aura.spellId) + " (" + std::to_string(m_aura.spellId) + ").";
+    std::string returnString = m_objectGuid.GetString(true);
+
+    if (m_auras.empty())
+        returnString += " removes all auras.";
+    else if (m_auras.size() > 1)
+        returnString += " updates " + std::to_string(m_auras.size()) + " aura slots.";
     else
-        returnString += "0.";
+    {
+        uint32 slot = m_auras.begin()->first;
+        uint32 spellId = m_auras.begin()->second.spellId;
+        returnString += " updates aura slot " + std::to_string(slot) + " to ";
+
+        if (spellId)
+            returnString += sGameDataMgr.GetSpellName(spellId) + " (" + std::to_string(spellId) + ").";
+        else
+            returnString += "0.";
+    }
+    
     return returnString;
 }
 
 std::string SniffedEvent_UnitUpdate_auras::GetLongDescription() const
 {
     std::string returnString;
-    returnString += "Slot: " + std::to_string(m_slot) + "\r\n";
-    returnString += "Spell: ";
-    if (m_aura.spellId)
-        returnString += sGameDataMgr.GetSpellName(m_aura.spellId) + " (" + std::to_string(m_aura.spellId) + ")\r\n";
-    else
-        returnString += "0\r\n";
-    returnString += "Aura Flags: " + std::to_string(m_aura.auraFlags) + "\r\n";
-    returnString += "Active Flags: " + std::to_string(m_aura.activeFlags) + "\r\n";
-    returnString += "Level: " + std::to_string(m_aura.level) + "\r\n";
-    returnString += "Stacks: " + std::to_string(m_aura.stacks) + "\r\n";
-    returnString += "Duration: " + std::to_string(m_aura.duration) + " / " + std::to_string(m_aura.durationMax) + "\r\n";
-    returnString += "Caster: " + m_aura.casterGuid.GetString(true) + "\r\n";
+    returnString += "Is Full Update: " + std::to_string(m_isFullUpdate) + "\r\n";
+    returnString += "Updated Slots: " + std::to_string(m_auras.size());
+    
+    for (auto const& itr : m_auras)
+    {
+        uint32 slot = itr.first;
+        Aura const& aura = itr.second;
+
+        returnString += "\r\n\r\n";
+        returnString += "[ SLOT " + std::to_string(slot) + " ]\r\n";
+        returnString += "Spell: ";
+        if (aura.spellId)
+            returnString += sGameDataMgr.GetSpellName(aura.spellId) + " (" + std::to_string(aura.spellId) + ")\r\n";
+        else
+            returnString += "0\r\n";
+        returnString += "Aura Flags: " + std::to_string(aura.auraFlags) + "\r\n";
+        returnString += "Active Flags: " + std::to_string(aura.activeFlags) + "\r\n";
+        returnString += "Level: " + std::to_string(aura.level) + "\r\n";
+        returnString += "Stacks: " + std::to_string(aura.stacks) + "\r\n";
+        returnString += "Duration: " + std::to_string(aura.duration) + " / " + std::to_string(aura.durationMax) + "\r\n";
+        returnString += "Caster: " + aura.casterGuid.GetString(true);
+    }
+    
     return returnString;
 }
 
@@ -3410,27 +3470,13 @@ void SniffedEvent_PlaySound::Execute() const
     if (!sReplayMgr.IsPlaying())
         return;
 
+    if (!sWorld.IsClientInWorld())
+        return;
+
     if (m_sourceGuid.IsEmpty())
-    {
-        if (!sWorld.IsClientInWorld())
-            return;
-
         sWorld.SendPlaySound(m_soundId);
-    }
     else
-    {
-        WorldObject const* pSource = sWorld.FindObject(GetSourceGuid());
-        if (!pSource)
-        {
-            printf("SniffedEvent_PlaySound: Cannot find source object!\n");
-            return;
-        }
-
-        if (!pSource->IsVisibleToClient())
-            return;
-
         sWorld.SendPlayObjectSound(m_soundId, m_sourceGuid);
-    }
 }
 
 std::string SniffedEvent_PlaySound::GetShortDescription() const

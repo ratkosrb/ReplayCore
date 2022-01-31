@@ -157,6 +157,7 @@ int main()
     sGUI.StartNetwork();
     sAuth.StartNetwork();
     sWorld.StartNetwork();
+    putchar(7); // beep
 
     if (sConfig.IsCLIEnabled())
     {

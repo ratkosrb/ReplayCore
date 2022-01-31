@@ -120,6 +120,7 @@ public :
     void SetAttackTime(WeaponAttackType att, uint32 val);
 
     bool HasAuras() const;
+    void UpdateAuras(std::map<uint8, Aura> const& auras, bool isFullUpdate, bool sendUpdate);
     void SetAura(uint8 slot, Aura aura, bool sendUpdate);
     void SetAuraFlag(uint32 slot, uint32 flags);
     void SetAuraLevel(uint32 slot, uint32 level);

@@ -1368,11 +1368,11 @@ struct SniffedEvent_UnitUpdate_speed : SniffedEventCRTP<SniffedEvent_UnitUpdate_
 
 struct SniffedEvent_UnitUpdate_auras : SniffedEventCRTP<SniffedEvent_UnitUpdate_auras>
 {
-    SniffedEvent_UnitUpdate_auras(ObjectGuid objectGuid, uint32 slot, Aura aura) :
-        m_objectGuid(objectGuid), m_slot(slot), m_aura(aura) {};
+    SniffedEvent_UnitUpdate_auras(ObjectGuid objectGuid, bool isFullUpdate) :
+        m_objectGuid(objectGuid), m_isFullUpdate(isFullUpdate) {};
     ObjectGuid m_objectGuid;
-    uint32 m_slot = 0;
-    Aura m_aura;
+    bool m_isFullUpdate = false;
+    std::map<uint8, Aura> m_auras;
     void Execute() const final;
     void PepareForCurrentClient() final;
     std::string GetShortDescription() const final;
