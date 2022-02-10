@@ -2026,6 +2026,7 @@ namespace Classic
                     case 1:
                         return POWER_COMBO_POINTS;
                 }
+                break;
             }
             case CLASS_PALADIN:
             {
@@ -2034,6 +2035,7 @@ namespace Classic
                     case 0:
                         return POWER_MANA;
                 }
+                break;
             }
             case CLASS_HUNTER:
             {
@@ -2042,6 +2044,7 @@ namespace Classic
                     case 0:
                         return POWER_MANA;
                 }
+                break;
             }
             case CLASS_ROGUE:
             {
@@ -2052,6 +2055,7 @@ namespace Classic
                     case 1:
                         return POWER_COMBO_POINTS;
                 }
+                break;
             }
             case CLASS_PRIEST:
             {
@@ -2060,6 +2064,7 @@ namespace Classic
                     case 0:
                         return POWER_MANA;
                 }
+                break;
             }
             case CLASS_SHAMAN:
             {
@@ -2068,6 +2073,7 @@ namespace Classic
                     case 0:
                         return POWER_MANA;
                 }
+                break;
             }
             case CLASS_MAGE:
             {
@@ -2076,6 +2082,7 @@ namespace Classic
                     case 0:
                         return POWER_MANA;
                 }
+                break;
             }
             case CLASS_WARLOCK:
             {
@@ -2084,6 +2091,7 @@ namespace Classic
                     case 0:
                         return POWER_MANA;
                 }
+                break;
             }
             case CLASS_DRUID:
             {
@@ -2098,6 +2106,7 @@ namespace Classic
                     case 3:
                         return POWER_COMBO_POINTS;
                 }
+                break;
             }
         }
 
