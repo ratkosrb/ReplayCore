@@ -10,7 +10,13 @@ namespace Console
     inline uint32 GetUInt32()
     {
         uint32 value = 0;
+        
+        #ifdef _WIN32
         scanf_s("%u", &value);
+        #else
+        scanf("%u", &value);
+        #endif
+
         return value;
     }
 
