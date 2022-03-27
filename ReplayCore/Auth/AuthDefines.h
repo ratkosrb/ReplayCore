@@ -1,8 +1,8 @@
 #ifndef _AUTH_DEFS_H
 #define _AUTH_DEFS_H
 
-#include "../Defines//Common.h"
-#include "../Defines//Utility.h"
+#include "../Defines/Common.h"
+#include "../Defines/Utility.h"
 #include <vector>
 
 enum AccountFlags

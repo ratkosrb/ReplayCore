@@ -26,7 +26,7 @@
 #include "Opcodes.h"
 #include "WorldServer.h"
 #include "ObjectGuid.h"
-#include "../Defines//ClientVersions.h"
+#include "../Defines/ClientVersions.h"
 #include "../Dependencies//include/zlib/zlib.h"
 #define MAX_UNCOMPRESSED_PACKET_SIZE 0x8000 // 32ko
 

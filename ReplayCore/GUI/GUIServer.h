@@ -1,9 +1,17 @@
 #ifndef _GUI_SERVER_H
 #define _GUI_SERVER_H
 
-#include "..\Defines\Common.h"
-#include "..\World\SniffedEvents.h"
+#include "../Defines/Common.h"
+#include "../World/SniffedEvents.h"
+
+#ifdef _WIN32
 #include "winsock2.h"
+#else
+#include <sys/socket.h>
+#include <pcap/pcap.h>
+#include <unistd.h>
+#endif
+
 #include <string>
 #include <map>
 #include <thread>
@@ -26,7 +34,13 @@ private:
     bool m_enabled = false;
     SOCKET m_guiSocket;
     SOCKET m_socketPrototype;
+    
+    #ifdef _WIN32
     SOCKADDR_IN m_address;
+    #else
+    sockaddr_in m_address;
+    #endif
+    
     std::map<uint8, GUIOpcodeHandler> m_opcodeHandlers;
 
     void ResetClientData();

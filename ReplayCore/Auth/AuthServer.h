@@ -1,9 +1,17 @@
 #ifndef _AUTH_SERVER_H
 #define _AUTH_SERVER_H
 
-#include "..\Defines\Common.h"
-#include "..\Crypto\BigNumber.h"
+#include "../Defines/Common.h"
+#include "../Crypto/BigNumber.h"
+
+#ifdef _WIN32
 #include "winsock2.h"
+#else
+#include <sys/socket.h>
+#include <pcap/pcap.h>
+#include <unistd.h>
+#endif
+
 #include <string>
 #include <map>
 #include <thread>
@@ -39,7 +47,11 @@ private:
     ClientData m_clientData;
     SOCKET m_authSocket;
     SOCKET m_socketPrototype;
+    #ifdef _WIN32
     SOCKADDR_IN m_address;
+    #else
+    sockaddr_in m_address;
+    #endif
     std::map<uint8, AuthOpcodeHandler> m_opcodeHandlers;
 
     void ResetClientData();

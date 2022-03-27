@@ -9,7 +9,7 @@
 #include "WorldServer.h"
 #include "../Defines/ClientVersions.h"
 #include "ClassicDefines.h"
-#include "../Defines//Utility.h"
+#include "../Defines/Utility.h"
 #include "GameObjectDefines.h"
 #include <set>
 

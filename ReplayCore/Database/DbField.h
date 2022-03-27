@@ -6,7 +6,7 @@
 #define _DBFIELD_H
 
 #include <string>
-#include "..\Defines\Common.h"
+#include "../Defines/Common.h"
 
 
 class DbField
