@@ -9,8 +9,7 @@
 #include "QueryResult.h"
 #include "QueryObjects.h"
 
-#include <winsock2.h>
-#include <mysql\mysql.h>
+#include <mysql/mysql.h>
 #include <unordered_map>
 #include <thread>
 

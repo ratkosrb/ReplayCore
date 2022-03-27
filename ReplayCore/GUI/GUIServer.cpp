@@ -1,7 +1,7 @@
 #include "GUIServer.h"
 #include "GUIOpcodes.h"
 #include "GUIFilters.h"
-#include "../Defines//ByteBuffer.h"
+#include "../Defines/ByteBuffer.h"
 #include "../Defines/Utility.h"
 #include "../Input/Config.h"
 #include "../World/SniffedEvents.h"

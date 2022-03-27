@@ -6,16 +6,16 @@
 #include <set>
 #include <sstream>
 
-#include "Database\Database.h"
-#include "GUI\GUIServer.h"
-#include "Auth\AuthServer.h"
-#include "World\WorldServer.h"
-#include "World\ReplayMgr.h"
-#include "World\GameDataMgr.h"
-#include "Defines\Console.h"
-#include "World\Opcodes.h"
-#include "Input\CommandHandler.h"
-#include "Input\Config.h"
+#include "Database/Database.h"
+#include "GUI/GUIServer.h"
+#include "Auth/AuthServer.h"
+#include "World/WorldServer.h"
+#include "World/ReplayMgr.h"
+#include "World/GameDataMgr.h"
+#include "Defines/Console.h"
+#include "World/Opcodes.h"
+#include "Input/CommandHandler.h"
+#include "Input/Config.h"
 
 Database WorldDatabase;
 Database SniffDatabase;

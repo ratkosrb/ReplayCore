@@ -1,8 +1,8 @@
 #ifndef _GUI_SERVER_H
 #define _GUI_SERVER_H
 
-#include "..\Defines\Common.h"
-#include "..\World\SniffedEvents.h"
+#include "../Defines/Common.h"
+#include "../World/SniffedEvents.h"
 #include "winsock2.h"
 #include <string>
 #include <map>

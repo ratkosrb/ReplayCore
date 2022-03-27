@@ -1,6 +1,6 @@
 #include "AuthServer.h"
 #include "AuthDefines.h"
-#include "../Defines//ByteBuffer.h"
+#include "../Defines/ByteBuffer.h"
 #include "../Defines/Utility.h"
 #include "../Defines/GameAccount.h"
 #include "../Crypto/Hmac.h"

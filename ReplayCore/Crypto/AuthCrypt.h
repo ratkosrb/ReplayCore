@@ -25,7 +25,7 @@
 #ifndef MANGOS_H_AUTHCRYPT
 #define MANGOS_H_AUTHCRYPT
 
-#include "../Defines//Common.h"
+#include "../Defines/Common.h"
 #include <openssl/rc4.h>
 #include <vector>
 

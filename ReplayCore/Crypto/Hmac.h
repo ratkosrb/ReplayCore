@@ -19,7 +19,7 @@
 #ifndef _AUTH_HMAC_H
 #define _AUTH_HMAC_H
 
-#include "../Defines//Common.h"
+#include "../Defines/Common.h"
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 #include <vector>

@@ -1,5 +1,5 @@
 #include "WorldServer.h"
-#include "../Defines//WorldPacket.h"
+#include "../Defines/WorldPacket.h"
 #include "GameDataMgr.h"
 #include "GameDataDefines.h"
 #include "../Defines/ClientVersions.h"

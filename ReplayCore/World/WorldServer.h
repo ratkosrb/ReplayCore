@@ -1,9 +1,9 @@
 #ifndef _WORLD_SERVER_H
 #define _WORLD_SERVER_H
 
-#include "..\Defines\Common.h"
-#include "..\Crypto\BigNumber.h"
-#include "..\Crypto\AuthCrypt.h"
+#include "../Defines/Common.h"
+#include "../Crypto/BigNumber.h"
+#include "../Crypto/AuthCrypt.h"
 #include "Player.h"
 #include "Waypoint.h"
 #include "GameObject.h"

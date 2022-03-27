@@ -1,8 +1,8 @@
 #ifndef _AUTH_SERVER_H
 #define _AUTH_SERVER_H
 
-#include "..\Defines\Common.h"
-#include "..\Crypto\BigNumber.h"
+#include "../Defines/Common.h"
+#include "../Crypto/BigNumber.h"
 #include "winsock2.h"
 #include <string>
 #include <map>

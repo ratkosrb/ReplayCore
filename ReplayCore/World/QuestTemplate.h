@@ -22,7 +22,7 @@
 #ifndef MANGOSSERVER_QUEST_H
 #define MANGOSSERVER_QUEST_H
 
-#include "../Defines//Common.h"
+#include "../Defines/Common.h"
 #include "../Database/Database.h"
 
 #include <string>

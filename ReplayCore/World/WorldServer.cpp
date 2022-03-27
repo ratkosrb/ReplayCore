@@ -1,6 +1,6 @@
 #include "WorldServer.h"
-#include "../Defines//ByteBuffer.h"
-#include "../Defines//WorldPacket.h"
+#include "../Defines/ByteBuffer.h"
+#include "../Defines/WorldPacket.h"
 #include "../Defines/Utility.h"
 #include "../Defines/ClientVersions.h"
 #include "../Auth/AuthServer.h"
