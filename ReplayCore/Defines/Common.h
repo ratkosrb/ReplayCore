@@ -4,6 +4,12 @@
 #include <cassert>
 #include <cstdint>
 #include <stdio.h>
+#ifdef __linux__
+#include <cstring>
+#include <cfloat>
+#include <memory>
+#include <cmath>
+#endif
 
 #define ASSERT(a) assert(a)
 

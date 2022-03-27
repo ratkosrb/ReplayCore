@@ -28,6 +28,7 @@ void GUIServer::StartNetwork()
     if (setsockopt(m_socketPrototype, SOL_SOCKET, SO_REUSEADDR, (const char*)&result, sizeof(result)) < 0)
         perror("[GUI] setsockopt(SO_REUSEADDR) failed");
 
+    #ifdef _WIN32
     m_address.sin_family = AF_INET;
     m_address.sin_port = htons(3800);
     m_address.sin_addr.S_un.S_addr = inet_addr(sConfig.GetListenAddress());
@@ -45,6 +46,25 @@ void GUIServer::StartNetwork()
         printf("[GUI] listen error: %i\n", WSAGetLastError());
         return;
     }
+    #else
+    m_address.sin_family = AF_INET;
+    m_address.sin_port = htons(3800);
+    m_address.sin_addr.s_addr = inet_addr(sConfig.GetListenAddress());
+
+    result = bind(m_socketPrototype, (sockaddr*)&m_address, sizeof(m_address));
+    if (result == -1)
+    {
+        printf("[GUI] bind error: %i\n", strerror(errno));
+        return;
+    }
+
+    result = listen(m_socketPrototype, 1);
+    if (result == -1)
+    {
+        printf("[GUI] listen error: %i\n", strerror(errno));
+        return;
+    }
+    #endif
 
     m_enabled = true;
 
@@ -53,11 +73,19 @@ void GUIServer::StartNetwork()
 
 void GUIServer::StopNetwork()
 {
+    #ifdef _WIN32
     m_enabled = false;
     shutdown(m_guiSocket, SD_BOTH);
     closesocket(m_guiSocket);
     shutdown(m_socketPrototype, SD_BOTH);
     closesocket(m_socketPrototype);
+    #else
+    m_enabled = false;
+    shutdown(m_guiSocket, SHUT_RDWR);
+    close(m_guiSocket);
+    shutdown(m_socketPrototype, SHUT_RDWR);
+    close(m_socketPrototype);
+    #endif
 }
 
 void GUIServer::NetworkLoop()
@@ -68,7 +96,11 @@ void GUIServer::NetworkLoop()
 
         printf("[GUI] Waiting for connection...\n");
         int addressSize = sizeof(m_address);
+        #ifdef _WIN32
         m_guiSocket = accept(m_socketPrototype, (SOCKADDR*)&m_address, &addressSize);
+        #else
+        m_guiSocket = accept(m_socketPrototype, (sockaddr*)&m_address, (socklen_t*)&addressSize);
+        #endif
         if (m_guiSocket == INVALID_SOCKET)
             break;
 
@@ -80,6 +112,8 @@ void GUIServer::NetworkLoop()
             ByteBuffer buffer;
             buffer.resize(MAX_PACKET_SIZE);
             int result = recv(m_guiSocket, (char*)buffer.contents(), MAX_PACKET_SIZE, 0);
+            
+            #ifdef _WIN32
             if (result == SOCKET_ERROR)
             {
                 printf("[GUI] recv error: %i\n", WSAGetLastError());
@@ -99,6 +133,27 @@ void GUIServer::NetworkLoop()
     } while (m_enabled);
 
     closesocket(m_guiSocket);
+    #else
+            if (result == -1)
+            {
+                printf("[GUI] recv error: %i\n", strerror(errno));
+                break;
+            }
+
+            if (result == 0)
+            {
+                printf("[GUI] Connection closed.\n");
+                break;
+            }
+
+            HandlePacket(buffer);
+
+        } while (m_enabled);
+
+    } while (m_enabled);
+
+    close(m_guiSocket);
+    #endif
 }
 
 void GUIServer::ResetClientData()

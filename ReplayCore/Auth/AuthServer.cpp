@@ -29,21 +29,36 @@ void AuthServer::StartNetwork()
 
     m_address.sin_family = AF_INET;
     m_address.sin_port = htons(sConfig.GetLoginServerPort());
-    m_address.sin_addr.S_un.S_addr = inet_addr(sConfig.GetListenAddress());
 
-    result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
+    #ifdef _WIN32
+    m_address.sin_addr.S_un.S_addr = inet_addr(sConfig.GetListenAddress());
+        result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)
     {
         printf("[AUTH] bind error: %i\n", WSAGetLastError());
         return;
     }
-
-    result = listen(m_socketPrototype, 1);
+        result = listen(m_socketPrototype, 1);
     if (result == SOCKET_ERROR)
     {
         printf("[AUTH] listen error: %i\n", WSAGetLastError());
         return;
     }
+    #else
+    m_address.sin_addr.s_addr = inet_addr(sConfig.GetListenAddress());
+        result = bind(m_socketPrototype, (sockaddr*)&m_address, sizeof(m_address));
+    if (result == -1)
+    {
+        printf("[AUTH] bind error: %i\n", strerror(errno));
+        return;
+    }
+        result = listen(m_socketPrototype, 1);
+    if (result == -1)
+    {
+        printf("[AUTH] listen error: %i\n", strerror(errno));
+        return;
+    }
+    #endif
 
     m_enabled = true;
 
@@ -53,10 +68,18 @@ void AuthServer::StartNetwork()
 void AuthServer::StopNetwork()
 {
     m_enabled = false;
+
+    #ifdef _WIN32
     shutdown(m_authSocket, SD_BOTH);
     closesocket(m_authSocket);
     shutdown(m_socketPrototype, SD_BOTH);
     closesocket(m_socketPrototype);
+    #else
+    shutdown(m_authSocket, SHUT_RDWR);
+    close(m_authSocket);
+    shutdown(m_socketPrototype, SHUT_RDWR);
+    close(m_socketPrototype);
+    #endif
 }
 
 void AuthServer::NetworkLoop()
@@ -66,8 +89,14 @@ void AuthServer::NetworkLoop()
         ResetClientData();
 
         printf("[AUTH] Waiting for connection...\n");
+
+        #ifdef _WIN32
         int addressSize = sizeof(m_address);
         m_authSocket = accept(m_socketPrototype, (SOCKADDR*)&m_address, &addressSize);
+        #else
+        m_authSocket = accept(m_socketPrototype, (sockaddr*)&m_address, (socklen_t*)sizeof(m_address));
+        #endif
+        
         if (m_authSocket == INVALID_SOCKET)
             break;
 
@@ -78,11 +107,20 @@ void AuthServer::NetworkLoop()
             ByteBuffer buffer;
             buffer.resize(1024);
             int result = recv(m_authSocket, (char*)buffer.contents(), 1024, 0);
+            
+            #ifdef _WIN32
             if (result == SOCKET_ERROR)
             {
                 printf("[AUTH] recv error: %i\n", WSAGetLastError());
                 break;
             }
+            #else
+            if (result == -1)
+            {
+                printf("[AUTH] recv error: %i\n", strerror(errno));
+                break;
+            }
+            #endif
 
             if (result == 0)
             {
@@ -96,7 +134,11 @@ void AuthServer::NetworkLoop()
 
     } while (m_enabled);
 
+    #ifdef _WIN32
     closesocket(m_authSocket);
+    #else
+    close(m_authSocket);
+    #endif
 }
 
 void AuthServer::ResetClientData()

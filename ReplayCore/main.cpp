@@ -146,6 +146,8 @@ int main()
     UpdateFields::SetupUpdateFieldMaps();
 
     printf("\n[MAIN] Starting network...\n");
+    
+    #ifdef _WIN32
     WSAData data;
     int result = WSAStartup(0x0202, &data);
     if (result == SOCKET_ERROR)
@@ -153,6 +155,7 @@ int main()
         printf("WSAStartup error: %i\n", WSAGetLastError());
         return 1;
     }
+    #endif
 
     sGUI.StartNetwork();
     sAuth.StartNetwork();
@@ -190,7 +193,11 @@ int main()
 
     WorldDatabase.Uninitialise();
     SniffDatabase.Uninitialise();
+
+    #ifdef _WIN32
     WSACleanup();
+    #endif
+
     return 0;
 }
 

@@ -10,7 +10,14 @@
 #include "DynamicObject.h"
 #include "SpellCastTargets.h"
 
+#ifdef _WIN32
 #include "winsock2.h"
+#else
+#include <sys/socket.h>
+#include <pcap/pcap.h>
+#include <unistd.h>
+#endif
+
 #include <map>
 #include <thread>
 #include <set>
@@ -258,7 +265,13 @@ private:
     uint16 m_lastSessionBuild = 0;
     SOCKET m_worldSocket;
     SOCKET m_socketPrototype;
+
+     #ifdef _WIN32
     SOCKADDR_IN m_address;
+    #else
+    sockaddr_in m_address;
+    #endif
+    
     std::queue<uint8*> m_incomingPacketQueue;
     std::map<uint16, WorldOpcodeHandler> m_opcodeHandlers;
     void ResetClientData();

@@ -7,8 +7,12 @@
 
 #include "DbField.h"
 
+#ifdef _WIN32
 #include <winsock2.h>
-#include <mysql\mysql.h>
+#else
+#include <sys/socket.h>
+#endif
+#include <mysql/mysql.h>
 
 class QueryResult
 {
