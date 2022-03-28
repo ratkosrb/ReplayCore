@@ -1879,13 +1879,13 @@ void WorldServer::SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid)
     SendPacket(data);
 }
 
-void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage)
+void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, int32 damage, int32 overkillDamage, uint32 damageSchoolMask, int32 absorbedDamage, int32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage)
 {
     WorldPacket data(GetOpcode("SMSG_ATTACKERSTATEUPDATE"), (16 + 45));
     data << uint32(hitInfo);
     data << attackerGuid.WriteAsPacked();
     data << victimGuid.WriteAsPacked();
-    data << uint32(damage);
+    data << int32(damage);
 
     if (GetClientBuild() >= CLIENT_BUILD_3_0_3)
         data << int32(overkillDamage);
@@ -1901,10 +1901,10 @@ void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGui
 
         // Float coefficient of sub damage
         data << float(damage);
-        data << uint32(damage);
+        data << int32(damage);
 
         if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_FULL_ABSORB | WotLK::HITINFO_PARTIAL_ABSORB)))
-            data << uint32(absorbedDamage);
+            data << int32(absorbedDamage);
         if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_FULL_RESIST | WotLK::HITINFO_PARTIAL_RESIST)))
             data << int32(resistedDamage);
     }
@@ -1918,7 +1918,7 @@ void WorldServer::SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGui
     data << uint32(spellId);
 
     if ((GetClientBuild() < CLIENT_BUILD_3_0_3) || (hitInfo & (WotLK::HITINFO_BLOCK)))
-        data << uint32(blockedDamage);
+        data << int32(blockedDamage);
 
     if ((GetClientBuild() >= CLIENT_BUILD_3_0_2) && (hitInfo & WotLK::HITINFO_RAGE_GAIN))
         data << uint32(0);
@@ -2052,11 +2052,11 @@ void WorldServer::SendAuraUpdate(ObjectGuid targetGuid, uint8 slot, Aura const& 
     SendPacket(data);
 }
 
-void WorldServer::SendAllAurasUpdate(ObjectGuid targetGuid, Aura const auras[MAX_AURA_SLOTS])
+void WorldServer::SendAllAurasUpdate(ObjectGuid targetGuid, std::vector<Aura> const& auras)
 {
     WorldPacket data(GetOpcode("SMSG_AURA_UPDATE_ALL"));
     data << targetGuid.WriteAsPacked();
-    for (uint8 i = 0; i < MAX_AURA_SLOTS; i++)
+    for (uint8 i = 0; i < auras.size(); i++)
     {
         if (auras[i].spellId)
         {

@@ -678,11 +678,30 @@ Unit* Unit::GetTarget() const
     return sWorld.FindUnit(guid);
 }
 
+void Unit::InitializeAurasContainer()
+{
+    if (m_auras.empty())
+        m_auras.resize(sGameDataMgr.GetAuraSlotsCount());
+}
+
 bool Unit::HasAuras() const
 {
-    for (uint8 i = 0; i < MAX_AURA_SLOTS; i++)
-        if (m_auras[i].spellId)
-            return true;
+    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+    {
+        if (uint32 uf = sWorld.GetUpdateField("UNIT_FIELD_AURA"))
+        {
+            for (uint32 i = 0; i < sGameDataMgr.GetAuraSlotsCount(); i++)
+                if (GetUInt32Value(uf + i))
+                    return true;
+        }
+    }
+    else
+    {
+        for (auto const& aura : m_auras)
+            if (aura.spellId)
+                return true;
+    }
+    
     return false;
 }
 
@@ -693,6 +712,9 @@ void Unit::SendAllAurasUpdate() const
 
 void Unit::UpdateAuras(std::map<uint8, Aura> const& auras, bool isFullUpdate, bool sendUpdate)
 {
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        InitializeAurasContainer();
+
     if (isFullUpdate)
     {
         for (uint8 i = 0; i < sGameDataMgr.GetAuraSlotsCount(); i++)
@@ -708,8 +730,6 @@ void Unit::UpdateAuras(std::map<uint8, Aura> const& auras, bool isFullUpdate, bo
 
 void Unit::SetAura(uint8 slot, Aura aura, bool sendUpdate)
 {
-    m_auras[slot] = aura;
-
     if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
     {
         if (uint32 uf = sWorld.GetUpdateField("UNIT_FIELD_AURA"))
@@ -722,6 +742,7 @@ void Unit::SetAura(uint8 slot, Aura aura, bool sendUpdate)
     }
     else if (sendUpdate)
     {
+        m_auras[slot] = aura;
         sWorld.SendAuraUpdate(m_guid, slot, aura);
     }
 }

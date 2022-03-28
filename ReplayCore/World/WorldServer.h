@@ -382,14 +382,14 @@ public:
     void SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<std::pair<ObjectGuid, uint8>> const& vHitTargets, std::vector<std::pair<ObjectGuid, uint8>> const& vMissTargets, uint32 ammoDisplayId = 0, uint32 ammoInventoryType = 0);
     void SendAttackStart(ObjectGuid attackerGuid, ObjectGuid victimGuid);
     void SendAttackStop(ObjectGuid attackerGuid, ObjectGuid victimGuid);
-    void SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 damage, int32 overkillDamage, uint32 damageSchoolMask, uint32 absorbedDamage, uint32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage);
+    void SendAttackerStateUpdate(uint32 hitInfo, ObjectGuid attackerGuid, ObjectGuid victimGuid, int32 damage, int32 overkillDamage, uint32 damageSchoolMask, int32 absorbedDamage, int32 resistedDamage, uint32 victimState, int32 attackerState, uint32 spellId, int32 blockedDamage);
     void SendEmote(ObjectGuid guid, uint32 emoteId);
     void SendWeather(uint32 type, float grade, uint32 soundId, bool instant);
     void SendInitialWorldStates(std::map<uint32, uint32> worldStates);
     void SendWorldStateUpdate(uint32 variable, uint32 value);
     void SendMonsterMove(Unit* pUnit);
     void SendAuraUpdate(ObjectGuid targetGuid, uint8 slot, Aura const& aura);
-    void SendAllAurasUpdate(ObjectGuid targetGuid, Aura const auras[MAX_AURA_SLOTS]);
+    void SendAllAurasUpdate(ObjectGuid targetGuid, std::vector<Aura> const& auras);
     void SendSpellFailedOther(ObjectGuid casterGuid, uint32 spellId, uint32 reason);
     void SendSpellChannelStart(ObjectGuid casterGuid, uint32 spellId, int32 duration);
     void SendSpellChannelUpdate(ObjectGuid casterGuid, int32 duration);

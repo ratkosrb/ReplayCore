@@ -119,6 +119,7 @@ public :
     uint32 GetAttackTime(WeaponAttackType att) const;
     void SetAttackTime(WeaponAttackType att, uint32 val);
 
+    void InitializeAurasContainer();
     bool HasAuras() const;
     void UpdateAuras(std::map<uint8, Aura> const& auras, bool isFullUpdate, bool sendUpdate);
     void SetAura(uint8 slot, Aura aura, bool sendUpdate);
@@ -160,7 +161,7 @@ public :
 protected:
     ObjectGuid m_meleeVictim;
     float m_speedRate[MAX_MOVE_TYPE_WOTLK] = {};
-    Aura m_auras[MAX_AURA_SLOTS] = {};
+    std::vector<Aura> m_auras; // for wotlk
 };
 
 #endif
