@@ -656,17 +656,17 @@ struct SniffedEvent_UnitAttackStop : SniffedEventCRTP<SniffedEvent_UnitAttackSto
 
 struct SniffedEvent_UnitAttackLog : SniffedEventCRTP<SniffedEvent_UnitAttackLog>
 {
-    SniffedEvent_UnitAttackLog(ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 hitInfo, uint32 damage, uint32 originalDamage, int32 overkillDamage, uint32 totalSchoolMask, uint32 totalAbsorbedDamage, uint32 totalResistedDamage, int32 blockedDamage, uint32 victimState, int32 attackerState, uint32 spellId) :
+    SniffedEvent_UnitAttackLog(ObjectGuid attackerGuid, ObjectGuid victimGuid, uint32 hitInfo, int32 damage, int32 originalDamage, int32 overkillDamage, uint32 totalSchoolMask, int32 totalAbsorbedDamage, int32 totalResistedDamage, int32 blockedDamage, uint32 victimState, int32 attackerState, uint32 spellId) :
         m_attackerGuid(attackerGuid), m_victimGuid(victimGuid), m_hitInfo(hitInfo), m_damage(damage), m_originalDamage(originalDamage), m_overkillDamage(overkillDamage), m_totalSchoolMask(totalSchoolMask), m_totalAbsorbedDamage(totalAbsorbedDamage), m_totalResistedDamage(totalResistedDamage), m_blockedDamage(blockedDamage), m_victimState(victimState), m_attackerState(attackerState), m_spellId(spellId) {};
     ObjectGuid m_attackerGuid;
     ObjectGuid m_victimGuid;
     uint32 m_hitInfo = 0;
-    uint32 m_damage = 0;
-    uint32 m_originalDamage = 0;
+    int32 m_damage = 0;
+    int32 m_originalDamage = 0;
     int32 m_overkillDamage = 0;
     uint32 m_totalSchoolMask = 0;
-    uint32 m_totalAbsorbedDamage = 0;
-    uint32 m_totalResistedDamage = 0;
+    int32 m_totalAbsorbedDamage = 0;
+    int32 m_totalResistedDamage = 0;
     int32 m_blockedDamage = 0;
     uint32 m_victimState = 0;
     int32 m_attackerState = 0;

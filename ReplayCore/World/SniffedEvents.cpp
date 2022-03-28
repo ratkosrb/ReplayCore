@@ -872,13 +872,13 @@ void ReplayMgr::LoadUnitAttackLog(char const* tableName, uint32 typeId)
             ObjectGuid victimGuid = MakeObjectGuidFromSniffData(victimGuidLow, victimId, victimType);
 
             uint32 hitInfo = fields[5].GetUInt32();
-            uint32 damage = fields[6].GetUInt32();
-            uint32 originalDamage = fields[7].GetUInt32();
+            int32 damage = fields[6].GetInt32();
+            int32 originalDamage = fields[7].GetInt32();
             int32 overkillDamage = fields[8].GetInt32();
             //uint32 subDamageCount = fields[9].GetInt32();
             uint32 totalSchoolMask = fields[10].GetInt32();
-            uint32 totalAbsorbedDamage = fields[11].GetInt32();
-            uint32 totalResistedDamage = fields[12].GetInt32();
+            int32 totalAbsorbedDamage = fields[11].GetInt32();
+            int32 totalResistedDamage = fields[12].GetInt32();
             int32 blockedDamage = fields[13].GetInt32();
             uint32 victimState = fields[14].GetUInt32();
             int32 attackerState = fields[15].GetInt32();

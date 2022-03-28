@@ -41,10 +41,10 @@ bool WorldObject::IsWithinVisibilityDistance(WorldObject const* pObject) const
 
 bool WorldObject::IsOnlyVisibleDuringReplay() const
 {
-    if (!GetTransportGuid().IsEmpty())
+    if (!sReplayMgr.IsInMassParseMode() && (!GetTransportGuid().IsEmpty() || IsTransport()))
         return true;
 
-    return IsDynamicObject() || IsTransport();
+    return IsDynamicObject();
 }
 
 uint32 WorldObject::GetZoneId() const

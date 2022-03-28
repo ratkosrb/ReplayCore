@@ -50,6 +50,7 @@ struct WorldObjectData : public ObjectData
 
 struct GameObjectData : public WorldObjectData
 {
+    bool isOnTransport = false;
     bool isTemporary = false;
     ObjectGuid createdBy;
     uint32 displayId = 0;
@@ -136,12 +137,13 @@ struct UnitData : public WorldObjectData
 
 struct CreatureData : public UnitData
 {
-    float wanderDistance = 0.0f;
-    uint32 movementType = 0;
+    bool isOnTransport = false;
     bool isTemporary = false;
     bool isPet = false;
     bool isVehicle = false;
     bool isHovering = false;
+    float wanderDistance = 0.0f;
+    uint32 movementType = 0;
 
     void InitializeCreature(Unit* pUnit) const;
 };
@@ -310,11 +312,14 @@ public:
     uint32 GetNewPlayerLowGuid();
     ObjectGuid GetOrCreatePlayerChatGuid(std::string name);
 
+    bool IsInMassParseMode() const { return m_eventsMapBackup.empty(); }
     void EnterMassParseMode();
     template<class T>
     void RemoveDuplicateSpawns(std::map<uint32 /*guid*/, T>& spawnsMap);
     void RemoveTemporaryCreatures();
     void RemoveTemporaryGameObjects();
+    void RemoveTransportCreatures();
+    void RemoveTransportGameObjects();
     void AddInitialAurasToCreatures();
 
 #pragma endregion WorldObjects

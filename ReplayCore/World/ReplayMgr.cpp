@@ -208,11 +208,11 @@ void CreatureData::InitializeCreature(Unit* pCreature) const
     if (isHovering)
     {
         if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            pCreature->AddUnitMovementFlag(Vanilla::MOVEFLAG_HOVER);
+            pCreature->AddUnitMovementFlag(Vanilla::MOVEFLAG_FIXED_Z);
         else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            pCreature->AddUnitMovementFlag(TBC::MOVEFLAG_HOVER);
+            pCreature->AddUnitMovementFlag(TBC::MOVEFLAG_FLYING2);
         else
-            pCreature->AddUnitMovementFlag(WotLK::MOVEFLAG_HOVER);
+            pCreature->AddUnitMovementFlag(WotLK::MOVEFLAG_FLYING);
     }
 
     if (guid.IsPet())
@@ -281,6 +281,9 @@ void ReplayMgr::AddInitialAurasToCreatures()
         {
             if (Unit* pCreature = sWorld.FindCreature(itr.second.guid))
             {
+                if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2)
+                    pCreature->InitializeAurasContainer();
+
                 for (uint32 i = 0; i < std::min<uint32>(31, itr.second.auras.size()); i++)
                 {
                     Aura aura;
@@ -441,9 +444,9 @@ void ReplayMgr::LoadGameObjects()
     printf("[ReplayMgr] Loading gameobject spawns...\n");
     //                                                               0       1              2     3      4             5             6             7
     std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, "
-    //    8            9            10           11           12              13              14              15            16
-        "`rotation0`, `rotation1`, `rotation2`, `rotation3`, `is_transport`, `is_temporary`, `creator_guid`, `creator_id`, `creator_type`, "
-    //    17            18       19         20       21               22               23       24      25         26               27
+    //    8            9            10           11           12              13                 14              15              16            17
+        "`rotation0`, `rotation1`, `rotation2`, `rotation3`, `is_transport`, `is_on_transport`, `is_temporary`, `creator_guid`, `creator_id`, `creator_type`, "
+    //    18            19       20         21       22               23               24       25      26         27               28
         "`display_id`, `level`, `faction`, `flags`, `dynamic_flags`, `path_progress`, `state`, `type`, `art_kit`, `anim_progress`, `sniff_id` FROM `gameobject`"));
 
     if (!result)
@@ -469,7 +472,7 @@ void ReplayMgr::LoadGameObjects()
         }
 
         GameObjectData& data = m_gameObjectSpawns[guidCounter];
-        HighGuid highGuid = fields[12].GetUInt32() ? HIGHGUID_TRANSPORT : HIGHGUID_GAMEOBJECT;
+        HighGuid highGuid = fields[12].GetBool() ? HIGHGUID_TRANSPORT : HIGHGUID_GAMEOBJECT;
         ObjectGuid objectGuid = ObjectGuid(highGuid, guidEntry, guidCounter);
 
         data.guid = objectGuid;
@@ -512,41 +515,42 @@ void ReplayMgr::LoadGameObjects()
             data.rotation[3] = 0.0f;
         }
 
-        data.isTemporary = fields[13].GetBool();
-        uint32 creatorGuid = fields[14].GetUInt32();
-        uint32 creatorId = fields[15].GetUInt32();
-        std::string creatorType = fields[16].GetCppString();
+        data.isOnTransport = fields[13].GetBool();
+        data.isTemporary = fields[14].GetBool();
+        uint32 creatorGuid = fields[15].GetUInt32();
+        uint32 creatorId = fields[16].GetUInt32();
+        std::string creatorType = fields[17].GetCppString();
         data.createdBy = MakeObjectGuidFromSniffData(creatorGuid, creatorId, creatorType);
 
-        data.displayId = fields[17].GetUInt32();
+        data.displayId = fields[18].GetUInt32();
         if (data.displayId > MAX_GAMEOBJECT_DISPLAY_ID_WOTLK)
         {
             printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `displayId` (%u) value.\n", guidCounter, entry, data.displayId);
             data.displayId = gInfo ? gInfo->displayId : GAMEOBJECT_DISPLAY_ID_CHEST;
         }
 
-        data.level = fields[18].GetInt32();
-        data.faction = fields[19].GetUInt32();
+        data.level = fields[19].GetInt32();
+        data.faction = fields[20].GetUInt32();
         if (data.faction > MAX_FACTION_TEMPLATE_WOTLK)
         {
             printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `faction` (%u) value.\n", guidCounter, entry, data.faction);
             data.faction = 35;
         }
 
-        data.flags = fields[20].GetUInt32();
-        data.dynamicFlags = fields[21].GetUInt32();
-        data.pathProgress = fields[22].GetUInt32();
-        data.state = fields[23].GetUInt32();
-        data.type = fields[24].GetUInt32();
+        data.flags = fields[21].GetUInt32();
+        data.dynamicFlags = fields[22].GetUInt32();
+        data.pathProgress = fields[23].GetUInt32();
+        data.state = fields[24].GetUInt32();
+        data.type = fields[25].GetUInt32();
         if (data.type >= MAX_GAMEOBJECT_TYPE_WOTLK)
         {
             printf("[ReplayMgr] Error: Table `gameobject` has gameobject (GUID: %u Entry: %u) with invalid `type` (%u) value.\n", guidCounter, entry, data.state);
             data.type = gInfo ? gInfo->type : GAMEOBJECT_TYPE_GENERIC;
         }
 
-        data.artKit = fields[25].GetUInt32();
-        data.animProgress = fields[26].GetUInt32();
-        data.sourceSniffId = fields[27].GetUInt32();
+        data.artKit = fields[26].GetUInt32();
+        data.animProgress = fields[27].GetUInt32();
+        data.sourceSniffId = fields[28].GetUInt32();
 
     } while (result->NextRow());
 
@@ -599,8 +603,8 @@ void ReplayMgr::LoadDynamicObjects()
 void ReplayMgr::LoadCreatures()
 {
     printf("[ReplayMgr] Loading creature spawns...\n");
-    //                                                               0       1              2     3      4             5             6             7              8                  9                10             11        12            13              14              15       16            17                   18                  19       20        21         22       23           24            25             26               27                28            29            30               31           32            33             34             35           36           37              38           39                 40            41           42                43            44                 45           46                47                 48              49                       50                      51                     52                    53                  54                  55       56
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `wander_distance`, `movement_type`, `is_hovering`, `is_pet`, `is_vehicle`, `is_temporary`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `anim_tier`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
+    //                                                               0       1              2     3      4             5             6             7              8                  9                10             11        12            13                 14              15              16       17            18                   19                  20       21        22         23       24           25            26             27               28                29            30            31               32           33            34             35             36           37           38              39           40                 41            42           43                44            45                 46           47                48                 49              50                       51                      52                     53                    54                  55                  56       57
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `wander_distance`, `movement_type`, `is_hovering`, `is_pet`, `is_vehicle`, `is_on_transport`, `is_temporary`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `anim_tier`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
 
     if (!result)
     {
@@ -646,55 +650,56 @@ void ReplayMgr::LoadCreatures()
         data.isHovering = fields[10].GetBool();
         data.isPet = fields[11].GetBool();
         data.isVehicle = fields[12].GetBool();
-        data.isTemporary = fields[13].GetBool();
-        data.createdBySpell = fields[14].GetUInt32();
-        data.scale = fields[15].GetFloat();
-        data.displayId = fields[16].GetUInt32();
-        data.nativeDisplayId = fields[17].GetUInt32();
-        data.mountDisplayId = fields[18].GetUInt32();
-        data.classId = fields[19].GetUInt32();
-        data.gender = fields[20].GetUInt32();
-        data.faction = fields[21].GetUInt32();
-        data.level = fields[22].GetUInt32();
-        data.npcFlags = fields[23].GetUInt32();
-        data.unitFlags = fields[24].GetUInt32();
-        data.unitFlags2 = fields[25].GetUInt32();
-        data.dynamicFlags = fields[26].GetUInt32();
-        data.currentHealth = fields[27].GetUInt32();
-        data.maxHealth = fields[28].GetUInt32();
-        data.powerType = fields[29].GetUInt8();
+        data.isOnTransport = fields[13].GetBool();
+        data.isTemporary = fields[14].GetBool();
+        data.createdBySpell = fields[15].GetUInt32();
+        data.scale = fields[16].GetFloat();
+        data.displayId = fields[17].GetUInt32();
+        data.nativeDisplayId = fields[18].GetUInt32();
+        data.mountDisplayId = fields[19].GetUInt32();
+        data.classId = fields[20].GetUInt32();
+        data.gender = fields[21].GetUInt32();
+        data.faction = fields[22].GetUInt32();
+        data.level = fields[23].GetUInt32();
+        data.npcFlags = fields[24].GetUInt32();
+        data.unitFlags = fields[25].GetUInt32();
+        data.unitFlags2 = fields[26].GetUInt32();
+        data.dynamicFlags = fields[27].GetUInt32();
+        data.currentHealth = fields[28].GetUInt32();
+        data.maxHealth = fields[29].GetUInt32();
+        data.powerType = fields[30].GetUInt8();
         if (data.powerType < MAX_POWERS_WOTLK)
         {
-            data.currentPowers[data.powerType] = fields[30].GetUInt32();
-            data.maxPowers[data.powerType] = fields[31].GetUInt32();
+            data.currentPowers[data.powerType] = fields[31].GetUInt32();
+            data.maxPowers[data.powerType] = fields[32].GetUInt32();
         }
         else
         {
             printf("[ReplayMgr] LoadCreatures: Invalid power type for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.powerType = POWER_MANA;
         }
-        data.auraState = fields[32].GetUInt32();
-        data.emoteState = fields[33].GetUInt32();
-        data.standState = fields[34].GetUInt32();
-        data.visFlags = fields[35].GetUInt32();
-        data.animTier = fields[36].GetUInt32();
-        data.sheathState = fields[37].GetUInt32();
-        data.pvpFlags = fields[38].GetUInt32();
-        data.shapeShiftForm = fields[39].GetUInt32();
-        data.speedRate[MOVE_WALK] = fields[40].GetFloat();
-        data.speedRate[MOVE_RUN] = fields[41].GetFloat();
-        data.speedRate[MOVE_RUN_BACK] = fields[42].GetFloat();
-        data.speedRate[MOVE_SWIM] = fields[43].GetFloat();
-        data.speedRate[MOVE_SWIM_BACK] = fields[44].GetFloat();
-        data.speedRate[MOVE_FLIGHT] = fields[45].GetFloat();
-        data.speedRate[MOVE_FLIGHT_BACK] = fields[46].GetFloat();
-        data.boundingRadius = fields[47].GetFloat();
-        data.combatReach = fields[48].GetFloat();
-        data.mainHandAttackTime = fields[49].GetUInt32();
-        data.offHandAttackTime = fields[50].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_0] = fields[51].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_1] = fields[52].GetUInt32();
-        data.virtualItems[VIRTUAL_ITEM_SLOT_2] = fields[53].GetUInt32();
+        data.auraState = fields[33].GetUInt32();
+        data.emoteState = fields[34].GetUInt32();
+        data.standState = fields[35].GetUInt32();
+        data.visFlags = fields[36].GetUInt32();
+        data.animTier = fields[37].GetUInt32();
+        data.sheathState = fields[38].GetUInt32();
+        data.pvpFlags = fields[39].GetUInt32();
+        data.shapeShiftForm = fields[40].GetUInt32();
+        data.speedRate[MOVE_WALK] = fields[41].GetFloat();
+        data.speedRate[MOVE_RUN] = fields[42].GetFloat();
+        data.speedRate[MOVE_RUN_BACK] = fields[43].GetFloat();
+        data.speedRate[MOVE_SWIM] = fields[44].GetFloat();
+        data.speedRate[MOVE_SWIM_BACK] = fields[45].GetFloat();
+        data.speedRate[MOVE_FLIGHT] = fields[46].GetFloat();
+        data.speedRate[MOVE_FLIGHT_BACK] = fields[47].GetFloat();
+        data.boundingRadius = fields[48].GetFloat();
+        data.combatReach = fields[49].GetFloat();
+        data.mainHandAttackTime = fields[50].GetUInt32();
+        data.offHandAttackTime = fields[51].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_0] = fields[52].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_1] = fields[53].GetUInt32();
+        data.virtualItems[VIRTUAL_ITEM_SLOT_2] = fields[54].GetUInt32();
 
         if (sConfig.GetSniffVersion() == SNIFF_VANILLA ||
             sConfig.GetSniffVersion() == SNIFF_TBC)
@@ -707,10 +712,10 @@ void ReplayMgr::LoadCreatures()
             }
         }
 
-        data.channelSpell = fields[54].GetUInt32();
-        std::string auras = fields[55].GetCppString();
+        data.channelSpell = fields[55].GetUInt32();
+        std::string auras = fields[56].GetCppString();
         ParseStringIntoVector(auras, data.auras);
-        data.sourceSniffId = fields[56].GetUInt32();
+        data.sourceSniffId = fields[57].GetUInt32();
 
         if (data.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
         {
@@ -1508,6 +1513,8 @@ void ReplayMgr::EnterMassParseMode()
         return;
 
     printf("[ReplayMgr] No events loaded. Switching to mass parse mode.\n");
+    RemoveTransportCreatures();
+    RemoveTransportGameObjects();
     if (sConfig.ShouldRemoveDuplicateSpawns())
     {
         RemoveDuplicateSpawns(m_creatureSpawns);
@@ -1518,29 +1525,53 @@ void ReplayMgr::EnterMassParseMode()
         RemoveTemporaryCreatures();
         RemoveTemporaryGameObjects();
     }
+    printf("[ReplayMgr] Unique creature spawn count is %u.\n", (uint32)m_creatureSpawns.size());
+    printf("[ReplayMgr] Unique gameobject spawn count is %u.\n", (uint32)m_gameObjectSpawns.size());
+}
+
+struct UniqueSpawn
+{
+    UniqueSpawn(uint32 entry, WorldLocation const& location) : m_entry(entry), m_location(location) {}
+    uint32 m_entry;
+    WorldLocation m_location;
+
+    bool operator ==(const UniqueSpawn& other) const
+    {
+        return m_entry == m_entry &&
+               m_location.mapId == other.m_location.mapId &&
+               m_location.x == other.m_location.x &&
+               m_location.y == other.m_location.y &&
+               m_location.z == other.m_location.z;
+    }
+};
+
+namespace std
+{
+    template<>
+    struct hash<UniqueSpawn>
+    {
+        const size_t operator()(const UniqueSpawn& s) const
+        {
+            return std::hash<uint32>()(s.m_entry) ^ 
+                   std::hash<uint32>()(s.m_location.mapId) ^
+                   std::hash<float>()(s.m_location.x) ^
+                   std::hash<float>()(s.m_location.y) ^
+                   std::hash<float>()(s.m_location.z);
+        }
+    };
 }
 
 template<class T>
 void ReplayMgr::RemoveDuplicateSpawns(std::map<uint32 /*guid*/, T>& spawnsMap)
 {
-    std::set<uint32> duplicateGuids;
-    for (auto itr1 = spawnsMap.begin(); itr1 != spawnsMap.end(); itr1++)
+    std::unordered_set<UniqueSpawn> uniqueSpawns;
+    for (auto itr = spawnsMap.begin(); itr != spawnsMap.end();)
     {
-        if (duplicateGuids.find(itr1->first) != duplicateGuids.end())
-            continue;
-
-        for (auto itr2 = std::next(itr1); itr2 != spawnsMap.end(); itr2++)
-        {
-            if (itr1->second.entry == itr2->second.entry &&
-                itr1->second.location == itr2->second.location)
-            {
-                duplicateGuids.insert(itr2->first);
-            }
-        }
+        if (uniqueSpawns.insert({ itr->second.entry , itr->second.location }).second)
+            ++itr;
+        else
+            spawnsMap.erase(itr++);
     }
-
-    for (auto guid : duplicateGuids)
-        spawnsMap.erase(guid);
 }
 
 void ReplayMgr::RemoveTemporaryCreatures()
@@ -1566,5 +1597,41 @@ void ReplayMgr::RemoveTemporaryGameObjects()
     }
 
     for (auto guid : temporarySpawns)
+        m_gameObjectSpawns.erase(guid);
+}
+
+void ReplayMgr::RemoveTransportCreatures()
+{
+    std::set<uint32> removeList;
+    for (auto const& itr : m_creatureSpawns)
+    {
+        if (itr.second.isOnTransport)
+            removeList.insert(itr.first);
+    }
+
+    for (auto guid : removeList)
+        m_creatureSpawns.erase(guid);
+}
+
+void ReplayMgr::RemoveTransportGameObjects()
+{
+    std::set<uint32> removeList;
+    std::set<uint32> entryList;
+    for (auto const& itr : m_gameObjectSpawns)
+    {
+        if (itr.second.guid.IsTransport())
+        {
+            if (entryList.find(itr.second.entry) == entryList.end())
+                entryList.insert(itr.second.entry);
+            else
+                removeList.insert(itr.first);
+            continue;
+        }
+
+        if (itr.second.isOnTransport)
+            removeList.insert(itr.first);
+    }
+
+    for (auto guid : removeList)
         m_gameObjectSpawns.erase(guid);
 }
