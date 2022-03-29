@@ -348,8 +348,13 @@ void WorldServer::NetworkLoop()
             ClientPktHeader& header = *((ClientPktHeader*)headerBuffer);
             m_sessionData.encryption.DecryptRecv((uint8*)&header, sizeof(ClientPktHeader));
 
+            #ifdef _WIN32
             EndianConvertReverse(header.size);
             EndianConvert(header.cmd);
+            #else
+            EndianConvert(header.size);
+            EndianConvertReverse(header.cmd);
+            #endif
 
             uint8* buffer = new uint8[header.size + sizeof(uint16)];
             result = recv(m_worldSocket, (char*)buffer, header.size + sizeof(uint16), 0);
@@ -518,8 +523,13 @@ void  WorldServer::SendPacket(WorldPacket& packet)
         header.cmd = packet.GetOpcode();
         header.size = (uint16)packet.size() + 2;
 
+        #ifdef _WIN32
         EndianConvertReverse(header.size);
         EndianConvert(header.cmd);
+        #else
+        EndianConvert(header.size);
+        EndianConvertReverse(header.cmd);
+        #endif
 
         m_sessionData.encryption.EncryptSend((uint8*)& header, sizeof(header));
 
