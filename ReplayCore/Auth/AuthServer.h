@@ -8,7 +8,7 @@
 #include "winsock2.h"
 #else
 #include <sys/socket.h>
-#include <pcap/pcap.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #endif
 
@@ -45,13 +45,17 @@ public:
 private:
     bool m_enabled = false;
     ClientData m_clientData;
+
+    #ifdef _WIN32
     SOCKET m_authSocket;
     SOCKET m_socketPrototype;
-    #ifdef _WIN32
     SOCKADDR_IN m_address;
     #else
+    int m_authSocket;
+    int m_socketPrototype;
     sockaddr_in m_address;
     #endif
+
     std::map<uint8, AuthOpcodeHandler> m_opcodeHandlers;
 
     void ResetClientData();

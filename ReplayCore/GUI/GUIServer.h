@@ -8,7 +8,7 @@
 #include "winsock2.h"
 #else
 #include <sys/socket.h>
-#include <pcap/pcap.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #endif
 
@@ -32,13 +32,16 @@ public:
     std::thread m_networkThread;
 private:
     bool m_enabled = false;
-    SOCKET m_guiSocket;
-    SOCKET m_socketPrototype;
+
     
     #ifdef _WIN32
     SOCKADDR_IN m_address;
+    SOCKET m_guiSocket;
+    SOCKET m_socketPrototype;
     #else
     sockaddr_in m_address;
+    int m_guiSocket;
+    int m_socketPrototype;
     #endif
     
     std::map<uint8, GUIOpcodeHandler> m_opcodeHandlers;

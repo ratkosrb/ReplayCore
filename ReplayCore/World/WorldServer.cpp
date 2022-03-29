@@ -261,13 +261,14 @@ void WorldServer::NetworkLoop()
         
         #ifdef _WIN32
         m_worldSocket = accept(m_socketPrototype, (SOCKADDR*)&m_address, &addressSize);
-        #else
-        m_worldSocket = accept(m_socketPrototype, (sockaddr*)&m_address, (socklen_t*)&addressSize);
-        #endif
-
         if (m_worldSocket == INVALID_SOCKET)
             break;
-
+        #else
+        m_worldSocket = accept(m_socketPrototype, (sockaddr*)&m_address, (socklen_t*)&addressSize);
+        if (m_worldSocket == -1)
+            break;
+        #endif
+        
         printf("[WORLD] Connection established!\n");
 
         ResetClientData();

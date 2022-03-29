@@ -14,7 +14,7 @@
 #include "winsock2.h"
 #else
 #include <sys/socket.h>
-#include <pcap/pcap.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #endif
 
@@ -263,12 +263,14 @@ private:
     // Network
     WorldSessionData m_sessionData;
     uint16 m_lastSessionBuild = 0;
+    
+    #ifdef _WIN32
     SOCKET m_worldSocket;
     SOCKET m_socketPrototype;
-
-     #ifdef _WIN32
     SOCKADDR_IN m_address;
     #else
+    int m_worldSocket;
+    int m_socketPrototype;
     sockaddr_in m_address;
     #endif
     

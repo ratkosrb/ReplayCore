@@ -98,11 +98,13 @@ void GUIServer::NetworkLoop()
         int addressSize = sizeof(m_address);
         #ifdef _WIN32
         m_guiSocket = accept(m_socketPrototype, (SOCKADDR*)&m_address, &addressSize);
-        #else
-        m_guiSocket = accept(m_socketPrototype, (sockaddr*)&m_address, (socklen_t*)&addressSize);
-        #endif
         if (m_guiSocket == INVALID_SOCKET)
             break;
+        #else
+        m_guiSocket = accept(m_socketPrototype, (sockaddr*)&m_address, (socklen_t*)&addressSize);
+        if (m_guiSocket == -1)
+            break;
+        #endif
 
         printf("[GUI] Connection established!\n");
         SendEventTypesList();
