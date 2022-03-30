@@ -24,10 +24,10 @@ public:
     std::thread m_networkThread;
 private:
     bool m_enabled = false;
-    SOCKADDR_IN m_address;
     SOCKET m_guiSocket;
     SOCKET m_socketPrototype;
-    
+    SOCKADDR_IN m_address;
+
     std::map<uint8, GUIOpcodeHandler> m_opcodeHandlers;
 
     void ResetClientData();

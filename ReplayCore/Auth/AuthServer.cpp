@@ -42,7 +42,7 @@ void AuthServer::StartNetwork()
         printf("[AUTH] bind error: %i\n", WSAGetLastError());
         return;
     }
-        result = listen(m_socketPrototype, 1);
+    result = listen(m_socketPrototype, 1);
     if (result == SOCKET_ERROR)
     {
         printf("[AUTH] listen error: %i\n", WSAGetLastError());

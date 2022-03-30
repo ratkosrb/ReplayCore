@@ -286,7 +286,6 @@ void WorldServer::NetworkLoop()
         {
             uint8 headerBuffer[sizeof(ClientPktHeader)];
             int result = recv(m_worldSocket, (char*)headerBuffer, sizeof(ClientPktHeader), MSG_PEEK);
-            
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());;
