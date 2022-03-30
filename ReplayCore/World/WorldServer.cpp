@@ -177,6 +177,9 @@ void WorldServer::StartNetwork()
     
     #ifdef _WIN32
     m_address.sin_addr.S_un.S_addr = inet_addr(sConfig.GetListenAddress());
+    #else
+    m_address.sin_addr.s_addr = inet_addr(sConfig.GetListenAddress());
+    #endif
 
     result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)
@@ -191,23 +194,6 @@ void WorldServer::StartNetwork()
         printf("[WORLD] listen error: %i\n", WSAGetLastError());
         return;
     }
-    #else
-    m_address.sin_addr.s_addr = inet_addr(sConfig.GetListenAddress());
-
-    result = bind(m_socketPrototype, (sockaddr*)&m_address, sizeof(m_address));
-    if (result == -1)
-    {
-        printf("[WORLD] bind error: %i\n", strerror(errno));
-        return;
-    }
-
-    result = listen(m_socketPrototype, 1);
-    if (result == -1)
-    {
-        printf("[WORLD] listen error: %i\n", strerror(errno));
-        return;
-    }
-    #endif
     
     m_enabled = true;
 
@@ -218,18 +204,10 @@ void WorldServer::StartNetwork()
 void WorldServer::StopNetwork()
 {
     m_enabled = false;
-
-    #ifdef _WIN32
     shutdown(m_worldSocket, SD_BOTH);
     closesocket(m_worldSocket);
     shutdown(m_socketPrototype, SD_BOTH);
     closesocket(m_socketPrototype);
-    #else
-    shutdown(m_worldSocket, SHUT_RDWR);
-    close(m_worldSocket);
-    shutdown(m_socketPrototype, SHUT_RDWR);
-    close(m_socketPrototype);
-    #endif
 }
 
 void WorldServer::ResetClientData()
@@ -295,15 +273,8 @@ void WorldServer::NetworkLoop()
         if (!Opcodes::GetOpcodesNamesMapForBuild(m_sessionData.build))
         {
             printf("[WORLD] Unsupported client version!\n");
-            
-            #ifdef _WIN32
             shutdown(m_worldSocket, SD_BOTH);
             closesocket(m_worldSocket);
-            #else
-            shutdown(m_worldSocket, SHUT_RDWR);
-            close(m_worldSocket);
-            #endif
-
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
         }
@@ -316,21 +287,12 @@ void WorldServer::NetworkLoop()
             uint8 headerBuffer[sizeof(ClientPktHeader)];
             int result = recv(m_worldSocket, (char*)headerBuffer, sizeof(ClientPktHeader), MSG_PEEK);
             
-            #ifdef _WIN32
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());;
                 OnClientDisconnect();
                 break;
             }
-            #else
-            if (result == -1)
-            {
-                printf("[WORLD] recv error: %i\n", strerror(errno));;
-                OnClientDisconnect();
-                break;
-            }
-            #endif
 
             if (result == 0)
             {
@@ -359,7 +321,6 @@ void WorldServer::NetworkLoop()
             uint8* buffer = new uint8[header.size + sizeof(uint16)];
             result = recv(m_worldSocket, (char*)buffer, header.size + sizeof(uint16), 0);
 
-            #ifdef _WIN32
             if (result == SOCKET_ERROR)
             {
                 printf("[WORLD] recv error: %i\n", WSAGetLastError());
@@ -367,15 +328,6 @@ void WorldServer::NetworkLoop()
                 delete[] buffer;
                 break;
             }
-            #else
-            if (result == -1)
-            {
-                printf("[WORLD] recv error: %i\n", strerror(errno));
-                OnClientDisconnect();
-                delete[] buffer;
-                break;
-            }
-            #endif
 
             if (result == 0)
             {
@@ -400,11 +352,7 @@ void WorldServer::NetworkLoop()
 
     } while (m_enabled);
 
-    #ifdef _WIN32
     closesocket(m_worldSocket);
-    #else
-    close(m_worldSocket);
-    #endif
 }
 
 void WorldServer::ProcessIncomingPackets()

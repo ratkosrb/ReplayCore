@@ -2,6 +2,7 @@
 #define _WORLD_SERVER_H
 
 #include "../Defines/Common.h"
+#include "../Defines/Networking.h"
 #include "../Crypto/BigNumber.h"
 #include "../Crypto/AuthCrypt.h"
 #include "Player.h"
@@ -9,15 +10,6 @@
 #include "GameObject.h"
 #include "DynamicObject.h"
 #include "SpellCastTargets.h"
-
-#ifdef _WIN32
-#include "winsock2.h"
-#else
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#endif
-
 #include <map>
 #include <thread>
 #include <set>
@@ -263,17 +255,9 @@ private:
     // Network
     WorldSessionData m_sessionData;
     uint16 m_lastSessionBuild = 0;
-    
-    #ifdef _WIN32
     SOCKET m_worldSocket;
     SOCKET m_socketPrototype;
     SOCKADDR_IN m_address;
-    #else
-    int m_worldSocket;
-    int m_socketPrototype;
-    sockaddr_in m_address;
-    #endif
-    
     std::queue<uint8*> m_incomingPacketQueue;
     std::map<uint16, WorldOpcodeHandler> m_opcodeHandlers;
     void ResetClientData();

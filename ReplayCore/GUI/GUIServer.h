@@ -3,15 +3,7 @@
 
 #include "../Defines/Common.h"
 #include "../World/SniffedEvents.h"
-
-#ifdef _WIN32
-#include "winsock2.h"
-#else
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#endif
-
+#include "../Defines/Networking.h"
 #include <string>
 #include <map>
 #include <thread>
@@ -32,17 +24,9 @@ public:
     std::thread m_networkThread;
 private:
     bool m_enabled = false;
-
-    
-    #ifdef _WIN32
     SOCKADDR_IN m_address;
     SOCKET m_guiSocket;
     SOCKET m_socketPrototype;
-    #else
-    sockaddr_in m_address;
-    int m_guiSocket;
-    int m_socketPrototype;
-    #endif
     
     std::map<uint8, GUIOpcodeHandler> m_opcodeHandlers;
 

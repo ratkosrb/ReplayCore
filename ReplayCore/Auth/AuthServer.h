@@ -2,16 +2,8 @@
 #define _AUTH_SERVER_H
 
 #include "../Defines/Common.h"
+#include "../Defines/Networking.h"
 #include "../Crypto/BigNumber.h"
-
-#ifdef _WIN32
-#include "winsock2.h"
-#else
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#endif
-
 #include <string>
 #include <map>
 #include <thread>
@@ -45,19 +37,10 @@ public:
 private:
     bool m_enabled = false;
     ClientData m_clientData;
-
-    #ifdef _WIN32
-    SOCKET m_authSocket;
-    SOCKET m_socketPrototype;
-    SOCKADDR_IN m_address;
-    #else
     int m_authSocket;
     int m_socketPrototype;
     sockaddr_in m_address;
-    #endif
-
     std::map<uint8, AuthOpcodeHandler> m_opcodeHandlers;
-
     void ResetClientData();
     void SetupOpcodeHandlers();
     void NetworkLoop();
