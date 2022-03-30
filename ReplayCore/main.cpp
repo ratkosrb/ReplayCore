@@ -152,7 +152,7 @@ int main()
     int result = WSAStartup(0x0202, &data);
     if (result == SOCKET_ERROR)
     {
-        printf("WSAStartup error: %i\n", WSAGetLastError());
+        printf("WSAStartup error: %i\n", SOCKET_ERROR_CODE);
         return 1;
     }
     #endif

@@ -39,13 +39,13 @@ void AuthServer::StartNetwork()
     result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)
     {
-        printf("[AUTH] bind error: %i\n", WSAGetLastError());
+        printf("[AUTH] bind error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
     result = listen(m_socketPrototype, 1);
     if (result == SOCKET_ERROR)
     {
-        printf("[AUTH] listen error: %i\n", WSAGetLastError());
+        printf("[AUTH] listen error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
 
@@ -90,7 +90,7 @@ void AuthServer::NetworkLoop()
             int result = recv(m_authSocket, (char*)buffer.contents(), 1024, 0);
             if (result == SOCKET_ERROR)
             {
-                printf("[AUTH] recv error: %i\n", WSAGetLastError());
+                printf("[AUTH] recv error: %i\n", SOCKET_ERROR_CODE);
                 break;
             }
 

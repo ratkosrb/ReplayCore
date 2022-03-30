@@ -184,14 +184,14 @@ void WorldServer::StartNetwork()
     result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)
     {
-        printf("[WORLD] bind error: %i\n", WSAGetLastError());
+        printf("[WORLD] bind error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
 
     result = listen(m_socketPrototype, 1);
     if (result == SOCKET_ERROR)
     {
-        printf("[WORLD] listen error: %i\n", WSAGetLastError());
+        printf("[WORLD] listen error: %i\n",SOCKET_ERROR_CODE);
         return;
     }
     
@@ -288,7 +288,7 @@ void WorldServer::NetworkLoop()
             int result = recv(m_worldSocket, (char*)headerBuffer, sizeof(ClientPktHeader), MSG_PEEK);
             if (result == SOCKET_ERROR)
             {
-                printf("[WORLD] recv error: %i\n", WSAGetLastError());;
+                printf("[WORLD] recv error: %i\n", SOCKET_ERROR_CODE);;
                 OnClientDisconnect();
                 break;
             }
@@ -322,7 +322,7 @@ void WorldServer::NetworkLoop()
 
             if (result == SOCKET_ERROR)
             {
-                printf("[WORLD] recv error: %i\n", WSAGetLastError());
+                printf("[WORLD] recv error: %i\n", SOCKET_ERROR_CODE);
                 OnClientDisconnect();
                 delete[] buffer;
                 break;

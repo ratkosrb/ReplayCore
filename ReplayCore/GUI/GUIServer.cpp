@@ -40,14 +40,14 @@ void GUIServer::StartNetwork()
     result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)
     {
-        printf("[GUI] bind error: %i\n", WSAGetLastError());
+        printf("[GUI] bind error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
 
     result = listen(m_socketPrototype, 1);
     if (result == SOCKET_ERROR)
     {
-        printf("[GUI] listen error: %i\n", WSAGetLastError());
+        printf("[GUI] listen error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
 
@@ -94,7 +94,7 @@ void GUIServer::NetworkLoop()
             
             if (result == SOCKET_ERROR)
             {
-                printf("[GUI] recv error: %i\n", WSAGetLastError());
+                printf("[GUI] recv error: %i\n", SOCKET_ERROR_CODE);
                 break;
             }
 

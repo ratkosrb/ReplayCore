@@ -1,5 +1,6 @@
 #ifdef _WIN32
   #include "winsock2.h"
+  #define SOCKET_ERROR_CODE WSAGetLastError()
 #else
   #include <sys/socket.h>
   #include <arpa/inet.h>
@@ -10,6 +11,6 @@
   #define SOCKET int
   #define SOCKADDR_IN sockaddr_in
   #define closesocket close
-  #define WSAGetLastError() strerror(errno)
   #define SOCKADDR sockaddr
+  #define SOCKET_ERROR_CODE errno
 #endif
