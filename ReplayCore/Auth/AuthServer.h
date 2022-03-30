@@ -37,9 +37,9 @@ public:
 private:
     bool m_enabled = false;
     ClientData m_clientData;
-    int m_authSocket;
-    int m_socketPrototype;
-    sockaddr_in m_address;
+    SOCKET m_authSocket;
+    SOCKET m_socketPrototype;
+    SOCKADDR_IN m_address;
     std::map<uint8, AuthOpcodeHandler> m_opcodeHandlers;
     void ResetClientData();
     void SetupOpcodeHandlers();
