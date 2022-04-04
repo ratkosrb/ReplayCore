@@ -19,7 +19,7 @@
 #ifndef _AUTH_BIGNUMBER_H
 #define _AUTH_BIGNUMBER_H
 
-#include "../Defines//Common.h"
+#include "../Defines/Common.h"
 #include <memory>
 #include <vector>
 

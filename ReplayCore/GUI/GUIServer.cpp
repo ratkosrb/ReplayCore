@@ -1,7 +1,7 @@
 #include "GUIServer.h"
 #include "GUIOpcodes.h"
 #include "GUIFilters.h"
-#include "../Defines//ByteBuffer.h"
+#include "../Defines/ByteBuffer.h"
 #include "../Defines/Utility.h"
 #include "../Input/Config.h"
 #include "../World/SniffedEvents.h"
@@ -30,19 +30,24 @@ void GUIServer::StartNetwork()
 
     m_address.sin_family = AF_INET;
     m_address.sin_port = htons(3800);
+
+    #ifdef _WIN32
     m_address.sin_addr.S_un.S_addr = inet_addr(sConfig.GetListenAddress());
+    #else
+    m_address.sin_addr.s_addr = inet_addr(sConfig.GetListenAddress());
+    #endif
 
     result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)
     {
-        printf("[GUI] bind error: %i\n", WSAGetLastError());
+        printf("[GUI] bind error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
 
     result = listen(m_socketPrototype, 1);
     if (result == SOCKET_ERROR)
     {
-        printf("[GUI] listen error: %i\n", WSAGetLastError());
+        printf("[GUI] listen error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
 
@@ -68,9 +73,15 @@ void GUIServer::NetworkLoop()
 
         printf("[GUI] Waiting for connection...\n");
         int addressSize = sizeof(m_address);
+        #ifdef _WIN32
         m_guiSocket = accept(m_socketPrototype, (SOCKADDR*)&m_address, &addressSize);
         if (m_guiSocket == INVALID_SOCKET)
             break;
+        #else
+        m_guiSocket = accept(m_socketPrototype, (sockaddr*)&m_address, (socklen_t*)&addressSize);
+        if (m_guiSocket == -1)
+            break;
+        #endif
 
         printf("[GUI] Connection established!\n");
         SendEventTypesList();
@@ -80,9 +91,10 @@ void GUIServer::NetworkLoop()
             ByteBuffer buffer;
             buffer.resize(MAX_PACKET_SIZE);
             int result = recv(m_guiSocket, (char*)buffer.contents(), MAX_PACKET_SIZE, 0);
+            
             if (result == SOCKET_ERROR)
             {
-                printf("[GUI] recv error: %i\n", WSAGetLastError());
+                printf("[GUI] recv error: %i\n", SOCKET_ERROR_CODE);
                 break;
             }
 

@@ -1,6 +1,6 @@
 #include "WorldServer.h"
-#include "../Defines//ByteBuffer.h"
-#include "../Defines//WorldPacket.h"
+#include "../Defines/ByteBuffer.h"
+#include "../Defines/WorldPacket.h"
 #include "../Defines/Utility.h"
 #include "../Defines/ClientVersions.h"
 #include "../Auth/AuthServer.h"
@@ -174,22 +174,27 @@ void WorldServer::StartNetwork()
 
     m_address.sin_family = AF_INET;
     m_address.sin_port = htons(sConfig.GetWorldServerPort());
+    
+    #ifdef _WIN32
     m_address.sin_addr.S_un.S_addr = inet_addr(sConfig.GetListenAddress());
+    #else
+    m_address.sin_addr.s_addr = inet_addr(sConfig.GetListenAddress());
+    #endif
 
     result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)
     {
-        printf("[WORLD] bind error: %i\n", WSAGetLastError());
+        printf("[WORLD] bind error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
 
     result = listen(m_socketPrototype, 1);
     if (result == SOCKET_ERROR)
     {
-        printf("[WORLD] listen error: %i\n", WSAGetLastError());
+        printf("[WORLD] listen error: %i\n",SOCKET_ERROR_CODE);
         return;
     }
-
+    
     m_enabled = true;
 
     m_networkThread = std::thread(&WorldServer::NetworkLoop, this);
@@ -231,10 +236,17 @@ void WorldServer::NetworkLoop()
     {
         printf("[WORLD] Waiting for connection...\n");
         int addressSize = sizeof(m_address);
+        
+        #ifdef _WIN32
         m_worldSocket = accept(m_socketPrototype, (SOCKADDR*)&m_address, &addressSize);
         if (m_worldSocket == INVALID_SOCKET)
             break;
-
+        #else
+        m_worldSocket = accept(m_socketPrototype, (sockaddr*)&m_address, (socklen_t*)&addressSize);
+        if (m_worldSocket == -1)
+            break;
+        #endif
+        
         printf("[WORLD] Connection established!\n");
 
         ResetClientData();
@@ -274,10 +286,9 @@ void WorldServer::NetworkLoop()
         {
             uint8 headerBuffer[sizeof(ClientPktHeader)];
             int result = recv(m_worldSocket, (char*)headerBuffer, sizeof(ClientPktHeader), MSG_PEEK);
-
             if (result == SOCKET_ERROR)
             {
-                printf("[WORLD] recv error: %i\n", WSAGetLastError());;
+                printf("[WORLD] recv error: %i\n", SOCKET_ERROR_CODE);;
                 OnClientDisconnect();
                 break;
             }
@@ -298,15 +309,20 @@ void WorldServer::NetworkLoop()
             ClientPktHeader& header = *((ClientPktHeader*)headerBuffer);
             m_sessionData.encryption.DecryptRecv((uint8*)&header, sizeof(ClientPktHeader));
 
+            #ifdef _WIN32
             EndianConvertReverse(header.size);
             EndianConvert(header.cmd);
+            #else
+            EndianConvert(header.size);
+            EndianConvertReverse(header.cmd);
+            #endif
 
             uint8* buffer = new uint8[header.size + sizeof(uint16)];
             result = recv(m_worldSocket, (char*)buffer, header.size + sizeof(uint16), 0);
 
             if (result == SOCKET_ERROR)
             {
-                printf("[WORLD] recv error: %i\n", WSAGetLastError());
+                printf("[WORLD] recv error: %i\n", SOCKET_ERROR_CODE);
                 OnClientDisconnect();
                 delete[] buffer;
                 break;
@@ -454,8 +470,13 @@ void  WorldServer::SendPacket(WorldPacket& packet)
         header.cmd = packet.GetOpcode();
         header.size = (uint16)packet.size() + 2;
 
+        #ifdef _WIN32
         EndianConvertReverse(header.size);
         EndianConvert(header.cmd);
+        #else
+        EndianConvert(header.size);
+        EndianConvertReverse(header.cmd);
+        #endif
 
         m_sessionData.encryption.EncryptSend((uint8*)& header, sizeof(header));
 

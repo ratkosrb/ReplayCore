@@ -1,9 +1,9 @@
 #ifndef _AUTH_SERVER_H
 #define _AUTH_SERVER_H
 
-#include "..\Defines\Common.h"
-#include "..\Crypto\BigNumber.h"
-#include "winsock2.h"
+#include "../Defines/Common.h"
+#include "../Defines/Networking.h"
+#include "../Crypto/BigNumber.h"
 #include <string>
 #include <map>
 #include <thread>
@@ -41,7 +41,6 @@ private:
     SOCKET m_socketPrototype;
     SOCKADDR_IN m_address;
     std::map<uint8, AuthOpcodeHandler> m_opcodeHandlers;
-
     void ResetClientData();
     void SetupOpcodeHandlers();
     void NetworkLoop();

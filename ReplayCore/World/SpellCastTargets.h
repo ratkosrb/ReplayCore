@@ -2,7 +2,7 @@
 #define __SPELL_CAST_TARGETS_H
 
 #include "../Defines/Common.h"
-#include "../Defines//ByteBuffer.h"
+#include "../Defines/ByteBuffer.h"
 #include "ObjectGuid.h"
 
 class WorldObject;

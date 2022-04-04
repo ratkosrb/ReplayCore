@@ -19,7 +19,7 @@
 #ifndef _AUTH_SHA1_H
 #define _AUTH_SHA1_H
 
-#include "../Defines//Common.h"
+#include "../Defines/Common.h"
 #include <openssl/sha.h>
 #include <openssl/crypto.h>
 #include <string>

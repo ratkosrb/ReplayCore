@@ -1,6 +1,6 @@
 #include "AuthServer.h"
 #include "AuthDefines.h"
-#include "../Defines//ByteBuffer.h"
+#include "../Defines/ByteBuffer.h"
 #include "../Defines/Utility.h"
 #include "../Defines/GameAccount.h"
 #include "../Crypto/Hmac.h"
@@ -29,19 +29,23 @@ void AuthServer::StartNetwork()
 
     m_address.sin_family = AF_INET;
     m_address.sin_port = htons(sConfig.GetLoginServerPort());
+
+    #ifdef _WIN32
     m_address.sin_addr.S_un.S_addr = inet_addr(sConfig.GetListenAddress());
+    #else
+    m_address.sin_addr.s_addr = inet_addr(sConfig.GetListenAddress());
+    #endif
 
     result = bind(m_socketPrototype, (SOCKADDR*)&m_address, sizeof(m_address));
     if (result == SOCKET_ERROR)
     {
-        printf("[AUTH] bind error: %i\n", WSAGetLastError());
+        printf("[AUTH] bind error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
-
     result = listen(m_socketPrototype, 1);
     if (result == SOCKET_ERROR)
     {
-        printf("[AUTH] listen error: %i\n", WSAGetLastError());
+        printf("[AUTH] listen error: %i\n", SOCKET_ERROR_CODE);
         return;
     }
 
@@ -67,9 +71,15 @@ void AuthServer::NetworkLoop()
 
         printf("[AUTH] Waiting for connection...\n");
         int addressSize = sizeof(m_address);
+        #ifdef _WIN32
         m_authSocket = accept(m_socketPrototype, (SOCKADDR*)&m_address, &addressSize);
         if (m_authSocket == INVALID_SOCKET)
             break;
+        #else
+        m_authSocket = accept(m_socketPrototype, (sockaddr*)&m_address, (socklen_t*)&addressSize);
+        if (m_authSocket == -1)
+            break;
+        #endif
 
         printf("[AUTH] Connection established!\n");
 
@@ -80,7 +90,7 @@ void AuthServer::NetworkLoop()
             int result = recv(m_authSocket, (char*)buffer.contents(), 1024, 0);
             if (result == SOCKET_ERROR)
             {
-                printf("[AUTH] recv error: %i\n", WSAGetLastError());
+                printf("[AUTH] recv error: %i\n", SOCKET_ERROR_CODE);
                 break;
             }
 

@@ -1,16 +1,15 @@
 #ifndef _WORLD_SERVER_H
 #define _WORLD_SERVER_H
 
-#include "..\Defines\Common.h"
-#include "..\Crypto\BigNumber.h"
-#include "..\Crypto\AuthCrypt.h"
+#include "../Defines/Common.h"
+#include "../Defines/Networking.h"
+#include "../Crypto/BigNumber.h"
+#include "../Crypto/AuthCrypt.h"
 #include "Player.h"
 #include "Waypoint.h"
 #include "GameObject.h"
 #include "DynamicObject.h"
 #include "SpellCastTargets.h"
-
-#include "winsock2.h"
 #include <map>
 #include <thread>
 #include <set>

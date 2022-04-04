@@ -4,7 +4,7 @@
 #include "../World/GameDataMgr.h"
 #include "../World/ReplayMgr.h"
 #include "../Defines/ClientVersions.h"
-#include "../Defines//Utility.h"
+#include "../Defines/Utility.h"
 #include <sstream>
 
 CommandHandler::CommandHandler(std::string const& text, bool console) : m_console(console)

@@ -1,9 +1,9 @@
 #ifndef _GUI_SERVER_H
 #define _GUI_SERVER_H
 
-#include "..\Defines\Common.h"
-#include "..\World\SniffedEvents.h"
-#include "winsock2.h"
+#include "../Defines/Common.h"
+#include "../World/SniffedEvents.h"
+#include "../Defines/Networking.h"
 #include <string>
 #include <map>
 #include <thread>
@@ -27,6 +27,7 @@ private:
     SOCKET m_guiSocket;
     SOCKET m_socketPrototype;
     SOCKADDR_IN m_address;
+
     std::map<uint8, GUIOpcodeHandler> m_opcodeHandlers;
 
     void ResetClientData();

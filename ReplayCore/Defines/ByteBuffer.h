@@ -77,7 +77,9 @@ class ByteBuffer
 
         template <typename T> void put(size_t pos,T value)
         {
+            #ifdef _WIN32
             EndianConvert(value);
+            #endif
             put(pos,(uint8*)&value,sizeof(value));
         }
 
@@ -315,7 +317,9 @@ class ByteBuffer
             if(pos + sizeof(T) > size())
                 throw ByteBufferException(false, pos, sizeof(T), size());
             T val = *((T const*)&_storage[pos]);
+            #ifdef _WIN32
             EndianConvert(val);
+            #endif
             return val;
         }
 
@@ -495,7 +499,9 @@ class ByteBuffer
         // limited for internal use because can "append" any unexpected type (like pointer and etc) with hard detection problem
         template <typename T> void append(T value)
         {
+            #ifdef _WIN32
             EndianConvert(value);
+            #endif
             append((uint8*)&value, sizeof(T));
         }
 
