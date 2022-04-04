@@ -344,7 +344,7 @@ bool CommandHandler::HandleNearGameObjects()
 
         float distance = gobject.GetDistance3D(pPlayer);
         if (distance <= radius)
-            PSendSysMessage("- %s", gobject.GetGuidStr(true));
+            PSendSysMessage("- %s", gobject.GetGuidStr(true).c_str());
     }
 
     return true;
