@@ -1,4 +1,3 @@
-OBJ_NAME = replayCore
 CC = g++ -O3
 OBJS = ./main.cpp ./*/*.cpp 
 LINK_INCLUDES = -L./*/*.h 
