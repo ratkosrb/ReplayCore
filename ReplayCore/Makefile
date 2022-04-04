@@ -1,4 +1,4 @@
-CC = g++
+CC = g++ -O3
 OBJS = ./main.cpp ./*/*.cpp 
 LINK_INCLUDES = -L./*/*.h 
 LINKER_FLAGS = -Wno-narrowing -lssl -lcrypto -lz -lmariadb
