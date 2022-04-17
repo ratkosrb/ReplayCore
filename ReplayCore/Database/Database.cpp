@@ -128,7 +128,11 @@ bool Database::Initialize(const char* infoString)
             return false;
         }
 
+        #ifdef _WIN32
         my_bool my_true = (my_bool)1;
+        #else
+        bool my_true = (my_bool)1;
+        #endif
         mysql_options(m_pMYSQL, MYSQL_OPT_RECONNECT, &my_true);
         return true;
     }
