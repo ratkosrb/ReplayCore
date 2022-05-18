@@ -11,6 +11,7 @@ public:
     bool LoadConfig();
 
     bool IsCLIEnabled() { return m_cli; }
+    bool IsDebuggingLogin() { return m_debugLogin; }
     const char* GetListenAddress() { return m_serverIp.c_str(); }
     uint32 GetLoginServerPort() { return m_loginServerPort; }
     uint32 GetWorldServerPort() { return m_worldServerPort; }
@@ -33,6 +34,7 @@ public:
     void SetSniffVersion(uint32 version) { m_sniffVersion = version; }
 private:
     bool m_cli = false;
+    bool m_debugLogin;
     std::string m_serverIp = "127.0.0.1";
     uint32 m_worldServerPort = 8085;
     uint32 m_loginServerPort = 3724;

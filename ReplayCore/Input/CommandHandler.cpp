@@ -94,6 +94,17 @@ bool CommandHandler::ExtractBool(bool& variable)
     return false;
 }
 
+bool CommandHandler::ExtractInt32(int32& variable)
+{
+    if (m_index < m_tokens.size())
+    {
+        variable = static_cast<int32>(atoi(m_tokens[m_index++].c_str()));
+        return true;
+    }
+
+    return false;
+}
+
 bool CommandHandler::ExtractUInt32(uint32& variable)
 {
     if (m_index < m_tokens.size())
@@ -716,6 +727,32 @@ bool CommandHandler::HandleSniffSetTime()
     uint32 unixtime;
     if (!ExtractUInt32(unixtime))
         return false;
+
+    sReplayMgr.ChangeTime(unixtime);
+    return true;
+}
+
+bool CommandHandler::HandleSniffSkipTime()
+{
+    if (!sWorld.GetClientPlayer())
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    int32 seconds;
+    if (!ExtractInt32(seconds))
+        return false;
+
+    uint32 unixtime = sReplayMgr.GetCurrentSniffTime();
+
+    if (seconds < 0 && ((uint32)abs(seconds)) > unixtime)
+    {
+        SendSysMessage("Can't go back that far.");
+        return true;
+    }
+
+    unixtime += seconds;
 
     sReplayMgr.ChangeTime(unixtime);
     return true;

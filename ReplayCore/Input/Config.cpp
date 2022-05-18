@@ -19,6 +19,7 @@ bool Config::LoadConfig()
     }
 
     m_cli = reader.GetBoolean("Server", "CLI", false);
+    m_debugLogin = reader.GetBoolean("Server", "DebugLogin", false);
     m_serverIp = reader.Get("Server", "Address", "127.0.0.1");
     m_loginServerPort = reader.GetInteger("Server", "LoginPort", 3724);
     m_worldServerPort = reader.GetInteger("Server", "WorldPort", 8085);

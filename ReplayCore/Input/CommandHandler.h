@@ -19,6 +19,7 @@ public:
     void PSendSysMessage(char const* format, ...);
     void SendSysMessage(char const* str);
     void ListAllCommands(bool console);
+    bool ExtractInt32(int32& variable);
     bool ExtractUInt32(uint32& variable);
     bool ExtractFloat(float& variable);
     bool ExtractString(std::string& variable);
@@ -55,6 +56,7 @@ public:
     bool HandleSniffStop();
     bool HandleSniffGetTime();
     bool HandleSniffSetTime();
+    bool HandleSniffSkipTime();
     bool HandleSniffResetTime();
     bool HandleListEvents();
     bool HandleWaypointsShow();
@@ -66,7 +68,7 @@ public:
     void ShowUpdateFieldHelper(Object const* pTarget, UpdateFieldDefinition const* pField);
     bool HandleSetValue();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[39] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[40] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -98,6 +100,7 @@ private:
         { "stop", &CommandHandler::HandleSniffStop },
         { "gettime", &CommandHandler::HandleSniffGetTime },
         { "settime", &CommandHandler::HandleSniffSetTime },
+        { "skiptime", &CommandHandler::HandleSniffSkipTime },
         { "resettime", &CommandHandler::HandleSniffResetTime },
         { "listevents", &CommandHandler::HandleListEvents },
         { "wpshow", &CommandHandler::HandleWaypointsShow },

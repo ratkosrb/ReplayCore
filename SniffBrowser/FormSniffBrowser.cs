@@ -1081,9 +1081,13 @@ namespace SniffBrowser
             SendChatCommand("gotoclient");
         }
 
-        private void btnReplayJumpForwardInTime_Click(object sender, EventArgs e)
+        private void btnReplaySkipTime_Click(object sender, EventArgs e)
         {
-            SendChatCommand("addtime");
+            string seconds = "10";
+            if (Utility.ShowInputDialog(ref seconds, "Seconds to skip") != DialogResult.OK)
+                return;
+
+            SendChatCommand("skiptime " + seconds);
         }
 
         private void btnReplayJumpToEventTime_Click(object sender, EventArgs e)

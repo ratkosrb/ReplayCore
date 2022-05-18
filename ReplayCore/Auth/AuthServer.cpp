@@ -156,32 +156,41 @@ void AuthServer::HandleLogonChallenge(ByteBuffer& buffer)
     challenge.name.resize(challenge.nameLength + 1);
     buffer.read(challenge.name.data(), challenge.nameLength);
 
-#ifdef AUTH_DEBUG
-    printf("cmd: %hhu\n", challenge.cmd);
-    printf("error: %hhu\n", challenge.error);
-    printf("size: %hu\n", challenge.size);
-    char gamename[5] = {};
-    memcpy(gamename, challenge.gamename, 4);
-    printf("gamename: %s\n", gamename);
-    printf("version1: %hhu\n", challenge.version1);
-    printf("version2: %hhu\n", challenge.version2);
-    printf("version3: %hhu\n", challenge.version3);
-    printf("build: %hu\n", challenge.build);
-    char platform[5] = {};
-    memcpy(platform, challenge.platform, 4);
-    ReverseArray(platform, strlen(platform));
-    printf("platform: %s\n", platform);
-    char os[5] = {};
-    memcpy(os, challenge.os, 4);
-    ReverseArray(os, strlen(os));
-    printf("os: %s\n", os);
-    char country[5] = {};
-    memcpy(country, challenge.country, 4);
-    ReverseArray(country, strlen(country));
-    printf("country: %s\n", country);
-    printf("timezone_bias: %u\n", challenge.timezone_bias);
-    printf("ip: %s\n", challenge.ip.GetString().c_str());
-#endif
+    if (sConfig.IsDebuggingLogin())
+    {
+        printf("\n---------------------------\n");
+        printf("CMD_AUTH_LOGON_CHALLENGE");
+        printf("\n---------------------------\n");
+        printf("cmd: %hhu\n", challenge.cmd);
+        printf("error: %hhu\n", challenge.error);
+        printf("size: %hu\n", challenge.size);
+        char gamename[5] = {};
+        memcpy(gamename, challenge.gamename, 4);
+        printf("gamename: %s\n", gamename);
+        printf("version1: %hhu\n", challenge.version1);
+        printf("version2: %hhu\n", challenge.version2);
+        printf("version3: %hhu\n", challenge.version3);
+        printf("build: %hu\n", challenge.build);
+        char platform[5] = {};
+        memcpy(platform, challenge.platform, 4);
+        ReverseArray(platform, strlen(platform));
+        printf("platform: %s\n", platform);
+        char os[5] = {};
+        memcpy(os, challenge.os, 4);
+        ReverseArray(os, strlen(os));
+        printf("os: %s\n", os);
+        char country[5] = {};
+        memcpy(country, challenge.country, 4);
+        ReverseArray(country, strlen(country));
+        printf("country: %s\n", country);
+        printf("timezone_bias: %u\n", challenge.timezone_bias);
+        printf("ip: %s (%u)\n", challenge.ip.GetString().c_str(), challenge.ip.data.together);
+        printf("nameLength: %u\n", challenge.nameLength);
+        printf("name: ");
+        for (char chr : challenge.name)
+            putchar(chr);
+        printf("\n---------------------------\n");
+    }
 
     m_clientData.build = challenge.build;
 
@@ -236,6 +245,37 @@ void AuthServer::HandleLogonChallenge(ByteBuffer& buffer)
 void AuthServer::HandleLogonProof(ByteBuffer& buffer)
 {
     sAuthLogonProof_C* proof = (sAuthLogonProof_C*)buffer.contents();
+
+    if (sConfig.IsDebuggingLogin())
+    {
+        printf("\n---------------------------\n");
+        printf("CMD_AUTH_LOGON_PROOF");
+        printf("\n---------------------------\n");
+        printf("cmd: %u\n", proof->cmd);
+        printf("A: ");
+        for (uint32 i = 0; i < sizeof(proof->A); i++)
+        {
+            if (i)
+                printf(",");
+            printf("%u", proof->A[i]);
+        }
+        printf("\nM1: ");
+        for (uint32 i = 0; i < sizeof(proof->M1); i++)
+        {
+            if (i)
+                printf(",");
+            printf("%u", proof->M1[i]);
+        }
+        printf("\ncrc_hash: ");
+        for (uint32 i = 0; i < sizeof(proof->crc_hash); i++)
+        {
+            if (i)
+                printf(",");
+            printf("%u", proof->crc_hash[i]);
+        }
+        printf("\nnumber_of_keys: %u", proof->number_of_keys);
+        printf("\n---------------------------\n");
+    }
 
     ///- Continue the SRP6 calculation based on data received from the client
     BigNumber A;
