@@ -13,6 +13,16 @@
 #include <unordered_map>
 #include <thread>
 
+// my_bool declaration is removed in 8.0
+#if MYSQL_VERSION_ID >= 80000
+typedef char my_bool;
+#ifdef _MSC_VER
+#pragma message("You are using an incompatible mysql version!")
+#else
+#warning "You are using an incompatible mysql version!"
+#endif
+#endif
+
 #define MAX_QUERY_LEN 8192
 
 #define _LIKE_           "LIKE"
