@@ -463,8 +463,8 @@ std::string SniffedEvent_WorldStateUpdate::GetLongDescription() const
 
 void ReplayMgr::LoadWorldObjectCreate(char const* tableName, uint32 typeId, bool isSpawn)
 {
-    //                                             0             1       2      3             4             5             6              7                 8              9                 10             11             12             13
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `transport_guid`, `transport_id`,`transport_type`, `transport_x`, `transport_y`, `transport_z`, `transport_o` FROM `%s` ORDER BY `unixtimems`", tableName))
+    //                                             0             1       2     3                        4                        5                        6                          7                 8              9                10                        11                        12                        13
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, round(`position_x`, 20), round(`position_y`, 20), round(`position_z`, 20), round(`orientation`, 20), `transport_guid`, `transport_id`,`transport_type`, round(`transport_x`, 20), round(`transport_y`, 20), round(`transport_z`, 20), round(`transport_o`, 20) FROM `%s` ORDER BY `unixtimems`", tableName))
     {
         do
         {
@@ -556,8 +556,8 @@ std::string SniffedEvent_WorldObjectCreate_Base<T>::GetLongDescription() const
 
 void ReplayMgr::LoadGameObjectCreate(char const* tableName, uint32 typeId, bool isSpawn)
 {
-    //                                             0             1       2      3             4             5             6              7                 8               9                 10             11             12             13             14
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `transport_guid`, `transport_id`, `transport_type`, `transport_x`, `transport_y`, `transport_z`, `transport_o`, `transport_path_timer` FROM `%s` ORDER BY `unixtimems`", tableName))
+    //                                             0             1       2     3                        4                        5                         6                         7                 8               9                10                        11                        12                        13                         14
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, round(`position_x`, 20), round(`position_y`, 20), round(`position_z`, 20), round(`orientation`, 20), `transport_guid`, `transport_id`, `transport_type`, round(`transport_x`, 20), round(`transport_y`, 20), round(`transport_z`, 20), round(`transport_o`, 20), `transport_path_timer` FROM `%s` ORDER BY `unixtimems`", tableName))
     {
         do
         {
@@ -616,8 +616,8 @@ void SniffedEvent_GameObjectCreate::Execute() const
 
 void ReplayMgr::LoadUnitCreate(char const* tableName, uint32 typeId, bool isSpawn)
 {
-    //                                             0             1       2      3             4             5             6              7            8             9              10            11           12                       13                     14                15                16                  17            18                     19                20              21                22             23             24             25             26                27
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `move_time`, `move_flags`, `move_flags2`, `swim_pitch`, `fall_time`, `jump_horizontal_speed`, `jump_vertical_speed`, `jump_cos_angle`, `jump_sin_angle`, `spline_elevation`, `vehicle_id`, `vehicle_orientation`, `transport_guid`, `transport_id`, `transport_type`, `transport_x`, `transport_y`, `transport_z`, `transport_o`, `transport_time`, `transport_seat` FROM `%s` ORDER BY `unixtimems`", tableName))
+    //                                             0             1       2     3                        4                        5                         6                         7            8             9             10                        11          12                                  13                                14                           15                           16                              17           18                                 19                20              21               22                        23                        24                        25                         26                27
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `map`, round(`position_x`, 20), round(`position_y`, 20), round(`position_z`, 20), round(`orientation`, 20), `move_time`, `move_flags`, `move_flags2`, round(`swim_pitch`, 20), `fall_time`, round(`jump_horizontal_speed`, 20), round(`jump_vertical_speed`, 20), round(`jump_cos_angle`, 20), round(`jump_sin_angle`, 20), round(`spline_elevation`, 20), `vehicle_id`, round(`vehicle_orientation`, 20), `transport_guid`, `transport_id`, `transport_type`, round(`transport_x`, 20), round(`transport_y`, 20), round(`transport_z`, 20), round(`transport_o`, 20), `transport_time`, `transport_seat` FROM `%s` ORDER BY `unixtimems`", tableName))
     {
         do
         {
@@ -1003,8 +1003,8 @@ std::string SniffedEvent_UnitEmote::GetLongDescription() const
 
 void ReplayMgr::LoadUnitClientSideMovement(char const* tableName, uint32 typeId)
 {
-    //                                                               0             1       2         3            4             5              6      7             8             9             10             11            12           13                       14                     15                16                17                  18                19              20                21             22             23             24             25                26
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `move_flags2`, `map`, `position_x`, `position_y`, `position_z`, `orientation`, `swim_pitch`, `fall_time`, `jump_horizontal_speed`, `jump_vertical_speed`, `jump_cos_angle`, `jump_sin_angle`, `spline_elevation`, `transport_guid`, `transport_id`, `transport_type`, `transport_x`, `transport_y`, `transport_z`, `transport_o`, `transport_time`, `transport_seat` FROM `%s` ORDER BY `packet_id` ASC", tableName));
+    //                                                               0             1       2         3            4             5              6     7                        8                        9                        10                        11                        12          13                                  14                                15                           16                           17                              18                19              20               21                        22                        23                        24                         25                26
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `unixtimems`, `guid`, `opcode`, `move_time`, `move_flags`, `move_flags2`, `map`, round(`position_x`, 20), round(`position_y`, 20), round(`position_z`, 20), round(`orientation`, 20), round(`swim_pitch`, 20), `fall_time`, round(`jump_horizontal_speed`, 20), round(`jump_vertical_speed`, 20), round(`jump_cos_angle`, 20), round(`jump_sin_angle`, 20), round(`spline_elevation`, 20), `transport_guid`, `transport_id`, `transport_type`, round(`transport_x`, 20), round(`transport_y`, 20), round(`transport_z`, 20), round(`transport_o`, 20), `transport_time`, `transport_seat` FROM `%s` ORDER BY `packet_id` ASC", tableName));
     if (!result)
         return;
 
@@ -1136,8 +1136,8 @@ std::string SniffedEvent_ClientSideMovement::GetLongDescription() const
 
 void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap)
 {
-    //                                             0       1               2               3             4             5
-    if (auto result = SniffDatabase.Query("SELECT `guid`, `parent_point`, `spline_point`, `position_x`, `position_y`, `position_z` FROM `%s` ORDER BY `guid`, `parent_point`, `spline_point`", tableName))
+    //                                             0       1               2              3                        4                        5
+    if (auto result = SniffDatabase.Query("SELECT `guid`, `parent_point`, `spline_point`, round(`position_x`, 20), round(`position_y`, 20), round(`position_z`, 20) FROM `%s` ORDER BY `guid`, `parent_point`, `spline_point`", tableName))
     {
         do
         {
@@ -1158,8 +1158,8 @@ void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap&
 
 void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap)
 {
-    //                                             0             1       2        3            4               5               6                   7                   8                   9                 10                11                12             13                14              15                16
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, `start_position_x`, `start_position_y`, `start_position_z`, `end_position_x`, `end_position_y`, `end_position_z`, `orientation`, `transport_guid`, `transport_id`, `transport_type`, `transport_seat` FROM `%s` ORDER BY `unixtimems`, `point`", tableName))
+    //                                             0             1       2        3            4               5              6                              7                              8                              9                            10                           11                           12                         13                14              15                16
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, round(`start_position_x`, 20), round(`start_position_y`, 20), round(`start_position_z`, 20), round(`end_position_x`, 20), round(`end_position_y`, 20), round(`end_position_z`, 20), round(`orientation`, 20), `transport_guid`, `transport_id`, `transport_type`, `transport_seat` FROM `%s` ORDER BY `unixtimems`, `point`", tableName))
     {
         do
         {
@@ -3739,8 +3739,8 @@ std::string SniffedEvent_SpellCastStart::GetLongDescription() const
 void ReplayMgr::LoadSpellCastGo()
 {
     std::map<uint32, Vector3> castGoPositions;
-    //                                             0     1             2             3
-    if (auto result = SniffDatabase.Query("SELECT `id`, `position_x`, `position_y`, `position_z` FROM `spell_cast_go_position`"))
+    //                                             0    1                        2                        3
+    if (auto result = SniffDatabase.Query("SELECT `id`, round(`position_x`, 20), round(`position_y`, 20), round(`position_z`, 20) FROM `spell_cast_go_position`"))
     {
         do
         {
