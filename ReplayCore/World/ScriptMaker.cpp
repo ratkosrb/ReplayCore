@@ -682,6 +682,14 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
         script->comment = "Set Go State to " + GameObjectStateToString(ptr->m_value);
         scriptActions.push_back(script);
     }
+    else if (auto ptr = std::dynamic_pointer_cast<SniffedEvent_GameObjectCustomAnim>(sniffedEvent))
+    {
+        auto script = std::make_shared<ScriptInfo>();
+        script->command = SCRIPT_COMMAND_PLAY_CUSTOM_ANIM;
+        script->playCustomAnim.animId = ptr->m_animId;
+        script->comment = "Activate Object";
+        scriptActions.push_back(script);
+    }
     else if (auto ptr = std::dynamic_pointer_cast<SniffedEvent_PlaySound>(sniffedEvent))
     {
         auto script = std::make_shared<ScriptInfo>();
