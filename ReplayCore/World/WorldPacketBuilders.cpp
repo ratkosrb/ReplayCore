@@ -950,6 +950,9 @@ void WorldServer::SendPacketsAfterAddToMap()
 {
     m_clientPlayer->SendCreateUpdateToPlayer(m_clientPlayer.get());
 
+    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+        m_clientPlayer->SendAllAurasUpdate();
+
     if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
     {
         SendTimeSyncRequest();
