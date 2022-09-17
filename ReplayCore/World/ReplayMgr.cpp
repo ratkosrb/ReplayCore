@@ -271,6 +271,35 @@ void ReplayMgr::SpawnCreatures()
 
     if (m_eventsMapBackup.empty())
         AddInitialAurasToCreatures();
+
+    for (auto const& itr : m_creatureMarkers)
+    {
+        ObjectGuid guid;
+        if (CreatureData const* pSpawnData = GetCreatureSpawnData(itr.first))
+            guid = pSpawnData->guid;
+        else
+            continue;
+
+        SetCreatureAura(guid, VISUAL_MARKER_SLOT, VISUAL_MARKER_AURA);
+    }
+}
+
+void ReplayMgr::SetCreatureAura(ObjectGuid guid, uint32 slot, uint32 spellId)
+{
+    if (Unit* pCreature = sWorld.FindCreature(guid))
+    {
+        Aura aura;
+        if (spellId)
+        {
+            if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2)
+                pCreature->InitializeAurasContainer();
+
+            aura.activeFlags = 1;
+            aura.auraFlags = sGameDataMgr.ConvertAuraFlags(Classic::AFLAG_POSITIVE, 1, slot);
+            aura.spellId = spellId;
+        }
+        pCreature->SetAura(slot, aura, pCreature->IsVisibleToClient());
+    }
 }
 
 void ReplayMgr::AddInitialAurasToCreatures()
@@ -439,6 +468,52 @@ std::map<uint32, uint32> ReplayMgr::GetInitialWorldStatesForCurrentTime()
     return worldStates;
 }
 
+void ReplayMgr::LoadSpawnMarkers(char const* tableName, std::map<uint32, int32>& markersTable)
+{
+    //                                                               0       1
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `marker` FROM %s", tableName));
+
+    if (!result)
+        return;
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 guid = fields[0].GetUInt32();
+        markersTable[guid] = fields[1].GetInt32();
+
+    } while (result->NextRow());
+
+    printf(">> Loaded %u spawn markers.\n", (uint32)markersTable.size());
+}
+
+void ReplayMgr::SetCreatureMarker(ObjectGuid guid, int32 marker)
+{
+    SniffDatabase.ExecuteQueryInstant("REPLACE INTO `replay_marked_creature` (`guid`, `marker`) VALUES (%u, %i)", guid.GetCounter(), marker);
+    m_creatureMarkers[guid.GetCounter()] = marker;
+    SetCreatureAura(guid, VISUAL_MARKER_SLOT, VISUAL_MARKER_AURA);
+}
+
+void ReplayMgr::SetGameObjectMarker(ObjectGuid guid, int32 marker)
+{
+    SniffDatabase.ExecuteQueryInstant("REPLACE INTO `replay_marked_gameobject` (`guid`, `marker`) VALUES (%u, %i)", guid.GetCounter(), marker);
+    m_gameobjectMarkers[guid.GetCounter()] = marker;
+}
+
+void ReplayMgr::ClearCreatureMarker(ObjectGuid guid)
+{
+    SniffDatabase.ExecuteQueryInstant("DELETE FROM `replay_marked_creature` WHERE `guid`=", guid.GetCounter());
+    m_creatureMarkers.erase(guid.GetCounter());
+    SetCreatureAura(guid, VISUAL_MARKER_SLOT, 0);
+}
+
+void ReplayMgr::ClearGameObjectMarker(ObjectGuid guid)
+{
+    SniffDatabase.ExecuteQueryInstant("DELETE FROM `replay_marked_gameobject` WHERE `guid`=", guid.GetCounter());
+    m_gameobjectMarkers.erase(guid.GetCounter());
+}
+
 void ReplayMgr::LoadGameObjects()
 {
     printf("[ReplayMgr] Loading gameobject spawns...\n");
@@ -554,6 +629,7 @@ void ReplayMgr::LoadGameObjects()
 
     } while (result->NextRow());
 
+   LoadSpawnMarkers("replay_marked_gameobject", m_gameobjectMarkers);
    printf(">> Loaded %u gameobject spawns.\n", (uint32)m_gameObjectSpawns.size());
 }
 
@@ -774,6 +850,7 @@ void ReplayMgr::LoadCreatures()
 
     LoadCreaturePetNames();
 
+    LoadSpawnMarkers("replay_marked_creature", m_creatureMarkers);
     printf(">> Loaded %u creature spawns.\n", (uint32)m_creatureSpawns.size());
 }
 

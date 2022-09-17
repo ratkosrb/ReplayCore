@@ -740,10 +740,12 @@ void Unit::SetAura(uint8 slot, Aura aura, bool sendUpdate)
             SetAuraCharges(slot, aura.stacks);
         }
     }
-    else if (sendUpdate)
+    else
     {
         m_auras[slot] = aura;
-        sWorld.SendAuraUpdate(m_guid, slot, aura);
+
+        if (sendUpdate)
+            sWorld.SendAuraUpdate(m_guid, slot, aura);
     }
 }
 

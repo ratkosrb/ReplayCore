@@ -98,7 +98,7 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
         bool visible = m_clientPlayer->IsWithinVisibilityDistance(&itr.second);
 
         // filter spawns from other sniffs if we only want to see data from specific sniff
-        if (visible && m_onlyShowSpawnsFromSniff >= 0)
+        if (visible && m_onlyShowSpawnsFromSniff >= 0 && itr.first.GetEntry() != 1)
         {
             WorldObjectData const* pSpawnData = sReplayMgr.GetObjectSpawnData(itr.first);
             if (pSpawnData && pSpawnData->sourceSniffId != m_onlyShowSpawnsFromSniff)

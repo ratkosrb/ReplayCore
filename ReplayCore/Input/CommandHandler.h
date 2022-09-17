@@ -68,8 +68,12 @@ public:
     void ShowUpdateFieldHelper(Object const* pTarget, UpdateFieldDefinition const* pField);
     bool HandleSetValue();
     bool HandleOnlySniff();
+    bool HandleMarkNPC();
+    bool HandleMarkGO();
+    bool HandleUnmarkNPC();
+    bool HandleUnmarkGO();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[41] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[45] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -112,6 +116,10 @@ private:
         { "getvalue", &CommandHandler::HandleGetValue },
         { "setvalue", &CommandHandler::HandleSetValue },
         { "onlysniff", &CommandHandler::HandleOnlySniff },
+        { "marknpc", &CommandHandler::HandleMarkNPC },
+        { "markgo", &CommandHandler::HandleMarkGO },
+        { "unmarknpc", &CommandHandler::HandleUnmarkNPC },
+        { "unmarkgo", &CommandHandler::HandleUnmarkGO },
     };
 
     bool m_console = true;

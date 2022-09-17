@@ -20,6 +20,10 @@ class GameObject;
 class DynamicObject;
 class MovementInfo;
 
+#define INVALID_MARKER INT32_MAX
+#define VISUAL_MARKER_AURA 1130
+#define VISUAL_MARKER_SLOT 31
+
 // Only the mutable update fields.
 struct ObjectData
 {
@@ -228,6 +232,27 @@ public:
         SpawnGameObjects();
         SpawnDynamicObjects();
     }
+    void LoadSpawnMarkers(char const* tableName, std::map<uint32, int32>& markersTable);
+    int32 GetCreatureMarker(uint32 guid)
+    {
+        auto itr = m_creatureMarkers.find(guid);
+        if (itr != m_creatureMarkers.end())
+            return itr->second;
+
+        return INT32_MAX;
+    }
+    void SetCreatureMarker(ObjectGuid guid, int32 marker);
+    void ClearCreatureMarker(ObjectGuid guid);
+    int32 GetGameObjectMarker(uint32 guid)
+    {
+        auto itr = m_gameobjectMarkers.find(guid);
+        if (itr != m_gameobjectMarkers.end())
+            return itr->second;
+
+        return INT32_MAX;
+    }
+    void SetGameObjectMarker(ObjectGuid guid, int32 marker);
+    void ClearGameObjectMarker(ObjectGuid guid);
 
     void LoadGameObjects();
     void SpawnGameObjects();
@@ -321,6 +346,7 @@ public:
     void RemoveTransportCreatures();
     void RemoveTransportGameObjects();
     void AddInitialAurasToCreatures();
+    void SetCreatureAura(ObjectGuid guid, uint32 slot, uint32 spellId);
 
 #pragma endregion WorldObjects
 
@@ -439,6 +465,8 @@ private:
     std::map<uint32 /*guid*/, CreatureData> m_creatureSpawns;
     std::map<uint32 /*guid*/, GameObjectData> m_gameObjectSpawns;
     std::map<uint32 /*guid*/, DynamicObjectData> m_dynamicObjectSpawns;
+    std::map<uint32 /*guid*/, int32> m_creatureMarkers;
+    std::map<uint32 /*guid*/, int32> m_gameobjectMarkers;
     std::map<uint64 /*unixtimems*/, std::map<uint32 /*variable*/, uint32 /*value*/>> m_initialWorldStates;
     std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMap;       // prepared data in the current client's format
     std::multimap<uint64 /*unixtimems*/, std::shared_ptr<SniffedEvent>> m_eventsMapBackup; // stores the original data in sniff client format

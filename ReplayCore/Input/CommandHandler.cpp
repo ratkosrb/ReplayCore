@@ -283,6 +283,9 @@ bool CommandHandler::HandleSpawnInfo()
         if (pData->isPet)
             SendSysMessage("Is Pet");
         PSendSysMessage("Sniff Id: %u", pData->sourceSniffId);
+        int32 marker = sReplayMgr.GetCreatureMarker(guid.GetCounter());
+        if (marker != INVALID_MARKER)
+            PSendSysMessage("Marker: %i", marker);
         return true;
     }
     else if (guid.IsPlayer())
@@ -327,7 +330,17 @@ bool CommandHandler::HandleNearCreatures()
 
         float distance = creature.GetDistance3D(pPlayer);
         if (distance <= radius)
-            PSendSysMessage("- %s", creature.GetGuidStr(true).c_str());
+        {
+            int32 sourceSniffId = -1;
+            if (CreatureData const* pSpawnData = sReplayMgr.GetCreatureSpawnData(itr.first.GetCounter()))
+                sourceSniffId = pSpawnData->sourceSniffId;
+
+            int32 marker = sReplayMgr.GetCreatureMarker(itr.first.GetCounter());
+            if (marker != INVALID_MARKER)
+                PSendSysMessage("- %s [s %u] [m %i]", creature.GetGuidStr(true).c_str(), sourceSniffId, marker);
+            else
+                PSendSysMessage("- %s [s %u]", creature.GetGuidStr(true).c_str(), sourceSniffId);
+        }
     }
 
     return true;
@@ -355,7 +368,17 @@ bool CommandHandler::HandleNearGameObjects()
 
         float distance = gobject.GetDistance3D(pPlayer);
         if (distance <= radius)
-            PSendSysMessage("- %s", gobject.GetGuidStr(true).c_str());
+        {
+            int32 sourceSniffId = -1;
+            if (GameObjectData const* pSpawnData = sReplayMgr.GetGameObjectSpawnData(itr.first.GetCounter()))
+                sourceSniffId = pSpawnData->sourceSniffId;
+
+            int32 marker = sReplayMgr.GetGameObjectMarker(itr.first.GetCounter());
+            if (marker != INVALID_MARKER)
+                PSendSysMessage("- %s [s %u] [m %i]", gobject.GetGuidStr(true).c_str(), sourceSniffId, marker);
+            else
+                PSendSysMessage("- %s [s %u]", gobject.GetGuidStr(true).c_str(), sourceSniffId);
+        }
     }
 
     return true;
@@ -1196,5 +1219,109 @@ bool CommandHandler::HandleOnlySniff()
     else
         SendSysMessage("Showing spawns from all sniffs.");
 
+    return true;
+}
+
+bool CommandHandler::HandleMarkNPC()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    ObjectGuid guid = pPlayer->GetTargetGuid();
+    if (!guid.IsCreatureOrPet())
+    {
+        SendSysMessage("No creature selected.");
+        return true;
+    }
+
+    int32 marker;
+    if (!ExtractInt32(marker))
+        return false;
+
+    sReplayMgr.SetCreatureMarker(guid, marker);
+    PSendSysMessage("Assigned marker %i to %s.", marker, guid.GetString().c_str());
+    return true;
+}
+
+bool CommandHandler::HandleMarkGO()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    uint32 lowGuid;
+    if (!ExtractUInt32(lowGuid))
+        return false;
+
+    ObjectGuid guid;
+    if (GameObjectData const* pSpawnData = sReplayMgr.GetGameObjectSpawnData(lowGuid))
+        guid = pSpawnData->guid;
+    else
+    {
+        printf("No gameobject with that guid!\n");
+        return true;
+    }
+
+    int32 marker;
+    if (!ExtractInt32(marker))
+        return false;
+
+    sReplayMgr.SetGameObjectMarker(guid, marker);
+    PSendSysMessage("Assigned marker %i to %s.", marker, guid.GetString().c_str());
+    return true;
+}
+
+bool CommandHandler::HandleUnmarkNPC()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    ObjectGuid guid = pPlayer->GetTargetGuid();
+    if (!guid.IsCreatureOrPet())
+    {
+        SendSysMessage("No creature selected.");
+        return true;
+    }
+
+    sReplayMgr.ClearCreatureMarker(guid);
+    PSendSysMessage("Removed marker from %s.", guid.GetString().c_str());
+    return true;
+}
+
+bool CommandHandler::HandleUnmarkGO()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    uint32 lowGuid;
+    if (!ExtractUInt32(lowGuid))
+        return false;
+
+    ObjectGuid guid;
+    if (GameObjectData const* pSpawnData = sReplayMgr.GetGameObjectSpawnData(lowGuid))
+        guid = pSpawnData->guid;
+    else
+    {
+        printf("No gameobject with that guid!\n");
+        return true;
+    }
+
+    sReplayMgr.ClearGameObjectMarker(guid);
+    PSendSysMessage("Removed marker from %s.", guid.GetString().c_str());
     return true;
 }
