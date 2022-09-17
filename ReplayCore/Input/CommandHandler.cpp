@@ -1182,3 +1182,19 @@ bool CommandHandler::HandleSetValue()
 
     return true;
 }
+
+bool CommandHandler::HandleOnlySniff()
+{
+    int32 sniffId;
+    if (!ExtractInt32(sniffId))
+        return false;
+
+    sWorld.m_onlyShowSpawnsFromSniff = sniffId;
+
+    if (sniffId >= 0)
+        PSendSysMessage("Only showing spawns from sniff id %i.", sniffId);
+    else
+        SendSysMessage("Showing spawns from all sniffs.");
+
+    return true;
+}

@@ -230,6 +230,7 @@ public:
     std::thread m_networkThread;
     std::thread m_worldThread;
     std::thread m_packetProcessingThread;
+    int32 m_onlyShowSpawnsFromSniff = -1;
 private:
     bool m_enabled = false;
     bool m_worldSpawned = false;

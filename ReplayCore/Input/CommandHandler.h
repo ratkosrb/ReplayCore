@@ -67,8 +67,9 @@ public:
     bool HandleGetValue();
     void ShowUpdateFieldHelper(Object const* pTarget, UpdateFieldDefinition const* pField);
     bool HandleSetValue();
+    bool HandleOnlySniff();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[40] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[41] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -110,6 +111,7 @@ private:
         { "moveinfo", &CommandHandler::HandleMoveInfo },
         { "getvalue", &CommandHandler::HandleGetValue },
         { "setvalue", &CommandHandler::HandleSetValue },
+        { "onlysniff", &CommandHandler::HandleOnlySniff },
     };
 
     bool m_console = true;
