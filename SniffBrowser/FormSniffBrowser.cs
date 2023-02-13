@@ -915,11 +915,16 @@ namespace SniffBrowser
                             {
                                 CopyEventTarget(sender, e, (SniffedEvent)item.Tag);
                             });
-                        eventListContextMenu.MenuItems.Add("Remove This Event",
+                        eventListContextMenu.MenuItems.Add("Remove This Row",
                             delegate (object sender2, EventArgs e2)
                             {
                                 lstEvents.Items.Remove(item);
                             });
+                        eventListContextMenu.MenuItems.Add("Remove This Type",
+                           delegate (object sender2, EventArgs e2)
+                           {
+                               RemoveEventsWithType(sender, e, ((SniffedEvent)item.Tag).eventType);
+                           });
                         eventListContextMenu.MenuItems.Add("Remove This Source",
                            delegate (object sender2, EventArgs e2)
                            {
@@ -1007,6 +1012,20 @@ namespace SniffBrowser
             {
                 SniffedEvent sniffedEvent = (SniffedEvent)lstEvents.Items[i].Tag;
                 if (sniffedEvent.targetGuid == targetGuid)
+                    itemsToRemove.Add(lstEvents.Items[i]);
+            }
+
+            foreach (var item in itemsToRemove)
+                lstEvents.Items.Remove(item);
+        }
+
+        private void RemoveEventsWithType(object sender, MouseEventArgs e, uint eventType)
+        {
+            List<ListViewItem> itemsToRemove = new List<ListViewItem>();
+            for (int i = 0; i < lstEvents.Items.Count; i++)
+            {
+                SniffedEvent sniffedEvent = (SniffedEvent)lstEvents.Items[i].Tag;
+                if (sniffedEvent.eventType == eventType)
                     itemsToRemove.Add(lstEvents.Items[i]);
             }
 
@@ -1156,6 +1175,16 @@ namespace SniffBrowser
 
         private void btnMakeScript_Click(object sender, EventArgs e)
         {
+            HandleMakeScriptOrWaypoints(false);
+        }
+
+        private void btnMakeWaypoints_Click(object sender, EventArgs e)
+        {
+            HandleMakeScriptOrWaypoints(true);
+        }
+
+        private void HandleMakeScriptOrWaypoints(bool makeWaypoints)
+        {
             if (lstEvents.SelectedItems.Count == 0)
             {
                 MessageBox.Show("No event selected.");
@@ -1227,6 +1256,7 @@ namespace SniffBrowser
             packet.WriteUInt64(sourceGuid.RawGuid);
             packet.WriteUInt64(targetGuid.RawGuid);
             packet.WriteUInt8(saveGameObjectSpawnsToDatabase);
+            packet.WriteUInt8(makeWaypoints ? (byte)1 : (byte)0);
             packet.WriteUInt32((uint)lstEvents.SelectedItems.Count);
             foreach (ListViewItem lvi in lstEvents.SelectedItems)
             {
@@ -1234,11 +1264,6 @@ namespace SniffBrowser
                 packet.WriteUInt32(sniffedEvent.uniqueIdentifier);
             }
             SendPacket(packet);
-        }
-
-        private void btnMakeWaypoints_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("Not Yet Implemented");
         }
 
         private void FormSniffBrowser_ResizeEnd(object sender, EventArgs e)

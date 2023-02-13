@@ -41,9 +41,9 @@ void ReplayMgr::LoadSniffedEvents()
     LoadServerSideMovementSplines("player_movement_server_spline", m_playerMovementSplines);
     LoadServerSideMovementSplines("creature_movement_server_spline", m_creatureMovementSplines);
     LoadServerSideMovementSplines("creature_movement_server_combat_spline", m_creatureMovementCombatSplines);
-    LoadServerSideMovement("player_movement_server", TYPEID_PLAYER, m_playerMovementSplines);
-    LoadServerSideMovement("creature_movement_server", TYPEID_UNIT, m_creatureMovementSplines);
-    LoadServerSideMovement("creature_movement_server_combat", TYPEID_UNIT, m_creatureMovementCombatSplines);
+    LoadServerSideMovement("player_movement_server", TYPEID_PLAYER, m_playerMovementSplines, false);
+    LoadServerSideMovement("creature_movement_server", TYPEID_UNIT, m_creatureMovementSplines, false);
+    LoadServerSideMovement("creature_movement_server_combat", TYPEID_UNIT, m_creatureMovementCombatSplines, true);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_entry>("creature_values_update", "entry", TYPEID_UNIT);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_scale>("creature_values_update", "scale", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_display_id>("creature_values_update", "display_id", TYPEID_UNIT);
@@ -1156,7 +1156,7 @@ void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap&
     }
 }
 
-void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap)
+void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap, bool isCombatMovements)
 {
     //                                             0             1       2        3            4               5              6                              7                              8                              9                            10                           11                           12                         13                14              15                16
     if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, round(`start_position_x`, 20), round(`start_position_y`, 20), round(`start_position_z`, 20), round(`end_position_x`, 20), round(`end_position_y`, 20), round(`end_position_z`, 20), round(`orientation`, 20), `transport_guid`, `transport_id`, `transport_type`, `transport_seat` FROM `%s` ORDER BY `unixtimems`, `point`", tableName))
@@ -1213,13 +1213,13 @@ void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, Spl
 
             std::shared_ptr<SniffedEvent_ServerSideMovement> newEvent;
             if (pSplines)
-                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, *pSplines, transportGuid, transportSeat);
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, *pSplines, transportGuid, transportSeat, isCombatMovements);
             else
             {
                 std::vector<Vector3> points;
                 if (splineCount)
                     points.push_back(endPosition);
-                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, points, transportGuid, transportSeat);
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, points, transportGuid, transportSeat, isCombatMovements);
             }
 
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));

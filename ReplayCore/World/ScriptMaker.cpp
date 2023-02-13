@@ -56,21 +56,72 @@ void ScriptMaker::SetScriptTargetParams(ScriptInfo& script, ObjectGuid target)
     }
 }
 
+struct WaypointRow
+{
+    uint64 unixTimeMs = 0;
+    Vector3 pos;
+    float orientation;
+    uint32 waitTime = 0;
+    uint32 travelTime = 0;
+    uint32 scriptId = 0;
+};
+
 #define UNKNOWN_TEXTS_START 200000
 
-void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, bool saveGoSpawnsToDb, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList)
+void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, bool saveGoSpawnsToDb, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList, bool makeWaypoints)
 {
     m_saveGoSpawnsToDb = saveGoSpawnsToDb;
     CheckGuidsThatNeedSeparateScript(defaultSource, defaultTarget, eventsList);
 
+    std::vector<WaypointRow> waypoints;
+
     uint64 const firstEventTime = eventsList.begin()->first;
     for (auto const& itr : eventsList)
     {
+        if (makeWaypoints && defaultSource == itr.second->GetSourceGuid() && itr.second->GetType() == SE_UNIT_SERVERSIDE_MOVEMENT)
+        {
+            auto ptr = std::static_pointer_cast<SniffedEvent_ServerSideMovement>(itr.second);
+            if (ptr->m_isCombatMovement)
+            {
+                printf("[ScriptMaker] Skipping combat movement.\n");
+                continue;
+            }
+
+            WaypointRow row;
+            row.pos = ptr->m_startPosition;
+            row.orientation = ptr->m_finalOrientation;
+            row.unixTimeMs = itr.first;
+            row.travelTime = ptr->m_moveTime;
+
+            if (!waypoints.empty())
+            {
+                WaypointRow& lastWP = waypoints.back();
+                uint64 timeDiff = itr.first - lastWP.unixTimeMs;
+                if (timeDiff > lastWP.travelTime)
+                    lastWP.waitTime = timeDiff - lastWP.travelTime;
+            }
+            else
+            {
+                auto script = std::make_shared<ScriptInfo>();
+                script->command = SCRIPT_COMMAND_START_WAYPOINTS;
+                script->delay = (itr.first - firstEventTime) / IN_MILLISECONDS;
+                script->comment = itr.second->GetSourceGuid().GetName() + " - " + "Start Waypoints";
+                m_mainScript.push_back(script);
+            }
+
+            waypoints.push_back(row);
+            continue;
+        }
+
         bool isSeparateScript = false;
         ObjectGuid currentSource = defaultSource;
         ObjectGuid currentTarget = defaultTarget;
         ObjectGuid const eventSource = itr.second->GetSourceGuid();
         ObjectGuid const eventTarget = itr.second->GetTargetGuid();
+
+        uint32 waypointScriptId = 0;
+        uint32 waypointScriptDelay = 0;
+
         std::vector<std::shared_ptr<ScriptInfo>>* scriptActions;
         if (!IsSniffEventTypeWithIrrelevantSource(itr.second->GetType()) && m_separateScriptGuids.find(eventSource) != m_separateScriptGuids.end())
         {
@@ -79,7 +130,28 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId
             scriptActions = &m_genericScripts[eventSource];
         }
         else
-            scriptActions = &m_mainScript;
+        {
+            if (makeWaypoints && !waypoints.empty())
+            {
+                for (int32 j = int32(waypoints.size()) - 1; j >= 0; j--)
+                {
+                    WaypointRow& lastWP = waypoints[j];
+                    uint64 const arrivalTime = lastWP.unixTimeMs + lastWP.travelTime;
+                    if (itr.first >= arrivalTime)
+                    {
+                        waypointScriptId = defaultSource.GetEntry() * 100 + waypoints.size();
+                        waypointScriptDelay = (itr.first - arrivalTime) / IN_MILLISECONDS;
+                        lastWP.scriptId = waypointScriptId;
+                        break;
+                    }
+                }
+            }
+
+            if (waypointScriptId)
+                scriptActions = &m_waypointScripts;
+            else
+                scriptActions = &m_mainScript;
+        }
 
         size_t const oldSize = scriptActions->size();
         GetScriptInfoFromSniffedEvent(itr.first, itr.second, *scriptActions);
@@ -91,7 +163,13 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId
             {
                 std::shared_ptr<ScriptInfo>& scriptAction = (*scriptActions)[i];
 
-                scriptAction->delay = (itr.first - firstEventTime) / IN_MILLISECONDS;
+                if (waypointScriptId)
+                {
+                    scriptAction->id = waypointScriptId;
+                    scriptAction->delay = waypointScriptDelay;
+                }
+                else
+                    scriptAction->delay = (itr.first - firstEventTime) / IN_MILLISECONDS;
 
                 if (!eventSource.IsEmpty() &&
                     !IsSniffEventTypeWithIrrelevantSource(itr.second->GetType()))
@@ -215,6 +293,38 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId
 
     log << "-- Main script\n";
     SaveScriptToFile(log, defaultScriptId, tableName, commentPrefix, m_mainScript, 0);
+
+    if (!waypoints.empty())
+    {
+        log << "-- Waypoints for " << defaultSource.GetString(true) << "\n";
+        log << "INSERT INTO `creature_movement` (`entry`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `waittime`, `wander_distance`, `script_id`) VALUES\n";
+        for (uint32 i = 0; i < waypoints.size(); i++)
+        {
+            if (i)
+                log << ",\n";
+
+            WaypointRow const& wp = waypoints[i];
+            log << "(" <<
+                std::to_string(defaultSource.GetEntry()) << ", " <<
+                std::to_string(i+1) << ", " <<
+                std::to_string(wp.pos.x) << ", " <<
+                std::to_string(wp.pos.y) << ", " <<
+                std::to_string(wp.pos.z) << ", " <<
+                std::to_string(wp.orientation) << ", " <<
+                std::to_string(wp.waitTime) << ", " <<
+                std::to_string(0.0f) << ", " <<
+                std::to_string(wp.scriptId) <<
+                ")";
+        }
+        log << ";\n";
+        
+        if (!m_waypointScripts.empty())
+        {
+            log << "\n-- Waypoint scripts\n";
+            SaveScriptToFile(log, 0, "creature_movement_scripts", commentPrefix, m_waypointScripts, 0);
+        }
+    }
+
     printf("[ScriptMaker] Script saved to file.\n");
 }
 
@@ -232,7 +342,7 @@ void ScriptMaker::SaveScriptToFile(std::ofstream& log, uint32 scriptId, std::str
 
         if (count > 0)
             log << ",\n";
-        log << "(" << scriptId << ", " << script->delay - delayOffset << ", " << script->command << ", "
+        log << "(" << (script->id ? script->id : scriptId) << ", " << script->delay - delayOffset << ", " << script->command << ", "
             << script->raw.data[0] << ", " << script->raw.data[1] << ", " << script->raw.data[2] << ", " << script->raw.data[3] << ", "
             << script->target_param1 << ", " << script->target_param2 << ", " << script->target_type << ", "
             << script->raw.data[4] << ", " << (int32)script->raw.data[5] << ", " << (int32)script->raw.data[6] << ", " << (int32)script->raw.data[7] << ", "

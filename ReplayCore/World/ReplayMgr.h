@@ -370,7 +370,7 @@ public:
     void LoadUnitAttackToggle(char const* tableName, uint32 typeId);
     void LoadUnitAttackLog(char const* tableName, uint32 typeId);
     void LoadUnitEmote(char const* tableName, uint32 typeId);
-    void LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap);
+    void LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap, bool isCombatMovements);
     void LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap);
     template <class T>
     void LoadObjectValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId);

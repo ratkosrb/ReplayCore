@@ -11,7 +11,7 @@
 class ScriptMaker
 {
 public:
-    void MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, bool saveGoSpawnsToDb, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
+    void MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId, std::string tableName, std::string commentPrefix, ObjectGuid defaultSource, ObjectGuid defaultTarget, bool saveGoSpawnsToDb, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList, bool makeWaypoints);
 private:
     void CheckGuidsThatNeedSeparateScript(ObjectGuid defaultSource, ObjectGuid defaultTarget, std::vector<std::pair<uint64, std::shared_ptr<SniffedEvent>>> const& eventsList);
     uint32 GetCreatureFieldValueBeforeTime(uint32 guid, uint64 unixtimems, char const* fieldName);
@@ -30,6 +30,9 @@ private:
 
     // the main script
     std::vector<std::shared_ptr<ScriptInfo>> m_mainScript;
+
+    // waypoint scripts
+    std::vector<std::shared_ptr<ScriptInfo>> m_waypointScripts;
     
     // guids whose actions need to be in a separate generic script
     std::set<ObjectGuid> m_separateScriptGuids;

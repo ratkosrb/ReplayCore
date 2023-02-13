@@ -745,8 +745,8 @@ struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSid
 
 struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSideMovement>
 {
-    SniffedEvent_ServerSideMovement(ObjectGuid moverGuid, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines, ObjectGuid transportGuid, int8 transportSeat) :
-        m_moverGuid(moverGuid), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines), m_transportGuid(transportGuid), m_transportSeat(transportSeat) {};
+    SniffedEvent_ServerSideMovement(ObjectGuid moverGuid, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines, ObjectGuid transportGuid, int8 transportSeat, bool isCombatMovement) :
+        m_moverGuid(moverGuid), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines), m_transportGuid(transportGuid), m_transportSeat(transportSeat), m_isCombatMovement(isCombatMovement) {};
     
     ObjectGuid m_moverGuid;
     Vector3 m_startPosition;
@@ -759,6 +759,7 @@ struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSid
     int8 m_transportSeat = 0;
     bool m_cyclic = false;
     bool m_catmullrom = false;
+    bool m_isCombatMovement = false;
     void Execute() const final;
     void PepareForCurrentClient() final;
     std::string GetShortDescription() const final;
