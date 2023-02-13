@@ -503,14 +503,14 @@ void ReplayMgr::SetGameObjectMarker(ObjectGuid guid, int32 marker)
 
 void ReplayMgr::ClearCreatureMarker(ObjectGuid guid)
 {
-    SniffDatabase.ExecuteQueryInstant("DELETE FROM `replay_marked_creature` WHERE `guid`=", guid.GetCounter());
+    SniffDatabase.ExecuteQueryInstant("DELETE FROM `replay_marked_creature` WHERE `guid`=%u", guid.GetCounter());
     m_creatureMarkers.erase(guid.GetCounter());
     SetCreatureAura(guid, VISUAL_MARKER_SLOT, 0);
 }
 
 void ReplayMgr::ClearGameObjectMarker(ObjectGuid guid)
 {
-    SniffDatabase.ExecuteQueryInstant("DELETE FROM `replay_marked_gameobject` WHERE `guid`=", guid.GetCounter());
+    SniffDatabase.ExecuteQueryInstant("DELETE FROM `replay_marked_gameobject` WHERE `guid`=%u", guid.GetCounter());
     m_gameobjectMarkers.erase(guid.GetCounter());
 }
 

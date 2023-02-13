@@ -40,6 +40,7 @@ public:
     bool HandleGoToClient();
     bool HandleGoForward();
     bool HandleGoUp();
+    bool HandleGoWP();
     bool SetSpeedCommandsHelper(UnitMoveType moveType);
     bool HandleSetAllSpeeds();
     bool HandleSetRunSpeed();
@@ -73,7 +74,7 @@ public:
     bool HandleUnmarkNPC();
     bool HandleUnmarkGO();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[45] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[46] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -90,6 +91,7 @@ private:
         { "gotoclient", &CommandHandler::HandleGoToClient },
         { "goforward", &CommandHandler::HandleGoForward },
         { "goup", &CommandHandler::HandleGoUp },
+        { "gowp", &CommandHandler::HandleGoWP },
         { "aspeed", &CommandHandler::HandleSetAllSpeeds },
         { "speed", &CommandHandler::HandleSetRunSpeed },
         { "backspeed", &CommandHandler::HandleSetRunBackSpeed },

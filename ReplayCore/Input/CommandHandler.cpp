@@ -563,6 +563,67 @@ bool CommandHandler::HandleGoUp()
     return true;
 }
 
+bool CommandHandler::HandleGoWP()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    ObjectGuid guid = pPlayer->GetTargetGuid();
+    if (guid.IsEmpty())
+    {
+        SendSysMessage("No target selected.");
+        return true;
+    }
+
+    uint32 point;
+    if (!ExtractUInt32(point))
+        return false;
+
+    if (!point)
+        return false;
+
+    point -= 1;
+
+    std::string option;
+    ExtractString(option);
+
+    bool useStartPosition = true;
+    if (option == "end" || option == "destination")
+        useStartPosition = false;
+
+    std::vector<WaypointData> waypoints;
+    sReplayMgr.GetWaypointsForCreature(guid.GetCounter(), waypoints, useStartPosition);
+
+    if (waypoints.empty())
+    {
+        SendSysMessage("No waypoint for target.");
+        return true;
+    }
+
+    if (waypoints.size() <= point)
+    {
+        SendSysMessage("No such point.");
+        return true;
+    }
+
+    PSendSysMessage("Teleporting to waypoint %u of %s.", point + 1, guid.GetString().c_str());
+
+    WorldLocation location = pPlayer->GetLocation();
+    location.x = waypoints[point].x;
+    location.y = waypoints[point].y;
+    location.z = waypoints[point].z;
+    location.o = waypoints[point].o;
+    pPlayer->Relocate(location);
+    pPlayer->GetMovementInfo().UpdateTime(sWorld.GetServerTimeMs());
+    sWorld.SendMovementPacket(pPlayer, sWorld.GetOpcode("MSG_MOVE_HEARTBEAT"));
+    
+    return true;
+}
+
 bool CommandHandler::SetSpeedCommandsHelper(UnitMoveType moveType)
 {
     Player* pPlayer = sWorld.GetClientPlayer();
