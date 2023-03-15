@@ -14,10 +14,6 @@ namespace SniffBrowser
 {
     public partial class FormSniffBrowser : Form
     {
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool ShowScrollBar(IntPtr hWnd, int wBar, bool bShow);
-
         private enum ScrollBarDirection
         {
             SB_HORZ = 0,
@@ -112,7 +108,6 @@ namespace SniffBrowser
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            ShowScrollBar(lstEvents.Handle, (int)ScrollBarDirection.SB_VERT, true);
             this.MinimumSize = this.Size;
             lstObjectFilters.MinimumSize = lstObjectFilters.Size;
 
@@ -1035,9 +1030,31 @@ namespace SniffBrowser
 
         private void lstEvents_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyData == (Keys.A | Keys.Control))
+            if (e.KeyData == (Keys.Control | Keys.A))
+            {
                 foreach (ListViewItem item in lstEvents.Items)
                     item.Selected = true;
+            }
+            else if (e.KeyData == (Keys.Control | Keys.F))
+            {
+                string searchText = "";
+                if (Utility.ShowInputDialog(ref searchText, "Search") == DialogResult.OK && !String.IsNullOrEmpty(searchText))
+                {
+                    for (int i = 0; i < lstEvents.Items.Count; i++)
+                    {
+                        ListViewItem item = lstEvents.Items[i];
+                        if (item.Text.Contains(searchText) ||
+                            item.SubItems[0].Text.Contains(searchText) ||
+                            item.SubItems[1].Text.Contains(searchText) ||
+                            item.SubItems[2].Text.Contains(searchText))
+                        {
+                            lstEvents.EnsureVisible(i);
+                            item.Selected = true;
+                            return;
+                        }
+                    }
+                }
+            }
         }
 
         private void UpdateTimeDisplayForAllEvents()

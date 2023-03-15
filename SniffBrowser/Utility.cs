@@ -8,6 +8,11 @@ namespace SniffBrowser
 {
     public static class Utility
     {
+        public static bool IsRunningOnMono()
+        {
+            return Type.GetType("Mono.Runtime") != null;
+        }
+
         private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public static DateTime GetDateTimeFromUnixTime(double unixTime)
