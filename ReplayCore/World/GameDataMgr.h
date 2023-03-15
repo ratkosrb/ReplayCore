@@ -156,6 +156,7 @@ public:
         auto itr = m_gameObjectTemplateMap.find(id);
         return itr != m_gameObjectTemplateMap.end() ? itr->second.name : "UNKNOWN";
     }
+    uint32 FindGameObjectSpawnNearSniffedSpawn(uint32 sniffedGuid) const;
 
     // Creatures
     void LoadCreatureTemplates();
@@ -185,6 +186,7 @@ public:
 
         return itr->second != 0.0f ? itr->second : 1.0f;
     }
+    uint32 FindCreatureSpawnNearSniffedSpawn(uint32 sniffedGuid) const;
 
     // AreaTriggers
     void LoadAreaTriggerTeleports();

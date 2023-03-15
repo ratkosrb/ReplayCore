@@ -74,6 +74,7 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId
     CheckGuidsThatNeedSeparateScript(defaultSource, defaultTarget, eventsList);
 
     std::vector<WaypointRow> waypoints;
+    std::set<ObjectGuid> involvedGuids;
 
     uint64 const firstEventTime = eventsList.begin()->first;
     for (auto const& itr : eventsList)
@@ -159,6 +160,11 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId
 
         if (oldSize < newSize)
         {
+            if (!itr.second->GetSourceGuid().IsEmpty())
+                involvedGuids.insert(itr.second->GetSourceGuid());
+            if (!itr.second->GetTargetGuid().IsEmpty())
+                involvedGuids.insert(itr.second->GetTargetGuid());
+
             for (size_t i = oldSize; i < newSize; i++)
             {
                 std::shared_ptr<ScriptInfo>& scriptAction = (*scriptActions)[i];
@@ -226,6 +232,30 @@ void ScriptMaker::MakeScript(uint32 defaultScriptId, uint32 genericScriptStartId
             log << uint32(UNKNOWN_TEXTS_START + i + 1) << " - " << m_unknownScriptTexts[i] << "\n";
         }
         log << "*/\n\n";
+    }
+
+    if (!involvedGuids.empty())
+    {
+        log << "/*\nFollowing spawns are involved in the script:\n";
+        log << "\nCreatures:\n\n";
+        for (auto const& guid : involvedGuids)
+        {
+            if (!guid.IsCreature())
+                continue;
+
+            uint32 dbGuid = sGameDataMgr.FindCreatureSpawnNearSniffedSpawn(guid.GetCounter());
+            log << "Sniff " << guid.GetCounter() << " - Mangos " << dbGuid << " - " << guid.GetName() << "\n";
+        }
+        log << "\nGameObjects:\n\n";
+        for (auto const& guid : involvedGuids)
+        {
+            if (!guid.IsGameObject())
+                continue;
+
+            uint32 dbGuid = sGameDataMgr.FindGameObjectSpawnNearSniffedSpawn(guid.GetCounter());
+            log << "Sniff " << guid.GetCounter() << " - Mangos " << dbGuid << " - " << guid.GetName() << "\n";
+        }
+        log << "\n*/\n\n";
     }
 
     if (!m_gameObjectGuidsToExport.empty())

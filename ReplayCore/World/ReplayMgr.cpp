@@ -1712,3 +1712,47 @@ void ReplayMgr::RemoveTransportGameObjects()
     for (auto guid : removeList)
         m_gameObjectSpawns.erase(guid);
 }
+
+uint32 GameDataMgr::FindCreatureSpawnNearSniffedSpawn(uint32 sniffedGuid) const
+{
+    CreatureData const* pData = sReplayMgr.GetCreatureSpawnData(sniffedGuid);
+    if (!pData)
+        return 0;
+
+    std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `guid` FROM `creature` WHERE `id`=%u && 1 > SQRT(((%g  - position_x) * (%g  - position_x)) + ((%g - position_y) * (%g - position_y)) + ((%g - position_z) * (%g - position_z)))", pData->entry, pData->location.x, pData->location.x, pData->location.y, pData->location.y, pData->location.z, pData->location.z));
+    if (!result)
+        return 0;
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 guid = fields[0].GetUInt32();
+        return guid;
+
+    } while (result->NextRow());
+
+    return 0;
+}
+
+uint32 GameDataMgr::FindGameObjectSpawnNearSniffedSpawn(uint32 sniffedGuid) const
+{
+    GameObjectData const* pData = sReplayMgr.GetGameObjectSpawnData(sniffedGuid);
+    if (!pData)
+        return 0;
+
+    std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `guid` FROM `gameobject` WHERE `id`=%u && 1 > SQRT(((%g  - position_x) * (%g  - position_x)) + ((%g - position_y) * (%g - position_y)) + ((%g - position_z) * (%g - position_z)))", pData->entry, pData->location.x, pData->location.x, pData->location.y, pData->location.y, pData->location.z, pData->location.z));
+    if (!result)
+        return 0;
+
+    do
+    {
+        DbField* fields = result->fetchCurrentRow();
+
+        uint32 guid = fields[0].GetUInt32();
+        return guid;
+
+    } while (result->NextRow());
+
+    return 0;
+}
