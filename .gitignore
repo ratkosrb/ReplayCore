@@ -1,0 +1,6 @@
+.vs
+ReplayCore/Release
+ReplayCore/Debug
+SniffBrowser/.vs
+SniffBrowser/obj
+zlib/Release
