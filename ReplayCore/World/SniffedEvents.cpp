@@ -448,7 +448,7 @@ void SniffedEvent_WorldStateUpdate::Execute() const
     if (sWorld.m_debugWorldStates)
     {
         uint32 system = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_SYSTEM);
-        std::string text = GetShortDescription();
+        std::string text = "DEBUG: " + GetShortDescription();
         sWorld.SendChatPacket(system, text.c_str(), 0, 0, ObjectGuid(), "");
     }
 

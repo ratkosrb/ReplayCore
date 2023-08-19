@@ -1416,3 +1416,18 @@ bool CommandHandler::HandleDebugWorldStates()
 
     return true;
 }
+
+bool CommandHandler::HandleDebugAreaTriggers()
+{
+    bool enabled;
+    if (!ExtractBool(enabled))
+        return false;
+
+    if (enabled)
+        SendSysMessage("Area triggers debug enabled. Entering an area trigger will be shown in chat.");
+    else
+        SendSysMessage("Area triggers debug disabled. Entering an area trigger will not be shown in chat.");
+    sWorld.m_debugAreaTriggers = enabled;
+
+    return true;
+}

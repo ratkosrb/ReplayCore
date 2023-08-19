@@ -233,6 +233,7 @@ public:
     int32 m_onlyShowSpawnsFromSniff = -1;
     bool m_debugSpellCasts = false;
     bool m_debugWorldStates = false;
+    bool m_debugAreaTriggers = false;
 private:
     bool m_enabled = false;
     bool m_worldSpawned = false;

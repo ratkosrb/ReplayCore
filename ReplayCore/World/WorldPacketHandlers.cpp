@@ -1005,6 +1005,13 @@ void WorldServer::HandleAreaTrigger(WorldPacket& packet)
     uint32 id;
     packet >> id;
 
+    if (sWorld.m_debugAreaTriggers)
+    {
+        uint32 system = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_SYSTEM);
+        std::string text = "DEBUG: You have entered areatrigger id " + std::to_string(id) + ".";
+        sWorld.SendChatPacket(system, text.c_str(), 0, 0, ObjectGuid(), "");
+    }
+
     if (AreaTriggerTeleportEntry const* pAreaTrigger = sGameDataMgr.GetAreaTriggerTeleportEntry(id))
     {
         printf("[HandleAreaTrigger] Teleporting player to %s\n", pAreaTrigger->name.c_str());
