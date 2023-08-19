@@ -1401,3 +1401,18 @@ bool CommandHandler::HandleDebugSpells()
 
     return true;
 }
+
+bool CommandHandler::HandleDebugWorldStates()
+{
+    bool enabled;
+    if (!ExtractBool(enabled))
+        return false;
+
+    if (enabled)
+        SendSysMessage("World states debug enabled. World state updates will be shown in chat.");
+    else
+        SendSysMessage("World states debug disabled. World state updates will not be shown in chat.");
+    sWorld.m_debugWorldStates = enabled;
+
+    return true;
+}

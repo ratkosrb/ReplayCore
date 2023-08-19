@@ -445,6 +445,13 @@ void SniffedEvent_WorldStateUpdate::Execute() const
     if (!sWorld.IsClientInWorld())
         return;
 
+    if (sWorld.m_debugWorldStates)
+    {
+        uint32 system = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_SYSTEM);
+        std::string text = GetShortDescription();
+        sWorld.SendChatPacket(system, text.c_str(), 0, 0, ObjectGuid(), "");
+    }
+
     sWorld.SendWorldStateUpdate(m_variable, m_value);
 }
 
