@@ -3705,6 +3705,13 @@ void SniffedEvent_SpellCastStart::Execute() const
         else if (GameObject const* pGo = pTarget->ToGameObject())
             targets.setGOTarget(pGo);
     }
+
+    if (sWorld.m_debugSpellCasts && (m_casterGuid.IsCreature() || m_casterGuid.IsGameObject()))
+    {
+        uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
+        std::string text = "CAST START: " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ")";
+        sWorld.SendChatPacket(say, text.c_str(), 0, 0, m_casterGuid, m_casterGuid.GetName().c_str());
+    }
     
     sWorld.SendSpellCastStart(m_spellId, m_castTime, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_ammoDisplayId, m_ammoInventoryType);
 }
@@ -3887,6 +3894,13 @@ void SniffedEvent_SpellCastGo::Execute() const
 
     if (!m_destinationPosition.IsEmpty())
         targets.setDestination(m_destinationPosition.x, m_destinationPosition.y, m_destinationPosition.z);
+
+    if (sWorld.m_debugSpellCasts && (m_casterGuid.IsCreature() || m_casterGuid.IsGameObject()))
+    {
+        uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
+        std::string text = "CAST GO: " + sGameDataMgr.GetSpellName(m_spellId) + " (" + std::to_string(m_spellId) + ")";
+        sWorld.SendChatPacket(say, text.c_str(), 0, 0, m_casterGuid, m_casterGuid.GetName().c_str());
+    }
 
     sWorld.SendSpellCastGo(m_spellId, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_hitTargets, m_missTargets, m_ammoDisplayId, m_ammoInventoryType);
 }

@@ -231,6 +231,7 @@ public:
     std::thread m_worldThread;
     std::thread m_packetProcessingThread;
     int32 m_onlyShowSpawnsFromSniff = -1;
+    bool m_debugSpellCasts = false;
 private:
     bool m_enabled = false;
     bool m_worldSpawned = false;

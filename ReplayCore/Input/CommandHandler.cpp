@@ -1386,3 +1386,18 @@ bool CommandHandler::HandleUnmarkGO()
     PSendSysMessage("Removed marker from %s.", guid.GetString().c_str());
     return true;
 }
+
+bool CommandHandler::HandleDebugSpells()
+{
+    bool enabled;
+    if (!ExtractBool(enabled))
+        return false;
+
+    if (enabled)
+        SendSysMessage("Spell debug enabled. Casts will be shown in chat.");
+    else
+        SendSysMessage("Spell debug disabled. Casts will not be shown in chat.");
+    sWorld.m_debugSpellCasts = enabled;
+
+    return true;
+}
