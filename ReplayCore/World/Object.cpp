@@ -697,6 +697,16 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
                 m.RemoveMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
             else
                 m.RemoveMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
+
+            if (unit->GetHealth() == 0)
+            {
+                if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                    m.RemoveMovementFlag(Vanilla::MOVEFLAG_MASK_MOVING);
+                else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                    m.RemoveMovementFlag(TBC::MOVEFLAG_MASK_MOVING);
+                else
+                    m.RemoveMovementFlag(WotLK::MOVEFLAG_MASK_MOVING);
+            }
         }
 
         *data << m;
