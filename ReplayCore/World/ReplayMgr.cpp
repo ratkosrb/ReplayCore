@@ -1614,7 +1614,7 @@ struct UniqueSpawn
 
     bool operator ==(const UniqueSpawn& other) const
     {
-        return m_entry == m_entry &&
+        return m_entry == other.m_entry &&
                m_location.mapId == other.m_location.mapId &&
                m_location.x == other.m_location.x &&
                m_location.y == other.m_location.y &&
