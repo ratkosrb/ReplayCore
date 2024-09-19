@@ -732,6 +732,16 @@ void ScriptMaker::GetScriptInfoFromSniffedEvent(uint64 unixtimems, std::shared_p
         script->comment = "Set Stand State to " + StandStateToString(ptr->m_value);
         scriptActions.push_back(script);
     }
+    else if (auto ptr = std::dynamic_pointer_cast<SniffedEvent_CreatureEquipmentUpdate>(sniffedEvent))
+    {
+        auto script = std::make_shared<ScriptInfo>();
+        script->command = SCRIPT_COMMAND_SET_EQUIPMENT;
+        for (int i = 0; i < 3; i++)
+            script->setEquipment.slot[i] = -1;
+        script->setEquipment.slot[ptr->m_slot] = ptr->m_itemId;
+        script->comment = "Set Equipment";
+        scriptActions.push_back(script);
+    }
     else if (auto ptr = std::dynamic_pointer_cast<SniffedEvent_UnitUpdate_npc_flags>(sniffedEvent))
     {
         uint32 oldFlags = GetCreatureFieldValueBeforeTime(ptr->GetSourceGuid().GetCounter(), unixtimems, "npc_flags");

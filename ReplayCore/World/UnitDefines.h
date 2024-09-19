@@ -1393,6 +1393,85 @@ inline std::string UnitDynFlagsToString(uint32 value)
     return flagNames;
 }
 
+enum CreatureStaticFlags
+{
+    CREATURE_STATIC_FLAG_MOUNTABLE                         = 0x00000001, // Not used by core.
+    CREATURE_STATIC_FLAG_NO_XP                             = 0x00000002, // No experience will be gained from killing the creature.
+    CREATURE_STATIC_FLAG_NO_LOOT                           = 0x00000004, // Not used by core.
+    CREATURE_STATIC_FLAG_UNKILLABLE                        = 0x00000008, // Invincibility threshold set to 1 HP.
+    CREATURE_STATIC_FLAG_TAMEABLE                          = 0x00000010, // Can be tamed by hunters.
+    CREATURE_STATIC_FLAG_IMMUNE_TO_PC                      = 0x00000020, // Applies UNIT_FLAG_IMMUNE_TO_PLAYER on spawn.
+    CREATURE_STATIC_FLAG_IMMUNE_TO_NPC                     = 0x00000040, // Applies UNIT_FLAG_IMMUNE_TO_NPC on spawn.
+    CREATURE_STATIC_FLAG_CAN_WIELD_LOOT                    = 0x00000080, // Will generate loot on spawn and equip any weapons.
+    CREATURE_STATIC_FLAG_SESSILE                           = 0x00000100, // Cannot move.
+    CREATURE_STATIC_FLAG_UNINTERACTIBLE                    = 0x00000200, // Applies UNIT_FLAG_NOT_SELECTABLE on spawn.
+    CREATURE_STATIC_FLAG_NO_AUTOMATIC_REGEN                = 0x00000400, // Will not regen health and mana.
+    CREATURE_STATIC_FLAG_DESPAWN_INSTANTLY                 = 0x00000800, // Despawn corpse instantly on death.
+    CREATURE_STATIC_FLAG_CORPSE_RAID                       = 0x00001000, // Does not check distance upon death for loot and xp eligibility.
+    CREATURE_STATIC_FLAG_CREATOR_LOOT                      = 0x00002000, // Can be looted by the player who created it.
+    CREATURE_STATIC_FLAG_NO_DEFENSE                        = 0x00004000, // Defense skill is 0.
+    CREATURE_STATIC_FLAG_NO_SPELL_DEFENSE                  = 0x00008000, // Cannot resist spells.
+    CREATURE_STATIC_FLAG_RAID_BOSS_MOB                     = 0x00010000, // Not used by core.
+    CREATURE_STATIC_FLAG_COMBAT_PING                       = 0x00020000, // Send mini map ping packet upon entering combat.
+    CREATURE_STATIC_FLAG_AQUATIC                           = 0x00040000, // Inhabit Type = INHABIT_WATER ; Original Comment: "aka Water Only"
+    CREATURE_STATIC_FLAG_AMPHIBIOUS                        = 0x00080000, // Inhabit Type = INHABIT_GROUND | INHABIT_WATER
+    CREATURE_STATIC_FLAG_NO_MELEE                          = 0x00100000, // Does not auto attack ; Original Comment: "Flee"
+    CREATURE_STATIC_FLAG_VISIBLE_TO_GHOSTS                 = 0x00200000, // Spirit Healers.
+    CREATURE_STATIC_FLAG_PVP_ENABLING                      = 0x00400000, // Flagged for PvP, makes it possible to target creature with beneficial spells as well.
+    CREATURE_STATIC_FLAG_DO_NOT_PLAY_WOUND_ANIM            = 0x00800000, // Will not play EMOTE_ONESHOT_WOUNDCRITICAL.
+    CREATURE_STATIC_FLAG_NO_FACTION_TOOLTIP                = 0x01000000, // Not used by core.
+    CREATURE_STATIC_FLAG_IGNORE_COMBAT                     = 0x02000000, // React State = Passive
+    CREATURE_STATIC_FLAG_ONLY_ATTACK_PVP_ENABLING          = 0x04000000, // No proximity aggro for players who are not PvP flagged.
+    CREATURE_STATIC_FLAG_CALLS_GUARDS                      = 0x08000000, // Summons a guard if an opposite faction player gets near or attacks.
+    CREATURE_STATIC_FLAG_CAN_SWIM                          = 0x10000000, // Applies UNIT_FLAG_USE_SWIM_ANIMATION on spawn.
+    CREATURE_STATIC_FLAG_FLOATING                          = 0x20000000, // Applies MOVEFLAG_FIXED_Z on spawn ; Original Comment: "Don't use"
+    CREATURE_STATIC_FLAG_MORE_AUDIBLE                      = 0x40000000, // Original Comment: "Caution, Expensive"
+    CREATURE_STATIC_FLAG_LARGE_AOI                         = 0x80000000  // Increases visibility distance to 200 yards ; Original Comment: "Caution, Expensive"
+};
+
+enum CreatureStaticFlags2
+{
+    CREATURE_STATIC_FLAG_2_NO_PET_SCALING                  = 0x00000001, // Not used by core.
+    CREATURE_STATIC_FLAG_2_FORCE_RAID_COMBAT               = 0x00000002, // Enters combat with zone on aggro.
+    CREATURE_STATIC_FLAG_2_LOCK_TAPPERS_TO_RAID_ON_DEATH   = 0x00000004, // Killing this creature will bind players to the raid.
+    CREATURE_STATIC_FLAG_2_NO_HARMFUL_VERTEX_COLORING      = 0x00000008, // Not used by core.
+    CREATURE_STATIC_FLAG_2_NO_CRUSHING_BLOWS               = 0x00000010, // Will not do crushing blows.
+    CREATURE_STATIC_FLAG_2_NO_OWNER_THREAT                 = 0x00000020, // Does not put owner in combat when it enters combat.
+    CREATURE_STATIC_FLAG_2_NO_WOUNDED_SLOWDOWN             = 0x00000040, // Does not reduce run speed at low health.
+};
+
+// This is a censured version of the static flags to be sent to client after 1.10.
+enum CreatureTypeFlags
+{
+    CREATURE_TYPEFLAGS_TAMEABLE                   = 0x00000001, // Derived from CREATURE_STATIC_FLAG_TAMEABLE (0x00000010)
+    CREATURE_TYPEFLAGS_VISIBLE_TO_GHOSTS          = 0x00000002, // Derived from CREATURE_STATIC_FLAG_VISIBLE_TO_GHOSTS (0x00200000)
+    CREATURE_TYPEFLAGS_RAID_BOSS_MOB              = 0x00000004, // Derived from CREATURE_STATIC_FLAG_RAID_BOSS_MOB (0x00010000)
+    CREATURE_TYPEFLAGS_DO_NOT_PLAY_WOUND_ANIM     = 0x00000008, // Derived from CREATURE_STATIC_FLAG_DO_NOT_PLAY_WOUND_ANIM (0x00800000)
+    CREATURE_TYPEFLAGS_NO_FACTION_TOOLTIP         = 0x00000010, // Derived from CREATURE_STATIC_FLAG_NO_FACTION_TOOLTIP (0x01000000)
+    CREATURE_TYPEFLAGS_MORE_AUDIBLE               = 0x00000020, // Derived from CREATURE_STATIC_FLAG_MORE_AUDIBLE (0x40000000)
+    CREATURE_TYPEFLAGS_NO_HARMFUL_VERTEX_COLORING = 0x00000040, // Derived from CREATURE_STATIC_FLAG_2_NO_HARMFUL_VERTEX_COLORING (0x00000008)
+};
+
+inline uint32 CreatureStaticFlagsToTypeFlags(uint32 staticFlags1, uint32 staticFlags2)
+{
+    uint32 typeFlags = 0;
+    if (staticFlags1 & CREATURE_STATIC_FLAG_TAMEABLE)
+        typeFlags |= CREATURE_TYPEFLAGS_TAMEABLE;
+    if (staticFlags1 & CREATURE_STATIC_FLAG_VISIBLE_TO_GHOSTS)
+        typeFlags |= CREATURE_TYPEFLAGS_VISIBLE_TO_GHOSTS;
+    if (staticFlags1 & CREATURE_STATIC_FLAG_RAID_BOSS_MOB)
+        typeFlags |= CREATURE_TYPEFLAGS_RAID_BOSS_MOB;
+    if (staticFlags1 & CREATURE_STATIC_FLAG_DO_NOT_PLAY_WOUND_ANIM)
+        typeFlags |= CREATURE_TYPEFLAGS_DO_NOT_PLAY_WOUND_ANIM;
+    if (staticFlags1 & CREATURE_STATIC_FLAG_NO_FACTION_TOOLTIP)
+        typeFlags |= CREATURE_TYPEFLAGS_NO_FACTION_TOOLTIP;
+    if (staticFlags1 & CREATURE_STATIC_FLAG_MORE_AUDIBLE)
+        typeFlags |= CREATURE_TYPEFLAGS_MORE_AUDIBLE;
+    if (staticFlags2 & CREATURE_STATIC_FLAG_2_NO_HARMFUL_VERTEX_COLORING)
+        typeFlags |= CREATURE_TYPEFLAGS_NO_HARMFUL_VERTEX_COLORING;
+    return typeFlags;
+}
+
 namespace Vanilla
 {
     enum VirtualItemInfoByteOffset

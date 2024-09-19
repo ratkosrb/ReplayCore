@@ -1736,8 +1736,8 @@ void GameDataMgr::LoadCreatureTemplates()
 
     if (m_dataSource == DB_VMANGOS)
     {
-        //                                                               0        1       2          3             4       5             6       7                    8              9              10             11             12          13
-        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `entry`, `name`, `subname`, `type_flags`, `type`, `pet_family`, `rank`, `pet_spell_list_id`, `display_id1`, `display_id2`, `display_id3`, `display_id4`, `civilian`, `racial_leader` FROM `creature_template` t1 WHERE `patch`=(SELECT max(`patch`) FROM `creature_template` t2 WHERE t1.`entry`=t2.`entry` && `patch` <= %u)", sConfig.GetVmangosContentPatch()));
+        //                                                               0        1       2          3                4                5       6             7       8                    9              10             11             12             13          14
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `entry`, `name`, `subname`, `static_flags1`, `static_flags2`, `type`, `pet_family`, `rank`, `pet_spell_list_id`, `display_id1`, `display_id2`, `display_id3`, `display_id4`, `civilian`, `racial_leader` FROM `creature_template` t1 WHERE `patch`=(SELECT max(`patch`) FROM `creature_template` t2 WHERE t1.`entry`=t2.`entry` && `patch` <= %u)", sConfig.GetVmangosContentPatch()));
         if (!result)
         {
             printf(">> Loaded 0 creature templates, table is empty!\n");
@@ -1753,17 +1753,19 @@ void GameDataMgr::LoadCreatureTemplates()
             creatureTemplate.entry = entry;
             creatureTemplate.name = fields[1].GetCppString();
             creatureTemplate.subName = fields[2].GetCppString();
-            creatureTemplate.typeFlags = fields[3].GetUInt32();
-            creatureTemplate.type = fields[4].GetUInt32();
-            creatureTemplate.family = fields[5].GetUInt32();
-            creatureTemplate.rank = fields[6].GetUInt32();
-            creatureTemplate.petSpellDataId = fields[7].GetUInt32();
-            creatureTemplate.displayId[0] = fields[8].GetUInt32();
-            creatureTemplate.displayId[1] = fields[9].GetUInt32();
-            creatureTemplate.displayId[2] = fields[10].GetUInt32();
-            creatureTemplate.displayId[3] = fields[11].GetUInt32();
-            creatureTemplate.civilian = fields[12].GetUInt8();
-            creatureTemplate.racialLeader = fields[13].GetUInt8();
+            uint32 staticFlags1 = fields[3].GetUInt32();
+            uint32 staticFlags2 = fields[4].GetUInt32();
+            creatureTemplate.typeFlags = CreatureStaticFlagsToTypeFlags(staticFlags1, staticFlags2);
+            creatureTemplate.type = fields[5].GetUInt32();
+            creatureTemplate.family = fields[6].GetUInt32();
+            creatureTemplate.rank = fields[7].GetUInt32();
+            creatureTemplate.petSpellDataId = fields[8].GetUInt32();
+            creatureTemplate.displayId[0] = fields[9].GetUInt32();
+            creatureTemplate.displayId[1] = fields[10].GetUInt32();
+            creatureTemplate.displayId[2] = fields[11].GetUInt32();
+            creatureTemplate.displayId[3] = fields[12].GetUInt32();
+            creatureTemplate.civilian = fields[13].GetUInt8();
+            creatureTemplate.racialLeader = fields[14].GetUInt8();
 
         } while (result->NextRow());
     }
