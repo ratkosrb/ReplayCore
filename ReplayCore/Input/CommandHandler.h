@@ -73,11 +73,12 @@ public:
     bool HandleMarkGO();
     bool HandleUnmarkNPC();
     bool HandleUnmarkGO();
+    bool HandleDebugSpawns();
     bool HandleDebugSpells();
     bool HandleDebugWorldStates();
     bool HandleDebugAreaTriggers();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[49] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[50] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -125,6 +126,7 @@ private:
         { "markgo", &CommandHandler::HandleMarkGO },
         { "unmarknpc", &CommandHandler::HandleUnmarkNPC },
         { "unmarkgo", &CommandHandler::HandleUnmarkGO },
+        { "debugspawns", &CommandHandler::HandleDebugSpawns },
         { "debugspells", &CommandHandler::HandleDebugSpells },
         { "debugwstates", &CommandHandler::HandleDebugWorldStates },
         { "debugatriggers", &CommandHandler::HandleDebugAreaTriggers },

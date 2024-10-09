@@ -530,6 +530,12 @@ void SniffedEvent_WorldObjectCreate_Base<T>::Execute() const
 
     if (!m_isSpawn)
         pObject->SetIsNewObject(false);
+    else if (sWorld.m_debugSpawns)
+    {
+        uint32 say = sGameDataMgr.ConvertClassicChatType(Classic::CHAT_MSG_MONSTER_SAY);
+        std::string text = "SPAWN: " + GetSourceGuid().GetString(false);
+        sWorld.SendChatPacket(say, text.c_str(), 0, 0, GetSourceGuid(), GetSourceGuid().GetName().c_str());
+    }
 
     pObject->SetVisibility(true);
 }

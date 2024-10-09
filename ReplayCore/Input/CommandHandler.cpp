@@ -1387,6 +1387,21 @@ bool CommandHandler::HandleUnmarkGO()
     return true;
 }
 
+bool CommandHandler::HandleDebugSpawns()
+{
+    bool enabled;
+    if (!ExtractBool(enabled))
+        return false;
+
+    if (enabled)
+        SendSysMessage("Spawn debug enabled. New spawns will be shown in chat.");
+    else
+        SendSysMessage("Spawn debug disabled. New spawns will not be shown in chat.");
+    sWorld.m_debugSpawns = enabled;
+
+    return true;
+}
+
 bool CommandHandler::HandleDebugSpells()
 {
     bool enabled;
