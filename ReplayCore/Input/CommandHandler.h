@@ -60,6 +60,7 @@ public:
     bool HandleSniffSkipTime();
     bool HandleSniffResetTime();
     bool HandleListEvents();
+    bool HandleWaypointsAdd();
     bool HandleWaypointsShow();
     bool HandleWaypointsHide();
     bool HandleWaypointInfo();
@@ -78,7 +79,7 @@ public:
     bool HandleDebugWorldStates();
     bool HandleDebugAreaTriggers();
 private:
-    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[50] =
+    std::pair<std::string, ChatCommandFunction> const m_commandHandlers[51] =
     {
         { "shutdown", &CommandHandler::HandleShutdown },
         { "spawninfo", &CommandHandler::HandleSpawnInfo },
@@ -114,6 +115,7 @@ private:
         { "skiptime", &CommandHandler::HandleSniffSkipTime },
         { "resettime", &CommandHandler::HandleSniffResetTime },
         { "listevents", &CommandHandler::HandleListEvents },
+        { "wpadd", &CommandHandler::HandleWaypointsAdd },
         { "wpshow", &CommandHandler::HandleWaypointsShow },
         { "wphide", &CommandHandler::HandleWaypointsHide },
         { "wpinfo", &CommandHandler::HandleWaypointInfo },

@@ -896,6 +896,39 @@ bool CommandHandler::HandleListEvents()
     return true;
 }
 
+bool CommandHandler::HandleWaypointsAdd()
+{
+    Player* pPlayer = sWorld.GetClientPlayer();
+    if (!pPlayer)
+    {
+        printf("Client is not in world!\n");
+        return true;
+    }
+
+    Unit* pTarget;
+    if (!pPlayer->GetTargetGuid().IsEmpty())
+        pTarget = sWorld.FindUnit(pPlayer->GetTargetGuid());
+    else
+        pTarget = pPlayer;
+
+    if (!pTarget)
+        return false;
+
+    FILE* pFile = fopen("wp.sql", "a");
+    if (!pFile)
+    {
+        printf("Cannot open waypoints file!\n");
+        return true;
+    }
+
+    fprintf(pFile, "(AAAA, XX, %g, %g, %g, %g, 0, 0.000000, 0),\n", pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), pTarget->GetOrientation());
+    fclose(pFile);
+
+    PSendSysMessage("Added position %g %g %g to waypoints file.", pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
+
+    return true;
+}
+
 bool CommandHandler::HandleWaypointsShow()
 {
     Player* pPlayer = sWorld.GetClientPlayer();

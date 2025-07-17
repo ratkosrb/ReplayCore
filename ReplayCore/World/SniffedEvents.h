@@ -939,7 +939,6 @@ struct SniffedEvent_UnitUpdate_stand_state : SniffedEventCRTP<SniffedEvent_UnitU
     ObjectGuid m_objectGuid;
     uint32 m_value = 0;
     void Execute() const final;
-    void PepareForCurrentClient() final;
     std::string GetShortDescription() const final;
     std::string GetLongDescription() const final;
     SniffedEventType GetType() const final

@@ -166,9 +166,7 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     if (sGameDataMgr.IsValidUnitDisplayId(mountDisplayId))
         pUnit->SetMountDisplayId(mountDisplayId);
     
-    if (sGameDataMgr.IsValidStandState(standState))
-        pUnit->SetStandState(standState);
-
+    pUnit->SetStandState(standState);
     pUnit->SetSheathState(sheathState);
     pUnit->SetShapeShiftForm(shapeShiftForm);
     pUnit->SetVisFlags(visFlags);
@@ -825,12 +823,6 @@ void ReplayMgr::LoadCreatures()
             data.emoteState = 0;
         }
 
-        if (data.standState >= MAX_UNIT_STAND_STATE_TBC)
-        {
-            printf("[ReplayMgr] LoadCreatures: Invalid stand state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
-            data.standState = UNIT_STAND_STATE_STAND;
-        }
-
         if (data.sheathState >= MAX_SHEATH_STATE)
         {
             printf("[ReplayMgr] LoadCreatures: Invalid sheath state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
@@ -1114,12 +1106,6 @@ void ReplayMgr::LoadPlayers()
         }
 
         playerData.standState = fields[32].GetUInt8();
-        if (playerData.standState >= MAX_UNIT_STAND_STATE_TBC)
-        {
-            printf("[ReplayMgr] LoadPlayers: Invalid stand state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
-            playerData.standState = UNIT_STAND_STATE_STAND;
-        }
-
         playerData.visFlags = fields[33].GetUInt8();
         playerData.animTier = fields[34].GetUInt8();
         playerData.sheathState = fields[35].GetUInt8();

@@ -33,7 +33,6 @@ public:
     void SetDataSource(GameDataSource source) { m_dataSource = source; }
 
     bool IsValidEmote(uint32 id) const;
-    bool IsValidStandState(uint32 id) const;
     bool IsValidRace(uint32 id) const;
     bool IsValidClass(uint32 id) const;
     bool IsValidUnitDisplayId(uint32 id) const;

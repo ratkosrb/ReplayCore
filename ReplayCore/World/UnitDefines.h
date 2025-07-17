@@ -774,9 +774,6 @@ enum UnitStandStateType
     UNIT_STAND_STATE_CUSTOM            = 9                  // Depends on model animation. Submerge, freeze, hide, hibernate, rest
 };
 
-#define MAX_UNIT_STAND_STATE_VANILLA     9
-#define MAX_UNIT_STAND_STATE_TBC         10
-
 inline std::string StandStateToString(uint32 state)
 {
     switch (state)

@@ -1584,12 +1584,6 @@ std::string SniffedEvent_UnitUpdate_emote_state::GetLongDescription() const
     return "Emote: " + EmoteToString(m_value) + " (" + std::to_string(m_value) + ")";
 }
 
-void SniffedEvent_UnitUpdate_stand_state::PepareForCurrentClient()
-{
-    if (!sGameDataMgr.IsValidStandState(m_value))
-        m_disabled = true;
-}
-
 void SniffedEvent_UnitUpdate_stand_state::Execute() const
 {
     Unit* pUnit = sWorld.FindUnit(GetSourceGuid());

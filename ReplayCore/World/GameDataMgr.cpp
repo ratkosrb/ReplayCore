@@ -29,14 +29,6 @@ bool GameDataMgr::IsValidEmote(uint32 id) const
         return id <= MAX_EMOTE_WOTLK;
 }
 
-bool GameDataMgr::IsValidStandState(uint32 id) const
-{
-    if (sWorld.GetClientBuild() <= CLIENT_BUILD_1_12_1)
-        return id < MAX_UNIT_STAND_STATE_VANILLA;
-    else
-        return id < MAX_UNIT_STAND_STATE_TBC;
-}
-
 bool GameDataMgr::IsValidFactionTemplate(uint32 id) const
 {
     if (m_dataSource == DB_VMANGOS)
