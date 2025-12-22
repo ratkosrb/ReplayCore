@@ -105,6 +105,14 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
                 visible = false;
         }
 
+        // filter everything but create object 2
+        if (visible && m_onlyShowRealSpawns && itr.first.GetEntry() != 1)
+        {
+            WorldObjectData const* pSpawnData = sReplayMgr.GetObjectSpawnData(itr.first);
+            if (pSpawnData && !pSpawnData->isSpawn)
+                visible = false;
+        }
+
         if (visible)
         {
             if (updatesCount < 10)

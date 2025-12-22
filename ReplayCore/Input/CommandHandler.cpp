@@ -1316,6 +1316,21 @@ bool CommandHandler::HandleOnlySniff()
     return true;
 }
 
+bool CommandHandler::HandleOnlySpawns()
+{
+    bool enabled;
+    if (!ExtractBool(enabled))
+        return false;
+
+    if (enabled)
+        SendSysMessage("Spawn only mode enabled. Will only show create object 2.");
+    else
+        SendSysMessage("Spawn only mode disabled. Will show all spawns.");
+    sWorld.m_onlyShowRealSpawns = enabled;
+
+    return true;
+}
+
 bool CommandHandler::HandleMarkNPC()
 {
     Player* pPlayer = sWorld.GetClientPlayer();

@@ -40,6 +40,7 @@ struct WorldObjectData : public ObjectData
     WorldLocation location;
     ObjectGuid transportGuid;
     Position transportPosition;
+    bool isSpawn = false;
 
     void InitializeWorldObject(WorldObject* pObject) const;
 

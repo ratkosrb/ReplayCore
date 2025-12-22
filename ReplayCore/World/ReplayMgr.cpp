@@ -519,8 +519,8 @@ void ReplayMgr::LoadGameObjects()
     std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, round(`position_x`, 20), round(`position_y`, 20), round(`position_z`, 20), round(`orientation`, 20), "
     //    8            9            10           11           12              13                 14              15              16            17
         "`rotation0`, `rotation1`, `rotation2`, `rotation3`, `is_transport`, `is_on_transport`, `is_temporary`, `creator_guid`, `creator_id`, `creator_type`, "
-    //    18            19       20         21       22               23               24       25      26         27               28
-        "`display_id`, `level`, `faction`, `flags`, `dynamic_flags`, `path_progress`, `state`, `type`, `art_kit`, `anim_progress`, `sniff_id` FROM `gameobject`"));
+    //    18            19       20         21       22               23               24       25      26         27               28          29
+        "`display_id`, `level`, `faction`, `flags`, `dynamic_flags`, `path_progress`, `state`, `type`, `art_kit`, `anim_progress`, `sniff_id`, `is_spawn` FROM `gameobject`"));
 
     if (!result)
     {
@@ -588,6 +588,7 @@ void ReplayMgr::LoadGameObjects()
             data.rotation[3] = 0.0f;
         }
 
+        data.isSpawn = fields[29].GetBool();
         data.isOnTransport = fields[13].GetBool();
         data.isTemporary = fields[14].GetBool();
         uint32 creatorGuid = fields[15].GetUInt32();
@@ -677,8 +678,8 @@ void ReplayMgr::LoadDynamicObjects()
 void ReplayMgr::LoadCreatures()
 {
     printf("[ReplayMgr] Loading creature spawns...\n");
-    //                                                               0       1              2     3     4                        5                        6                        7                          8                  9                10             11        12            13                 14              15              16       17            18                   19                  20       21        22         23       24           25            26             27               28                29            30            31               32           33            34             35             36           37           38              39           40                 41            42           43                44            45                 46           47                48                 49              50                       51                      52                     53                    54                  55                  56       57
-    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, round(`position_x`, 20), round(`position_y`, 20), round(`position_z`, 20), round(`orientation`, 20), `wander_distance`, `movement_type`, `is_hovering`, `is_pet`, `is_vehicle`, `is_on_transport`, `is_temporary`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `anim_tier`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id` FROM `creature`"));
+    //                                                               0       1              2     3     4                        5                        6                        7                          8                  9                10             11        12            13                 14              15              16       17            18                   19                  20       21        22         23       24           25            26             27               28                29            30            31               32           33            34             35             36           37           38              39           40                 41            42           43                44            45                 46           47                48                 49              50                       51                      52                     53                    54                  55                  56       57          58
+    std::shared_ptr<QueryResult> result(SniffDatabase.Query("SELECT `guid`, `original_id`, `id`, `map`, round(`position_x`, 20), round(`position_y`, 20), round(`position_z`, 20), round(`orientation`, 20), `wander_distance`, `movement_type`, `is_hovering`, `is_pet`, `is_vehicle`, `is_on_transport`, `is_temporary`, `summon_spell`, `scale`, `display_id`, `native_display_id`, `mount_display_id`, `class`, `gender`, `faction`, `level`, `npc_flags`, `unit_flags`, `unit_flags2`, `dynamic_flags`, `current_health`, `max_health`, `power_type`, `current_power`, `max_power`, `aura_state`, `emote_state`, `stand_state`, `vis_flags`, `anim_tier`, `sheath_state`, `pvp_flags`, `shapeshift_form`, `speed_walk`, `speed_run`, `speed_run_back`, `speed_swim`, `speed_swim_back`, `speed_fly`, `speed_fly_back`, `bounding_radius`, `combat_reach`, `main_hand_attack_time`, `off_hand_attack_time`, `main_hand_slot_item`, `off_hand_slot_item`, `ranged_slot_item`, `channel_spell_id`, `auras`, `sniff_id`, `is_spawn` FROM `creature`"));
 
     if (!result)
     {
@@ -721,6 +722,7 @@ void ReplayMgr::LoadCreatures()
         data.location.o = fields[7].GetFloat();
         data.wanderDistance = fields[8].GetFloat();
         data.movementType = fields[9].GetUInt8();
+        data.isSpawn = fields[58].GetBool();
         data.isHovering = fields[10].GetBool();
         data.isPet = fields[11].GetBool();
         data.isVehicle = fields[12].GetBool();
@@ -1628,8 +1630,31 @@ template<class T>
 void ReplayMgr::RemoveDuplicateSpawns(std::map<uint32 /*guid*/, T>& spawnsMap)
 {
     std::unordered_set<UniqueSpawn> uniqueSpawns;
+
+    // first only create object 2
     for (auto itr = spawnsMap.begin(); itr != spawnsMap.end();)
     {
+        if (!itr->second.isSpawn)
+        {
+            ++itr;
+            continue;
+        } 
+
+        if (uniqueSpawns.insert({ itr->second.entry , itr->second.location }).second)
+            ++itr;
+        else
+            spawnsMap.erase(itr++);
+    }
+
+    // then other objects seen after they had spawned
+    for (auto itr = spawnsMap.begin(); itr != spawnsMap.end();)
+    {
+        if (itr->second.isSpawn)
+        {
+            ++itr;
+            continue;
+        }
+
         if (uniqueSpawns.insert({ itr->second.entry , itr->second.location }).second)
             ++itr;
         else
