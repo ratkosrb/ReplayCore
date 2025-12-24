@@ -20,7 +20,15 @@
 
 void WorldServer::SendAuthChallenge()
 {
-    if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
+    if (m_sessionData.build >= CLIENT_BUILD_4_3_4)
+    {
+        WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 32 + 4 + 1);
+        for (int i = 0; i < 8; ++i)
+            packet << uint32_t(0);
+        packet << m_sessionData.seed << uint8(1);
+        SendPacket(packet);
+    }
+    else if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
     {
         WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 40);
         packet << uint32(1);
@@ -38,6 +46,42 @@ void WorldServer::SendAuthChallenge()
         WorldPacket packet(GetOpcode("SMSG_AUTH_CHALLENGE"), 4);
         packet << m_sessionData.seed;
         SendPacket(packet);
+    }
+}
+
+void WorldServer::SendAuthResponse(bool success)
+{
+    if (m_sessionData.build <= CLIENT_BUILD_3_3_5a)
+    {
+        WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"));
+        response << uint8(success ? 12 : 13); // AUTH_OK or AUTH_FAILED
+        if (success)
+        {
+            response << uint32(0); // BillingTimeRemaining
+            response << uint8(0); // BillingPlanFlags
+            response << uint32(0); // BillingTimeRested
+            if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
+                response << uint8(m_sessionData.build >= CLIENT_BUILD_3_0_2 ? 2 : 1); // Expansion
+        }
+        SendPacket(response);
+    }
+    else
+    {
+        WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"));
+        response.WriteBit(false); // HasWaitInfo
+        response.WriteBit(success); // HasSuccessInfo
+        response.FlushBits();
+        if (success)
+        {
+            response << uint32(0); // TimeRemain
+            response << uint8(3); // ActiveExpansionLevel
+            response << uint32(0); // TimeSecondsUntilPCKick
+            response << uint8(3); // AccountExpansionLevel
+            response << uint32(0); // TimeRested
+            response << uint8(0); // TimeOptions
+        }
+        response << uint8(success ? 12 : 13); // AUTH_OK or AUTH_FAILED
+        SendPacket(response);
     }
 }
 
@@ -92,6 +136,9 @@ void WorldServer::SendAddonInfo(std::vector<ClientAddonData> const& clientAddons
         }
     }
 
+    // banned addon count
+    data << uint32(0);
+
     SendPacket(data);
 }
 
@@ -100,70 +147,186 @@ void WorldServer::SendCharEnum(std::vector<CharEnumData> const& characters)
     uint8 count = std::min(uint32(characters.size()), uint32(10));
 
     WorldPacket data(GetOpcode("SMSG_CHAR_ENUM"));
-    data << uint8(count);
 
-    for (auto const& character : characters)
+    if (m_sessionData.build <= CLIENT_BUILD_3_3_5a)
     {
-        if (count <= 0)
-            break;
+        data << uint8(count);
 
-        data << character.guid;
-        data << character.name;
-        data << uint8(character.raceId);
-        data << uint8(character.classId);
-        data << uint8(character.gender);
-        data << uint8(character.skinColor);
-        data << uint8(character.face);
-        data << uint8(character.hairStyle);
-        data << uint8(character.hairColor);
-        data << uint8(character.facialHair);
-        data << uint8(character.level);
-
-        data << uint32(character.zoneId);
-        data << uint32(character.mapid);
-        data << float(character.positionX);
-        data << float(character.positionY);
-        data << float(character.positionZ);
-
-        data << uint32(character.guildId);
-        data << uint32(character.characterFlags);
-
-        if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
-            data << uint32(character.customizationFlags);
-
-        data << uint8(character.firstLogin);
-        data << uint32(character.petDisplayId);
-        data << uint32(character.petLevel);
-        data << uint32(character.petFamily);
-
-        for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
+        for (auto const& character : characters)
         {
-            if (ItemPrototype const* pItem = sGameDataMgr.GetItemPrototype(character.equipmentItemId[i]))
+            if (count <= 0)
+                break;
+
+            data << character.guid;
+            data << character.name;
+            data << uint8(character.raceId);
+            data << uint8(character.classId);
+            data << uint8(character.gender);
+            data << uint8(character.skinColor);
+            data << uint8(character.face);
+            data << uint8(character.hairStyle);
+            data << uint8(character.hairColor);
+            data << uint8(character.facialHair);
+            data << uint8(character.level);
+
+            data << uint32(character.zoneId);
+            data << uint32(character.mapid);
+            data << float(character.positionX);
+            data << float(character.positionY);
+            data << float(character.positionZ);
+
+            data << uint32(character.guildId);
+            data << uint32(character.characterFlags);
+
+            if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
+                data << uint32(character.customizationFlags);
+
+            data << uint8(character.firstLogin);
+            data << uint32(character.petDisplayId);
+            data << uint32(character.petLevel);
+            data << uint32(character.petFamily);
+
+            for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
             {
-                data << uint32(pItem->DisplayInfoID);
-                data << uint8(pItem->InventoryType);
-                if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
-                    data << uint32(character.equipmentEnchantId[i]);
+                if (ItemPrototype const* pItem = sGameDataMgr.GetItemPrototype(character.equipmentItemId[i]))
+                {
+                    data << uint32(pItem->DisplayInfoID);
+                    data << uint8(pItem->InventoryType);
+                    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+                        data << uint32(character.equipmentEnchantId[i]);
+                }
+                else
+                {
+                    data << uint32(0); // display id
+                    data << uint8(0); // inventory type;
+                    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+                        data << uint32(0); // enchant id
+                }
             }
-            else
+
+            int bagCount = (GetClientBuild() >= CLIENT_BUILD_3_3_3) ? 4 : 1;
+            for (int j = 0; j < bagCount; j++)
             {
                 data << uint32(0); // display id
                 data << uint8(0); // inventory type;
                 if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
                     data << uint32(0); // enchant id
             }
-        }
 
-        int bagCount = (GetClientBuild() >= CLIENT_BUILD_3_3_3) ? 4 : 1;
-        for (int j = 0; j < bagCount; j++)
+            count--;
+        }
+    }
+    else
+    {
+        data.WriteBits(0, 23); // FactionChangeRestrictions
+        data.WriteBit(true); // Success
+        data.WriteBits(count, 17);
+
+        uint32 i = 0;
+        for (auto const& character : characters)
         {
-            data << uint32(0); // display id
-            data << uint8(0); // inventory type;
-            if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
-                data << uint32(0); // enchant id
+            if (i >= count)
+                break;
+
+            ObjectGuid guildGuid(HIGHGUID_GUILD, character.guildId);
+            
+            data.WriteBit(character.guid[3]);
+            data.WriteBit(guildGuid[1]);
+            data.WriteBit(guildGuid[7]);
+            data.WriteBit(guildGuid[2]);
+            data.WriteBits(character.name.length(), 7);
+            data.WriteBit(character.guid[4]);
+            data.WriteBit(character.guid[7]);
+            data.WriteBit(guildGuid[3]);
+            data.WriteBit(character.guid[5]);
+            data.WriteBit(guildGuid[6]);
+            data.WriteBit(character.guid[1]);
+            data.WriteBit(guildGuid[5]);
+            data.WriteBit(guildGuid[4]);
+            data.WriteBit(character.firstLogin);
+            data.WriteBit(character.guid[0]);
+            data.WriteBit(character.guid[2]);
+            data.WriteBit(character.guid[6]);
+            data.WriteBit(guildGuid[0]);
+
+            ++i;
         }
 
-        count--;
+        data.FlushBits();
+
+        i = 0;
+        for (auto const& character : characters)
+        {
+            if (i >= count)
+                break;
+
+            data << uint8(character.classId);
+
+            for (int i = 0; i < EQUIPMENT_SLOT_END; i++)
+            {
+                if (ItemPrototype const* pItem = sGameDataMgr.GetItemPrototype(character.equipmentItemId[i]))
+                {
+                    data << uint8(pItem->InventoryType);
+                    data << uint32(pItem->DisplayInfoID);
+                    data << uint32(character.equipmentEnchantId[i]);
+                }
+                else
+                {
+                    data << uint8(0); // inventory type;
+                    data << uint32(0); // display id
+                    data << uint32(0); // enchant id
+                }
+            }
+
+            int bagCount = 4;
+            for (int j = 0; j < bagCount; j++)
+            {
+                data << uint8(0); // inventory type;
+                data << uint32(0); // display id
+                data << uint32(0); // enchant id
+            }
+
+            ObjectGuid guildGuid(HIGHGUID_GUILD, character.guildId);
+
+            data << uint32(character.petFamily);
+            data.WriteByteSeq(guildGuid[2]);
+            data << uint8(i);
+            data << uint8(character.hairStyle);
+            data.WriteByteSeq(guildGuid[3]);
+            data << uint32(character.petDisplayId);
+            data << uint32(character.characterFlags);
+            data << uint8(character.hairColor);
+            data.WriteByteSeq(character.guid[4]);
+            data << int32(character.mapid);
+            data.WriteByteSeq(guildGuid[5]);
+            data << float(character.positionZ);
+            data.WriteByteSeq(guildGuid[6]);
+            data << uint32(character.petLevel);
+            data.WriteByteSeq(character.guid[3]);
+            data << float(character.positionY);
+            data << uint32(character.customizationFlags);
+            data << uint8(character.facialHair);
+            data.WriteByteSeq(character.guid[7]);
+            data << uint8(character.gender);
+            data.WriteString(character.name);
+            data << uint8(character.face);
+            data.WriteByteSeq(character.guid[0]);
+            data.WriteByteSeq(character.guid[2]);
+            data.WriteByteSeq(guildGuid[1]);
+            data.WriteByteSeq(guildGuid[7]);
+            data << float(character.positionX);
+            data << uint8(character.skinColor);
+            data << uint8(character.raceId);
+            data << uint8(character.level);
+            data.WriteByteSeq(character.guid[6]);
+            data.WriteByteSeq(guildGuid[4]);
+            data.WriteByteSeq(guildGuid[0]);
+            data.WriteByteSeq(character.guid[5]);
+            data.WriteByteSeq(character.guid[1]);
+            data << int32(character.zoneId);
+
+            ++i;
+        }
     }
     SendPacket(data);
 }

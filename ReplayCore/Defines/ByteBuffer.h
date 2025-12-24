@@ -41,30 +41,35 @@ class ByteBuffer
 {
     public:
         static size_t const DEFAULT_SIZE = 0x1000;
+        static uint8 const InitialBitPos = 8;
 
         // constructor
-        ByteBuffer(): _rpos(0), _wpos(0)
+        ByteBuffer(): _rpos(0), _wpos(0), _bitpos(InitialBitPos), _curbitval(0)
         {
             _storage.reserve(DEFAULT_SIZE);
         }
 
         // constructor
-        ByteBuffer(size_t res): _rpos(0), _wpos(0)
+        ByteBuffer(size_t res): _rpos(0), _wpos(0), _bitpos(InitialBitPos), _curbitval(0)
         {
             _storage.reserve(res);
         }
 
         // copy constructor
-        ByteBuffer(ByteBuffer const& buf): _rpos(buf._rpos), _wpos(buf._wpos), _storage(buf._storage) { }
+        ByteBuffer(ByteBuffer const& buf): _rpos(buf._rpos), _wpos(buf._wpos),
+            _bitpos(buf._bitpos), _curbitval(buf._curbitval), _storage(buf._storage) { }
 
         // move constructor
-        ByteBuffer(ByteBuffer&& buf) : _rpos(buf._rpos), _wpos(buf._wpos), _storage(std::move(buf._storage)) {}
+        ByteBuffer(ByteBuffer&& buf) : _rpos(buf._rpos), _wpos(buf._wpos),
+            _bitpos(buf._bitpos), _curbitval(buf._curbitval), _storage(std::move(buf._storage)) {}
 
         // move operator
         ByteBuffer& operator=(ByteBuffer&& rhs)
         {
             _rpos = rhs._rpos;
             _wpos = rhs._wpos;
+            _bitpos = rhs._bitpos;
+            _curbitval = rhs._curbitval;
             _storage = std::move(rhs._storage);
             return *this;
         }
@@ -81,6 +86,107 @@ class ByteBuffer
             EndianConvert(value);
             #endif
             put(pos,(uint8*)&value,sizeof(value));
+        }
+
+        void FlushBits()
+        {
+            if (_bitpos == 8)
+                return;
+
+            _bitpos = 8;
+
+            append((uint8 *)&_curbitval, sizeof(uint8));
+            _curbitval = 0;
+        }
+
+        bool WriteBit(uint32 bit)
+        {
+            --_bitpos;
+            if (bit)
+                _curbitval |= (1 << (_bitpos));
+
+            if (_bitpos == 0)
+            {
+                _bitpos = 8;
+                append((uint8 *)&_curbitval, sizeof(_curbitval));
+                _curbitval = 0;
+            }
+
+            return (bit != 0);
+        }
+
+        bool ReadBit()
+        {
+            if (_bitpos >= 8)
+            {
+                read(&_curbitval, 1);
+                _bitpos = 0;
+            }
+
+            return ((_curbitval >> (8 - ++_bitpos)) & 1) != 0;
+        }
+
+        void WriteBits(uint64 value, int32 bits)
+        {
+            // remove bits that don't fit
+            value &= (1 << bits) - 1;
+            value &= (uint64(1) << bits) - 1;
+
+            if (bits > int32(_bitpos))
+            {
+                // first write to fill bit buffer
+                _curbitval |= value >> (bits - _bitpos);
+                bits -= _bitpos;
+                _bitpos = 8; // required "unneccessary" write to avoid double flushing
+                append(&_curbitval, sizeof(_curbitval));
+
+                // then append as many full bytes as possible
+                while (bits >= 8)
+                {
+                    bits -= 8;
+                    append<uint8>(value >> bits);
+                }
+
+                // store remaining bits in the bit buffer
+                _bitpos = 8 - bits;
+                _curbitval = (value & ((1 << bits) - 1)) << _bitpos;
+                _curbitval = (value & ((uint64(1) << bits) - 1)) << _bitpos;
+            }
+            else
+            {
+                // entire value fits in the bit buffer
+                _bitpos -= bits;
+                _curbitval |= value << _bitpos;
+
+                if (_bitpos == 0)
+                {
+                    _bitpos = 8;
+                    append(&_curbitval, sizeof(_curbitval));
+                    _curbitval = 0;
+                }
+            }
+        }
+
+        uint32 ReadBits(int32 bits)
+        {
+            uint32 value = 0;
+            for (int32 i = bits - 1; i >= 0; --i)
+                value |= uint32(ReadBit()) << i;
+
+            return value;
+        }
+
+        // Reads a byte (if needed) in-place
+        void ReadByteSeq(uint8& b)
+        {
+            if (b != 0)
+                b ^= read<uint8>();
+        }
+
+        void WriteByteSeq(uint8 b)
+        {
+            if (b != 0)
+                append<uint8>(b ^ 1);
         }
 
         ByteBuffer& operator<<(uint8 value)
@@ -290,6 +396,16 @@ class ByteBuffer
             return _wpos;
         }
 
+        /// Returns position of last written bit
+        size_t bitwpos() const { return _wpos * 8 + 8 - _bitpos; }
+
+        size_t bitwpos(size_t newPos)
+        {
+            _wpos = newPos / 8;
+            _bitpos = 8 - (newPos % 8);
+            return _wpos * 8 + 8 - _bitpos;
+        }
+
         template<typename T>
         void read_skip() { read_skip(sizeof(T)); }
 
@@ -348,6 +464,25 @@ class ByteBuffer
             }
 
             return guid;
+        }
+
+        std::string ReadString(uint32 length)
+        {
+            if (!length)
+                return std::string();
+            char* buffer = new char[length + 1]();
+            read((uint8*)buffer, length);
+            std::string retval = buffer;
+            delete[] buffer;
+            return retval;
+        }
+
+        //! Method for writing strings that have their length sent separately in packet
+        //! without null-terminating the string
+        void WriteString(std::string const& str)
+        {
+            if (size_t len = str.length())
+                append(str.c_str(), len);
         }
 
         uint8 const* contents() const { return &_storage[0]; }
@@ -506,7 +641,8 @@ class ByteBuffer
         }
 
     protected:
-        size_t _rpos, _wpos;
+        size_t _rpos, _wpos, _bitpos;
+        uint8 _curbitval;
         std::vector<uint8> _storage;
 };
 

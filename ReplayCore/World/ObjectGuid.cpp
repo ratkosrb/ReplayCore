@@ -25,6 +25,18 @@
 #include "ReplayMgr.h"
 #include <sstream>
 
+uint8& ObjectGuid::operator[](uint32 index)
+{
+    ASSERT(index < sizeof(uint64));
+    return m_data.bytes[index];
+}
+
+uint8 const& ObjectGuid::operator[](uint32 index) const
+{
+    ASSERT(index < sizeof(uint64));
+    return m_data.bytes[index];
+}
+
 char const* ObjectGuid::GetTypeName(HighGuid high)
 {
     switch (high)
@@ -122,7 +134,7 @@ std::string ObjectGuid::GetName() const
 
 void ObjectGuid::Set(uint64 const& guid)
 {
-    m_guid = guid;
+    m_data.guid = guid;
 }
 
 template<HighGuid high>

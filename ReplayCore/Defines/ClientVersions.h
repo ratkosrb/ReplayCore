@@ -55,6 +55,6 @@
 #define CLIENT_BUILD_3_3_3a 11723
 #define CLIENT_BUILD_3_3_5 12213
 #define CLIENT_BUILD_3_3_5a 12340
-
+#define CLIENT_BUILD_4_3_4 15595
 
 #endif

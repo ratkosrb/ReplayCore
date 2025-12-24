@@ -44,6 +44,7 @@ enum HighGuid
     HIGHGUID_DYNAMICOBJECT  = 0xF100,                       // blizz F100
     HIGHGUID_CORPSE         = 0xF101,                       // blizz F100
     HIGHGUID_MO_TRANSPORT   = 0x1FC0,                       // blizz 1FC0 (for GAMEOBJECT_TYPE_MO_TRANSPORT)
+    HIGHGUID_GUILD          = 0x01FF,
 };
 
 class ObjectGuid;
@@ -58,14 +59,14 @@ struct PackedGuidReader
 class ObjectGuid
 {
     public:                                                 // constructors
-        ObjectGuid() : m_guid(0) {}
-        ObjectGuid(uint64 const& guid) : m_guid(guid) {}    // temporary allowed implicit cast, really bad in connection with operator uint64()
-        ObjectGuid(HighGuid hi, uint32 entry, uint32 counter) : m_guid(counter ? uint64(counter) | (uint64(entry) << 24) | (uint64(hi) << 48) : 0) {}
-        ObjectGuid(HighGuid hi, uint32 counter) : m_guid(counter ? uint64(counter) | (uint64(hi) << 48) : 0) {}
+        ObjectGuid() { m_data.guid = 0; }
+        ObjectGuid(uint64 const& guid) { m_data.guid = guid; }    // temporary allowed implicit cast, really bad in connection with operator uint64()
+        ObjectGuid(HighGuid hi, uint32 entry, uint32 counter) {m_data.guid = (counter ? uint64(counter) | (uint64(entry) << 24) | (uint64(hi) << 48) : 0);}
+        ObjectGuid(HighGuid hi, uint32 counter) { m_data.guid = (counter ? uint64(counter) | (uint64(hi) << 48) : 0); }
 
     //private:
-        explicit ObjectGuid(uint32 const& lowGuid) : m_guid(lowGuid) {} // Besoin dans OutdoorPvP par exemple
-        operator uint64() const { return m_guid; }
+        explicit ObjectGuid(uint32 const& lowGuid) { m_data.guid = lowGuid; } // Besoin dans OutdoorPvP par exemple
+        operator uint64() const { return m_data.guid; }
     private:
         ObjectGuid(HighGuid, uint32, uint64 counter);       // no implementation, used for catch wrong type assign
         ObjectGuid(HighGuid, uint64 counter);               // no implementation, used for catch wrong type assign
@@ -74,18 +75,18 @@ class ObjectGuid
         PackedGuidReader ReadAsPacked() { return PackedGuidReader(*this); }
 
         void Set(uint64 const& guid);
-        void Clear() { m_guid = 0; }
+        void Clear() { m_data.guid = 0; }
 
         PackedGuid WriteAsPacked() const;
     public:                                                 // accessors
-        uint64 const& GetRawValue() const { return m_guid; }
+        uint64 const& GetRawValue() const { return m_data.guid; }
         static HighGuid GetHigh(uint64 guid) { return HighGuid((guid >> 48) & 0x0000FFFF); }
         static void ClampPlayerGuid(uint64& value);
-        HighGuid GetHigh() const { return GetHigh(m_guid); }
-        uint32   GetEntry() const { return HasEntry() ? uint32((m_guid >> 24) & UINT64_C(0x0000000000FFFFFF)) : 0; }
+        HighGuid GetHigh() const { return GetHigh(m_data.guid); }
+        uint32   GetEntry() const { return HasEntry() ? uint32((m_data.guid >> 24) & UINT64_C(0x0000000000FFFFFF)) : 0; }
         uint32   GetCounter()  const
         {
-            return GetCounter(m_guid, HasEntry());
+            return GetCounter(m_data.guid, HasEntry());
         }
 
         static uint32 GetCounter(uint64 guid, bool hasEntry)
@@ -104,7 +105,10 @@ class ObjectGuid
 
         uint32 GetMaxCounter() const { return GetMaxCounter(GetHigh()); }
 
-        bool IsEmpty()         const { return m_guid == 0; }
+        uint8& operator[](uint32 index);
+        uint8 const& operator[](uint32 index) const;
+
+        bool IsEmpty()         const { return m_data.guid == 0; }
         bool IsCreature()      const { return GetHigh() == HIGHGUID_UNIT; }
         bool IsPet()           const { return GetHigh() == HIGHGUID_PET; }
         bool IsCreatureOrPet() const { return IsCreature() || IsPet(); }
@@ -117,6 +121,7 @@ class ObjectGuid
         bool IsCorpse()        const { return GetHigh() == HIGHGUID_CORPSE; }
         bool IsTransport()     const { return GetHigh() == HIGHGUID_TRANSPORT; }
         bool IsMOTransport()   const { return GetHigh() == HIGHGUID_MO_TRANSPORT; }
+        bool IsGuild()         const { return GetHigh() == HIGHGUID_GUILD; }
 
         static TypeID GetTypeId(HighGuid high)
         {
@@ -174,7 +179,11 @@ class ObjectGuid
         bool HasEntry() const { return HasEntry(GetHigh()); }
 
     private:                                                // fields
-        uint64 m_guid;
+        union
+        {
+            uint64 guid;
+            uint8 bytes[sizeof(uint64)];
+        } m_data;
 };
 
 namespace std {

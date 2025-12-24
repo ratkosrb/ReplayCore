@@ -88,49 +88,107 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_COMPLETE_CINEMATIC", &WorldServer::HandleCompleteCinematic);
 }
 
+#define WORLD_DEBUG
+
 void WorldServer::HandleAuthSession(WorldPacket& packet)
 {
-    // Read the content of the packet
-    uint32 build;
-    packet >> build;
-    uint32 serverId;
-    packet >> serverId;
     std::string account;
-    packet >> account;
-
-    if (build >= CLIENT_BUILD_3_0_2)
-    {
-        uint32 loginServerType;
-        packet >> loginServerType;
-    }
-
     uint32 clientSeed;
-    packet >> clientSeed;
-
-    if (build >= CLIENT_BUILD_3_3_5a)
-    {
-        uint32 regionId;
-        packet >> regionId;
-        uint32 battlegroupId;
-        packet >> battlegroupId;
-        uint32 realm;
-        packet >> realm;
-    }
-
-    if (build >= CLIENT_BUILD_3_2_0)
-    {
-        uint64 dosResponse;
-        packet >> dosResponse;
-    }
-
     uint8 digest[20];
-    packet.read(digest, 20);
+    ByteBuffer addonInfo;
+
+    if (m_sessionData.build <= CLIENT_BUILD_3_3_5a)
+    {
+        uint32 build;
+        packet >> build;
+        uint32 serverId;
+        packet >> serverId;
+        packet >> account;
+
+        if (build >= CLIENT_BUILD_3_0_2)
+        {
+            uint32 loginServerType;
+            packet >> loginServerType;
+        }
+
+        packet >> clientSeed;
+
+        if (build >= CLIENT_BUILD_3_3_5a)
+        {
+            uint32 regionId;
+            packet >> regionId;
+            uint32 battlegroupId;
+            packet >> battlegroupId;
+            uint32 realm;
+            packet >> realm;
+        }
+
+        if (build >= CLIENT_BUILD_3_2_0)
+        {
+            uint64 dosResponse;
+            packet >> dosResponse;
+        }
+
+        packet.read(digest, 20);
+    }
+    else
+    {
+        uint32 battlegroupId = 0;
+        int8 loginServerType = 0; 
+        int8 buildType = 0;
+        uint32 realm = 0;
+        uint16 build = 0;
+        int32 loginServerId = 0;
+        uint32 regionId = 0;
+        uint64 dosResponse = 0;
+        bool useIPv6 = false;
+        uint32 addonDataSize;
+
+        packet >> loginServerId;
+        packet >> battlegroupId;
+        packet >> loginServerType;
+        packet >> digest[10];
+        packet >> digest[18];
+        packet >> digest[12];
+        packet >> digest[5];
+        packet >> dosResponse;
+        packet >> digest[15];
+        packet >> digest[9];
+        packet >> digest[19];
+        packet >> digest[4];
+        packet >> digest[7];
+        packet >> digest[16];
+        packet >> digest[3];
+        packet >> build;
+        packet >> digest[8];
+        packet >> realm;
+        packet >> buildType;
+        packet >> digest[17];
+        packet >> digest[6];
+        packet >> digest[0];
+        packet >> digest[1];
+        packet >> digest[11];
+        packet >> clientSeed;
+        packet >> digest[2];
+        packet >> regionId;
+        packet >> digest[14];
+        packet >> digest[13];
+        packet >> addonDataSize;
+
+        if (addonDataSize)
+        {
+            addonInfo.resize(addonDataSize);
+            packet.read((uint8*)addonInfo.contents(), addonDataSize);
+        }
+
+        useIPv6 = packet.ReadBit(); // UseIPv6
+        uint8 accountNameLength = packet.ReadBits(12);
+        account = packet.ReadString(accountNameLength);
+    }
 
 #ifdef WORLD_DEBUG
     printf("\n");
     printf("[WORLD] CMSG_AUTH_SESSION data:\n");
-    printf("Client Build: %u\n", build);
-    printf("Server Id: %u\n", serverId);
     printf("Account: %s\n", account.c_str());
     printf("Client Seed: %u\n", clientSeed);
     printf("Digest: ");
@@ -139,19 +197,7 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
     printf("\n\n");
 #endif
 
-    BigNumber v, s, g, N, K;
-
-    N.SetHexStr("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7");
-    g.SetDword(7);
-
-    v.SetHexStr(accountPasswordV.c_str());
-    s.SetHexStr(accountPasswordS.c_str());
-
-    char const* sStr = s.AsHexStr();                        //Must be freed by OPENSSL_free()
-    char const* vStr = v.AsHexStr();                        //Must be freed by OPENSSL_free()
-
-    OPENSSL_free((void*)sStr);
-    OPENSSL_free((void*)vStr);
+    BigNumber K;
 
     K.SetHexStr(m_sessionData.sessionKey.c_str());
     if (K.AsByteArray().empty())
@@ -159,6 +205,14 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
         printf("[WORLD] Error in HandleAuthSession - K.AsByteArray().empty()\n");
         return;
     }
+
+    // Initialize encryption now otherwise client can't read SMSG_AUTH_RESPONSE in case of failure.
+    if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
+        m_sessionData.encryption.InitWOTLK(&K);
+    else if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
+        m_sessionData.encryption.InitTBC(&K);
+    else
+        m_sessionData.encryption.InitVanilla(&K);
 
     // Check that Key and account name are the same on client and server
     Sha1Hash sha;
@@ -175,34 +229,22 @@ void WorldServer::HandleAuthSession(WorldPacket& packet)
 
     if (memcmp(sha.GetDigest(), digest, 20))
     {
-        WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1);
-        response << uint8(13);
-        SendPacket(response);
+        SendAuthResponse(false);
         printf("[WORLD] Error in HandleAuthSession - memcmp(sha.GetDigest(), digest, 20)\n");
         return;
     }
 
     printf("[WORLD] Authentication successful.\n");
-    if (m_sessionData.build >= CLIENT_BUILD_3_3_5a)
-        m_sessionData.encryption.InitWOTLK(&K);
-    else if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
-        m_sessionData.encryption.InitTBC(&K);
+
+    if (m_sessionData.build <= CLIENT_BUILD_3_3_5a)
+        HandleAddonInfo(packet);
     else
-        m_sessionData.encryption.InitVanilla(&K);
+        HandleAddonInfo(addonInfo);
 
-    HandleAddonInfo(packet);
-
-    WorldPacket response(GetOpcode("SMSG_AUTH_RESPONSE"), 1 + 4 + 1 + 4 + (m_sessionData.build >= CLIENT_BUILD_2_0_1 ? 1 : 0));
-    response << uint8(12);
-    response << uint32(0);                                    // BillingTimeRemaining
-    response << uint8(0);                                     // BillingPlanFlags
-    response << uint32(0);                                    // BillingTimeRested
-    if (m_sessionData.build >= CLIENT_BUILD_2_0_1)
-        response << uint8(m_sessionData.build >= CLIENT_BUILD_3_0_2 ? 2 : 1); // Expansion
-    SendPacket(response);
+    SendAuthResponse(true);
 }
 
-void WorldServer::HandleAddonInfo(WorldPacket& authSessionPacket)
+void WorldServer::HandleAddonInfo(ByteBuffer& authSessionPacket)
 {
     ByteBuffer unpackedDataBuffer;
     uLongf addonRealSize;

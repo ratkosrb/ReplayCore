@@ -275,7 +275,7 @@ private:
     void ProcessIncomingPackets();
     void HandlePacket(uint8* buffer);
     void HandleAuthSession(WorldPacket& packet);
-    void HandleAddonInfo(WorldPacket& authSessionPacket);
+    void HandleAddonInfo(ByteBuffer& authSessionPacket);
     void HandleEnumCharacters(WorldPacket& packet);
     void HandleCharCreate(WorldPacket& packet);
     void HandlePing(WorldPacket& packet);
@@ -314,6 +314,7 @@ private:
 public:
     // Packet Building
     void SendAuthChallenge();
+    void SendAuthResponse(bool success);
     void SendAddonInfo(std::vector<ClientAddonData> const& clientAddons);
     void SendCharEnum(std::vector<CharEnumData> const& characters);
     void SendCharCreate(uint8 result);

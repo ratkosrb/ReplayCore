@@ -13,6 +13,8 @@ namespace Opcodes
     extern std::map<uint16, std::string> g_opcodeNames8606;
     extern std::map<std::string, uint16> g_opcodeValues12340;
     extern std::map<uint16, std::string> g_opcodeNames12340;
+    extern std::map<std::string, uint16> g_opcodeValues15595;
+    extern std::map<uint16, std::string> g_opcodeNames15595;
 
     void SetupOpcodeNamesMaps();
     std::map<std::string, uint16>* GetOpcodesValuesMapForBuild(uint16 build);

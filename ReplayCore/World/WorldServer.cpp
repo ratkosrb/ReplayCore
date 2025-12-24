@@ -246,6 +246,9 @@ void WorldServer::OnClientDisconnect()
     }
 }
 
+static std::string const ServerConnectionInitialize("WORLD OF WARCRAFT CONNECTION - SERVER TO CLIENT");
+static std::string const ClientConnectionInitialize("WORLD OF WARCRAFT CONNECTION - CLIENT TO SERVER");
+
 void WorldServer::NetworkLoop()
 {
     do
@@ -296,7 +299,19 @@ void WorldServer::NetworkLoop()
         }
 
         SetupOpcodeHandlers();
-        SendAuthChallenge();
+
+        if (m_sessionData.build >= CLIENT_BUILD_4_3_4)
+        {
+            ByteBuffer buffer;
+            ServerPktHeaderWotlk header(ServerConnectionInitialize.size(), 0);
+            buffer.append(header.header, header.getHeaderLength() - 2);
+            buffer.append(ServerConnectionInitialize.c_str(), ServerConnectionInitialize.length());
+            send(m_worldSocket, (char*)buffer.contents(), buffer.size(), 0);
+        }
+        else
+            SendAuthChallenge();
+
+        bool initialized = m_sessionData.build < CLIENT_BUILD_4_3_4;
 
         do
         {
@@ -360,6 +375,23 @@ void WorldServer::NetworkLoop()
             }
 
             memcpy(buffer, headerBuffer, sizeof(ClientPktHeader));
+
+            if (!initialized)
+            {
+                if (header.size != ClientConnectionInitialize.length() + 1 ||
+                    memcmp(buffer + sizeof(uint16), ClientConnectionInitialize.c_str(), header.size - sizeof(uint16)) != 0)
+                {
+                    printf("[WORLD] Failed to read client connection initialization string.\n");
+                    OnClientDisconnect();
+                    delete[] buffer;
+                    break;
+                }
+
+                initialized = true;
+                delete[] buffer;
+                SendAuthChallenge();
+                continue;
+            }
 
             m_incomingPacketQueue.push(buffer);
 
