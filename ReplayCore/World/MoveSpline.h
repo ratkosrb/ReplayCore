@@ -30,6 +30,8 @@ struct MoveSpline
     }
     void WriteMove(WorldPacket& data) const;
     void WriteCreate(ByteBuffer& data) const;
+    void WriteCreateBits434(ByteBuffer& data) const;
+    void WriteCreateData434(ByteBuffer& data) const;
     void Update(Unit* pUnit);
     bool m_initialized = false;
     static uint32 m_maxId;
@@ -38,6 +40,7 @@ struct MoveSpline
     uint64 m_startTimeMs = 0; // when movement started in sniff replay time
     uint8 m_type = 0;
     float m_finalOrientation = 0.0f;
+    float m_verticalAcceleration = 0.0f;
     uint32 m_flags = 0;
     uint32 m_moveTimeMs = 0; // how long the movement should take
     std::vector<Vector3> m_destinationPoints;

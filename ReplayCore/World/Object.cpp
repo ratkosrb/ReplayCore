@@ -468,7 +468,7 @@ void Object::SendDirectValueUpdate(uint16 index, uint16 size)
     
     UpdateData data;
     ByteBuffer buf(50);
-    buf << uint8(UPDATETYPE_VALUES);
+    buf << uint8(sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a ? Cataclysm::UPDATETYPE_VALUES : Vanilla::UPDATETYPE_VALUES);
     buf << GetPackGUID();
 
     UpdateMask updateMask;
@@ -497,9 +497,9 @@ bool Object::BuildValuesUpdateBlockForPlayer(UpdateData* data, Player* target) c
         return false;
 
     ByteBuffer buf(500);
-    buf << uint8(UPDATETYPE_VALUES);
+    buf << uint8(sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a ? Cataclysm::UPDATETYPE_VALUES : Vanilla::UPDATETYPE_VALUES);
     buf << GetPackGUID();
-    BuildValuesUpdate(UPDATETYPE_VALUES, &buf, &updateMask, target);
+    BuildValuesUpdate(&buf, &updateMask, target);
     data->AddUpdateBlock(buf);
     return true;
 }
@@ -531,8 +531,8 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
 {
     if (!target)
         return;
-
-    uint8 updatetype = UPDATETYPE_CREATE_OBJECT;
+    
+    uint8 updatetype = sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a ? Cataclysm::UPDATETYPE_CREATE_OBJECT : Vanilla::UPDATETYPE_CREATE_OBJECT;
     uint16 updateFlags = m_updateFlags;
 
     if (target == this)                                     // building packet for yourself
@@ -547,7 +547,7 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
 
     if (m_isNewObject)
     {
-        updatetype = UPDATETYPE_CREATE_OBJECT2;
+        updatetype = sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a ? Cataclysm::UPDATETYPE_CREATE_OBJECT2 : Vanilla::UPDATETYPE_CREATE_OBJECT2;
         m_isNewObject = false;
     }
 
@@ -563,7 +563,7 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
     UpdateMask updateMask;
     updateMask.SetCount(m_valuesCount);
     _SetCreateBits(&updateMask, target);
-    BuildValuesUpdate(updatetype, &buf, &updateMask, target);
+    BuildValuesUpdate(&buf, &updateMask, target);
     data->AddUpdateBlock(buf);
 }
 
@@ -649,162 +649,480 @@ Player const* Object::ToPlayer() const
 
 void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
 {
-    // update flags
-    if (sWorld.GetClientBuild() < CLIENT_BUILD_3_1_0)
-        *data << uint8(updateFlags);
-    else
-        *data << uint16(updateFlags);
-
-    if (updateFlags & UPDATEFLAG_LIVING)
+    if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
     {
-        Unit const* unit = ToUnit();
-        ASSERT(unit);
-        MovementInfo m = unit->m_movementInfo;
-        if (!m.ctime)
-        {
-            m.time = sWorld.GetServerTimeMs() + 1000;
-            m.ChangePosition(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ(), unit->GetOrientation());
-        }
+        // update flags
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_3_1_0)
+            *data << uint8(updateFlags);
+        else
+            *data << uint16(updateFlags);
 
-        bool const sendSpline = unit->m_moveSpline.m_initialized && unit->GetHealth() != 0;
-
-        if (sendSpline)
+        if (updateFlags & UPDATEFLAG_LIVING)
         {
-            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            {
-                m.AddMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
-                //if (!unit->m_moveSpline.m_catmullrom)
-                //    m.AddMovementFlag(Vanilla::MOVEFLAG_FORWARD);
-            }
-            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            {
-                m.AddMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
-                //if (!unit->m_moveSpline.m_catmullrom)
-                //    m.AddMovementFlag(TBC::MOVEFLAG_FORWARD);
-            } 
-            else
-            {
-                m.AddMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
-                //if (!unit->m_moveSpline.m_catmullrom)
-                //    m.AddMovementFlag(WotLK::MOVEFLAG_FORWARD);
-            }
+            Unit const* unit = ToUnit();
+            ASSERT(unit);
+            MovementInfo mi;
+            bool sendSpline;
+            unit->GetMovementInfoForObjectUpdate(mi, sendSpline);
+
+            *data << mi;
+
+            for (int i = 0; i < sGameDataMgr.GetMoveSpeedsCount(); ++i)
+                *data << float(unit->GetSpeed(UnitMoveType(i)));
+
+            // Send current movement informations
+            if (sendSpline)
+                unit->m_moveSpline.WriteCreate(*data);
         }
         else
         {
-            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-                m.RemoveMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
-            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-                m.RemoveMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
-            else
-                m.RemoveMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
-
-            if (unit->GetHealth() == 0)
+            if (updateFlags & UPDATEFLAG_POSITION)
             {
-                if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-                    m.RemoveMovementFlag(Vanilla::MOVEFLAG_MASK_MOVING);
-                else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-                    m.RemoveMovementFlag(TBC::MOVEFLAG_MASK_MOVING);
-                else
-                    m.RemoveMovementFlag(WotLK::MOVEFLAG_MASK_MOVING);
-            }
-        }
+                WorldObject const* wo = static_cast<WorldObject const*>(this);
 
-        *data << m;
+                ObjectGuid transportGuid = wo->GetTransportGuid();
 
-        for (int i = 0; i < sGameDataMgr.GetMoveSpeedsCount(); ++i)
-            *data << float(unit->GetSpeed(UnitMoveType(i)));
+                *data << transportGuid.WriteAsPacked();
 
-        // Send current movement informations
-        if (sendSpline)
-            unit->m_moveSpline.WriteCreate(*data);
-    }
-    else
-    {
-        if (updateFlags & UPDATEFLAG_POSITION)
-        {
-            WorldObject const* wo = static_cast<WorldObject const*>(this);
-
-            ObjectGuid transportGuid = wo->GetTransportGuid();
-
-            *data << transportGuid.WriteAsPacked();
-
-            *data << wo->GetPositionX();
-            *data << wo->GetPositionY();
-            *data << wo->GetPositionZ();
-
-            if (!transportGuid.IsEmpty())
-            {
-                *data << wo->GetTransOffsetX();
-                *data << wo->GetTransOffsetY();
-                *data << wo->GetTransOffsetZ();
-            }
-            else
-            {
                 *data << wo->GetPositionX();
                 *data << wo->GetPositionY();
                 *data << wo->GetPositionZ();
+
+                if (!transportGuid.IsEmpty())
+                {
+                    *data << wo->GetTransOffsetX();
+                    *data << wo->GetTransOffsetY();
+                    *data << wo->GetTransOffsetZ();
+                }
+                else
+                {
+                    *data << wo->GetPositionX();
+                    *data << wo->GetPositionY();
+                    *data << wo->GetPositionZ();
+                }
+
+                *data << wo->GetOrientation();
+
+                if (GetTypeId() == TYPEID_CORPSE)
+                    *data << float(wo->GetOrientation());
+                else
+                    *data << float(0);
+            }
+            else if (updateFlags & UPDATEFLAG_HAS_POSITION)                     // 0x40
+            {
+                WorldObject* object = ((WorldObject*)this);
+
+                *data << float(object->GetPositionX());
+                *data << float(object->GetPositionY());
+                *data << float(object->GetPositionZ());
+                *data << float(object->GetOrientation());
+            }
+        }
+        if (updateFlags & UPDATEFLAG_HIGHGUID)
+        {
+            // unk uint32.
+            *data << uint32(0);
+        }
+
+        if (updateFlags & UPDATEFLAG_ALL)                       // 0x10
+        {
+            // unk uint32.
+            *data << uint32(1);
+        }
+
+        if (updateFlags & UPDATEFLAG_FULLGUID)
+        {
+            if (Unit const* me = ToUnit())
+            {
+                *data << me->GetMeleeVictimGuid().WriteAsPacked();
+            }
+            else
+                *data << uint8(0); // Empty pack guid
+        }
+        // 0x2
+        if (updateFlags & UPDATEFLAG_TRANSPORT)
+        {
+            // transport progress or mstime.
+            *data << uint32(((GameObject*)this)->GetPathTimer());
+        }
+
+        // 0x80
+        if (updateFlags & UPDATEFLAG_VEHICLE)
+        {
+            *data << uint32(((Unit*)this)->m_vehicleId);
+            *data << float(((Unit*)this)->m_vehicleOrientation);
+        }
+
+        // 0x200
+        if (updateFlags & UPDATEFLAG_ROTATION)
+        {
+            *data << int64(((GameObject*)this)->GetPackedLocalRotation());
+        }
+    }
+    else
+    {
+        struct CreateObjectBits
+        {
+            bool PlayerHoverAnim : 1;
+            bool SupressedGreetings : 1;
+            bool Rotation : 1;
+            bool AnimKit : 1;
+            bool CombatVictim : 1;
+            bool ThisIsYou : 1;
+            bool Vehicle : 1;
+            bool MovementUpdate : 1;
+            bool NoBirthAnim : 1;
+            bool MovementTransport : 1;
+            bool Stationary : 1;
+            bool AreaTrigger : 1;
+            bool EnablePortals : 1;
+            bool ServerTime : 1;
+
+            void Clear()
+            {
+                memset(this, 0, sizeof(CreateObjectBits));
+            }
+        };
+
+        CreateObjectBits flags;
+        flags.Clear();
+        WorldObject const* wo = ToWorldObject();
+        Unit const* unit = ToUnit();
+
+        if (updateFlags & UPDATEFLAG_SELF)
+            flags.ThisIsYou = true;
+        if (unit)
+            flags.MovementUpdate = true;
+        else if (wo)
+            flags.Stationary = true;
+        if (wo && wo->GetTransportGuid())
+            flags.MovementTransport = true;
+        if (updateFlags & UPDATEFLAG_FULLGUID)
+            flags.CombatVictim = true;
+        if (updateFlags & UPDATEFLAG_TRANSPORT)
+            flags.ServerTime = true;
+        if (updateFlags & UPDATEFLAG_VEHICLE)
+            flags.Vehicle = true;
+        if (updateFlags & UPDATEFLAG_ROTATION)
+            flags.Rotation = true;
+
+        ObjectGuid guid = GetObjectGuid();
+        bool hasTransportTime2 = false;
+        bool hasVehicleId = false;
+        bool hasFallDirection = false;
+        bool hasFallData = false;
+        bool hasPitch = false;
+        bool hasSpline = false;
+        bool hasSplineElevation = false;
+        bool hasAIAnimKit = false;
+        bool hasMovementAnimKit = false;
+        bool hasMeleeAnimKit = false;
+
+        std::vector<uint32> const* PauseTimes = nullptr;
+        //if (GameObject const* go = ToGameObject())
+        //    PauseTimes = go->GetPauseTimes();
+
+        // Bit content
+        data->WriteBit(flags.PlayerHoverAnim);
+        data->WriteBit(flags.SupressedGreetings);
+        data->WriteBit(flags.Rotation);
+        data->WriteBit(flags.AnimKit);
+        data->WriteBit(flags.CombatVictim);
+        data->WriteBit(flags.ThisIsYou);
+        data->WriteBit(flags.Vehicle);
+        data->WriteBit(flags.MovementUpdate);
+        data->WriteBits(PauseTimes ? PauseTimes->size() : 0, 24);
+        data->WriteBit(flags.NoBirthAnim);
+        data->WriteBit(flags.MovementTransport);
+        data->WriteBit(flags.Stationary);
+        data->WriteBit(flags.AreaTrigger);
+        data->WriteBit(flags.EnablePortals);
+        data->WriteBit(flags.ServerTime);
+
+        if (flags.MovementUpdate)
+        {
+            MovementInfo mi;
+            unit->GetMovementInfoForObjectUpdate(mi, hasSpline);
+            uint32 movementFlags = mi.GetMovementFlags();
+            uint32 movementFlagsExtra = mi.GetMovementFlags2();
+
+            hasTransportTime2 = !mi.t_guid.IsEmpty() && mi.t_time2 != 0;
+            hasVehicleId = false;
+            hasPitch = mi.HasMovementFlag(WotLK::MOVEFLAG_SWIMMING | WotLK::MOVEFLAG_FLYING) || mi.HasMovementFlag2(WotLK::MOVEFLAG2_ALLOW_PITCHING);
+            hasFallDirection = mi.HasMovementFlag(WotLK::MOVEFLAG_FALLING);
+            hasFallData = hasFallDirection || mi.fallTime != 0;
+            hasSplineElevation = mi.HasMovementFlag(WotLK::MOVEFLAG_SPLINE_ELEVATION);
+
+            data->WriteBit(!movementFlags);                                         // !Has MoveFlags0
+            data->WriteBit(mi.pos.o != 0);             // Has Orientation
+            data->WriteBit(guid[7]);
+            data->WriteBit(guid[3]);
+            data->WriteBit(guid[2]);
+            if (movementFlags)
+                data->WriteBits(movementFlags, 30);
+
+            data->WriteBit(hasSpline && !unit->IsPlayer());                         // !Has player spline data
+            data->WriteBit(!hasPitch);                                              // !Has pitch
+            data->WriteBit(hasSpline);                                              // Has spline data (independent)
+            data->WriteBit(hasFallData);                                            // Has fall data
+            data->WriteBit(!hasSplineElevation);                                    // !Has spline elevation
+            data->WriteBit(guid[5]);
+            data->WriteBit(!mi.t_guid.IsEmpty());         // Has transport data
+            data->WriteBit(0);                                                      // !HasTime
+
+            if (!mi.t_guid.IsEmpty())
+            {
+                ObjectGuid transGuid = mi.t_guid;
+
+                data->WriteBit(transGuid[1]);
+                data->WriteBit(hasTransportTime2);                             // Has PrevMoveTime
+                data->WriteBit(transGuid[4]);
+                data->WriteBit(transGuid[0]);
+                data->WriteBit(transGuid[6]);
+                data->WriteBit(hasVehicleId);                                  // Has VehicleRecID
+                data->WriteBit(transGuid[7]);
+                data->WriteBit(transGuid[5]);
+                data->WriteBit(transGuid[3]);
+                data->WriteBit(transGuid[2]);
             }
 
-            *data << wo->GetOrientation();
+            data->WriteBit(guid[4]);
 
-            if (GetTypeId() == TYPEID_CORPSE)
-                *data << float(wo->GetOrientation());
-            else
-                *data << float(0);
+            if (hasSpline)
+                unit->m_moveSpline.WriteCreateBits434(*data);
+
+            data->WriteBit(guid[6]);
+            if (hasFallData)
+                data->WriteBit(hasFallDirection);
+
+            data->WriteBit(guid[0]);
+            data->WriteBit(guid[1]);
+            data->WriteBit(0);                                                      // HeightChangeFailed
+            data->WriteBit(!movementFlagsExtra);                                    // !Has MoveFlags1
+            if (movementFlagsExtra)
+                data->WriteBits(movementFlagsExtra, 12);
         }
-        else if (updateFlags & UPDATEFLAG_HAS_POSITION)                     // 0x40
+
+        if (flags.MovementTransport)
         {
-            WorldObject* object = ((WorldObject*)this);
-
-            *data << float(object->GetPositionX());
-            *data << float(object->GetPositionY());
-            *data << float(object->GetPositionZ());
-            *data << float(object->GetOrientation());
+            ObjectGuid transGuid = wo->GetMovementInfo().t_guid;
+            data->WriteBit(transGuid[5]);
+            data->WriteBit(hasVehicleId);                                           // Has GO transport time 3
+            data->WriteBit(transGuid[0]);
+            data->WriteBit(transGuid[3]);
+            data->WriteBit(transGuid[6]);
+            data->WriteBit(transGuid[1]);
+            data->WriteBit(transGuid[4]);
+            data->WriteBit(transGuid[2]);
+            data->WriteBit(hasTransportTime2);                                      // Has GO transport time 2
+            data->WriteBit(transGuid[7]);
         }
-    }
-    if (updateFlags & UPDATEFLAG_HIGHGUID)
-    {
-        // unk uint32.
-        *data << uint32(0);
-    }
 
-    if (updateFlags & UPDATEFLAG_ALL)                       // 0x10
-    {
-        // unk uint32.
-        *data << uint32(1);
-    }
-
-    if (updateFlags & UPDATEFLAG_FULLGUID)
-    {
-        if (Unit const* me = ToUnit())
+        if (flags.CombatVictim)
         {
-            *data << me->GetMeleeVictimGuid().WriteAsPacked();
+            ObjectGuid victimGuid = unit->GetMeleeVictimGuid();
+            data->WriteBit(victimGuid[2]);
+            data->WriteBit(victimGuid[7]);
+            data->WriteBit(victimGuid[0]);
+            data->WriteBit(victimGuid[4]);
+            data->WriteBit(victimGuid[5]);
+            data->WriteBit(victimGuid[6]);
+            data->WriteBit(victimGuid[1]);
+            data->WriteBit(victimGuid[3]);
         }
-        else
-            *data << uint8(0); // Empty pack guid
-    }
-    // 0x2
-    if (updateFlags & UPDATEFLAG_TRANSPORT)
-    {
-        // transport progress or mstime.
-        *data << uint32(((GameObject*)this)->GetPathTimer());
-    }
 
-    // 0x80
-    if (updateFlags & UPDATEFLAG_VEHICLE)
-    {
-        *data << uint32(((Unit*)this)->m_vehicleId);
-        *data << float(((Unit*)this)->m_vehicleOrientation);
-    }
+        if (flags.AnimKit)
+        {
+            hasAIAnimKit = wo->GetAIAnimKitId();
+            data->WriteBit(!hasAIAnimKit);
+            hasMovementAnimKit = wo->GetMovementAnimKitId();
+            data->WriteBit(!hasMovementAnimKit);
+            hasMeleeAnimKit = wo->GetMeleeAnimKitId();
+            data->WriteBit(!hasMeleeAnimKit);
+        }
 
-    // 0x200
-    if (updateFlags & UPDATEFLAG_ROTATION)
-    {
-        *data << int64(((GameObject*)this)->GetPackedLocalRotation());
+        data->FlushBits();
+
+        if (PauseTimes && !PauseTimes->empty())
+            data->append(PauseTimes->data(), PauseTimes->size());
+
+        if (flags.MovementUpdate)
+        {
+            MovementInfo mi;
+            unit->GetMovementInfoForObjectUpdate(mi, hasSpline);
+
+            data->WriteByteSeq(guid[4]);
+            *data << unit->GetSpeed(MOVE_RUN_BACK);
+
+            if (hasFallData)
+            {
+                if (hasFallDirection)
+                {
+                    *data << float(mi.jump.xyspeed);
+                    *data << float(mi.jump.sinAngle);
+                    *data << float(mi.jump.cosAngle);
+                }
+
+                *data << uint32(mi.fallTime);
+                *data << float(mi.jump.zspeed);
+            }
+
+            *data << unit->GetSpeed(MOVE_SWIM_BACK);
+            if (hasSplineElevation)
+                *data << float(mi.splineElevation);
+
+            if (hasSpline)
+                unit->m_moveSpline.WriteCreateData434(*data);
+
+            *data << float(unit->GetPositionZ());
+            data->WriteByteSeq(guid[5]);
+
+            if (mi.t_guid)
+            {
+                ObjectGuid transGuid = mi.t_guid;
+
+                data->WriteByteSeq(transGuid[5]);
+                data->WriteByteSeq(transGuid[7]);
+                *data << uint32(mi.t_time);
+                *data << float(mi.t_pos.o);
+                if (hasTransportTime2)
+                    *data << uint32(mi.t_time2);
+
+                *data << float(unit->GetTransOffsetY());
+                *data << float(unit->GetTransOffsetX());
+                data->WriteByteSeq(transGuid[3]);
+                *data << float(unit->GetTransOffsetZ());
+                data->WriteByteSeq(transGuid[0]);
+                if (hasVehicleId)
+                    *data << uint32(mi.t_vehicle);
+
+                *data << int8(mi.t_seat);
+                data->WriteByteSeq(transGuid[1]);
+                data->WriteByteSeq(transGuid[6]);
+                data->WriteByteSeq(transGuid[2]);
+                data->WriteByteSeq(transGuid[4]);
+            }
+
+            *data << float(unit->GetPositionX());
+            *data << unit->GetSpeed(MOVE_PITCH_RATE);
+            data->WriteByteSeq(guid[3]);
+            data->WriteByteSeq(guid[0]);
+            *data << unit->GetSpeed(MOVE_SWIM);
+            *data << float(unit->GetPositionY());
+            data->WriteByteSeq(guid[7]);
+            data->WriteByteSeq(guid[1]);
+            data->WriteByteSeq(guid[2]);
+            *data << unit->GetSpeed(MOVE_WALK);
+
+            //if (true)   // Has time, controlled by bit just after HasTransport
+            *data << uint32(mi.time);
+
+            *data << unit->GetSpeed(MOVE_TURN_RATE);
+            data->WriteByteSeq(guid[6]);
+            *data << unit->GetSpeed(MOVE_FLIGHT);
+            if (!mi.pos.o != 0)
+                *data << float(unit->GetOrientation());
+
+            *data << unit->GetSpeed(MOVE_RUN);
+            if (hasPitch)
+                *data << float(mi.s_pitch);
+
+            *data << unit->GetSpeed(MOVE_FLIGHT_BACK);
+        }
+
+        if (flags.Vehicle)
+        {
+            *data << float(((Unit*)this)->m_vehicleOrientation);
+            *data << uint32(((Unit*)this)->m_vehicleId);
+        }
+
+        if (flags.MovementTransport)
+        {
+            ObjectGuid transGuid = wo->GetMovementInfo().t_guid;
+
+            data->WriteByteSeq(transGuid[0]);
+            data->WriteByteSeq(transGuid[5]);
+            if (hasVehicleId)
+                *data << uint32(wo->GetMovementInfo().t_vehicle);
+
+            data->WriteByteSeq(transGuid[3]);
+            *data << float(wo->GetTransOffsetX());
+            data->WriteByteSeq(transGuid[4]);
+            data->WriteByteSeq(transGuid[6]);
+            data->WriteByteSeq(transGuid[1]);
+            *data << uint32(wo->GetMovementInfo().t_time);
+            *data << float(wo->GetTransOffsetY());
+            data->WriteByteSeq(transGuid[2]);
+            data->WriteByteSeq(transGuid[7]);
+            *data << float(wo->GetTransOffsetZ());
+            *data << int8(wo->GetMovementInfo().t_seat);
+            *data << float(wo->GetTransOffsetO());
+            if (hasTransportTime2)
+                *data << uint32(wo->GetMovementInfo().t_time2);
+        }
+
+        if (flags.Rotation)
+            *data << uint64(ToGameObject()->GetPackedLocalRotation());
+
+        if (flags.AreaTrigger)
+        {
+            // client doesn't use these values, so unk
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << uint8(0);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+            *data << float(0.0f);
+        }
+
+        if (flags.Stationary)
+        {
+            *data << float(wo->GetOrientation());
+            *data << float(wo->GetPositionX());
+            *data << float(wo->GetPositionY());
+            *data << float(wo->GetPositionZ());
+        }
+
+        if (flags.CombatVictim)
+        {
+            ObjectGuid victimGuid = unit->GetMeleeVictimGuid();
+            data->WriteByteSeq(victimGuid[4]);
+            data->WriteByteSeq(victimGuid[0]);
+            data->WriteByteSeq(victimGuid[3]);
+            data->WriteByteSeq(victimGuid[5]);
+            data->WriteByteSeq(victimGuid[7]);
+            data->WriteByteSeq(victimGuid[6]);
+            data->WriteByteSeq(victimGuid[2]);
+            data->WriteByteSeq(victimGuid[1]);
+        }
+
+        if (flags.AnimKit)
+        {
+            if (hasAIAnimKit)
+                *data << uint16(wo->GetAIAnimKitId());
+            if (hasMovementAnimKit)
+                *data << uint16(wo->GetMovementAnimKitId());
+            if (hasMeleeAnimKit)
+                *data << uint16(wo->GetMeleeAnimKitId());
+        }
+
+        if (flags.ServerTime)
+            *data << uint32(((GameObject*)this)->GetPathTimer());
     }
 }
 
-void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer* data, UpdateMask* updateMask, Player* target) const
+void Object::BuildValuesUpdate(ByteBuffer* data, UpdateMask* updateMask, Player* target) const
 {
     if (!target)
         return;

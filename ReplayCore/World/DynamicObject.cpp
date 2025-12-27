@@ -16,7 +16,7 @@ DynamicObject::DynamicObject(DynamicObjectData const& dynamicObjectData) : World
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
+    SetUInt32Value(sWorld.GetUpdateField("OBJECT_FIELD_TYPE"), m_objectTypeMask);
     dynamicObjectData.InitializeDynamicObject(this);
 }
 

@@ -5,6 +5,12 @@
 
 void MovementInfo::Read(ByteBuffer &data)
 {
+    if (sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a)
+    {
+        printf("[ERROR] MovementInfo::Read called for unsupported client version.");
+        while (true) {};
+    }
+
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
     {
         data >> moveFlags;
@@ -213,6 +219,12 @@ void MovementInfo::CorrectData()
 
 void MovementInfo::Write(ByteBuffer &data) const
 {
+    if (sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a)
+    {
+        printf("[ERROR] MovementInfo::Write called for unsupported client version.");
+        while (true) {};
+    }
+
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
     {
         data << moveFlags;

@@ -129,6 +129,7 @@ public :
     void SendAllAurasUpdate() const;
     void SetDebuffLimit(uint8 slots);
 
+    void GetMovementInfoForObjectUpdate(MovementInfo& mi, bool& sendSpline) const;
     void InitializePlaceholderUnitFields();
     void InitializeMoveSpeeds();
     void SetSpeedRate(UnitMoveType moveType, float rate)

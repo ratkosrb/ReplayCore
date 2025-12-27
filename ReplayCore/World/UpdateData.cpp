@@ -134,6 +134,9 @@ bool UpdateData::BuildPacket(WorldPacket* packet, UpdatePacket const* updPacket,
 
     ByteBuffer buf(4 + 1 + (m_outOfRangeGUIDs.empty() ? 0 : 1 + 4 + 9 * m_outOfRangeGUIDs.size()) + (updPacket ? updPacket->data.wpos() : 0));
 
+    if (sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        buf << (uint16)sWorld.GetClientPlayer()->GetMapId();
+
     uint32 blockCount = updPacket ? updPacket->blockCount : 0;
     buf << (uint32)(!m_outOfRangeGUIDs.empty() ? blockCount + 1 : blockCount);
 
@@ -142,7 +145,7 @@ bool UpdateData::BuildPacket(WorldPacket* packet, UpdatePacket const* updPacket,
 
     if (!m_outOfRangeGUIDs.empty())
     {
-        buf << (uint8) UPDATETYPE_OUT_OF_RANGE_OBJECTS;
+        buf << (uint8)((sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a) ? Cataclysm::UPDATETYPE_OUT_OF_RANGE_OBJECTS : Vanilla::UPDATETYPE_OUT_OF_RANGE_OBJECTS);
         buf << (uint32) m_outOfRangeGUIDs.size();
 
         for (auto const& guid : m_outOfRangeGUIDs)
@@ -152,9 +155,11 @@ bool UpdateData::BuildPacket(WorldPacket* packet, UpdatePacket const* updPacket,
     if (updPacket)
         buf.append(updPacket->data);
 
-    size_t pSize = buf.wpos();                             // use real used data size
+    // use real used data size
+    size_t pSize = buf.wpos();
 
-    if (pSize > 100)                                       // compress large packets
+    // compress large packets
+    if (pSize > 100 && sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
     {
         if (pSize >= 900000)
             printf("[CRASH-CLIENT] Too large packet: %u\n", pSize);

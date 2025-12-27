@@ -186,6 +186,123 @@ void MoveSpline::WriteCreate(ByteBuffer& data) const
     }
 }
 
+void MoveSpline::WriteCreateBits434(ByteBuffer& data) const
+{
+    data.WriteBits(uint8(m_type), 2);
+
+    uint32 splineFlags = m_flags;
+    if (m_type == SPLINE_TYPE_FACING_ANGLE)
+        splineFlags |= WotLK::SplineFlags::Final_Angle;
+
+    data.WriteBit(splineFlags & (WotLK::SplineFlags::Parabolic | WotLK::SplineFlags::Animation));
+    uint32 pointsCount = std::max<uint32>(4, m_destinationPoints.size());
+    data.WriteBits(pointsCount, 22);
+
+    switch (m_type)
+    {
+        case SPLINE_TYPE_FACING_TARGET:
+        {
+            ObjectGuid targetGuid;
+            data.WriteBits(2, 2);
+            data.WriteBit(targetGuid[4]);
+            data.WriteBit(targetGuid[3]);
+            data.WriteBit(targetGuid[7]);
+            data.WriteBit(targetGuid[2]);
+            data.WriteBit(targetGuid[6]);
+            data.WriteBit(targetGuid[1]);
+            data.WriteBit(targetGuid[0]);
+            data.WriteBit(targetGuid[5]);
+            break;
+        }
+        case SPLINE_TYPE_FACING_ANGLE:
+            data.WriteBits(0, 2);
+            break;
+        case SPLINE_TYPE_FACING_SPOT:
+            data.WriteBits(1, 2);
+            break;
+        default:
+            data.WriteBits(3, 2);
+            break;
+    }
+
+    data.WriteBit(splineFlags & WotLK::SplineFlags::Parabolic);
+    data.WriteBits(splineFlags, 25);
+}
+
+void MoveSpline::WriteCreateData434(ByteBuffer& data) const
+{
+    uint32 splineFlags = m_flags;
+    if (m_type == SPLINE_TYPE_FACING_ANGLE)
+        splineFlags |= WotLK::SplineFlags::Final_Angle;
+
+    if (splineFlags & WotLK::SplineFlags::Parabolic)
+        data << m_verticalAcceleration; // added in 3.1
+
+    data << uint32(1 + sReplayMgr.GetCurrentSniffTimeMs() - m_startTimeMs);
+
+    if (m_type == SPLINE_TYPE_FACING_ANGLE)
+        data << m_finalOrientation;
+    else if (m_type == SPLINE_TYPE_FACING_TARGET)
+    {
+        ObjectGuid facingGuid;
+        data.WriteByteSeq(facingGuid[5]);
+        data.WriteByteSeq(facingGuid[3]);
+        data.WriteByteSeq(facingGuid[7]);
+        data.WriteByteSeq(facingGuid[1]);
+        data.WriteByteSeq(facingGuid[6]);
+        data.WriteByteSeq(facingGuid[4]);
+        data.WriteByteSeq(facingGuid[2]);
+        data.WriteByteSeq(facingGuid[0]);
+    }
+
+    uint32 pointsCount = std::max<uint32>(4, m_destinationPoints.size());
+    for (auto const& itr : m_destinationPoints)
+    {
+        data << float(itr.z);
+        data << float(itr.x);
+        data << float(itr.y);
+    }
+    if (m_destinationPoints.size() < 4)
+    {
+        for (uint32 i = 0; i < (4 - m_destinationPoints.size()); i++)
+        {
+            data << float(m_destinationPoints[0].z);
+            data << float(m_destinationPoints[0].x);
+            data << float(m_destinationPoints[0].y);
+        }
+    }
+
+    if (m_type == SPLINE_TYPE_FACING_SPOT)
+    {
+        data << float(0); // x
+        data << float(0); // z
+        data << float(0); // y
+    }
+
+    data << float(1.f);                             // splineInfo.duration_mod_next; added in 3.1
+    data << uint32(m_moveTimeMs);
+    if (splineFlags & (WotLK::SplineFlags::Parabolic | WotLK::SplineFlags::Animation))
+        data << uint32(0);                          // effect_start_time; added in 3.1
+
+    data << float(1.f);                             // splineInfo.duration_mod; added in 3.1
+
+    if (m_cyclic)
+    {
+        data << float(0);
+        data << float(0);
+        data << float(0);
+    }
+    else
+    {
+        uint32 finalPointIndex = m_destinationPoints.size() - 1;
+        data << float(m_destinationPoints[finalPointIndex].z);
+        data << float(m_destinationPoints[finalPointIndex].x);
+        data << float(m_destinationPoints[finalPointIndex].y);
+    }
+
+    data << uint32(m_id);
+}
+
 void MoveSpline::Update(Unit* pUnit)
 {
     if (!m_initialized || m_cyclic || !m_moveTimeMs)

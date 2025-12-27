@@ -152,6 +152,7 @@ enum Powers
 
 #define MAX_POWERS_VANILLA  5
 #define MAX_POWERS_WOTLK  7
+#define MAX_POWERS_CATA  5
 
 inline std::string PowerToString(uint32 value)
 {

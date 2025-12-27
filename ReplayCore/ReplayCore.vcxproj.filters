@@ -107,6 +107,9 @@
     <ClCompile Include="World\ScriptMaker.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\MovementStructures434.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -299,6 +302,9 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\ScriptCommands.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\MovementStructures434.h">
       <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>

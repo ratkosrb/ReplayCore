@@ -21,7 +21,7 @@ Player::Player(PlayerData const& playerData) : Unit(playerData.guid)
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
+    SetUInt32Value(sWorld.GetUpdateField("OBJECT_FIELD_TYPE"), m_objectTypeMask);
     InitializePlaceholderUnitFields();
     playerData.InitializePlayer(this);
     InitializeDefaultPlayerValues();
@@ -42,7 +42,7 @@ Player::Player(ObjectGuid guid, std::string name, Player const& otherPlayer) : U
     m_uint32Values = new uint32[m_valuesCount];
     memcpy(m_uint32Values, otherPlayer.m_uint32Values, sizeof(uint32) * m_valuesCount);
     SetGuidValue(OBJECT_FIELD_GUID, guid);
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
+    SetUInt32Value(sWorld.GetUpdateField("OBJECT_FIELD_TYPE"), m_objectTypeMask);
 
     // change some fields
     SetUInt32Value("UNIT_FIELD_MOUNTDISPLAYID", 0);
@@ -108,8 +108,15 @@ void Player::InitializeDefaultPlayerValues()
     
     for (uint32 count = 0; count < g_playerSkills.size(); count++)
     {
-        uint16 PLAYER_SKILL_INFO_1_1 = sWorld.GetUpdateField("PLAYER_SKILL_INFO_1_1");
-        assert(PLAYER_SKILL_INFO_1_1);
+        uint32 skill = g_playerSkills[count].first;
+        uint32 value = g_playerSkills[count].second;
+        if (value == 0)
+            value = GetLevel() * 5;
+
+        if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+        {
+            uint16 PLAYER_SKILL_INFO_1_1 = sWorld.GetUpdateField("PLAYER_SKILL_INFO_1_1");
+            assert(PLAYER_SKILL_INFO_1_1);
 
 #define MAKE_PAIR32(l, h)  uint32( uint16(l) | ( uint32(h) << 16 ) )
 #define PLAYER_SKILL_INDEX(x)       (PLAYER_SKILL_INFO_1_1 + ((x)*3))
@@ -117,14 +124,32 @@ void Player::InitializeDefaultPlayerValues()
 #define PLAYER_SKILL_BONUS_INDEX(x) (PLAYER_SKILL_INDEX(x)+2)
 #define MAKE_SKILL_VALUE(v, m) MAKE_PAIR32(v,m)
 
-        uint32 skill = g_playerSkills[count].first;
-        uint32 value = g_playerSkills[count].second;
-        if (value == 0)
-            value = GetLevel() * 5;
+            SetUInt32Value(PLAYER_SKILL_INDEX(count), skill);
+            SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(count), MAKE_SKILL_VALUE(value, value));
+            SetUInt32Value(PLAYER_SKILL_BONUS_INDEX(count), 0);
 
-        SetUInt32Value(PLAYER_SKILL_INDEX(count), skill);
-        SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(count), MAKE_SKILL_VALUE(value, value));
-        SetUInt32Value(PLAYER_SKILL_BONUS_INDEX(count), 0);
+#undef MAKE_PAIR32
+#undef PLAYER_SKILL_INDEX
+#undef PLAYER_SKILL_VALUE_INDEX
+#undef PLAYER_SKILL_BONUS_INDEX
+#undef MAKE_SKILL_VALUE
+        }
+        else
+        {
+            uint16 PLAYER_SKILL_STEP_0 = sWorld.GetUpdateField("PLAYER_SKILL_STEP_0");
+            assert(PLAYER_SKILL_STEP_0);
+            uint16 PLAYER_SKILL_RANK_0 = sWorld.GetUpdateField("PLAYER_SKILL_RANK_0");
+            assert(PLAYER_SKILL_RANK_0);
+            uint16 PLAYER_SKILL_MAX_RANK_0 = sWorld.GetUpdateField("PLAYER_SKILL_MAX_RANK_0");
+            assert(PLAYER_SKILL_MAX_RANK_0);
+
+            uint16 field = count / 2;
+            uint8 offset = count & 1;
+            SetUInt16Value(PLAYER_SKILL_STEP_0 + field, offset, value / 75);
+            // update value
+            SetUInt16Value(PLAYER_SKILL_RANK_0 + field, offset, value);
+            SetUInt16Value(PLAYER_SKILL_MAX_RANK_0 + field, offset, value);
+        }
     }
 
     SetUInt32Value("PLAYER_XP", 1);

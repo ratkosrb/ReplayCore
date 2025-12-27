@@ -27,6 +27,7 @@ enum TypeMask
     TYPEMASK_GAMEOBJECT     = 0x0020,
     TYPEMASK_DYNAMICOBJECT  = 0x0040,
     TYPEMASK_CORPSE         = 0x0080,
+    //TYPEMASK_AREATRIGGER    = 0x0100,
 
     // used combinations in Player::GetObjectByTypeMask (TYPEMASK_UNIT case ignore players in call)
     TYPEMASK_CREATURE_OR_GAMEOBJECT = TYPEMASK_UNIT | TYPEMASK_GAMEOBJECT,

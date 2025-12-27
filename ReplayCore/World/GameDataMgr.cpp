@@ -145,7 +145,10 @@ uint8 GameDataMgr::GetPowersCount() const
     if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
         return MAX_POWERS_VANILLA;
 
-    return MAX_POWERS_WOTLK;
+    if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+        return MAX_POWERS_WOTLK;
+
+    return MAX_POWERS_CATA;
 }
 
 uint32 GameDataMgr::GetTransportMoveFlag() const
@@ -1654,13 +1657,13 @@ void GameDataMgr::LoadGameObjectTemplates()
         goTemplate.name = fields[3].GetCppString();
         goTemplate.scale = fields[4].GetFloat();
 
-        for (uint32 i = 0; i < MAX_GAMEOBJECT_DATA; i++)
+        for (uint32 i = 0; i < MAX_GAMEOBJECT_DATA_WOTLK; i++)
             goTemplate.data[i] = fields[5 + i].GetUInt32();
 
         if (m_dataSource == DB_CMANGOS_TBC || m_dataSource == DB_CMANGOS_WOTLK || m_dataSource == DB_TRINITY)
         {
             goTemplate.iconName = fields[29].GetCppString();
-            goTemplate.castBarCaption = fields[30].GetCppString();
+            goTemplate.openingText = fields[30].GetCppString();
         }
 
         if (m_dataSource == DB_CMANGOS_WOTLK)

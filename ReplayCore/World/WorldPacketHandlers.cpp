@@ -7,10 +7,12 @@
 #include "../Defines/GameAccount.h"
 #include "../Defines/ClientVersions.h"
 #include "../Defines/ResponseCodes.h"
+#include "Opcodes.h"
 #include "GameDataMgr.h"
 #include "ReplayMgr.h"
 #include "ChatDefines.h"
 #include "SpellCastTargets.h"
+#include "MovementStructures434.h"
 #include "../Dependencies/include/zlib/zlib.h"
 #include <set>
 
@@ -73,6 +75,19 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("MSG_MOVE_WORLDPORT_ACK", &WorldServer::HandleMoveWorldportAck);
     SetOpcodeHandler("MSG_MOVE_TELEPORT_ACK", &WorldServer::HandleMoveTeleportAck);
     SetOpcodeHandler("CMSG_MESSAGECHAT", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_AFK", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_BATTLEGROUND", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_CHANNEL", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_DND", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_EMOTE", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_GUILD", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_OFFICER", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_PARTY", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_RAID", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_RAID_WARNING", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_SAY", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_WHISPER", &WorldServer::HandleMessageChat);
+    SetOpcodeHandler("CMSG_MESSAGECHAT_YELL", &WorldServer::HandleMessageChat);
     SetOpcodeHandler("CMSG_QUEST_QUERY", &WorldServer::HandleQuestQuery);
     SetOpcodeHandler("CMSG_AREATRIGGER", &WorldServer::HandleAreaTrigger);
     SetOpcodeHandler("CMSG_CREATURE_QUERY", &WorldServer::HandleCreatureQuery);
@@ -504,9 +519,17 @@ void WorldServer::HandlePing(WorldPacket& packet)
     uint32 ping = 0;
     uint32 latency = 0;
 
-    packet >> ping;
-    if (GetClientBuild() > CLIENT_BUILD_1_8_4)
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        packet >> ping;
+        if (GetClientBuild() > CLIENT_BUILD_1_8_4)
+            packet >> latency;
+    }
+    else
+    {
         packet >> latency;
+        packet >> ping;
+    }
 
 #ifdef WORLD_DEBUG
     printf("\n");
@@ -544,7 +567,28 @@ void WorldServer::HandleRealmSplit(WorldPacket& packet)
 void WorldServer::HandlePlayerLogin(WorldPacket& packet)
 {
     ObjectGuid guid;
-    packet >> guid;
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+        packet >> guid;
+    else
+    {
+        guid[2] = packet.ReadBit();
+        guid[3] = packet.ReadBit();
+        guid[0] = packet.ReadBit();
+        guid[6] = packet.ReadBit();
+        guid[4] = packet.ReadBit();
+        guid[5] = packet.ReadBit();
+        guid[1] = packet.ReadBit();
+        guid[7] = packet.ReadBit();
+
+        packet.ReadByteSeq(guid[2]);
+        packet.ReadByteSeq(guid[7]);
+        packet.ReadByteSeq(guid[0]);
+        packet.ReadByteSeq(guid[3]);
+        packet.ReadByteSeq(guid[5]);
+        packet.ReadByteSeq(guid[6]);
+        packet.ReadByteSeq(guid[1]);
+        packet.ReadByteSeq(guid[4]);
+    }
 
     if (!m_worldSpawned)
         ResetAndSpawnWorld();
@@ -698,19 +742,34 @@ void WorldServer::HandleLogoutRequest(WorldPacket& packet)
 void WorldServer::HandleJoinChannel(WorldPacket& packet)
 {
     uint32 channelId = 0;
+    bool hasVoice;
+    bool joinedByZoneUpdate;
+    std::string channelName, password;
 
-    if (GetClientBuild() > CLIENT_BUILD_2_0_1)
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        if (GetClientBuild() > CLIENT_BUILD_2_0_1)
+        {
+            packet >> channelId;
+            packet >> hasVoice;
+            packet >> joinedByZoneUpdate;
+        }
+
+        packet >> channelName;
+        packet >> password;
+    }
+    else
     {
         packet >> channelId;
-        bool hasVoice;
-        packet >> hasVoice;
-        bool joinedByZoneUpdate;
-        packet >> joinedByZoneUpdate;
+        hasVoice = packet.ReadBit();
+        joinedByZoneUpdate = packet.ReadBit();
+
+        uint32 channelLength, passLength;
+        channelLength = packet.ReadBits(8);
+        passLength = packet.ReadBits(8);
+        channelName = packet.ReadString(channelLength);
+        password = packet.ReadString(passLength);
     }
-    
-    std::string channelName, password;
-    packet >> channelName;
-    packet >> password;
 
 #ifdef WORLD_DEBUG
     printf("\n");
@@ -770,14 +829,21 @@ void WorldServer::HandleMovementPacket(WorldPacket& packet)
     if (m_sessionData.isTeleportPending)
         return;
 
-    if (GetClientBuild() >= CLIENT_BUILD_3_2_0)
-    {
-        ObjectGuid guid;
-        packet >> guid.ReadAsPacked();
-    }
-
+    ObjectGuid guid;
     MovementInfo movementInfo;
-    packet >> movementInfo;
+
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        if (GetClientBuild() >= CLIENT_BUILD_3_2_0)
+            packet >> guid.ReadAsPacked();
+
+        packet >> movementInfo;
+    }
+    else
+    {
+        Cataclysm::ReadMovementInfo(packet, movementInfo, &guid, nullptr, nullptr);
+    }
+    
     m_clientPlayer->SetMovementInfo(movementInfo);
     m_sessionData.isWatchingCinematic = false;
 }
@@ -862,15 +928,42 @@ void WorldServer::HandleMoveWorldportAck(WorldPacket& packet)
 void WorldServer::HandleMoveTeleportAck(WorldPacket& packet)
 {
     ObjectGuid guid;
-    if (GetClientBuild() < CLIENT_BUILD_3_0_2)
-        packet >> guid;
-    else
-        packet >> guid.ReadAsPacked();
-
     uint32 movementCounter;
-    packet >> movementCounter;
-    uint32 time = 0;
-    packet >> time;
+    uint32 time;
+
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+            packet >> guid;
+        else
+            packet >> guid.ReadAsPacked();
+
+        packet >> movementCounter;
+        packet >> time;
+    }
+    else
+    {
+        packet >> movementCounter;
+        packet >> time;
+
+        guid[5] = packet.ReadBit();
+        guid[0] = packet.ReadBit();
+        guid[1] = packet.ReadBit();
+        guid[6] = packet.ReadBit();
+        guid[3] = packet.ReadBit();
+        guid[7] = packet.ReadBit();
+        guid[2] = packet.ReadBit();
+        guid[4] = packet.ReadBit();
+
+        packet.ReadByteSeq(guid[4]);
+        packet.ReadByteSeq(guid[2]);
+        packet.ReadByteSeq(guid[7]);
+        packet.ReadByteSeq(guid[6]);
+        packet.ReadByteSeq(guid[5]);
+        packet.ReadByteSeq(guid[1]);
+        packet.ReadByteSeq(guid[3]);
+        packet.ReadByteSeq(guid[0]);
+    }
 
 #ifdef WORLD_DEBUG
     printf("\n");
@@ -906,11 +999,52 @@ void WorldServer::HandleMoveTeleportAck(WorldPacket& packet)
 
 void WorldServer::HandleMessageChat(WorldPacket& packet)
 {
-    uint32 type;
-    uint32 lang;
+    uint32 type = 0;
+    uint32 lang = 0;
 
-    packet >> type;
-    packet >> lang;
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        packet >> type;
+        packet >> lang;
+    }
+    else
+    {
+        std::string opcodeName = Opcodes::GetOpcodeName(packet.GetOpcode(), GetClientBuild());
+        if (opcodeName == "CMSG_MESSAGECHAT_SAY")
+            type = WotLK::CHAT_MSG_SAY;
+        else if (opcodeName == "CMSG_MESSAGECHAT_YELL")
+            type = WotLK::CHAT_MSG_YELL;
+        else if (opcodeName == "CMSG_MESSAGECHAT_CHANNEL")
+            type = WotLK::CHAT_MSG_CHANNEL;
+        else if (opcodeName == "CMSG_MESSAGECHAT_WHISPER")
+            type = WotLK::CHAT_MSG_WHISPER;
+        else if (opcodeName == "CMSG_MESSAGECHAT_GUILD")
+            type = WotLK::CHAT_MSG_GUILD;
+        else if (opcodeName == "CMSG_MESSAGECHAT_OFFICER")
+            type = WotLK::CHAT_MSG_OFFICER;
+        else if (opcodeName == "CMSG_MESSAGECHAT_AFK")
+            type = WotLK::CHAT_MSG_AFK;
+        else if (opcodeName == "CMSG_MESSAGECHAT_DND")
+            type = WotLK::CHAT_MSG_DND;
+        else if (opcodeName == "CMSG_MESSAGECHAT_EMOTE")
+            type = WotLK::CHAT_MSG_EMOTE;
+        else if (opcodeName == "CMSG_MESSAGECHAT_PARTY")
+            type = WotLK::CHAT_MSG_PARTY;
+        else if (opcodeName == "CMSG_MESSAGECHAT_RAID")
+            type = WotLK::CHAT_MSG_RAID;
+        else if (opcodeName == "CMSG_MESSAGECHAT_BATTLEGROUND")
+            type = WotLK::CHAT_MSG_BATTLEGROUND;
+        else if (opcodeName == "CMSG_MESSAGECHAT_RAID_WARNING")
+            type = WotLK::CHAT_MSG_RAID_WARNING;
+        else
+        {
+            printf("[HandleMessageChat] Error: unknown message type for opcode %s\n", opcodeName.c_str());
+            return;
+        }
+
+        if (type != WotLK::CHAT_MSG_EMOTE && type != WotLK::CHAT_MSG_AFK && type != WotLK::CHAT_MSG_DND)
+            packet >> lang;
+    }
 
     std::string msg, channel, to;
 
@@ -977,7 +1111,7 @@ void WorldServer::HandleMessageChat(WorldPacket& packet)
                 break;
         }
     }
-    else
+    else if (GetClientBuild() < CLIENT_BUILD_3_3_5a)
     {
         switch (type)
         {
@@ -1003,6 +1137,47 @@ void WorldServer::HandleMessageChat(WorldPacket& packet)
             case WotLK::CHAT_MSG_AFK:
             case WotLK::CHAT_MSG_DND:
                 packet >> msg;
+                break;
+            default:
+                printf("[HandleMessageChat] Error: unknown message type %u, lang: %u\n", type, lang);
+                break;
+        }
+    }
+    else
+    {
+        uint32 textLength = 0;
+        uint32 receiverLength = 0;
+
+        switch (type)
+        {
+            case WotLK::CHAT_MSG_SAY:
+            case WotLK::CHAT_MSG_EMOTE:
+            case WotLK::CHAT_MSG_YELL:
+            case WotLK::CHAT_MSG_PARTY:
+            case WotLK::CHAT_MSG_GUILD:
+            case WotLK::CHAT_MSG_OFFICER:
+            case WotLK::CHAT_MSG_RAID:
+            case WotLK::CHAT_MSG_RAID_WARNING:
+            case WotLK::CHAT_MSG_BATTLEGROUND:
+                textLength = packet.ReadBits(9);
+                msg = packet.ReadString(textLength);
+                break;
+            case WotLK::CHAT_MSG_WHISPER:
+                receiverLength = packet.ReadBits(10);
+                textLength = packet.ReadBits(9);
+                to = packet.ReadString(receiverLength);
+                msg = packet.ReadString(textLength);
+                break;
+            case WotLK::CHAT_MSG_CHANNEL:
+                receiverLength = packet.ReadBits(10);
+                textLength = packet.ReadBits(9);
+                msg = packet.ReadString(textLength);
+                channel = packet.ReadString(receiverLength);
+                break;
+            case WotLK::CHAT_MSG_AFK:
+            case WotLK::CHAT_MSG_DND:
+                textLength = packet.ReadBits(9);
+                msg = packet.ReadString(textLength);
                 break;
             default:
                 printf("[HandleMessageChat] Error: unknown message type %u, lang: %u\n", type, lang);
@@ -1154,34 +1329,80 @@ void WorldServer::HandleCastSpell(WorldPacket& packet)
     uint32 spellId = 0;
     uint8 castCount = 0;
     uint8 castFlags = 0;
+    SpellCastTargets targets;
 
-    if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+    if (GetClientBuild() < CLIENT_BUILD_3_3_5a)
     {
-        packet >> spellId;
-    }
-    else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
-    {
-        packet >> spellId;
-        packet >> castCount;
+        if (GetClientBuild() < CLIENT_BUILD_2_0_1)
+        {
+            packet >> spellId;
+        }
+        else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
+        {
+            packet >> spellId;
+            packet >> castCount;
+        }
+        else
+        {
+            packet >> castCount;
+            packet >> spellId;
+            packet >> castFlags;
+        }
+
+        packet >> targets.ReadForCaster(m_clientPlayer.get());
     }
     else
     {
+        struct MissileTrajectoryRequest
+        {
+            float Pitch = 0.0f;
+            float Speed = 0.0f;
+        };
+
+        struct SpellWeight
+        {
+            uint8 Type = 0;
+            int32 ID = 0;
+            uint32 Quantity = 0;
+        };
+
+        int32 misc = 0;
+        MissileTrajectoryRequest missileTrajectory;
+        std::unique_ptr<MovementInfo> movementInfo;
+        std::vector<SpellWeight> weights;
+
         packet >> castCount;
         packet >> spellId;
+        packet >> misc;
         packet >> castFlags;
+        packet >> targets.ReadForCaster(m_clientPlayer.get());
+
+        if (castFlags & CAST_FLAG_HAS_TRAJECTORY)
+        {
+            packet >> missileTrajectory.Pitch;
+            packet >> missileTrajectory.Speed;
+            bool hasMovementpacket = packet.read<bool>();
+            if (hasMovementpacket)
+            {
+                ObjectGuid moverGuid;
+                movementInfo = std::make_unique<MovementInfo>();
+                Cataclysm::ReadMovementInfo(packet, *movementInfo, &moverGuid, nullptr, nullptr);
+            }
+        }
+
+        if (castFlags & CAST_FLAG_HAS_WEIGHT)
+        {
+            uint32 weightCount = packet.read<uint32>();
+            weights.resize(weightCount);
+
+            for (auto& weight : weights)
+            {
+                packet >> weight.Type;
+                packet >> weight.ID;
+                packet >> weight.Quantity;
+            }
+        }
     }
-
-#ifdef WORLD_DEBUG
-    printf("\n");
-    printf("[HandleCastSpell] CMSG_CAST_SPELL data:\n");
-    printf("Spell Id: %u\n", spellId);
-    printf("Cast Count: %hhu\n", castCount);
-    printf("Cast Flags: %hhu\n", castFlags);
-    printf("\n");
-#endif
-
-    SpellCastTargets targets;
-    packet >> targets.ReadForCaster(m_clientPlayer.get());
 
     SendSpellCastStart(spellId, 0, 2, m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetObjectGuid(), targets);
     SendCastResult(spellId, 0, 0);

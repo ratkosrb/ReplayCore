@@ -86,7 +86,7 @@ public:
     void SendCreateUpdateToPlayer(Player* player);
     void SendDirectValueUpdate(uint16 index, uint16 size = 1);
     void BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) const;
-    void BuildValuesUpdate(uint8 updatetype, ByteBuffer* data, UpdateMask* updateMask, Player* target) const;
+    void BuildValuesUpdate(ByteBuffer* data, UpdateMask* updateMask, Player* target) const;
     void BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const;
     bool BuildValuesUpdateBlockForPlayer(UpdateData* data, Player* target) const;
     void BuildOutOfRangeUpdateBlock(UpdateData* data) const;
@@ -299,6 +299,10 @@ public:
     {
         return m_movementInfo.t_pos.z;
     }
+    float GetTransOffsetO() const
+    {
+        return m_movementInfo.t_pos.o;
+    }
 
     float GetDistance2D(float x, float y) const
     {
@@ -338,10 +342,19 @@ public:
     {
         m_lastPositionUpdate = moveTime;
     }
+    uint16 GetAIAnimKitId() const { return m_aiAnimKitId; }
+    void SetAIAnimKitId(uint16 animKitId);
+    uint16 GetMovementAnimKitId() const { return m_movementAnimKitId; }
+    void SetMovementAnimKitId(uint16 animKitId);
+    uint16 GetMeleeAnimKitId() const { return m_meleeAnimKitId; }
+    void SetMeleeAnimKitId(uint16 animKitId);
 protected:
     WorldLocation m_location;
     MovementInfo m_movementInfo;
     uint32 m_lastPositionUpdate = 0;
+    uint16 m_aiAnimKitId;
+    uint16 m_movementAnimKitId;
+    uint16 m_meleeAnimKitId;
 };
 
 

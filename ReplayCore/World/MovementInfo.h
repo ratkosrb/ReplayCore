@@ -24,7 +24,7 @@ class MovementInfo
 {
     public:
         MovementInfo() : moveFlags(0), moveFlags2TBC(0), moveFlags2WotLK(0), time(0), ctime(0),
-            t_time(0), t_seat(0), t_time2(0), s_pitch(0.0f), fallTime(0), splineElevation(0.0f) {}
+            t_time(0), t_seat(0), t_time2(0), t_vehicle(0), s_pitch(0.0f), fallTime(0), splineElevation(0.0f) {}
 
         // Read/Write methods
         void Read(ByteBuffer &data);
@@ -35,7 +35,9 @@ class MovementInfo
         void AddMovementFlag(uint32 f) { moveFlags |= f; }
         void RemoveMovementFlag(uint32 f) { moveFlags &= ~f; }
         bool HasMovementFlag(uint32 f) const { return (moveFlags & f) != 0; }
+        bool HasMovementFlag2(uint32 f) const { return (moveFlags2WotLK & f) != 0; }
         uint32 GetMovementFlags() const { return moveFlags; }
+        uint32 GetMovementFlags2() const { return moveFlags2WotLK; }
         void SetMovementFlags(uint32 f) { moveFlags = f; }
 
         // Position manipulations
@@ -70,22 +72,23 @@ class MovementInfo
         JumpInfo const& GetJumpInfo() const { return jump; }
     //private:
         // common
-        uint32  moveFlags;                                  // see enum MovementFlags
+        uint32 moveFlags;                                  // see enum MovementFlags
         uint8 moveFlags2TBC;                                // see enum MovementFlags2
-        uint16  moveFlags2WotLK;                            // see enum MovementFlags2
-        uint32  time;
-        uint32  ctime; // Client time
+        uint16 moveFlags2WotLK;                            // see enum MovementFlags2
+        uint32 time;
+        uint32 ctime; // Client time
         Position pos;
         // transport
         ObjectGuid t_guid;
         Position t_pos;
-        uint32  t_time;
-        int8     t_seat;
-        uint32   t_time2;
+        uint32 t_time;
+        int8 t_seat;
+        uint32 t_time2;
+        uint32 t_vehicle;
         // swimming and unknown
-        float   s_pitch;
+        float s_pitch;
         // last fall time
-        uint32  fallTime;
+        uint32 fallTime;
         // jumping
         JumpInfo jump;
         // spline

@@ -41,7 +41,7 @@ Unit::Unit(CreatureData const& unitData) : WorldObject(unitData.guid)
     assert(m_valuesCount);
     m_uint32Values = new uint32[m_valuesCount];
     memset(m_uint32Values, 0, m_valuesCount * sizeof(uint32));
-    SetUInt32Value(OBJECT_FIELD_TYPE, m_objectTypeMask);
+    SetUInt32Value(sWorld.GetUpdateField("OBJECT_FIELD_TYPE"), m_objectTypeMask);
     InitializePlaceholderUnitFields();
     unitData.InitializeCreature(this);
 }
@@ -75,6 +75,59 @@ void Unit::InitializeMoveSpeeds()
 {
     for (int i = 0; i < MAX_MOVE_TYPE_WOTLK; i++)
         m_speedRate[i] = 1.0f;
+}
+
+void Unit::GetMovementInfoForObjectUpdate(MovementInfo& mi, bool& sendSpline) const
+{
+    mi = m_movementInfo;
+    if (!mi.ctime)
+    {
+        mi.time = sWorld.GetServerTimeMs() + 1000;
+        mi.ChangePosition(GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
+    }
+
+    sendSpline = m_moveSpline.m_initialized && GetHealth() != 0;
+
+    if (sendSpline)
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        {
+            mi.AddMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
+            //if (!m_moveSpline.m_catmullrom)
+            //    mi.AddMovementFlag(Vanilla::MOVEFLAG_FORWARD);
+        }
+        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+        {
+            mi.AddMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
+            //if (!m_moveSpline.m_catmullrom)
+            //    mi.AddMovementFlag(TBC::MOVEFLAG_FORWARD);
+        }
+        else
+        {
+            mi.AddMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
+            //if (!m_moveSpline.m_catmullrom)
+            //    mi.AddMovementFlag(WotLK::MOVEFLAG_FORWARD);
+        }
+    }
+    else
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            mi.RemoveMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
+        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            mi.RemoveMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
+        else
+            mi.RemoveMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
+
+        if (GetHealth() == 0)
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                mi.RemoveMovementFlag(Vanilla::MOVEFLAG_MASK_MOVING);
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                mi.RemoveMovementFlag(TBC::MOVEFLAG_MASK_MOVING);
+            else
+                mi.RemoveMovementFlag(WotLK::MOVEFLAG_MASK_MOVING);
+        }
+    }
 }
 
 ObjectGuid Unit::GetCharmGuid() const

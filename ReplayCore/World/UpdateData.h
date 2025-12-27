@@ -28,15 +28,29 @@
 class WorldPacket;
 class WorldObject;
 
-enum ObjectUpdateType
+namespace Vanilla
 {
-    UPDATETYPE_VALUES               = 0,
-    UPDATETYPE_MOVEMENT             = 1,
-    UPDATETYPE_CREATE_OBJECT        = 2,
-    UPDATETYPE_CREATE_OBJECT2       = 3,
-    UPDATETYPE_OUT_OF_RANGE_OBJECTS,
-    UPDATETYPE_NEAR_OBJECTS
-};
+    enum ObjectUpdateType
+    {
+        UPDATETYPE_VALUES = 0,
+        UPDATETYPE_MOVEMENT = 1,
+        UPDATETYPE_CREATE_OBJECT = 2,
+        UPDATETYPE_CREATE_OBJECT2 = 3,
+        UPDATETYPE_OUT_OF_RANGE_OBJECTS = 4,
+        UPDATETYPE_NEAR_OBJECTS = 5
+    };
+}
+
+namespace Cataclysm
+{
+    enum ObjectUpdateType
+    {
+        UPDATETYPE_VALUES = 0,
+        UPDATETYPE_CREATE_OBJECT = 1,
+        UPDATETYPE_CREATE_OBJECT2 = 2,
+        UPDATETYPE_OUT_OF_RANGE_OBJECTS = 3
+    };
+}
 
 // checked for 1.12.1
 enum ObjectUpdateFlags

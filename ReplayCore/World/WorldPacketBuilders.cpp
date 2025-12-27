@@ -406,9 +406,42 @@ void WorldServer::SendUpdateAccountDataComplete(uint32 type)
 
 void WorldServer::SendFeatureSystemStatus(bool enableComplaintChat, bool enableVoiceChat)
 {
-    WorldPacket data(GetOpcode("SMSG_FEATURE_SYSTEM_STATUS"), 2);
-    data << uint8(enableComplaintChat);
-    data << uint8(enableVoiceChat);
+    WorldPacket data(GetOpcode("SMSG_FEATURE_SYSTEM_STATUS"));
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        data << uint8(enableComplaintChat);
+        data << uint8(enableVoiceChat);
+    }
+    else
+    {
+        data << uint8(2); // ComplaintStatus
+        data << uint32(1); // ScrollOfResurrectionRequestsRemaining
+        data << uint32(1); // ScrollOfResurrectionMaxRequestsPerDay
+        data << uint32(2); // CfgRealmID
+        data << uint32(0); // CfgRealmRecID
+        data.WriteBit(true); // ItemRestorationButtonEnabled
+        data.WriteBit(true); // TravelPassEnabled
+        data.WriteBit(false); // ScrollOfResurrectionEnabled
+        data.WriteBit(true); // EuropaTicketSystemStatus.has_value
+        data.WriteBit(false); // SessionAlert.has_value()
+        data.WriteBit(enableVoiceChat);
+        data.FlushBits();
+
+        // if (EuropaTicketSystemStatus)
+        {
+            data << uint32(1); // EuropaTicketSystemStatus->TryCount
+            data << uint32(0); // EuropaTicketSystemStatus->LastResetTimeBeforeNow
+            data << uint32(10); // EuropaTicketSystemStatus->MaxTries
+            data << uint32(60); // EuropaTicketSystemStatus->PerMilliseconds
+        }
+
+        //if (SessionAlert)
+        //{
+        //    data << int32(SessionAlert->Period);
+        //    data << int32(SessionAlert->Delay);
+        //    data << int32(SessionAlert->DisplayTime);
+        //}
+    }
     SendPacket(data);
 }
 
@@ -495,7 +528,7 @@ void WorldServer::SendActionButtons(uint8 raceId, uint8 classId)
 
     WorldPacket data(GetOpcode("SMSG_ACTION_BUTTONS"), (maxActionButtons * 4));
 
-    if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
+    if (GetClientBuild() >= CLIENT_BUILD_3_1_0 && GetClientBuild() <= CLIENT_BUILD_3_3_5a)
         data << uint8(0); // packet type
 
     PlayerInfo const* pInfo = sGameDataMgr.GetPlayerInfo(raceId, classId);
@@ -528,6 +561,9 @@ void WorldServer::SendActionButtons(uint8 raceId, uint8 classId)
         }
     }
 
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << uint8(0);
+
     SendPacket(data);
 }
 
@@ -538,7 +574,7 @@ void WorldServer::SendPlayerNameQueryResponse(ObjectGuid guid, char const* name,
     if (GetClientBuild() >= CLIENT_BUILD_3_1_0)
     {
         data << guid.WriteAsPacked();
-        data << uint8(0); // has result
+        data << uint8(0); // RESPONSE_SUCCESS
     }
     else
         data << guid;
@@ -568,9 +604,14 @@ void WorldServer::SendPlayerNameQueryResponse(ObjectGuid guid, char const* name,
 void WorldServer::SendPetNameQueryResponse(uint32 petNumber, char const* name, uint32 timestamp)
 {
     WorldPacket data(GetOpcode("SMSG_PET_NAME_QUERY_RESPONSE"));
+
     data << uint32(petNumber);
     data << name;
     data << uint32(timestamp);
+
+    if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
+        data << uint8(0); // name declined
+
     SendPacket(data);
 }
 
@@ -1403,6 +1444,10 @@ void WorldServer::SendQuestQueryResponse(uint32 entry)
     
     data << uint32(pQuest->GetSrcItemId());                 // source item id
     data << uint32(pQuest->GetQuestFlags());                // quest flags
+
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << uint32(0);                                  // MinimapTargetMark
+
     if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
         data << uint32(pQuest->GetCharTitleId());           // CharTitleId, new 2.4.0, player gets this title (id from CharTitles)
 
@@ -1411,7 +1456,20 @@ void WorldServer::SendQuestQueryResponse(uint32 entry)
         data << uint32(pQuest->GetPlayersSlain());          // players slain
         data << uint32(pQuest->GetBonusTalents());          // bonus talents
         data << uint32(0);                                  // bonus arena points
-        data << uint32(0);                                  // rew rep show mask?
+
+        if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        {
+            data << uint32(0);                              // RewardSkillLineID
+            data << uint32(0);                              // RewardNumSkillUps
+        }
+        
+        data << uint32(0);                                  // RewardReputationMask
+
+        if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        {
+            data << uint32(0);                              // PortraitGiver
+            data << uint32(0);                              // PortraitTurnIn
+        }
     }
 
     int iI;
@@ -1488,8 +1546,34 @@ void WorldServer::SendQuestQueryResponse(uint32 entry)
         data << uint32(pQuest->ReqItemCount[iI]);
     }
 
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << uint32(0);                                  // RequiredSpell
+
     for (iI = 0; iI < QUEST_OBJECTIVES_COUNT; ++iI)
         data << pQuest->ObjectiveText[iI];
+
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+    {
+        for (uint32 i = 0; i < QUEST_REWARD_CURRENCY_COUNT; ++i)
+        {
+            data << uint32(0);                              // RewardCurrencyID
+            data << uint32(0);                              // RewardCurrencyQty
+        }
+
+        for (uint32 i = 0; i < QUEST_REQUIRED_CURRENCY_COUNT; ++i)
+        {
+            data << uint32(0);                              // RequiredCurrencyID
+            data << uint32(0);                              // RequiredCurrencyQty
+        }
+
+        data << uint8(0);                                   // PortraitGiverText
+        data << uint8(0);                                   // PortraitGiverName;
+        data << uint8(0);                                   // PortraitTurnintext;
+        data << uint8(0);                                   // PortraitTurnInName;
+
+        data << uint32(0);                                  // AcceptedSoundKitID
+        data << uint32(0);                                  // CompleteSoundKitID
+    }
 
     SendPacket(data);
 }
@@ -1508,12 +1592,23 @@ void WorldServer::SendCreatureQueryResponse(uint32 entry)
 
     WorldPacket data(GetOpcode("SMSG_CREATURE_QUERY_RESPONSE"), 100);
     data << uint32(pCreature->entry);
+
     data << pCreature->name;
     data << uint8(0) << uint8(0) << uint8(0); // name2, name3, name4, always empty
+
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << uint8(0) << uint8(0) << uint8(0) << uint8(0); // nameAlt
+
     data << pCreature->subName;
+
     if (GetClientBuild() >= CLIENT_BUILD_2_0_1)
         data << pCreature->iconName;
+
     data << uint32(pCreature->typeFlags);
+
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << uint32(0); // typeFlags2
+
     data << uint32(pCreature->type);
     data << uint32(pCreature->family);
     data << uint32(pCreature->rank);
@@ -1556,6 +1651,9 @@ void WorldServer::SendCreatureQueryResponse(uint32 entry)
         data << uint32(pCreature->movementTemplateId);
     }
 
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << uint32(0); // RequiredExpansion
+
     SendPacket(data);
 }
 
@@ -1577,13 +1675,16 @@ void WorldServer::SendGameObjectQueryResponse(uint32 entry)
     data << uint32(pGo->displayId);
     data << pGo->name;
     data << uint8(0) << uint8(0) << uint8(0);   // name2, name3, name4
+    data << pGo->iconName;
+
     if (GetClientBuild() >= CLIENT_BUILD_2_0_3)
     {
-        data << pGo->iconName;
-        data << pGo->castBarCaption;
+        data << pGo->openingText;
+        data << pGo->closingText;
     }
-    data << pGo->unkString;                     // one more name, client handles it a bit differently
-    data.append(pGo->data, 24);                 // these are read as int32
+
+    uint32 dataFieldsCount = (GetClientBuild() > CLIENT_BUILD_3_3_5a) ? MAX_GAMEOBJECT_DATA_CATA : MAX_GAMEOBJECT_DATA_WOTLK;
+    data.append(pGo->data, dataFieldsCount); // these are read as int32
 
     if (GetClientBuild() >= CLIENT_BUILD_2_4_3)
         data << float(pGo->scale);
@@ -1596,7 +1697,10 @@ void WorldServer::SendGameObjectQueryResponse(uint32 entry)
             data << uint32(pGo->questItems[i]);
         }
     }
-    
+
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << int32(0); // RequiredLevel
+
     SendPacket(data);
 }
 
@@ -1717,6 +1821,89 @@ void WorldServer::SendLfgPlayerInfo()
     SendPacket(data);
 }
 
+void WriteCommonSpellCastPart(WorldPacket& data, uint32 castFlags, SpellCastTargets const& targets, uint32 ammoDisplayId, uint32 ammoInventoryType)
+{
+    data << targets;
+
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2)
+    {
+        if (castFlags & CAST_FLAG_PREDICTED_POWER)              // predicted power
+            data << uint32(0);
+
+        if (castFlags & CAST_FLAG_PREDICTED_RUNES)              // predicted runes
+        {
+            uint8 runeMaskInitial = 0;
+            uint8 runeMaskAfterCast = 0;
+            data << uint8(runeMaskInitial);                     // runes state before
+            data << uint8(runeMaskAfterCast);                   // runes state after
+            for (uint8 i = 0; i < 6; ++i)
+            {
+                uint8 mask = (1 << i);
+                if (mask & runeMaskInitial && (!(mask & runeMaskAfterCast)))
+                {
+                    data << uint8(0);
+                }
+            }
+        }
+
+        if (castFlags & CAST_FLAG_ADJUST_MISSILE)               // adjust missile trajectory duration
+        {
+            data << float(0);
+            data << uint32(0);
+        }
+    }
+
+    if (castFlags & CAST_FLAG_AMMO)                         // projectile info
+    {
+        data << uint32(ammoDisplayId);
+        data << uint32(ammoInventoryType);
+    }
+
+    if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2)
+    {
+        if (castFlags & CAST_FLAG_VISUAL_CHAIN)                 // spell visual chain effect
+        {
+            data << uint32(0);                                  // SpellVisual.dbc id?
+            data << uint32(0);                                  // overrides previous field if > 0 and violencelevel client cvar < 2
+        }
+
+        bool sendDestLoc = false;
+        uint32 destLocCounter = 0;
+        if (targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
+        {
+            data << uint8(0); // The value increase for each time, can remind of a cast count for the spell
+        }
+
+        if (targets.m_targetMask & TARGET_FLAG_VISUAL_CHAIN)  // probably used (or can be used) with CAST_FLAG_VISUAL_CHAIN flag
+        {
+            data << uint32(0);                                  // count
+
+            // for(int = 0; i < count; ++i)
+            //{
+            //    // position and guid?
+            //    data << float(0) << float(0) << float(0) << uint64(0);
+            //}
+        }
+    }
+
+    if (sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a)
+    {
+        if (castFlags & CAST_FLAG_IMMUNITY)
+        {
+            data << int32(0);                                   // School
+            data << int32(0);                                   // Value
+        }
+
+        if (castFlags & CAST_FLAG_HEAL_PREDICTION)
+        {
+            data << int32(0);                                   // Points
+            data << uint8(0);                                   // Type
+            //if (predict.Type == SPELL_HEAL_PREDICTION_TARGET_AND_BEACON)
+            //    data << predict.BeaconGUID->WriteAsPacked();
+        }
+    }
+}
+
 void WorldServer::SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, WorldObject const* pTarget, uint32 ammoDisplayId, uint32 ammoInventoryType)
 {
     SpellCastTargets targets;
@@ -1750,16 +1937,13 @@ void WorldServer::SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 cas
         data << uint8(0); // cast count
         data << uint32(spellId);
         data << uint32(castFlags);
+        if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+            data << uint32(0); // castFlags2
     }
 
     data << uint32(castTime);
-    data << targets;
 
-    if (castFlags & CAST_FLAG_AMMO)                         // projectile info
-    {
-        data << uint32(ammoDisplayId);
-        data << uint32(ammoInventoryType);
-    }
+    WriteCommonSpellCastPart(data, castFlags, targets, ammoDisplayId, ammoInventoryType);
 
     SendPacket(data);
 }
@@ -1946,6 +2130,8 @@ void WorldServer::SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid c
         data << uint8(0); // cast count
         data << uint32(spellId);
         data << uint32(castFlags);
+        if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+            data << uint32(0); // castFlags2
         data << uint32(GetServerTimeMs());
     }
 
@@ -1960,70 +2146,11 @@ void WorldServer::SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid c
     {
         data << itr.first;
         data << uint8(itr.second);
+        if (itr.second == SPELL_MISS_REFLECT)
+            data << uint8(0); // ReflectStatus
     }
 
-    data << targets;
-
-    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
-    {
-        if (castFlags & CAST_FLAG_PREDICTED_POWER)              // predicted power
-            data << uint32(0);
-
-        if (castFlags & CAST_FLAG_PREDICTED_RUNES)              // predicted runes
-        {
-            uint8 runeMaskInitial = 0;
-            uint8 runeMaskAfterCast = 0;
-            data << uint8(runeMaskInitial);                     // runes state before
-            data << uint8(runeMaskAfterCast);                   // runes state after
-            for (uint8 i = 0; i < 6; ++i)
-            {
-                uint8 mask = (1 << i);
-                if (mask & runeMaskInitial && (!(mask & runeMaskAfterCast)))
-                {
-                    data << uint8(0);
-                }
-            }
-        }
-
-        if (castFlags & CAST_FLAG_ADJUST_MISSILE)               // adjust missile trajectory duration
-        {
-            data << float(0);
-            data << uint32(0);
-        }
-    }
-
-    if (castFlags & CAST_FLAG_AMMO)                         // projectile info
-    {
-        data << uint32(ammoDisplayId);
-        data << uint32(ammoInventoryType);
-    }
-
-    if (GetClientBuild() >= CLIENT_BUILD_3_0_2)
-    {
-        if (castFlags & CAST_FLAG_VISUAL_CHAIN)                 // spell visual chain effect
-        {
-            data << uint32(0);                                  // SpellVisual.dbc id?
-            data << uint32(0);                                  // overrides previous field if > 0 and violencelevel client cvar < 2
-        }
-
-        bool sendDestLoc = false;
-        uint32 destLocCounter = 0;
-        if (targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
-        {
-            data << uint8(0); // The value increase for each time, can remind of a cast count for the spell
-        }
-
-        if (targets.m_targetMask & TARGET_FLAG_VISUAL_CHAIN)  // probably used (or can be used) with CAST_FLAG_VISUAL_CHAIN flag
-        {
-            data << uint32(0);                                  // count
-
-            // for(int = 0; i < count; ++i)
-            //{
-            //    // position and guid?
-            //    data << float(0) << float(0) << float(0) << uint64(0);
-            //}
-        }
-    }
+    WriteCommonSpellCastPart(data, castFlags, targets, ammoDisplayId, ammoInventoryType);
 
     SendPacket(data);
 }
@@ -2170,7 +2297,6 @@ void WorldServer::SendInitialWorldStates(std::map<uint32, uint32> worldStates)
         data << uint32(itr.first);
         data << uint32(itr.second);
     }
-    data << uint32(0) << uint32(0);     // [-ZERO] Add terminator to prevent repeating audio bug.
     SendPacket(data);
 }
 

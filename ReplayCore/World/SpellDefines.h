@@ -14,9 +14,9 @@ enum SpellCastFlags
 {
     CAST_FLAG_NONE              = 0x00000000,
     CAST_FLAG_HIDDEN_COMBATLOG  = 0x00000001,               // hide in combat log?
-    CAST_FLAG_UNKNOWN2          = 0x00000002,
+    CAST_FLAG_HAS_TRAJECTORY    = 0x00000002,
     CAST_FLAG_UNKNOWN3          = 0x00000004,
-    CAST_FLAG_UNKNOWN4          = 0x00000008,
+    CAST_FLAG_HAS_WEIGHT        = 0x00000008,
     CAST_FLAG_PERSISTENT_AA     = 0x00000010,               // Spell has Persistent AA effect
     CAST_FLAG_AMMO              = 0x00000020,               // Projectiles visual
     CAST_FLAG_UNKNOWN7          = 0x00000040,               // !0x41 mask used to call CGTradeSkillInfo::DoRecast
@@ -35,7 +35,12 @@ enum SpellCastFlags
     CAST_FLAG_VISUAL_CHAIN      = 0x00080000,               // wotlk
     CAST_FLAG_UNKNOWN21         = 0x00100000,
     CAST_FLAG_PREDICTED_RUNES   = 0x00200000,               // wotlk, rune cooldown list
-    CAST_FLAG_IMMUNITY          = 0x04000000                // spell cast school imminity info
+    CAST_FLAG_IMMUNITY          = 0x04000000,               // spell cast school imminity info
+    CAST_FLAG_UNKNOWN_28        = 0x08000000,
+    CAST_FLAG_UNKNOWN_29        = 0x10000000,
+    CAST_FLAG_UNKNOWN_30        = 0x20000000,
+    CAST_FLAG_HEAL_PREDICTION   = 0x40000000,
+    CAST_FLAG_UNKNOWN_32        = 0x80000000
 };
 
 enum SpellMissInfo
@@ -516,7 +521,7 @@ namespace WotLK
         AFLAG_NO_CASTER         = 0x08,
         AFLAG_POSITIVE          = 0x10,
         AFLAG_DURATION          = 0x20,
-        AFLAG_UNK2              = 0x40,
+        AFLAG_SCALABLE          = 0x40,
         AFLAG_NEGATIVE          = 0x80
     };
 

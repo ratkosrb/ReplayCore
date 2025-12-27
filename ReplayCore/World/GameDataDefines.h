@@ -315,7 +315,8 @@ struct CreatureTemplate
     uint32 movementTemplateId = 0;
 };
 
-#define MAX_GAMEOBJECT_DATA 24
+#define MAX_GAMEOBJECT_DATA_WOTLK 24
+#define MAX_GAMEOBJECT_DATA_CATA 32
 #define MAX_GAMEOBJECT_QUEST_ITEMS 6
 
 struct GameObjectTemplate
@@ -326,9 +327,9 @@ struct GameObjectTemplate
     float scale = 1.0f;
     std::string name;
     std::string iconName;
-    std::string castBarCaption;
-    std::string unkString;
-    uint32 data[MAX_GAMEOBJECT_DATA] = {};
+    std::string openingText;
+    std::string closingText;
+    uint32 data[MAX_GAMEOBJECT_DATA_CATA] = {};
     uint32 questItems[MAX_GAMEOBJECT_QUEST_ITEMS] = {};
 };
 
