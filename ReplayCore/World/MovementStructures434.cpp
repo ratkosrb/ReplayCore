@@ -5583,38 +5583,38 @@ uint16 CMSG_MOVE_KNOCK_BACK_ACK;
 uint16 CMSG_MOVE_SET_CAN_FLY;
 uint16 CMSG_MOVE_SET_CAN_FLY_ACK;
 uint16 CMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY_ACK;
-uint16 CMSG_MOVE_SET_COLLISION_HEIGHT_ACK;
-uint16 SMSG_MOVE_SET_COLLISION_HEIGHT;
-uint16 SMSG_MOVE_UPDATE_COLLISION_HEIGHT;
+uint16 CMSG_MOVE_SET_COLLISION_HGT_ACK;
+uint16 SMSG_MOVE_SET_COLLISION_HGT;
+uint16 MSG_MOVE_SET_COLLISION_HGT;
 uint16 CMSG_MOVE_WATER_WALK_ACK;
 uint16 MSG_MOVE_SET_RUN_MODE;
 uint16 MSG_MOVE_SET_WALK_MODE;
 uint16 SMSG_MOVE_UPDATE;
-uint16 SMSG_MOVE_UPDATE_FLIGHT_SPEED;
-uint16 SMSG_MOVE_UPDATE_RUN_SPEED;
-uint16 SMSG_MOVE_UPDATE_KNOCK_BACK;
-uint16 SMSG_MOVE_UPDATE_RUN_BACK_SPEED;
-uint16 SMSG_MOVE_UPDATE_SWIM_SPEED;
-uint16 SMSG_MOVE_UPDATE_SWIM_BACK_SPEED;
-uint16 SMSG_MOVE_UPDATE_WALK_SPEED;
-uint16 SMSG_SPLINE_MOVE_SET_WALK_SPEED;
-uint16 SMSG_SPLINE_MOVE_SET_RUN_SPEED;
-uint16 SMSG_SPLINE_MOVE_SET_RUN_BACK_SPEED;
-uint16 SMSG_SPLINE_MOVE_SET_SWIM_SPEED;
-uint16 SMSG_SPLINE_MOVE_SET_SWIM_BACK_SPEED;
-uint16 SMSG_SPLINE_MOVE_SET_TURN_RATE;
-uint16 SMSG_SPLINE_MOVE_SET_FLIGHT_SPEED;
-uint16 SMSG_SPLINE_MOVE_SET_FLIGHT_BACK_SPEED;
-uint16 SMSG_SPLINE_MOVE_SET_PITCH_RATE;
-uint16 SMSG_MOVE_SET_WALK_SPEED;
-uint16 SMSG_MOVE_SET_RUN_SPEED;
-uint16 SMSG_MOVE_SET_RUN_BACK_SPEED;
-uint16 SMSG_MOVE_SET_SWIM_SPEED;
-uint16 SMSG_MOVE_SET_SWIM_BACK_SPEED;
-uint16 SMSG_MOVE_SET_TURN_RATE;
-uint16 SMSG_MOVE_SET_FLIGHT_SPEED;
-uint16 SMSG_MOVE_SET_FLIGHT_BACK_SPEED;
-uint16 SMSG_MOVE_SET_PITCH_RATE;
+uint16 MSG_MOVE_SET_FLIGHT_SPEED;
+uint16 MSG_MOVE_SET_RUN_SPEED;
+uint16 MSG_MOVE_KNOCK_BACK;
+uint16 MSG_MOVE_SET_RUN_BACK_SPEED;
+uint16 MSG_MOVE_SET_SWIM_SPEED;
+uint16 MSG_MOVE_SET_SWIM_BACK_SPEED;
+uint16 MSG_MOVE_SET_WALK_SPEED;
+uint16 SMSG_SPLINE_SET_WALK_SPEED;
+uint16 SMSG_SPLINE_SET_RUN_SPEED;
+uint16 SMSG_SPLINE_SET_RUN_BACK_SPEED;
+uint16 SMSG_SPLINE_SET_SWIM_SPEED;
+uint16 SMSG_SPLINE_SET_SWIM_BACK_SPEED;
+uint16 SMSG_SPLINE_SET_TURN_RATE;
+uint16 SMSG_SPLINE_SET_FLIGHT_SPEED;
+uint16 SMSG_SPLINE_SET_FLIGHT_BACK_SPEED;
+uint16 SMSG_SPLINE_SET_PITCH_RATE;
+uint16 SMSG_FORCE_WALK_SPEED_CHANGE;
+uint16 SMSG_FORCE_RUN_SPEED_CHANGE;
+uint16 SMSG_FORCE_RUN_BACK_SPEED_CHANGE;
+uint16 SMSG_FORCE_SWIM_SPEED_CHANGE;
+uint16 SMSG_FORCE_SWIM_BACK_SPEED_CHANGE;
+uint16 SMSG_FORCE_TURN_RATE_CHANGE;
+uint16 SMSG_FORCE_FLIGHT_SPEED_CHANGE;
+uint16 SMSG_FORCE_FLIGHT_BACK_SPEED_CHANGE;
+uint16 SMSG_FORCE_PITCH_RATE_CHANGE;
 uint16 SMSG_SPLINE_MOVE_SET_WALK_MODE;
 uint16 SMSG_SPLINE_MOVE_SET_RUN_MODE;
 uint16 SMSG_SPLINE_MOVE_GRAVITY_DISABLE;
@@ -5647,7 +5647,7 @@ uint16 CMSG_PET_CAST_SPELL;
 uint16 CMSG_USE_ITEM;
 uint16 SMSG_MOVE_GRAVITY_DISABLE;
 uint16 SMSG_MOVE_GRAVITY_ENABLE;
-uint16 SMSG_MOVE_UPDATE_FLIGHT_BACK_SPEED;
+uint16 MSG_MOVE_SET_FLIGHT_BACK_SPEED;
 uint16 SMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY;
 uint16 SMSG_MOVE_UNSET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY;
 
@@ -5697,38 +5697,38 @@ void CacheMovementOpcodes()
     CMSG_MOVE_SET_CAN_FLY = Opcodes::GetOpcodeValue("CMSG_MOVE_SET_CAN_FLY", sWorld.GetClientBuild());
     CMSG_MOVE_SET_CAN_FLY_ACK = Opcodes::GetOpcodeValue("CMSG_MOVE_SET_CAN_FLY_ACK", sWorld.GetClientBuild());
     CMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY_ACK = Opcodes::GetOpcodeValue("CMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY_ACK", sWorld.GetClientBuild());
-    CMSG_MOVE_SET_COLLISION_HEIGHT_ACK = Opcodes::GetOpcodeValue("CMSG_MOVE_SET_COLLISION_HEIGHT_ACK", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_COLLISION_HEIGHT = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_COLLISION_HEIGHT", sWorld.GetClientBuild());
-    SMSG_MOVE_UPDATE_COLLISION_HEIGHT = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE_COLLISION_HEIGHT", sWorld.GetClientBuild());
+    CMSG_MOVE_SET_COLLISION_HGT_ACK = Opcodes::GetOpcodeValue("CMSG_MOVE_SET_COLLISION_HGT_ACK", sWorld.GetClientBuild());
+    SMSG_MOVE_SET_COLLISION_HGT = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_COLLISION_HGT", sWorld.GetClientBuild());
+    MSG_MOVE_SET_COLLISION_HGT = Opcodes::GetOpcodeValue("MSG_MOVE_SET_COLLISION_HGT", sWorld.GetClientBuild());
     CMSG_MOVE_WATER_WALK_ACK = Opcodes::GetOpcodeValue("CMSG_MOVE_WATER_WALK_ACK", sWorld.GetClientBuild());
     MSG_MOVE_SET_RUN_MODE = Opcodes::GetOpcodeValue("MSG_MOVE_SET_RUN_MODE", sWorld.GetClientBuild());
     MSG_MOVE_SET_WALK_MODE = Opcodes::GetOpcodeValue("MSG_MOVE_SET_WALK_MODE", sWorld.GetClientBuild());
     SMSG_MOVE_UPDATE = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE", sWorld.GetClientBuild());
-    SMSG_MOVE_UPDATE_FLIGHT_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE_FLIGHT_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_UPDATE_RUN_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE_RUN_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_UPDATE_KNOCK_BACK = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE_KNOCK_BACK", sWorld.GetClientBuild());
-    SMSG_MOVE_UPDATE_RUN_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE_RUN_BACK_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_UPDATE_SWIM_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE_SWIM_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_UPDATE_SWIM_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE_SWIM_BACK_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_UPDATE_WALK_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE_WALK_SPEED", sWorld.GetClientBuild());
-    SMSG_SPLINE_MOVE_SET_WALK_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_WALK_SPEED", sWorld.GetClientBuild());
-    SMSG_SPLINE_MOVE_SET_RUN_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_RUN_SPEED", sWorld.GetClientBuild());
-    SMSG_SPLINE_MOVE_SET_RUN_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_RUN_BACK_SPEED", sWorld.GetClientBuild());
-    SMSG_SPLINE_MOVE_SET_SWIM_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_SWIM_SPEED", sWorld.GetClientBuild());
-    SMSG_SPLINE_MOVE_SET_SWIM_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_SWIM_BACK_SPEED", sWorld.GetClientBuild());
-    SMSG_SPLINE_MOVE_SET_TURN_RATE = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_TURN_RATE", sWorld.GetClientBuild());
-    SMSG_SPLINE_MOVE_SET_FLIGHT_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_FLIGHT_SPEED", sWorld.GetClientBuild());
-    SMSG_SPLINE_MOVE_SET_FLIGHT_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_FLIGHT_BACK_SPEED", sWorld.GetClientBuild());
-    SMSG_SPLINE_MOVE_SET_PITCH_RATE = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_PITCH_RATE", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_WALK_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_WALK_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_RUN_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_RUN_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_RUN_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_RUN_BACK_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_SWIM_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_SWIM_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_SWIM_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_SWIM_BACK_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_TURN_RATE = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_TURN_RATE", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_FLIGHT_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_FLIGHT_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_FLIGHT_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_FLIGHT_BACK_SPEED", sWorld.GetClientBuild());
-    SMSG_MOVE_SET_PITCH_RATE = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_PITCH_RATE", sWorld.GetClientBuild());
+    MSG_MOVE_SET_FLIGHT_SPEED = Opcodes::GetOpcodeValue("MSG_MOVE_SET_FLIGHT_SPEED", sWorld.GetClientBuild());
+    MSG_MOVE_SET_RUN_SPEED = Opcodes::GetOpcodeValue("MSG_MOVE_SET_RUN_SPEED", sWorld.GetClientBuild());
+    MSG_MOVE_KNOCK_BACK = Opcodes::GetOpcodeValue("MSG_MOVE_KNOCK_BACK", sWorld.GetClientBuild());
+    MSG_MOVE_SET_RUN_BACK_SPEED = Opcodes::GetOpcodeValue("MSG_MOVE_SET_RUN_BACK_SPEED", sWorld.GetClientBuild());
+    MSG_MOVE_SET_SWIM_SPEED = Opcodes::GetOpcodeValue("MSG_MOVE_SET_SWIM_SPEED", sWorld.GetClientBuild());
+    MSG_MOVE_SET_SWIM_BACK_SPEED = Opcodes::GetOpcodeValue("MSG_MOVE_SET_SWIM_BACK_SPEED", sWorld.GetClientBuild());
+    MSG_MOVE_SET_WALK_SPEED = Opcodes::GetOpcodeValue("MSG_MOVE_SET_WALK_SPEED", sWorld.GetClientBuild());
+    SMSG_SPLINE_SET_WALK_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_SET_WALK_SPEED", sWorld.GetClientBuild());
+    SMSG_SPLINE_SET_RUN_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_SET_RUN_SPEED", sWorld.GetClientBuild());
+    SMSG_SPLINE_SET_RUN_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_SET_RUN_BACK_SPEED", sWorld.GetClientBuild());
+    SMSG_SPLINE_SET_SWIM_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_SET_SWIM_SPEED", sWorld.GetClientBuild());
+    SMSG_SPLINE_SET_SWIM_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_SET_SWIM_BACK_SPEED", sWorld.GetClientBuild());
+    SMSG_SPLINE_SET_TURN_RATE = Opcodes::GetOpcodeValue("SMSG_SPLINE_SET_TURN_RATE", sWorld.GetClientBuild());
+    SMSG_SPLINE_SET_FLIGHT_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_SET_FLIGHT_SPEED", sWorld.GetClientBuild());
+    SMSG_SPLINE_SET_FLIGHT_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_SPLINE_SET_FLIGHT_BACK_SPEED", sWorld.GetClientBuild());
+    SMSG_SPLINE_SET_PITCH_RATE = Opcodes::GetOpcodeValue("SMSG_SPLINE_SET_PITCH_RATE", sWorld.GetClientBuild());
+    SMSG_FORCE_WALK_SPEED_CHANGE = Opcodes::GetOpcodeValue("SMSG_FORCE_WALK_SPEED_CHANGE", sWorld.GetClientBuild());
+    SMSG_FORCE_RUN_SPEED_CHANGE = Opcodes::GetOpcodeValue("SMSG_FORCE_RUN_SPEED_CHANGE", sWorld.GetClientBuild());
+    SMSG_FORCE_RUN_BACK_SPEED_CHANGE = Opcodes::GetOpcodeValue("SMSG_FORCE_RUN_BACK_SPEED_CHANGE", sWorld.GetClientBuild());
+    SMSG_FORCE_SWIM_SPEED_CHANGE = Opcodes::GetOpcodeValue("SMSG_FORCE_SWIM_SPEED_CHANGE", sWorld.GetClientBuild());
+    SMSG_FORCE_SWIM_BACK_SPEED_CHANGE = Opcodes::GetOpcodeValue("SMSG_FORCE_SWIM_BACK_SPEED_CHANGE", sWorld.GetClientBuild());
+    SMSG_FORCE_TURN_RATE_CHANGE = Opcodes::GetOpcodeValue("SMSG_FORCE_TURN_RATE_CHANGE", sWorld.GetClientBuild());
+    SMSG_FORCE_FLIGHT_SPEED_CHANGE = Opcodes::GetOpcodeValue("SMSG_FORCE_FLIGHT_SPEED_CHANGE", sWorld.GetClientBuild());
+    SMSG_FORCE_FLIGHT_BACK_SPEED_CHANGE = Opcodes::GetOpcodeValue("SMSG_FORCE_FLIGHT_BACK_SPEED_CHANGE", sWorld.GetClientBuild());
+    SMSG_FORCE_PITCH_RATE_CHANGE = Opcodes::GetOpcodeValue("SMSG_FORCE_PITCH_RATE_CHANGE", sWorld.GetClientBuild());
     SMSG_SPLINE_MOVE_SET_WALK_MODE = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_WALK_MODE", sWorld.GetClientBuild());
     SMSG_SPLINE_MOVE_SET_RUN_MODE = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_SET_RUN_MODE", sWorld.GetClientBuild());
     SMSG_SPLINE_MOVE_GRAVITY_DISABLE = Opcodes::GetOpcodeValue("SMSG_SPLINE_MOVE_GRAVITY_DISABLE", sWorld.GetClientBuild());
@@ -5761,7 +5761,7 @@ void CacheMovementOpcodes()
     CMSG_USE_ITEM = Opcodes::GetOpcodeValue("CMSG_USE_ITEM", sWorld.GetClientBuild());
     SMSG_MOVE_GRAVITY_DISABLE = Opcodes::GetOpcodeValue("SMSG_MOVE_GRAVITY_DISABLE", sWorld.GetClientBuild());
     SMSG_MOVE_GRAVITY_ENABLE = Opcodes::GetOpcodeValue("SMSG_MOVE_GRAVITY_ENABLE", sWorld.GetClientBuild());
-    SMSG_MOVE_UPDATE_FLIGHT_BACK_SPEED = Opcodes::GetOpcodeValue("SMSG_MOVE_UPDATE_FLIGHT_BACK_SPEED", sWorld.GetClientBuild());
+    MSG_MOVE_SET_FLIGHT_BACK_SPEED = Opcodes::GetOpcodeValue("MSG_MOVE_SET_FLIGHT_BACK_SPEED", sWorld.GetClientBuild());
     SMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY = Opcodes::GetOpcodeValue("SMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY", sWorld.GetClientBuild());
     SMSG_MOVE_UNSET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY = Opcodes::GetOpcodeValue("SMSG_MOVE_UNSET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY", sWorld.GetClientBuild());
 }
@@ -5863,11 +5863,11 @@ MovementStatusElements const* Cataclysm::GetMovementStatusElementsSequence(uint3
         return MovementSetCanFlyAck;
     if (opcode == CMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY_ACK)
         return MovementSetCanTransitionBetweenSwimAndFlyAck;
-    if (opcode == CMSG_MOVE_SET_COLLISION_HEIGHT_ACK)
+    if (opcode == CMSG_MOVE_SET_COLLISION_HGT_ACK)
         return MovementSetCollisionHeightAck;
-    if (opcode == SMSG_MOVE_SET_COLLISION_HEIGHT)
+    if (opcode == SMSG_MOVE_SET_COLLISION_HGT)
         return MovementSetCollisionHeight;
-    if (opcode == SMSG_MOVE_UPDATE_COLLISION_HEIGHT)
+    if (opcode == MSG_MOVE_SET_COLLISION_HGT)
         return MovementUpdateCollisionHeight;
     if (opcode == CMSG_MOVE_WATER_WALK_ACK)
         return MovementWaterWalkAck;
@@ -5877,55 +5877,55 @@ MovementStatusElements const* Cataclysm::GetMovementStatusElementsSequence(uint3
         return MovementSetWalkMode;
     if (opcode == SMSG_MOVE_UPDATE)
         return MovementUpdate;
-    if (opcode == SMSG_MOVE_UPDATE_FLIGHT_SPEED)
+    if (opcode == MSG_MOVE_SET_FLIGHT_SPEED)
         return MovementUpdateFlightSpeed;
-    if (opcode == SMSG_MOVE_UPDATE_RUN_SPEED)
+    if (opcode == MSG_MOVE_SET_RUN_SPEED)
         return MovementUpdateRunSpeed;
-    if (opcode == SMSG_MOVE_UPDATE_KNOCK_BACK)
+    if (opcode == MSG_MOVE_KNOCK_BACK)
         return MovementUpdateKnockBack;
-    if (opcode == SMSG_MOVE_UPDATE_RUN_BACK_SPEED)
+    if (opcode == MSG_MOVE_SET_RUN_BACK_SPEED)
         return MovementUpdateRunBackSpeed;
-    if (opcode == SMSG_MOVE_UPDATE_SWIM_SPEED)
+    if (opcode == MSG_MOVE_SET_SWIM_SPEED)
         return MovementUpdateSwimSpeed;
-    if (opcode == SMSG_MOVE_UPDATE_SWIM_BACK_SPEED)
+    if (opcode == MSG_MOVE_SET_SWIM_BACK_SPEED)
         return MoveUpdateSwimBackSpeed;
-    if (opcode == SMSG_MOVE_UPDATE_WALK_SPEED)
+    if (opcode == MSG_MOVE_SET_WALK_SPEED)
         return MovementUpdateWalkSpeed;
-    if (opcode == SMSG_SPLINE_MOVE_SET_WALK_SPEED)
+    if (opcode == SMSG_SPLINE_SET_WALK_SPEED)
         return SplineMoveSetWalkSpeed;
-    if (opcode == SMSG_SPLINE_MOVE_SET_RUN_SPEED)
+    if (opcode == SMSG_SPLINE_SET_RUN_SPEED)
         return SplineMoveSetRunSpeed;
-    if (opcode == SMSG_SPLINE_MOVE_SET_RUN_BACK_SPEED)
+    if (opcode == SMSG_SPLINE_SET_RUN_BACK_SPEED)
         return SplineMoveSetRunBackSpeed;
-    if (opcode == SMSG_SPLINE_MOVE_SET_SWIM_SPEED)
+    if (opcode == SMSG_SPLINE_SET_SWIM_SPEED)
         return SplineMoveSetSwimSpeed;
-    if (opcode == SMSG_SPLINE_MOVE_SET_SWIM_BACK_SPEED)
+    if (opcode == SMSG_SPLINE_SET_SWIM_BACK_SPEED)
         return SplineMoveSetSwimBackSpeed;
-    if (opcode == SMSG_SPLINE_MOVE_SET_TURN_RATE)
+    if (opcode == SMSG_SPLINE_SET_TURN_RATE)
         return SplineMoveSetTurnRate;
-    if (opcode == SMSG_SPLINE_MOVE_SET_FLIGHT_SPEED)
+    if (opcode == SMSG_SPLINE_SET_FLIGHT_SPEED)
         return SplineMoveSetFlightSpeed;
-    if (opcode == SMSG_SPLINE_MOVE_SET_FLIGHT_BACK_SPEED)
+    if (opcode == SMSG_SPLINE_SET_FLIGHT_BACK_SPEED)
         return SplineMoveSetFlightBackSpeed;
-    if (opcode == SMSG_SPLINE_MOVE_SET_PITCH_RATE)
+    if (opcode == SMSG_SPLINE_SET_PITCH_RATE)
         return SplineMoveSetPitchRate;
-    if (opcode == SMSG_MOVE_SET_WALK_SPEED)
+    if (opcode == SMSG_FORCE_WALK_SPEED_CHANGE)
         return MoveSetWalkSpeed;
-    if (opcode == SMSG_MOVE_SET_RUN_SPEED)
+    if (opcode == SMSG_FORCE_RUN_SPEED_CHANGE)
         return MoveSetRunSpeed;
-    if (opcode == SMSG_MOVE_SET_RUN_BACK_SPEED)
+    if (opcode == SMSG_FORCE_RUN_BACK_SPEED_CHANGE)
         return MoveSetRunBackSpeed;
-    if (opcode == SMSG_MOVE_SET_SWIM_SPEED)
+    if (opcode == SMSG_FORCE_SWIM_SPEED_CHANGE)
         return MoveSetSwimSpeed;
-    if (opcode == SMSG_MOVE_SET_SWIM_BACK_SPEED)
+    if (opcode == SMSG_FORCE_SWIM_BACK_SPEED_CHANGE)
         return MoveSetSwimBackSpeed;
-    if (opcode == SMSG_MOVE_SET_TURN_RATE)
+    if (opcode == SMSG_FORCE_TURN_RATE_CHANGE)
         return MoveSetTurnRate;
-    if (opcode == SMSG_MOVE_SET_FLIGHT_SPEED)
+    if (opcode == SMSG_FORCE_FLIGHT_SPEED_CHANGE)
         return MoveSetFlightSpeed;
-    if (opcode == SMSG_MOVE_SET_FLIGHT_BACK_SPEED)
+    if (opcode == SMSG_FORCE_FLIGHT_BACK_SPEED_CHANGE)
         return MoveSetFlightBackSpeed;
-    if (opcode == SMSG_MOVE_SET_PITCH_RATE)
+    if (opcode == SMSG_FORCE_PITCH_RATE_CHANGE)
         return MoveSetPitchRate;
     if (opcode == SMSG_SPLINE_MOVE_SET_WALK_MODE)
         return SplineMoveSetWalkMode;
@@ -5987,7 +5987,7 @@ MovementStatusElements const* Cataclysm::GetMovementStatusElementsSequence(uint3
         return MoveGravityDisable;
     if (opcode == SMSG_MOVE_GRAVITY_ENABLE)
         return MoveGravityEnable;
-    if (opcode == SMSG_MOVE_UPDATE_FLIGHT_BACK_SPEED)
+    if (opcode == MSG_MOVE_SET_FLIGHT_BACK_SPEED)
         return MoveUpdateFlightBackSpeed;
     if (opcode == SMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY)
         return MoveSetCanTransitionBetweenSwimAndFly;
@@ -5997,12 +5997,12 @@ MovementStatusElements const* Cataclysm::GetMovementStatusElementsSequence(uint3
     return nullptr;
 }
 
-void Cataclysm::ReadMovementInfo(WorldPacket& data, MovementInfo& mi, ObjectGuid* guid, uint32* movementCounter, ExtraMovementStatusElement* extras)
+void Cataclysm::ReadMovementPacket(WorldPacket& data, MovementInfo* mi, ObjectGuid* guid, uint32* movementCounter, ExtraMovementStatusElement* extras)
 {
     MovementStatusElements const* sequence = GetMovementStatusElementsSequence(data.GetOpcode());
     if (!sequence)
     {
-        printf("[ERROR] Cataclysm::ReadMovementInfo: No movement sequence found for opcode %s", Opcodes::GetOpcodeName(data.GetOpcode(), sWorld.GetClientBuild()).c_str());
+        printf("[ERROR] Cataclysm::ReadMovementPacket: No movement sequence found for opcode %s", Opcodes::GetOpcodeName(data.GetOpcode(), sWorld.GetClientBuild()).c_str());
         return;
     }
 
@@ -6034,7 +6034,7 @@ void Cataclysm::ReadMovementInfo(WorldPacket& data, MovementInfo& mi, ObjectGuid
             case MSEHasGuidByte5:
             case MSEHasGuidByte6:
             case MSEHasGuidByte7:
-                guid[element - MSEHasGuidByte0] = data.ReadBit();
+                (*guid)[element - MSEHasGuidByte0] = data.ReadBit();
                 break;
             case MSEHasTransportGuidByte0:
             case MSEHasTransportGuidByte1:
@@ -6112,88 +6112,88 @@ void Cataclysm::ReadMovementInfo(WorldPacket& data, MovementInfo& mi, ObjectGuid
                 break;
             case MSEMovementFlags:
                 if (hasMovementFlags)
-                    mi.moveFlags = data.ReadBits(30);
+                    mi->moveFlags = data.ReadBits(30);
                 break;
             case MSEMovementFlags2:
                 if (hasMovementFlags2)
-                    mi.moveFlags2WotLK = data.ReadBits(12);
+                    mi->moveFlags2WotLK = data.ReadBits(12);
                 break;
             case MSETimestamp:
                 if (hasTimestamp)
-                    data >> mi.time;
+                    data >> mi->time;
                 break;
             case MSEPositionX:
-                data >> mi.pos.x;
+                data >> mi->pos.x;
                 break;
             case MSEPositionY:
-                data >> mi.pos.y;
+                data >> mi->pos.y;
                 break;
             case MSEPositionZ:
-                data >> mi.pos.z;
+                data >> mi->pos.z;
                 break;
             case MSEOrientation:
                 if (hasOrientation)
-                    mi.pos.o = data.read<float>();
+                    mi->pos.o = data.read<float>();
                 break;
             case MSETransportPositionX:
                 if (hasTransportData)
-                    data >> mi.t_pos.x;
+                    data >> mi->t_pos.x;
                 break;
             case MSETransportPositionY:
                 if (hasTransportData)
-                    data >> mi.t_pos.y;
+                    data >> mi->t_pos.y;
                 break;
             case MSETransportPositionZ:
                 if (hasTransportData)
-                    data >> mi.t_pos.z;
+                    data >> mi->t_pos.z;
                 break;
             case MSETransportOrientation:
                 if (hasTransportData)
-                    mi.t_pos.o = data.read<float>();
+                    mi->t_pos.o = data.read<float>();
                 break;
             case MSETransportSeat:
                 if (hasTransportData)
-                    data >> mi.t_seat;
+                    data >> mi->t_seat;
                 break;
             case MSETransportTime:
                 if (hasTransportData)
-                    data >> mi.t_time;
+                    data >> mi->t_time;
                 break;
             case MSETransportTime2:
                 if (hasTransportData && hasTransportTime2)
-                    data >> mi.t_time2;
+                    data >> mi->t_time2;
                 break;
             case MSETransportVehicleId:
                 if (hasTransportData && hasTransportVehicleId)
-                    data >> mi.t_vehicle;
+                    data >> mi->t_vehicle;
                 break;
             case MSEPitch:
                 if (hasPitch)
-                    data >> mi.s_pitch;
+                    data >> mi->s_pitch;
                 break;
             case MSEFallTime:
                 if (hasFallData)
-                    data >> mi.fallTime;
+                    data >> mi->fallTime;
                 break;
             case MSEFallVerticalSpeed:
                 if (hasFallData)
-                    data >> mi.jump.zspeed;
+                    data >> mi->jump.zspeed;
                 break;
             case MSEFallCosAngle:
                 if (hasFallData && hasFallDirection)
-                    data >> mi.jump.cosAngle;
+                    data >> mi->jump.cosAngle;
                 break;
             case MSEFallSinAngle:
                 if (hasFallData && hasFallDirection)
-                    data >> mi.jump.sinAngle;
+                    data >> mi->jump.sinAngle;
                 break;
             case MSEFallHorizontalSpeed:
                 if (hasFallData && hasFallDirection)
-                    data >> mi.jump.xyspeed;
+                    data >> mi->jump.xyspeed;
                 break;
             case MSESplineElevation:
                 if (hasSplineElevation)
-                    data >> mi.splineElevation;
+                    data >> mi->splineElevation;
                 break;
             case MSECounter:
                 data >> *movementCounter;
@@ -6206,38 +6206,39 @@ void Cataclysm::ReadMovementInfo(WorldPacket& data, MovementInfo& mi, ObjectGuid
                 extras->ReadNextElement(data);
                 break;
             default:
-                printf("[ERROR] Cataclysm::ReadMovementInfo Incorrect sequence element %u detected", element);
+                printf("[ERROR] Cataclysm::ReadMovementPacket Incorrect sequence element %u detected", element);
                 break;
         }
     }
 
-    mi.t_guid = tguid;
+    if (mi)
+        mi->t_guid = tguid;
 }
 
-void Cataclysm::WriteMovementInfo(WorldPacket& data, MovementInfo& mi, ObjectGuid* guid, uint32* movementCounter, ExtraMovementStatusElement* extras)
+void Cataclysm::WriteMovementPacket(WorldPacket& data, MovementInfo const* mi, ObjectGuid const* guid, uint32 const* movementCounter, ExtraMovementStatusElement* extras)
 {
-    bool hasMovementFlags = mi.moveFlags != 0;
-    bool hasMovementFlags2 = mi.moveFlags2WotLK != 0;
+    bool hasMovementFlags = mi && mi->moveFlags != 0;
+    bool hasMovementFlags2 = mi && mi->moveFlags2WotLK != 0;
     bool hasTimestamp = true;
-    bool hasOrientation = mi.pos.o != 0;
-    bool hasTransportData = !mi.t_guid.IsEmpty();
-    bool hasSpline = mi.moveFlags & WotLK::MOVEFLAG_SPLINE_ENABLED;
+    bool hasOrientation = mi && mi->pos.o != 0;
+    bool hasTransportData = mi && !mi->t_guid.IsEmpty();
+    bool hasSpline = mi && mi->HasMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
 
-    bool hasTransportTime2 = hasTransportData && mi.t_time2 != 0;
-    bool hasTransportVehicleId = hasTransportData && mi.t_vehicle != 0;
-    bool hasPitch = mi.HasMovementFlag(WotLK::MOVEFLAG_SWIMMING | WotLK::MOVEFLAG_FLYING) || mi.HasMovementFlag2(WotLK::MOVEFLAG2_ALLOW_PITCHING);
-    bool hasFallDirection = mi.HasMovementFlag(WotLK::MOVEFLAG_FALLING);
-    bool hasFallData = hasFallDirection || mi.fallTime != 0;
-    bool hasSplineElevation = mi.HasMovementFlag(WotLK::MOVEFLAG_SPLINE_ELEVATION);
+    bool hasTransportTime2 = hasTransportData && mi->t_time2 != 0;
+    bool hasTransportVehicleId = hasTransportData && mi->t_vehicle != 0;
+    bool hasPitch = mi && (mi->HasMovementFlag(WotLK::MOVEFLAG_SWIMMING | WotLK::MOVEFLAG_FLYING) || mi->HasMovementFlag2(WotLK::MOVEFLAG2_ALLOW_PITCHING));
+    bool hasFallDirection = mi && mi->HasMovementFlag(WotLK::MOVEFLAG_FALLING);
+    bool hasFallData = hasFallDirection || mi && mi->fallTime != 0;
+    bool hasSplineElevation = mi && mi->HasMovementFlag(WotLK::MOVEFLAG_SPLINE_ELEVATION);
 
     MovementStatusElements const* sequence = GetMovementStatusElementsSequence(data.GetOpcode());
     if (!sequence)
     {
-        printf("[ERROR] Cataclysm::WriteMovementInfo: No movement sequence found for opcode %s", Opcodes::GetOpcodeName(data.GetOpcode(), sWorld.GetClientBuild()).c_str());
+        printf("[ERROR] Cataclysm::WriteMovementPacket: No movement sequence found for opcode %s", Opcodes::GetOpcodeName(data.GetOpcode(), sWorld.GetClientBuild()).c_str());
         return;
     }
 
-    ObjectGuid tguid = mi.t_guid;
+    ObjectGuid tguid = mi ? mi->t_guid : ObjectGuid();
 
     for (; *sequence != MSEEnd; ++sequence)
     {
@@ -6245,193 +6246,193 @@ void Cataclysm::WriteMovementInfo(WorldPacket& data, MovementInfo& mi, ObjectGui
 
         switch (element)
         {
-        case MSEHasGuidByte0:
-        case MSEHasGuidByte1:
-        case MSEHasGuidByte2:
-        case MSEHasGuidByte3:
-        case MSEHasGuidByte4:
-        case MSEHasGuidByte5:
-        case MSEHasGuidByte6:
-        case MSEHasGuidByte7:
-            data.WriteBit(guid[element - MSEHasGuidByte0]);
-            break;
-        case MSEHasTransportGuidByte0:
-        case MSEHasTransportGuidByte1:
-        case MSEHasTransportGuidByte2:
-        case MSEHasTransportGuidByte3:
-        case MSEHasTransportGuidByte4:
-        case MSEHasTransportGuidByte5:
-        case MSEHasTransportGuidByte6:
-        case MSEHasTransportGuidByte7:
-            if (hasTransportData)
-                data.WriteBit(tguid[element - MSEHasTransportGuidByte0]);
-            break;
-        case MSEGuidByte0:
-        case MSEGuidByte1:
-        case MSEGuidByte2:
-        case MSEGuidByte3:
-        case MSEGuidByte4:
-        case MSEGuidByte5:
-        case MSEGuidByte6:
-        case MSEGuidByte7:
-            data.WriteByteSeq(guid[element - MSEGuidByte0]);
-            break;
-        case MSETransportGuidByte0:
-        case MSETransportGuidByte1:
-        case MSETransportGuidByte2:
-        case MSETransportGuidByte3:
-        case MSETransportGuidByte4:
-        case MSETransportGuidByte5:
-        case MSETransportGuidByte6:
-        case MSETransportGuidByte7:
-            if (hasTransportData)
-                data.WriteByteSeq(tguid[element - MSETransportGuidByte0]);
-            break;
-        case MSEHasMovementFlags:
-            data.WriteBit(!hasMovementFlags);
-            break;
-        case MSEHasMovementFlags2:
-            data.WriteBit(!hasMovementFlags2);
-            break;
-        case MSEHasTimestamp:
-            data.WriteBit(!hasTimestamp);
-            break;
-        case MSEHasOrientation:
-            data.WriteBit(!hasOrientation);
-            break;
-        case MSEHasTransportData:
-            data.WriteBit(hasTransportData);
-            break;
-        case MSEHasTransportTime2:
-            if (hasTransportData)
-                data.WriteBit(hasTransportTime2);
-            break;
-        case MSEHasVehicleId:
-            if (hasTransportData)
-                data.WriteBit(hasTransportVehicleId);
-            break;
-        case MSEHasPitch:
-            data.WriteBit(!hasPitch);
-            break;
-        case MSEHasFallData:
-            data.WriteBit(hasFallData);
-            break;
-        case MSEHasFallDirection:
-            if (hasFallData)
-                data.WriteBit(hasFallDirection);
-            break;
-        case MSEHasSplineElevation:
-            data.WriteBit(!hasSplineElevation);
-            break;
-        case MSEHasSpline:
-            data.WriteBit(hasSpline);
-            break;
-        case MSEHasHeightChangeFailed:
-            data.WriteBit(0);
-            break;
-        case MSEMovementFlags:
-            if (hasMovementFlags)
-                data.WriteBits(mi.moveFlags, 30);
-            break;
-        case MSEMovementFlags2:
-            if (hasMovementFlags2)
-                data.WriteBits(mi.moveFlags2WotLK, 12);
-            break;
-        case MSETimestamp:
-            if (hasTimestamp)
-                data << mi.time;
-            break;
-        case MSEPositionX:
-            data << mi.pos.x;
-            break;
-        case MSEPositionY:
-            data << mi.pos.y;
-            break;
-        case MSEPositionZ:
-            data << mi.pos.z;
-            break;
-        case MSEOrientation:
-            if (hasOrientation)
-                data << mi.pos.o;
-            break;
-        case MSETransportPositionX:
-            if (hasTransportData)
-                data << mi.t_pos.x;
-            break;
-        case MSETransportPositionY:
-            if (hasTransportData)
-                data << mi.t_pos.y;
-            break;
-        case MSETransportPositionZ:
-            if (hasTransportData)
-                data << mi.t_pos.z;
-            break;
-        case MSETransportOrientation:
-            if (hasTransportData)
-                data << mi.t_pos.o;
-            break;
-        case MSETransportSeat:
-            if (hasTransportData)
-                data << mi.t_seat;
-            break;
-        case MSETransportTime:
-            if (hasTransportData)
-                data << mi.t_time;
-            break;
-        case MSETransportTime2:
-            if (hasTransportData && hasTransportTime2)
-                data << mi.t_time2;
-            break;
-        case MSETransportVehicleId:
-            if (hasTransportData && hasTransportVehicleId)
-                data << mi.t_vehicle;
-            break;
-        case MSEPitch:
-            if (hasPitch)
-                data << mi.s_pitch;
-            break;
-        case MSEFallTime:
-            if (hasFallData)
-                data << mi.fallTime;
-            break;
-        case MSEFallVerticalSpeed:
-            if (hasFallData)
-                data << mi.jump.zspeed;
-            break;
-        case MSEFallCosAngle:
-            if (hasFallData && hasFallDirection)
-                data << mi.jump.cosAngle;
-            break;
-        case MSEFallSinAngle:
-            if (hasFallData && hasFallDirection)
-                data << mi.jump.sinAngle;
-            break;
-        case MSEFallHorizontalSpeed:
-            if (hasFallData && hasFallDirection)
-                data << mi.jump.xyspeed;
-            break;
-        case MSESplineElevation:
-            if (hasSplineElevation)
-                data << mi.splineElevation;
-            break;
-        case MSECounter:
-            data << uint32(movementCounter ? *movementCounter : 0);
-            break;
-        case MSEZeroBit:
-            data.WriteBit(0);
-            break;
-        case MSEOneBit:
-            data.WriteBit(1);
-            break;
-        case MSEFlushBits:
-            data.FlushBits();
-            break;
-        case MSEExtraElement:
-            extras->WriteNextElement(data);
-            break;
-        default:
-            printf("[ERROR] Cataclysm::WriteMovementInfo Incorrect sequence element %u detected", element);
-            break;
+            case MSEHasGuidByte0:
+            case MSEHasGuidByte1:
+            case MSEHasGuidByte2:
+            case MSEHasGuidByte3:
+            case MSEHasGuidByte4:
+            case MSEHasGuidByte5:
+            case MSEHasGuidByte6:
+            case MSEHasGuidByte7:
+                data.WriteBit((*guid)[element - MSEHasGuidByte0]);
+                break;
+            case MSEHasTransportGuidByte0:
+            case MSEHasTransportGuidByte1:
+            case MSEHasTransportGuidByte2:
+            case MSEHasTransportGuidByte3:
+            case MSEHasTransportGuidByte4:
+            case MSEHasTransportGuidByte5:
+            case MSEHasTransportGuidByte6:
+            case MSEHasTransportGuidByte7:
+                if (hasTransportData)
+                    data.WriteBit(tguid[element - MSEHasTransportGuidByte0]);
+                break;
+            case MSEGuidByte0:
+            case MSEGuidByte1:
+            case MSEGuidByte2:
+            case MSEGuidByte3:
+            case MSEGuidByte4:
+            case MSEGuidByte5:
+            case MSEGuidByte6:
+            case MSEGuidByte7:
+                data.WriteByteSeq((*guid)[element - MSEGuidByte0]);
+                break;
+            case MSETransportGuidByte0:
+            case MSETransportGuidByte1:
+            case MSETransportGuidByte2:
+            case MSETransportGuidByte3:
+            case MSETransportGuidByte4:
+            case MSETransportGuidByte5:
+            case MSETransportGuidByte6:
+            case MSETransportGuidByte7:
+                if (hasTransportData)
+                    data.WriteByteSeq(tguid[element - MSETransportGuidByte0]);
+                break;
+            case MSEHasMovementFlags:
+                data.WriteBit(!hasMovementFlags);
+                break;
+            case MSEHasMovementFlags2:
+                data.WriteBit(!hasMovementFlags2);
+                break;
+            case MSEHasTimestamp:
+                data.WriteBit(!hasTimestamp);
+                break;
+            case MSEHasOrientation:
+                data.WriteBit(!hasOrientation);
+                break;
+            case MSEHasTransportData:
+                data.WriteBit(hasTransportData);
+                break;
+            case MSEHasTransportTime2:
+                if (hasTransportData)
+                    data.WriteBit(hasTransportTime2);
+                break;
+            case MSEHasVehicleId:
+                if (hasTransportData)
+                    data.WriteBit(hasTransportVehicleId);
+                break;
+            case MSEHasPitch:
+                data.WriteBit(!hasPitch);
+                break;
+            case MSEHasFallData:
+                data.WriteBit(hasFallData);
+                break;
+            case MSEHasFallDirection:
+                if (hasFallData)
+                    data.WriteBit(hasFallDirection);
+                break;
+            case MSEHasSplineElevation:
+                data.WriteBit(!hasSplineElevation);
+                break;
+            case MSEHasSpline:
+                data.WriteBit(hasSpline);
+                break;
+            case MSEHasHeightChangeFailed:
+                data.WriteBit(0);
+                break;
+            case MSEMovementFlags:
+                if (hasMovementFlags)
+                    data.WriteBits(mi->moveFlags, 30);
+                break;
+            case MSEMovementFlags2:
+                if (hasMovementFlags2)
+                    data.WriteBits(mi->moveFlags2WotLK, 12);
+                break;
+            case MSETimestamp:
+                if (hasTimestamp)
+                    data << mi->time;
+                break;
+            case MSEPositionX:
+                data << mi->pos.x;
+                break;
+            case MSEPositionY:
+                data << mi->pos.y;
+                break;
+            case MSEPositionZ:
+                data << mi->pos.z;
+                break;
+            case MSEOrientation:
+                if (hasOrientation)
+                    data << mi->pos.o;
+                break;
+            case MSETransportPositionX:
+                if (hasTransportData)
+                    data << mi->t_pos.x;
+                break;
+            case MSETransportPositionY:
+                if (hasTransportData)
+                    data << mi->t_pos.y;
+                break;
+            case MSETransportPositionZ:
+                if (hasTransportData)
+                    data << mi->t_pos.z;
+                break;
+            case MSETransportOrientation:
+                if (hasTransportData)
+                    data << mi->t_pos.o;
+                break;
+            case MSETransportSeat:
+                if (hasTransportData)
+                    data << mi->t_seat;
+                break;
+            case MSETransportTime:
+                if (hasTransportData)
+                    data << mi->t_time;
+                break;
+            case MSETransportTime2:
+                if (hasTransportData && hasTransportTime2)
+                    data << mi->t_time2;
+                break;
+            case MSETransportVehicleId:
+                if (hasTransportData && hasTransportVehicleId)
+                    data << mi->t_vehicle;
+                break;
+            case MSEPitch:
+                if (hasPitch)
+                    data << mi->s_pitch;
+                break;
+            case MSEFallTime:
+                if (hasFallData)
+                    data << mi->fallTime;
+                break;
+            case MSEFallVerticalSpeed:
+                if (hasFallData)
+                    data << mi->jump.zspeed;
+                break;
+            case MSEFallCosAngle:
+                if (hasFallData && hasFallDirection)
+                    data << mi->jump.cosAngle;
+                break;
+            case MSEFallSinAngle:
+                if (hasFallData && hasFallDirection)
+                    data << mi->jump.sinAngle;
+                break;
+            case MSEFallHorizontalSpeed:
+                if (hasFallData && hasFallDirection)
+                    data << mi->jump.xyspeed;
+                break;
+            case MSESplineElevation:
+                if (hasSplineElevation)
+                    data << mi->splineElevation;
+                break;
+            case MSECounter:
+                data << uint32(movementCounter ? *movementCounter : 0);
+                break;
+            case MSEZeroBit:
+                data.WriteBit(0);
+                break;
+            case MSEOneBit:
+                data.WriteBit(1);
+                break;
+            case MSEFlushBits:
+                data.FlushBits();
+                break;
+            case MSEExtraElement:
+                extras->WriteNextElement(data);
+                break;
+            default:
+                printf("[ERROR] Cataclysm::WriteMovementPacket Incorrect sequence element %u detected", element);
+                break;
         }
     }
 }

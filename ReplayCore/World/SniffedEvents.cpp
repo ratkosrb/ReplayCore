@@ -3720,7 +3720,7 @@ void SniffedEvent_SpellCastStart::Execute() const
         sWorld.SendChatPacket(say, text.c_str(), 0, 0, m_casterGuid, m_casterGuid.GetName().c_str());
     }
     
-    sWorld.SendSpellCastStart(m_spellId, m_castTime, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_ammoDisplayId, m_ammoInventoryType);
+    sWorld.SendSpellCastStart(m_spellId, 0, m_castTime, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_ammoDisplayId, m_ammoInventoryType);
 }
 
 std::string SniffedEvent_SpellCastStart::GetShortDescription() const
@@ -3909,7 +3909,7 @@ void SniffedEvent_SpellCastGo::Execute() const
         sWorld.SendChatPacket(say, text.c_str(), 0, 0, m_casterGuid, m_casterGuid.GetName().c_str());
     }
 
-    sWorld.SendSpellCastGo(m_spellId, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_hitTargets, m_missTargets, m_ammoDisplayId, m_ammoInventoryType);
+    sWorld.SendSpellCastGo(m_spellId, 0, m_castFlags, m_casterGuid, m_casterUnitGuid, targets, m_hitTargets, m_missTargets, m_ammoDisplayId, m_ammoInventoryType);
 }
 
 std::string SniffedEvent_SpellCastGo::GetShortDescription() const

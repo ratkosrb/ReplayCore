@@ -9,6 +9,7 @@
 #include "SpellCastTargets.h"
 #include "SpellDefines.h"
 #include "Aura.h"
+#include "MovementStructures434.h"
 
 #ifdef min
 #undef min
@@ -849,7 +850,7 @@ void WorldServer::SendMotd()
 void WorldServer::SendTimeSyncRequest()
 {
     WorldPacket data(GetOpcode("SMSG_TIME_SYNC_REQ"), 4);
-    data << uint32(0); // couner
+    data << uint32(0); // counter
     SendPacket(data);
 }
 
@@ -1105,18 +1106,36 @@ void WorldServer::TeleportClient(WorldLocation const& location)
 void WorldServer::SendTransferPending(uint32 mapId)
 {
     WorldPacket data(GetOpcode("SMSG_TRANSFER_PENDING"), 4);
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+    {
+        data.WriteBit(false); // TransferSpellID.has_value()
+        data.WriteBit(false); // Ship.has_value()
+    }
     data << uint32(mapId);
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data.FlushBits();
     SendPacket(data);
 }
 
 void WorldServer::SendNewWorld(WorldLocation const& location)
 {
     WorldPacket data(GetOpcode("SMSG_NEW_WORLD"), 20);
-    data << uint32(location.mapId);
-    data << float(location.x);
-    data << float(location.y);
-    data << float(location.z);
-    data << float(location.o);
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        data << uint32(location.mapId);
+        data << float(location.x);
+        data << float(location.y);
+        data << float(location.z);
+        data << float(location.o);
+    }
+    else
+    {
+        data << float(location.x);
+        data << float(location.o);
+        data << float(location.z);
+        data << uint32(location.mapId);
+        data << float(location.y);
+    }
     SendPacket(data);
 }
 
@@ -1131,12 +1150,87 @@ void WorldServer::SendMoveTeleportAck(float x, float y, float z, float o)
     MovementInfo mi = m_clientPlayer->GetMovementInfo();
     mi.UpdateTime(sWorld.GetServerTimeMs());
     mi.ChangePosition(x, y, z, o);
+    ++m_sessionData.movementCounter;
 
-    WorldPacket data(GetOpcode("MSG_MOVE_TELEPORT_ACK"), 41);
-    data << m_clientPlayer->GetPackGUID();
-    data << m_sessionData.movementCounter;
-    data << mi;
-    SendPacket(data);
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        WorldPacket data(GetOpcode("MSG_MOVE_TELEPORT_ACK"), 41);
+        data << m_clientPlayer->GetPackGUID();
+        data << m_sessionData.movementCounter;
+        data << mi;
+        SendPacket(data);
+    }
+    else
+    {
+        WorldPacket data(GetOpcode("MSG_MOVE_TELEPORT"), 12 + 4 + 8 + 8 + 4);
+        data.WriteBit(m_clientPlayer->GetObjectGuid()[6]);
+        data.WriteBit(m_clientPlayer->GetObjectGuid()[0]);
+        data.WriteBit(m_clientPlayer->GetObjectGuid()[3]);
+        data.WriteBit(m_clientPlayer->GetObjectGuid()[2]);
+        
+        data.WriteBit(m_clientPlayer->m_vehicleId != 0);
+        if (m_clientPlayer->m_vehicleId != 0)
+        {
+            data.WriteBit(true); // VehicleExitVoluntary
+            data.WriteBit(true); // VehicleExitTeleport
+        }
+        
+        data.WriteBit(!m_clientPlayer->GetTransportGuid().IsEmpty());
+        data.WriteBit(m_clientPlayer->GetObjectGuid()[1]);
+
+        if (!m_clientPlayer->GetTransportGuid().IsEmpty())
+        {
+            ObjectGuid transGUID = m_clientPlayer->GetTransportGuid();
+            data.WriteBit(transGUID[1]);
+            data.WriteBit(transGUID[3]);
+            data.WriteBit(transGUID[2]);
+            data.WriteBit(transGUID[5]);
+            data.WriteBit(transGUID[0]);
+            data.WriteBit(transGUID[7]);
+            data.WriteBit(transGUID[6]);
+            data.WriteBit(transGUID[4]);
+        }
+
+        data.WriteBit(m_clientPlayer->GetObjectGuid()[4]);
+        data.WriteBit(m_clientPlayer->GetObjectGuid()[7]);
+        data.WriteBit(m_clientPlayer->GetObjectGuid()[5]);
+
+        data.FlushBits();
+
+        if (!m_clientPlayer->GetTransportGuid().IsEmpty())
+        {
+            ObjectGuid transGUID = m_clientPlayer->GetTransportGuid();
+            data.WriteByteSeq(transGUID[5]);
+            data.WriteByteSeq(transGUID[6]);
+            data.WriteByteSeq(transGUID[1]);
+            data.WriteByteSeq(transGUID[7]);
+            data.WriteByteSeq(transGUID[0]);
+            data.WriteByteSeq(transGUID[2]);
+            data.WriteByteSeq(transGUID[4]);
+            data.WriteByteSeq(transGUID[3]);
+        }
+
+        data << uint32(m_sessionData.movementCounter);
+        data.WriteByteSeq(m_clientPlayer->GetObjectGuid()[1]);
+        data.WriteByteSeq(m_clientPlayer->GetObjectGuid()[2]);
+        data.WriteByteSeq(m_clientPlayer->GetObjectGuid()[3]);
+        data.WriteByteSeq(m_clientPlayer->GetObjectGuid()[5]);
+        data << float(x);
+        data.WriteByteSeq(m_clientPlayer->GetObjectGuid()[4]);
+        data << float(o);
+        data.WriteByteSeq(m_clientPlayer->GetObjectGuid()[7]);
+        data << float(z);
+
+        if (m_clientPlayer->m_vehicleId != 0)
+            data << uint32(0); // VehicleSeatIndex
+
+        data.WriteByteSeq(m_clientPlayer->GetObjectGuid()[0]);
+        data.WriteByteSeq(m_clientPlayer->GetObjectGuid()[6]);
+
+        data << float(y);
+        SendPacket(data);
+    }
+    
 }
 
 void WorldServer::SendPacketsBeforeAddToMap(Player const* pPlayer)
@@ -1295,6 +1389,7 @@ void WorldServer::SendChatPacket(uint32 msgtype, char const* message, uint32 lan
         const bool isGM = false;
         bool isAchievement = false;
         uint32 achievementId = 0;
+        std::string addonPrefix;
 
         data.Initialize(isGM ? GetOpcode("SMSG_GM_MESSAGECHAT") : GetOpcode("SMSG_MESSAGECHAT"));
         data << uint8(msgtype);
@@ -1355,6 +1450,10 @@ void WorldServer::SendChatPacket(uint32 msgtype, char const* message, uint32 lan
                 data << ObjectGuid(targetGuid);
                 break;
         }
+
+        if (GetClientBuild() > CLIENT_BUILD_3_3_5a && language == LANG_ADDON)
+            data << addonPrefix;
+
         assert(message);
         data << uint32(strlen(message) + 1);
         data << message;
@@ -1362,6 +1461,11 @@ void WorldServer::SendChatPacket(uint32 msgtype, char const* message, uint32 lan
 
         if (isAchievement)
             data << uint32(achievementId);
+        else if (GetClientBuild() > CLIENT_BUILD_3_3_5a && (msgtype == WotLK::CHAT_MSG_RAID_BOSS_WHISPER || msgtype == WotLK::CHAT_MSG_RAID_BOSS_EMOTE))
+        {
+            data << float(0.0f);                        // Display time in middle of the screen (in seconds), defaults to 10 if not set (cannot be below 1)
+            data << uint8(0);                           // Hide in chat frame (only shows in middle of the screen)
+        }
     }
     SendPacket(data);
 }
@@ -1727,10 +1831,22 @@ void WorldServer::SendSetSpeed(Unit const* pUnit, uint32 moveType, float speed)
 
     if (uint16 opcode = GetOpcode(moveTypeToSetSpeedOpcode[moveType]))
     {
-        WorldPacket data(opcode, 8 + 4);
-        data << pUnit->GetPackGUID();
-        data << pUnit->GetMovementInfo();
-        data << float(speed);
+        WorldPacket data(opcode);
+        if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+        {
+            data << pUnit->GetPackGUID();
+            data << pUnit->GetMovementInfo();
+            data << float(speed);
+        }
+        else
+        {
+            static MovementStatusElements const speedVal = MSEExtraFloat;
+            Cataclysm::ExtraMovementStatusElement extra(&speedVal);
+            extra.Data.floatData = speed;
+
+            ObjectGuid moverGuid = pUnit->GetObjectGuid();
+            Cataclysm::WriteMovementPacket(data, &pUnit->GetMovementInfo(), &moverGuid, nullptr, &extra);
+        }
         SendPacket(data);
     }
 }
@@ -1758,34 +1874,75 @@ void WorldServer::SendSplineSetSpeed(ObjectGuid guid, uint32 moveType, float spe
 
     if (uint16 opcode = GetOpcode(moveTypeToSplineSetSpeedOpcode[moveType]))
     {
-        WorldPacket data(opcode, 8 + 4);
-        data << guid.WriteAsPacked();
-        data << float(speed);
+        WorldPacket data(opcode);
+        if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+        {
+            data << guid.WriteAsPacked();
+            data << float(speed);
+        }
+        else
+        {
+            static MovementStatusElements const speedVal = MSEExtraFloat;
+            Cataclysm::ExtraMovementStatusElement extra(&speedVal);
+            extra.Data.floatData = speed;
+
+            Cataclysm::WriteMovementPacket(data, nullptr, &guid, nullptr, &extra);
+        }
         SendPacket(data);
     }
 }
 
 void WorldServer::SendMovementPacket(Unit* pUnit, uint16 opcode)
 {
-    WorldPacket data(opcode);
-    data << pUnit->GetPackGUID();
-    data << pUnit->GetMovementInfo();
+    WorldPacket data;
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        data.Initialize(opcode);
+        data << pUnit->GetPackGUID();
+        data << pUnit->GetMovementInfo();
+    }
+    else
+    {
+        if (uint16 moveUpdate = GetOpcode("SMSG_MOVE_UPDATE"))
+            opcode = moveUpdate;
+        data.Initialize(opcode);
+        ObjectGuid moverGuid = pUnit->GetObjectGuid();
+        Cataclysm::WriteMovementPacket(data, &pUnit->GetMovementInfo(), &moverGuid, nullptr, nullptr);
+    }
     SendPacket(data);
 }
 
 void WorldServer::SendMoveSetCanFly(Unit* pUnit)
 {
     WorldPacket data(GetOpcode("SMSG_MOVE_SET_CAN_FLY"), 12);
-    data << pUnit->GetPackGUID();
-    data << uint32(0); // movement counter
+    ++m_sessionData.movementCounter;
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        data << pUnit->GetPackGUID();
+        data << uint32(m_sessionData.movementCounter);
+    }
+    else
+    {
+        ObjectGuid moverGuid = pUnit->GetObjectGuid();
+        Cataclysm::WriteMovementPacket(data, &pUnit->GetMovementInfo(), &moverGuid, &m_sessionData.movementCounter, nullptr);
+    }
     SendPacket(data);
 }
 
 void WorldServer::SendMoveUnsetCanFly(Unit* pUnit)
 {
     WorldPacket data(GetOpcode("SMSG_MOVE_UNSET_CAN_FLY"), 12);
-    data << pUnit->GetPackGUID();
-    data << uint32(0); // movement counter
+    ++m_sessionData.movementCounter;
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        data << pUnit->GetPackGUID();
+        data << uint32(m_sessionData.movementCounter);
+    }
+    else
+    {
+        ObjectGuid moverGuid = pUnit->GetObjectGuid();
+        Cataclysm::WriteMovementPacket(data, &pUnit->GetMovementInfo(), &moverGuid, &m_sessionData.movementCounter, nullptr);
+    }
     SendPacket(data);
 }
 
@@ -1904,7 +2061,7 @@ void WriteCommonSpellCastPart(WorldPacket& data, uint32 castFlags, SpellCastTarg
     }
 }
 
-void WorldServer::SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, WorldObject const* pTarget, uint32 ammoDisplayId, uint32 ammoInventoryType)
+void WorldServer::SendSpellCastStart(uint32 spellId, uint8 castCount, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, WorldObject const* pTarget, uint32 ammoDisplayId, uint32 ammoInventoryType)
 {
     SpellCastTargets targets;
     if (Unit const* pUnitTarget = pTarget->ToUnit())
@@ -1912,10 +2069,10 @@ void WorldServer::SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 cas
     else if (GameObject const* pGoTarget = pTarget->ToGameObject())
         targets.setGOTarget(pGoTarget);
 
-    SendSpellCastStart(spellId, castTime, castFlags, casterGuid, unitCasterGuid, targets, ammoDisplayId, ammoInventoryType);
+    SendSpellCastStart(spellId, castCount, castTime, castFlags, casterGuid, unitCasterGuid, targets, ammoDisplayId, ammoInventoryType);
 }
 
-void WorldServer::SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, uint32 ammoDisplayId, uint32 ammoInventoryType)
+void WorldServer::SendSpellCastStart(uint32 spellId, uint8 castCount, uint32 castTime, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, uint32 ammoDisplayId, uint32 ammoInventoryType)
 {
     WorldPacket data(GetOpcode("SMSG_SPELL_START"), (8 + 8 + 4 + 2 + 4));
     data << casterGuid.WriteAsPacked();
@@ -1929,12 +2086,12 @@ void WorldServer::SendSpellCastStart(uint32 spellId, uint32 castTime, uint32 cas
     else if (GetClientBuild() < CLIENT_BUILD_3_0_2)
     {
         data << uint32(spellId);
-        data << uint8(0); // cast count
+        data << uint8(castCount);
         data << uint16(castFlags);
     }
     else
     {
-        data << uint8(0); // cast count
+        data << uint8(castCount);
         data << uint32(spellId);
         data << uint32(castFlags);
         if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
@@ -2108,7 +2265,7 @@ void WorldServer::SendCastResult(uint32 spellId, uint32 result, uint32 reason)
     }
 }
 
-void WorldServer::SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<std::pair<ObjectGuid, uint8>> const& vHitTargets, std::vector<std::pair<ObjectGuid, uint8>> const& vMissTargets, uint32 ammoDisplayId, uint32 ammoInventoryType)
+void WorldServer::SendSpellCastGo(uint32 spellId, uint8 castCount, uint32 castFlags, ObjectGuid casterGuid, ObjectGuid unitCasterGuid, SpellCastTargets const& targets, std::vector<std::pair<ObjectGuid, uint8>> const& vHitTargets, std::vector<std::pair<ObjectGuid, uint8>> const& vMissTargets, uint32 ammoDisplayId, uint32 ammoInventoryType)
 {
     WorldPacket data(GetOpcode("SMSG_SPELL_GO"), 53);
     data << casterGuid.WriteAsPacked();
@@ -2127,7 +2284,7 @@ void WorldServer::SendSpellCastGo(uint32 spellId, uint32 castFlags, ObjectGuid c
     }
     else
     {
-        data << uint8(0); // cast count
+        data << uint8(castCount);
         data << uint32(spellId);
         data << uint32(castFlags);
         if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
@@ -2305,6 +2462,8 @@ void WorldServer::SendWorldStateUpdate(uint32 variable, uint32 value)
     WorldPacket data(GetOpcode("SMSG_UPDATE_WORLD_STATE"), 4 + 4);
     data << uint32(variable);
     data << uint32(value);
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << uint8(0); // hidden
     SendPacket(data);
 }
 

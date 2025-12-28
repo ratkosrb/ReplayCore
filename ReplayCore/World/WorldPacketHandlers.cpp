@@ -841,7 +841,7 @@ void WorldServer::HandleMovementPacket(WorldPacket& packet)
     }
     else
     {
-        Cataclysm::ReadMovementInfo(packet, movementInfo, &guid, nullptr, nullptr);
+        Cataclysm::ReadMovementPacket(packet, &movementInfo, &guid, nullptr, nullptr);
     }
     
     m_clientPlayer->SetMovementInfo(movementInfo);
@@ -1386,7 +1386,7 @@ void WorldServer::HandleCastSpell(WorldPacket& packet)
             {
                 ObjectGuid moverGuid;
                 movementInfo = std::make_unique<MovementInfo>();
-                Cataclysm::ReadMovementInfo(packet, *movementInfo, &moverGuid, nullptr, nullptr);
+                Cataclysm::ReadMovementPacket(packet, movementInfo.get(), &moverGuid, nullptr, nullptr);
             }
         }
 
@@ -1404,7 +1404,17 @@ void WorldServer::HandleCastSpell(WorldPacket& packet)
         }
     }
 
-    SendSpellCastStart(spellId, 0, 2, m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetObjectGuid(), targets);
+#ifdef WORLD_DEBUG
+    printf("\n");
+    printf("[HandleCastSpell] CMSG_CAST_SPELL data:\n");
+    printf("Spell Id: %u\n", spellId);
+    printf("Cast Count: %u\n", castCount);
+    printf("Cast Flags: %u\n", castFlags);
+    printf("Target: %s\n", targets.getUnitTargetGuid().GetString().c_str());
+    printf("\n");
+#endif
+
+    SendSpellCastStart(spellId, castCount, 0, 2, m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetObjectGuid(), targets);
     SendCastResult(spellId, 0, 0);
 
     std::vector<std::pair<ObjectGuid, uint8>> vHitTargets;
@@ -1417,7 +1427,7 @@ void WorldServer::HandleCastSpell(WorldPacket& packet)
         vHitTargets.push_back({ m_clientPlayer->GetObjectGuid(), 0 });
 
     std::vector<std::pair<ObjectGuid, uint8>> vMissTargets;
-    SendSpellCastGo(spellId, 256, m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetObjectGuid(), targets, vHitTargets, vMissTargets);
+    SendSpellCastGo(spellId, castCount, 256, m_clientPlayer->GetObjectGuid(), m_clientPlayer->GetObjectGuid(), targets, vHitTargets, vMissTargets);
 }
 
 void WorldServer::HandleAttackStop(WorldPacket& packet)
