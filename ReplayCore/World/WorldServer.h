@@ -312,6 +312,7 @@ private:
     void HandleZoneUpdate(WorldPacket& packet);
     void HandleTaxiNodeStatusQuery(WorldPacket& packet);
     void HandleCompleteCinematic(WorldPacket& packet);
+    void HandleObjectUpdateFailed(WorldPacket& packet);
 public:
     // Packet Building
     void SendAuthChallenge();

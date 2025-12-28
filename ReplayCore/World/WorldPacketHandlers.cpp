@@ -101,6 +101,7 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_ZONEUPDATE", &WorldServer::HandleZoneUpdate);
     SetOpcodeHandler("CMSG_TAXINODE_STATUS_QUERY", &WorldServer::HandleTaxiNodeStatusQuery);
     SetOpcodeHandler("CMSG_COMPLETE_CINEMATIC", &WorldServer::HandleCompleteCinematic);
+    SetOpcodeHandler("CMSG_OBJECT_UPDATE_FAILED", &WorldServer::HandleObjectUpdateFailed);
 }
 
 #define WORLD_DEBUG
@@ -1474,4 +1475,29 @@ void WorldServer::HandleTaxiNodeStatusQuery(WorldPacket& packet)
 void WorldServer::HandleCompleteCinematic(WorldPacket& packet)
 {
     m_sessionData.isWatchingCinematic = false;
+}
+
+void WorldServer::HandleObjectUpdateFailed(WorldPacket& packet)
+{
+    ObjectGuid guid;
+    guid[6] = packet.ReadBit();
+    guid[7] = packet.ReadBit();
+    guid[4] = packet.ReadBit();
+    guid[0] = packet.ReadBit();
+    guid[1] = packet.ReadBit();
+    guid[5] = packet.ReadBit();
+    guid[3] = packet.ReadBit();
+    guid[2] = packet.ReadBit();
+
+    packet.ReadByteSeq(guid[6]);
+    packet.ReadByteSeq(guid[7]);
+    packet.ReadByteSeq(guid[2]);
+    packet.ReadByteSeq(guid[3]);
+    packet.ReadByteSeq(guid[1]);
+    packet.ReadByteSeq(guid[4]);
+    packet.ReadByteSeq(guid[0]);
+    packet.ReadByteSeq(guid[5]);
+
+    printf("[ERROR] Object update failed for %s.", guid.GetString().c_str());
+    m_sessionData.visibleObjects.erase(guid);
 }
