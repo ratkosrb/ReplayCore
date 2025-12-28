@@ -171,7 +171,7 @@ namespace Vanilla
         switch (value)
         {
             case SplineFlags::None:
-                    return "None";
+                return "None";
             case SplineFlags::Done:
                 return "Done";
             case SplineFlags::Falling:
@@ -545,7 +545,7 @@ namespace WotLK
             ExitVehicle  = 0x01000000,
             Unknown7     = 0x02000000,
             Unknown8     = 0x04000000,
-            OrientationInversed = 0x08000000,
+            Backward     = 0x08000000,
             Unknown10    = 0x10000000,
             Unknown11    = 0x20000000,
             Unknown12    = 0x40000000,
@@ -604,8 +604,110 @@ namespace WotLK
                 return "BoardVehicle";
             case SplineFlags::ExitVehicle:
                 return "ExitVehicle";
-            case SplineFlags::OrientationInversed:
-                return "OrientationInversed";
+            case SplineFlags::Backward:
+                return "Backward";
+        }
+        return std::to_string(value);
+    }
+}
+
+namespace Cataclysm
+{
+    namespace SplineFlags
+    {
+        enum SplineFlag
+        {
+            None                = 0x00000000,
+            Unknown_0x1         = 0x00000001,           // NOT VERIFIED
+            Unknown_0x2         = 0x00000002,           // NOT VERIFIED
+            Unknown_0x4         = 0x00000004,           // NOT VERIFIED
+            Unknown_0x8         = 0x00000008,           // NOT VERIFIED - does someting related to falling/fixed orientation
+            FallingSlow         = 0x00000010,
+            Done                = 0x00000020,
+            Falling             = 0x00000040,           // Affects elevation computation, can't be combined with Parabolic flag
+            No_Spline           = 0x00000080,
+            Unknown_0x100       = 0x00000100,           // NOT VERIFIED
+            Flying              = 0x00000200,           // Smooth movement(Catmullrom interpolation mode), flying animation
+            OrientationFixed    = 0x00000400,           // Model orientation fixed
+            Catmullrom          = 0x00000800,           // Used Catmullrom interpolation mode
+            Cyclic              = 0x00001000,           // Movement by cycled spline
+            Enter_Cycle         = 0x00002000,           // Everytimes appears with cyclic flag in monster move packet, erases first spline vertex after first cycle done
+            Frozen              = 0x00004000,           // Will never arrive
+            BoardVehicle        = 0x00008000,
+            ExitVehicle         = 0x00010000,
+            Unknown_0x20000     = 0x00020000,           // NOT VERIFIED
+            Unknown_0x40000     = 0x00040000,           // NOT VERIFIED
+            Backward            = 0x00080000,
+            SmoothGroundPath    = 0x00100000,
+            CanSwim             = 0x00200000,
+            UncompressedPath    = 0x00400000,
+            Unknown_0x800000    = 0x00800000,           // NOT VERIFIED
+            Animation           = 0x01000000,           // Plays animation after some time passed
+            Parabolic           = 0x02000000,           // Affects elevation computation, can't be combined with Falling flag
+            FadeObject          = 0x04000000,
+            Steering            = 0x08000000,
+            UnlimitedSpeed      = 0x10000000,
+            Unknown_0x20000000  = 0x20000000,           // NOT VERIFIED
+            Unknown_0x40000000  = 0x40000000,           // NOT VERIFIED
+            Unknown_0x80000000  = 0x80000000,           // NOT VERIFIED
+
+            // Masks
+            // flags that shouldn't be appended into SMSG_MONSTER_MOVE\SMSG_MONSTER_MOVE_TRANSPORT packet, should be more probably
+            Mask_No_Monster_Move = Done,
+            // Unused, not suported flags
+            Mask_Unused         = No_Spline | Enter_Cycle | Frozen | Unknown_0x8 | Unknown_0x100 | Unknown_0x20000 | Unknown_0x40000
+                                | Unknown_0x800000 | FadeObject | Steering | UnlimitedSpeed | Unknown_0x20000000 | Unknown_0x40000000 | Unknown_0x80000000
+        };
+    }
+
+    inline std::string SplineFlagToString(uint32 value)
+    {
+        switch (value)
+        {
+            case SplineFlags::None:
+                return "None";
+            case SplineFlags::FallingSlow:
+                return "FallingSlow";
+            case SplineFlags::Done:
+                return "Done";
+            case SplineFlags::Falling:
+                return "Falling";
+            case SplineFlags::No_Spline:
+                return "No_Spline";
+            case SplineFlags::Flying:
+                return "Flying";
+            case SplineFlags::OrientationFixed:
+                return "OrientationFixed";
+            case SplineFlags::Catmullrom:
+                return "Catmullrom";
+            case SplineFlags::Cyclic:
+                return "Cyclic";
+            case SplineFlags::Enter_Cycle:
+                return "Enter_Cycle";
+            case SplineFlags::Frozen:
+                return "Frozen";
+            case SplineFlags::BoardVehicle:
+                return "BoardVehicle";
+            case SplineFlags::ExitVehicle:
+                return "ExitVehicle";
+            case SplineFlags::Backward:
+                return "Backward";
+            case SplineFlags::SmoothGroundPath:
+                return "SmoothGroundPath";
+            case SplineFlags::CanSwim:
+                return "CanSwim";
+            case SplineFlags::UncompressedPath:
+                return "UncompressedPath";
+            case SplineFlags::Animation:
+                return "Animation";
+            case SplineFlags::Parabolic:
+                return "Parabolic";
+            case SplineFlags::FadeObject:
+                return "FadeObject";
+            case SplineFlags::Steering:
+                return "Steering";
+            case SplineFlags::UnlimitedSpeed:
+                return "UnlimitedSpeed";
         }
         return std::to_string(value);
     }
@@ -739,8 +841,8 @@ namespace Classic
             Cyclic            = 0x00001000,
             EnterCycle        = 0x00002000,
             Frozen            = 0x00004000,
-            TransportEnter    = 0x00008000,
-            TransportExit     = 0x00010000,
+            BoardVehicle      = 0x00008000,
+            ExitVehicle       = 0x00010000,
             Unknown2          = 0x00020000,
             Unknown3          = 0x00040000,
             Backward          = 0x00080000,
@@ -793,10 +895,10 @@ namespace Classic
                 return "EnterCycle";
             case SplineFlags::Frozen:
                 return "Frozen";
-            case SplineFlags::TransportEnter:
-                return "TransportEnter";
-            case SplineFlags::TransportExit:
-                return "TransportExit";
+            case SplineFlags::BoardVehicle:
+                return "BoardVehicle";
+            case SplineFlags::ExitVehicle:
+                return "ExitVehicle";
             case SplineFlags::Backward:
                 return "Backward";
             case SplineFlags::SmoothGroundPath:

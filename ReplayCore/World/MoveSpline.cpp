@@ -55,18 +55,20 @@ void MoveSpline::WriteMove(WorldPacket& data) const
 
     data << uint32(m_flags);
 
-    if ((sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2) && (m_flags & WotLK::SplineFlags::Animation))
+    if (sWorld.ClientBuildIsBetween(CLIENT_BUILD_3_0_2, CLIENT_BUILD_3_3_5a) && (m_flags & WotLK::SplineFlags::Animation) ||
+        sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a && (m_flags & Cataclysm::SplineFlags::Animation))
     {
-        data << uint8(0);  // Animation State
-        data << uint32(0); // Async-time in ms
+        data << int8(m_animTier);  // Animation State
+        data << uint32(m_effectStartTime); // Async-time in ms
     }
 
     data << uint32(m_moveTimeMs);
 
-    if ((sWorld.GetClientBuild() >= CLIENT_BUILD_3_0_2) && (m_flags & WotLK::SplineFlags::Parabolic))
+    if (sWorld.ClientBuildIsBetween(CLIENT_BUILD_3_0_2, CLIENT_BUILD_3_3_5a) && (m_flags & WotLK::SplineFlags::Parabolic) ||
+        sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a && (m_flags & Cataclysm::SplineFlags::Parabolic))
     {
-        data << float(1.0f); // Vertical Speed
-        data << uint32(0);   // Async-time in ms
+        data << float(m_verticalAcceleration); // Vertical Speed
+        data << uint32(m_effectStartTime);   // Async-time in ms
     }
     
     uint32 pointsCount = m_destinationPoints.size();
@@ -188,13 +190,13 @@ void MoveSpline::WriteCreate(ByteBuffer& data) const
 
 void MoveSpline::WriteCreateBits434(ByteBuffer& data) const
 {
+    bool hasSplineMove = data.WriteBit(HasRemainingMovement());
+    if (!hasSplineMove)
+        return;
+
     data.WriteBits(uint8(m_type), 2);
-
     uint32 splineFlags = m_flags;
-    if (m_type == SPLINE_TYPE_FACING_ANGLE)
-        splineFlags |= WotLK::SplineFlags::Final_Angle;
-
-    data.WriteBit(splineFlags & (WotLK::SplineFlags::Parabolic | WotLK::SplineFlags::Animation));
+    data.WriteBit(splineFlags & (Cataclysm::SplineFlags::Parabolic | Cataclysm::SplineFlags::Animation));
     uint32 pointsCount = std::max<uint32>(4, m_destinationPoints.size());
     data.WriteBits(pointsCount, 22);
 
@@ -225,17 +227,18 @@ void MoveSpline::WriteCreateBits434(ByteBuffer& data) const
             break;
     }
 
-    data.WriteBit(splineFlags & WotLK::SplineFlags::Parabolic);
+    data.WriteBit(splineFlags & Cataclysm::SplineFlags::Parabolic);
     data.WriteBits(splineFlags, 25);
 }
 
 void MoveSpline::WriteCreateData434(ByteBuffer& data) const
 {
-    uint32 splineFlags = m_flags;
-    if (m_type == SPLINE_TYPE_FACING_ANGLE)
-        splineFlags |= WotLK::SplineFlags::Final_Angle;
+    if (!HasRemainingMovement())
+        return;
 
-    if (splineFlags & WotLK::SplineFlags::Parabolic)
+    uint32 splineFlags = m_flags;
+
+    if (splineFlags & Cataclysm::SplineFlags::Parabolic)
         data << m_verticalAcceleration; // added in 3.1
 
     data << uint32(1 + sReplayMgr.GetCurrentSniffTimeMs() - m_startTimeMs);
@@ -281,8 +284,8 @@ void MoveSpline::WriteCreateData434(ByteBuffer& data) const
 
     data << float(1.f);                             // splineInfo.duration_mod_next; added in 3.1
     data << uint32(m_moveTimeMs);
-    if (splineFlags & (WotLK::SplineFlags::Parabolic | WotLK::SplineFlags::Animation))
-        data << uint32(0);                          // effect_start_time; added in 3.1
+    if (splineFlags & (Cataclysm::SplineFlags::Parabolic | Cataclysm::SplineFlags::Animation))
+        data << uint32(m_effectStartTime);                          // added in 3.1
 
     data << float(1.f);                             // splineInfo.duration_mod; added in 3.1
 
@@ -301,6 +304,19 @@ void MoveSpline::WriteCreateData434(ByteBuffer& data) const
     }
 
     data << uint32(m_id);
+}
+
+bool MoveSpline::HasRemainingMovement() const
+{
+    if (m_destinationPoints.empty())
+        return false;
+
+    uint64 elapsedTime = sReplayMgr.GetCurrentSniffTimeMs() - m_startTimeMs;
+    if (elapsedTime >= m_moveTimeMs)
+        return false;
+
+    uint32 finalPointIndex = m_destinationPoints.size() - 1;
+    return m_startPosition != m_destinationPoints[finalPointIndex];
 }
 
 void MoveSpline::Update(Unit* pUnit)

@@ -2540,6 +2540,11 @@ void WorldServer::SendSpellChannelStart(ObjectGuid casterGuid, uint32 spellId, i
         data << casterGuid.WriteAsPacked();
     data << uint32(spellId);
     data << int32(duration);
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+    {
+        data << uint8(0); // InterruptImmunities.has_value()
+        data << uint8(0); // HealPrediction.has_value()
+    }
     SendPacket(data);
 }
 
@@ -2596,6 +2601,8 @@ void WorldServer::SendPlayMusic(uint32 musicId)
 {
     WorldPacket data(GetOpcode("SMSG_PLAY_MUSIC"), 4);
     data << uint32(musicId);
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << m_clientPlayer->GetObjectGuid();
     SendPacket(data);
 }
 
@@ -2603,6 +2610,8 @@ void WorldServer::SendPlaySound(uint32 soundId)
 {
     WorldPacket data(GetOpcode("SMSG_PLAY_SOUND"), 4);
     data << uint32(soundId);
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << m_clientPlayer->GetObjectGuid();
     SendPacket(data);
 }
 
@@ -2611,14 +2620,43 @@ void WorldServer::SendPlayObjectSound(uint32 soundId, ObjectGuid guid)
     WorldPacket data(GetOpcode("SMSG_PLAY_OBJECT_SOUND"), 4 + 8);
     data << uint32(soundId);
     data << guid;
+    if (GetClientBuild() > CLIENT_BUILD_3_3_5a)
+        data << m_clientPlayer->GetObjectGuid();
     SendPacket(data);
 }
 
 void WorldServer::SendPlaySpellVisual(ObjectGuid guid, uint32 kitId)
 {
     WorldPacket data(GetOpcode("SMSG_PLAY_SPELL_VISUAL"), 8 + 4);
-    data << guid;
-    data << uint32(kitId);
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+    {
+        data << guid;
+        data << uint32(kitId);
+    }
+    else
+    {
+        data << uint32(0); // Duration
+        data << int32(kitId);
+        data << int32(0); // KitType
+
+        data.WriteBit(guid[4]);
+        data.WriteBit(guid[7]);
+        data.WriteBit(guid[5]);
+        data.WriteBit(guid[3]);
+        data.WriteBit(guid[1]);
+        data.WriteBit(guid[2]);
+        data.WriteBit(guid[0]);
+        data.WriteBit(guid[6]);
+
+        data.WriteByteSeq(guid[0]);
+        data.WriteByteSeq(guid[4]);
+        data.WriteByteSeq(guid[1]);
+        data.WriteByteSeq(guid[6]);
+        data.WriteByteSeq(guid[7]);
+        data.WriteByteSeq(guid[2]);
+        data.WriteByteSeq(guid[3]);
+        data.WriteByteSeq(guid[5]);
+    }
     SendPacket(data);
 }
 

@@ -185,6 +185,7 @@ public:
     std::string GetUpdateField(uint16 id);
     uint16 GetUpdateFieldFlags(uint8 objectTypeId, uint16 id);
     uint16 GetClientBuild() const { return m_sessionData.build; }
+    bool ClientBuildIsBetween(uint16 min, uint16 max) const { return GetClientBuild() >= min && GetClientBuild() <= max; }
     Player* GetClientPlayer() { return m_clientPlayer.get(); }
     uint32 GetServerTimeMs() const { return m_msTimeSinceServerStart; }
     bool IsGuidVisibleToClient(ObjectGuid guid) const

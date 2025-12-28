@@ -454,7 +454,7 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
                 else if (!hasDestination)
                     splineType = SPLINE_TYPE_STOP;
             }
-            else
+            else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
             {
                 if (splineFlags & Vanilla::SplineFlags::Cyclic)
                 {
@@ -468,6 +468,25 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
                 }
                 if (splineFlags & Vanilla::SplineFlags::Falling)
                     newFlags |= WotLK::SplineFlags::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            else
+            {
+                if (splineFlags & Vanilla::SplineFlags::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= Cataclysm::SplineFlags::Cyclic;
+                }
+                if (splineFlags & Vanilla::SplineFlags::Flying)
+                {
+                    newFlags |= Cataclysm::SplineFlags::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Vanilla::SplineFlags::Falling)
+                    newFlags |= Cataclysm::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -513,7 +532,7 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
                 else if (!hasDestination)
                     splineType = SPLINE_TYPE_STOP;
             }
-            else
+            else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
             {
                 if (splineFlags & TBC::SplineFlags::Cyclic)
                 {
@@ -527,6 +546,25 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
                 }
                 if (splineFlags & TBC::SplineFlags::Falling)
                     newFlags |= WotLK::SplineFlags::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            else
+            {
+                if (splineFlags & TBC::SplineFlags::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= Cataclysm::SplineFlags::Cyclic;
+                }
+                if (splineFlags & TBC::SplineFlags::Flying)
+                {
+                    newFlags |= Cataclysm::SplineFlags::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & TBC::SplineFlags::Falling)
+                    newFlags |= Cataclysm::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -577,7 +615,7 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
                 else if (!hasDestination)
                     splineType = SPLINE_TYPE_STOP;
             }
-            else
+            else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
             {
                 newFlags = splineFlags;
 
@@ -588,6 +626,30 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
                 if (splineFlags & WotLK::SplineFlags::Catmullrom)
                     isCatmullrom = true;
 
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            else
+            {
+                if (splineFlags & WotLK::SplineFlags::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= Cataclysm::SplineFlags::Cyclic;
+                }
+                if (splineFlags & WotLK::SplineFlags::Flying)
+                {
+                    newFlags |= Cataclysm::SplineFlags::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & WotLK::SplineFlags::Catmullrom)
+                {
+                    newFlags |= Cataclysm::SplineFlags::Catmullrom;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & WotLK::SplineFlags::Falling)
+                    newFlags |= Cataclysm::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)
@@ -639,7 +701,7 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
                 else if (!hasDestination)
                     splineType = SPLINE_TYPE_STOP;
             }
-            else
+            else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
             {
                 if (splineFlags & Classic::SplineFlags::Cyclic)
                 {
@@ -658,6 +720,30 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
                 }
                 if (splineFlags & Classic::SplineFlags::Falling)
                     newFlags |= WotLK::SplineFlags::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            else
+            {
+                if (splineFlags & Classic::SplineFlags::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= Cataclysm::SplineFlags::Cyclic;
+                }
+                if (splineFlags & Classic::SplineFlags::Flying)
+                {
+                    newFlags |= Cataclysm::SplineFlags::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Classic::SplineFlags::Catmullrom)
+                {
+                    newFlags |= Cataclysm::SplineFlags::Catmullrom;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Classic::SplineFlags::Falling)
+                    newFlags |= Cataclysm::SplineFlags::Falling;
                 if (finalOrientation != 100)
                     splineType = SPLINE_TYPE_FACING_ANGLE;
                 else if (!hasDestination)

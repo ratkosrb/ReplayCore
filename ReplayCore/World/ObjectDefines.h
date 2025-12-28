@@ -83,6 +83,14 @@ struct Vector3
     {
         return *this * (1.0f / s);
     }
+    inline bool operator==(const Vector3& other) const
+    {
+        return x == other.x && y == other.y && z == other.z;
+    }
+    inline bool operator!=(const Vector3& other) const
+    {
+        return !(*this == other);
+    }
 };
 struct Position
 {

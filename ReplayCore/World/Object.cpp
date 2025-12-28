@@ -854,7 +854,7 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             hasSplineElevation = mi.HasMovementFlag(WotLK::MOVEFLAG_SPLINE_ELEVATION);
 
             data->WriteBit(!movementFlags);                                         // !Has MoveFlags0
-            data->WriteBit(mi.pos.o != 0);             // Has Orientation
+            data->WriteBit(mi.pos.o != 0);                                          // Has Orientation
             data->WriteBit(guid[7]);
             data->WriteBit(guid[3]);
             data->WriteBit(guid[2]);
@@ -867,7 +867,7 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             data->WriteBit(hasFallData);                                            // Has fall data
             data->WriteBit(!hasSplineElevation);                                    // !Has spline elevation
             data->WriteBit(guid[5]);
-            data->WriteBit(!mi.t_guid.IsEmpty());         // Has transport data
+            data->WriteBit(!mi.t_guid.IsEmpty());                                   // Has transport data
             data->WriteBit(0);                                                      // !HasTime
 
             if (!mi.t_guid.IsEmpty())
