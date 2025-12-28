@@ -163,7 +163,7 @@ void UnitData::InitializeUnit(Unit* pUnit) const
     else
         pUnit->SetNativeDisplayId(sGameDataMgr.GetReplacementUnitDisplayId(nativeDisplayId));
 
-    if (sGameDataMgr.IsValidUnitDisplayId(mountDisplayId))
+    if (!mountDisplayId || sGameDataMgr.IsValidUnitDisplayId(mountDisplayId))
         pUnit->SetMountDisplayId(mountDisplayId);
     
     pUnit->SetStandState(standState);

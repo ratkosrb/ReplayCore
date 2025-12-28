@@ -120,6 +120,7 @@ void WorldServer::BuildAndSendObjectUpdates(T& objectsMap)
                 if (m_sessionData.visibleObjects.find(itr.first) == m_sessionData.visibleObjects.end())
                 {
                     itr.second.BuildCreateUpdateBlockForPlayer(&updateData, m_clientPlayer.get());
+                    itr.second.ClearUpdateMask();
                     m_sessionData.visibleObjects.insert(itr.first);
                     updatesCount++;
 
@@ -420,6 +421,21 @@ void WorldServer::ProcessIncomingPackets()
 void WorldServer::HandlePacket(uint8* buffer)
 {
     ClientPktHeader& header = *((ClientPktHeader*)buffer);
+
+    if (sConfig.IsPacketLoggingEnabled() && m_packetLog)
+    {
+        uint8 direction = 0x00;
+        fwrite(&direction, 1, 1, m_packetLog);
+        uint32 unixTime = uint32(time(nullptr));
+        fwrite(&unixTime, sizeof(uint32), 1, m_packetLog);
+        fwrite(&unixTime, sizeof(uint32), 1, m_packetLog);
+        uint32 packetSize = header.size;
+        fwrite(&packetSize, sizeof(uint32), 1, m_packetLog);
+        uint32 opcode = header.cmd;
+        fwrite(&opcode, sizeof(uint32), 1, m_packetLog);
+        if (header.size > sizeof(uint32))
+            fwrite(buffer + sizeof(ClientPktHeader), sizeof(uint8), header.size - sizeof(uint32), m_packetLog);
+    }
 
     uint16 opcode = header.cmd;
     auto itr = m_opcodeHandlers.find(opcode);

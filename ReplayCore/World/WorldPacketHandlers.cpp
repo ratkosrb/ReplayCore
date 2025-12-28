@@ -1498,6 +1498,6 @@ void WorldServer::HandleObjectUpdateFailed(WorldPacket& packet)
     packet.ReadByteSeq(guid[0]);
     packet.ReadByteSeq(guid[5]);
 
-    printf("[ERROR] Object update failed for %s.", guid.GetString().c_str());
+    printf("[ERROR] Object update failed for %s.\n", guid.GetString().c_str());
     m_sessionData.visibleObjects.erase(guid);
 }
