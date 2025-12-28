@@ -551,9 +551,6 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
         m_isNewObject = false;
     }
 
-    if (IsTransport())
-    printf("BuildCreateUpdate: update-type: %u, object-type: %u got updateFlags: %X\n", updatetype, m_objectTypeId, updateFlags);
-
     ByteBuffer buf(500);
     buf << (uint8)updatetype;
     buf << GetPackGUID();

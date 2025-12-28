@@ -392,7 +392,7 @@ inline uint32 GetDefaultDisplayIdForPlayerRace(uint8 race, uint8 gender)
             printf("Error: Unknown race %hhu in GetDefaultDisplayIdForPlayerRace!\n", race);
             break;
     }
-    return UNIT_DISPLAY_ID_BOX;
+    return UNIT_DISPLAY_ID_PLACEHOLDER;
 }
 
 inline uint32 GetDefaultPowerTypeForPlayerClass(uint8 classId)

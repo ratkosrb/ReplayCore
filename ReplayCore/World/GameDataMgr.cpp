@@ -1662,7 +1662,7 @@ uint32 GameDataMgr::GetReplacementUnitDisplayId(uint32 displayId) const
             break;
     }
 
-    return UNIT_DISPLAY_ID_BOX;
+    return UNIT_DISPLAY_ID_PLACEHOLDER;
 }
 
 void GameDataMgr::LoadBroadcastTexts()
@@ -1974,7 +1974,7 @@ CreatureTemplate const* GameDataMgr::AddPlaceholderCreatureTemplate(uint32 id)
     creatureTemplate.name = "NPC " + std::to_string(id);
     creatureTemplate.subName = "PH";
     creatureTemplate.type = 10;
-    creatureTemplate.killCredit[0] = UNIT_DISPLAY_ID_BOX;
+    creatureTemplate.displayId[0] = UNIT_DISPLAY_ID_PLACEHOLDER;
     return &creatureTemplate;
 }
 

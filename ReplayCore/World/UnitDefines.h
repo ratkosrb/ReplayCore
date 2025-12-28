@@ -120,7 +120,7 @@ enum Classes
 
 
 // This is the first id in the dbc and exists in all clients.
-#define UNIT_DISPLAY_ID_BOX 4
+#define UNIT_DISPLAY_ID_PLACEHOLDER 13
 
 #define MAX_UNIT_DISPLAY_ID_VANILLA 17548
 #define MAX_UNIT_DISPLAY_ID_TBC 25958
