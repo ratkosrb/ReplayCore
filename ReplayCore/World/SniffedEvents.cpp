@@ -3502,7 +3502,7 @@ std::string SniffedEvent_PlaySound::GetLongDescription() const
 void ReplayMgr::LoadPlaySpellVisualKit()
 {
     //                                             0             1              2            3              4         5           6
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `caster_guid`, `caster_id`, `caster_type`, `kit_id`, `kit_type`, `kit_duration` FROM `play_spell_visual_kit` ORDER BY `unixtimems`"))
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `caster_guid`, `caster_id`, `caster_type`, `kit_id`, `kit_type`, `duration` FROM `play_spell_visual_kit` ORDER BY `unixtimems`"))
     {
         do
         {
