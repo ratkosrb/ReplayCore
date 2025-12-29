@@ -395,7 +395,7 @@ public:
     void SendPlayMusic(uint32 musicId);
     void SendPlaySound(uint32 soundId);
     void SendPlayObjectSound(uint32 soundId, ObjectGuid guid);
-    void SendPlaySpellVisual(ObjectGuid guid, uint32 kitId);
+    void SendPlaySpellVisual(ObjectGuid guid, int32 kitId, int32 kitType, uint32 duration);
     void SendLogXPGain(ObjectGuid victimGuid, uint32 totalXP, uint32 killXP, float groupBonus, bool rafBonus);
     void SendSetFactionStanding(float rafBonus, bool showVisual, int32 reputationListId, int32 standing);
     void SendTaxiNodeStatus(ObjectGuid guid, bool known);

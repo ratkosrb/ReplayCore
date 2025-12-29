@@ -1762,10 +1762,12 @@ struct SniffedEvent_PlaySound : SniffedEventCRTP<SniffedEvent_PlaySound>
 
 struct SniffedEvent_PlaySpellVisualKit : SniffedEventCRTP<SniffedEvent_PlaySpellVisualKit>
 {
-    SniffedEvent_PlaySpellVisualKit(ObjectGuid casterGuid, uint32 kitId) :
-        m_casterGuid(casterGuid), m_kitId(kitId) {};
+    SniffedEvent_PlaySpellVisualKit(ObjectGuid casterGuid, int32 kitId, int32 kitType, uint32 duration) :
+        m_casterGuid(casterGuid), m_kitId(kitId), m_kitType(kitType), m_duration(duration) {};
     ObjectGuid m_casterGuid;
-    uint32 m_kitId = 0;
+    int32 m_kitId = 0;
+    int32 m_kitType = 0;
+    uint32 m_duration = 0;
     void Execute() const final;
     std::string GetShortDescription() const final;
     std::string GetLongDescription() const final;

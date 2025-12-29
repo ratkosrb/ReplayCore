@@ -2625,19 +2625,19 @@ void WorldServer::SendPlayObjectSound(uint32 soundId, ObjectGuid guid)
     SendPacket(data);
 }
 
-void WorldServer::SendPlaySpellVisual(ObjectGuid guid, uint32 kitId)
+void WorldServer::SendPlaySpellVisual(ObjectGuid guid, int32 kitId, int32 kitType, uint32 duration)
 {
-    WorldPacket data(GetOpcode("SMSG_PLAY_SPELL_VISUAL"), 8 + 4);
+    WorldPacket data(GetOpcode("SMSG_PLAY_SPELL_VISUAL_KIT"), 8 + 4);
     if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
     {
         data << guid;
-        data << uint32(kitId);
+        data << int32(kitId);
     }
     else
     {
-        data << uint32(0); // Duration
+        data << uint32(duration);
         data << int32(kitId);
-        data << int32(0); // KitType
+        data << int32(kitType);
 
         data.WriteBit(guid[4]);
         data.WriteBit(guid[7]);

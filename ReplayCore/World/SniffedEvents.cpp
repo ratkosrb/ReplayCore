@@ -3501,8 +3501,8 @@ std::string SniffedEvent_PlaySound::GetLongDescription() const
 
 void ReplayMgr::LoadPlaySpellVisualKit()
 {
-    //                                             0             1              2            3              4
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `caster_guid`, `caster_id`, `caster_type`, `kit_id` FROM `play_spell_visual_kit` ORDER BY `unixtimems`"))
+    //                                             0             1              2            3              4         5           6
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `caster_guid`, `caster_id`, `caster_type`, `kit_id`, `kit_type`, `kit_duration` FROM `play_spell_visual_kit` ORDER BY `unixtimems`"))
     {
         do
         {
@@ -3519,9 +3519,11 @@ void ReplayMgr::LoadPlaySpellVisualKit()
                 continue;
             }
 
-            uint32 kitId = fields[4].GetUInt32();
+            int32 kitId = fields[4].GetInt32();
+            int32 kitType = fields[5].GetInt32();
+            uint32 duration = fields[6].GetUInt32();
 
-            std::shared_ptr<SniffedEvent_PlaySpellVisualKit> newEvent = std::make_shared<SniffedEvent_PlaySpellVisualKit>(casterGuid, kitId);
+            std::shared_ptr<SniffedEvent_PlaySpellVisualKit> newEvent = std::make_shared<SniffedEvent_PlaySpellVisualKit>(casterGuid, kitId, kitType, duration);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
 
         } while (result->NextRow());
@@ -3543,7 +3545,7 @@ void SniffedEvent_PlaySpellVisualKit::Execute() const
     if (!pSource->IsVisibleToClient())
         return;
 
-    sWorld.SendPlaySpellVisual(GetSourceGuid(), m_kitId);
+    sWorld.SendPlaySpellVisual(GetSourceGuid(), m_kitId, m_kitType, m_duration);
 }
 
 std::string SniffedEvent_PlaySpellVisualKit::GetShortDescription() const
