@@ -500,24 +500,24 @@ namespace WotLK
 
     enum MovementFlags2
     {
-        MOVEFLAG2_NONE              = 0x0000,
-        MOVEFLAG2_NO_STRAFE         = 0x0001,
-        MOVEFLAG2_NO_JUMPING        = 0x0002,
-        MOVEFLAG2_UNK3              = 0x0004,
-        MOVEFLAG2_FULLSPEEDTURNING  = 0x0008,
-        MOVEFLAG2_FULLSPEEDPITCHING = 0x0010,
-        MOVEFLAG2_ALLOW_PITCHING    = 0x0020,
-        MOVEFLAG2_UNK4              = 0x0040,
-        MOVEFLAG2_UNK5              = 0x0080,
-        MOVEFLAG2_UNK6              = 0x0100,                   // transport related
-        MOVEFLAG2_UNK7              = 0x0200,
-        MOVEFLAG2_INTERP_MOVEMENT   = 0x0400,
-        MOVEFLAG2_INTERP_TURNING    = 0x0800,
-        MOVEFLAG2_INTERP_PITCHING   = 0x1000,
-        MOVEFLAG2_UNK8              = 0x2000,
-        MOVEFLAG2_UNK9              = 0x4000,
-        MOVEFLAG2_UNK10             = 0x8000,
-        MOVEFLAG2_INTERP_MASK       = MOVEFLAG2_INTERP_MOVEMENT | MOVEFLAG2_INTERP_TURNING | MOVEFLAG2_INTERP_PITCHING
+        MOVEFLAG2_NONE                  = 0x0000,
+        MOVEFLAG2_NO_STRAFE             = 0x0001,
+        MOVEFLAG2_NO_JUMPING            = 0x0002,
+        MOVEFLAG2_UNK3                  = 0x0004,
+        MOVEFLAG2_FULL_SPEED_TURNING    = 0x0008,
+        MOVEFLAG2_FULL_SPEED_PITCHING   = 0x0010,
+        MOVEFLAG2_ALWAYS_ALLOW_PITCHING = 0x0020,
+        MOVEFLAG2_UNK4                  = 0x0040,
+        MOVEFLAG2_UNK5                  = 0x0080,
+        MOVEFLAG2_UNK6                  = 0x0100,                   // transport related
+        MOVEFLAG2_UNK7                  = 0x0200,
+        MOVEFLAG2_INTERPOLATED_MOVEMENT = 0x0400,
+        MOVEFLAG2_INTERPOLATED_TURNING  = 0x0800,
+        MOVEFLAG2_INTERPOLATED_PITCHING = 0x1000,
+        MOVEFLAG2_UNK8                  = 0x2000,
+        MOVEFLAG2_UNK9                  = 0x4000,
+        MOVEFLAG2_UNK10                 = 0x8000,
+        MOVEFLAG2_INTERP_MASK           = MOVEFLAG2_INTERPOLATED_MOVEMENT | MOVEFLAG2_INTERPOLATED_TURNING | MOVEFLAG2_INTERPOLATED_PITCHING
     };
 
     namespace SplineFlags
@@ -613,6 +613,146 @@ namespace WotLK
 
 namespace Cataclysm
 {
+    enum MovementFlags
+    {
+        MOVEFLAG_NONE                  = 0x00000000,
+        MOVEFLAG_FORWARD               = 0x00000001,
+        MOVEFLAG_BACKWARD              = 0x00000002,
+        MOVEFLAG_STRAFE_LEFT           = 0x00000004,
+        MOVEFLAG_STRAFE_RIGHT          = 0x00000008,
+        MOVEFLAG_TURN_LEFT             = 0x00000010,
+        MOVEFLAG_TURN_RIGHT            = 0x00000020,
+        MOVEFLAG_PITCH_UP              = 0x00000040,
+        MOVEFLAG_PITCH_DOWN            = 0x00000080,
+        MOVEFLAG_WALK_MODE             = 0x00000100,               // Walking
+        MOVEFLAG_DISABLE_GRAVITY       = 0x00000200,               // Former MOVEFLAG_LEVITATING. This is used when walking is not possible.
+        MOVEFLAG_ROOT                  = 0x00000400,               // Must not be set along with MOVEFLAG_MASK_MOVING
+        MOVEFLAG_FALLING               = 0x00000800,               // damage dealt on that type of falling
+        MOVEFLAG_FALLINGFAR            = 0x00001000,
+        MOVEFLAG_PENDINGSTOP           = 0x00002000,
+        MOVEFLAG_PENDINGSTRAFESTOP     = 0x00004000,
+        MOVEFLAG_PENDINGFORWARD        = 0x00008000,
+        MOVEFLAG_PENDINGBACKWARD       = 0x00010000,
+        MOVEFLAG_PENDINGSTRAFELEFT     = 0x00020000,
+        MOVEFLAG_PENDINGSTRAFERIGHT    = 0x00040000,
+        MOVEFLAG_PENDINGROOT           = 0x00080000,
+        MOVEFLAG_SWIMMING              = 0x00100000,               // appears with fly flag also
+        MOVEFLAG_ASCENDING             = 0x00200000,               // press "space" when flying or swimming
+        MOVEFLAG_DESCENDING            = 0x00400000,
+        MOVEFLAG_CAN_FLY               = 0x00800000,               // Appears when unit can fly AND also walk
+        MOVEFLAG_FLYING                = 0x01000000,               // unit is actually flying. pretty sure this is only used for players. creatures use disable_gravity
+        MOVEFLAG_SPLINE_ELEVATION      = 0x02000000,               // used for flight paths
+        MOVEFLAG_WATERWALKING          = 0x04000000,               // prevent unit from falling through water
+        MOVEFLAG_SAFE_FALL             = 0x08000000,               // active rogue safe fall spell (passive)
+        MOVEFLAG_HOVER                 = 0x10000000,               // hover, cannot jump
+        MOVEFLAG_DISABLE_COLLISION     = 0x20000000,
+
+        MOVEFLAG_MASK_MOVING =
+        MOVEFLAG_FORWARD | MOVEFLAG_BACKWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT |
+        MOVEFLAG_PITCH_UP | MOVEFLAG_PITCH_DOWN | MOVEFLAG_FALLING | MOVEFLAG_FALLINGFAR |
+        MOVEFLAG_SPLINE_ELEVATION,
+        MOVEFLAG_MASK_MOVING_OR_TURN = MOVEFLAG_MASK_MOVING | MOVEFLAG_TURN_LEFT | MOVEFLAG_TURN_RIGHT,
+        MOVEFLAG_MASK_MOVING_FORWARD = MOVEFLAG_FORWARD | MOVEFLAG_STRAFE_LEFT | MOVEFLAG_STRAFE_RIGHT | MOVEFLAG_FALLING,
+
+        // Movement flags allowed for creature in CreateObject - we need to keep all other enabled serverside
+        // to properly calculate all movement
+        MOVEFLAG_MASK_CREATURE_ALLOWED =
+            MOVEFLAG_FORWARD | MOVEFLAG_DISABLE_GRAVITY | MOVEFLAG_ROOT | MOVEFLAG_SWIMMING |
+            MOVEFLAG_CAN_FLY | MOVEFLAG_WATERWALKING | MOVEFLAG_SAFE_FALL | MOVEFLAG_HOVER,
+    };
+
+    inline std::string MovementFlagToString(uint32 value)
+    {
+        switch (value)
+        {
+            case MOVEFLAG_NONE:
+                return "MOVEFLAG_NONE";
+            case MOVEFLAG_FORWARD:
+                return "MOVEFLAG_FORWARD";
+            case MOVEFLAG_BACKWARD:
+                return "MOVEFLAG_BACKWARD";
+            case MOVEFLAG_STRAFE_LEFT:
+                return "MOVEFLAG_STRAFE_LEFT";
+            case MOVEFLAG_STRAFE_RIGHT:
+                return "MOVEFLAG_STRAFE_RIGHT";
+            case MOVEFLAG_TURN_LEFT:
+                return "MOVEFLAG_TURN_LEFT";
+            case MOVEFLAG_TURN_RIGHT:
+                return "MOVEFLAG_TURN_RIGHT";
+            case MOVEFLAG_PITCH_UP:
+                return "MOVEFLAG_PITCH_UP";
+            case MOVEFLAG_PITCH_DOWN:
+                return "MOVEFLAG_PITCH_DOWN";
+            case MOVEFLAG_WALK_MODE:
+                return "MOVEFLAG_WALK_MODE";
+            case MOVEFLAG_DISABLE_GRAVITY:
+                return "MOVEFLAG_DISABLE_GRAVITY";
+            case MOVEFLAG_ROOT:
+                return "MOVEFLAG_ROOT";
+            case MOVEFLAG_FALLING:
+                return "MOVEFLAG_FALLING";
+            case MOVEFLAG_FALLINGFAR:
+                return "MOVEFLAG_FALLINGFAR";
+            case MOVEFLAG_PENDINGSTOP:
+                return "MOVEFLAG_PENDINGSTOP";
+            case MOVEFLAG_PENDINGSTRAFESTOP:
+                return "MOVEFLAG_PENDINGSTRAFESTOP";
+            case MOVEFLAG_PENDINGFORWARD:
+                return "MOVEFLAG_PENDINGFORWARD";
+            case MOVEFLAG_PENDINGBACKWARD:
+                return "MOVEFLAG_PENDINGBACKWARD";
+            case MOVEFLAG_PENDINGSTRAFELEFT:
+                return "MOVEFLAG_PENDINGSTRAFELEFT";
+            case MOVEFLAG_PENDINGSTRAFERIGHT:
+                return "MOVEFLAG_PENDINGSTRAFERIGHT";
+            case MOVEFLAG_PENDINGROOT:
+                return "MOVEFLAG_PENDINGROOT";
+            case MOVEFLAG_SWIMMING:
+                return "MOVEFLAG_SWIMMING";
+            case MOVEFLAG_ASCENDING:
+                return "MOVEFLAG_ASCENDING";
+            case MOVEFLAG_DESCENDING:
+                return "MOVEFLAG_DESCENDING";
+            case MOVEFLAG_CAN_FLY:
+                return "MOVEFLAG_CAN_FLY";
+            case MOVEFLAG_FLYING:
+                return "MOVEFLAG_FLYING";
+            case MOVEFLAG_SPLINE_ELEVATION:
+                return "MOVEFLAG_SPLINE_ELEVATION";
+            case MOVEFLAG_WATERWALKING:
+                return "MOVEFLAG_WATERWALKING";
+            case MOVEFLAG_SAFE_FALL:
+                return "MOVEFLAG_SAFE_FALL";
+            case MOVEFLAG_HOVER:
+                return "MOVEFLAG_HOVER";
+            case MOVEFLAG_DISABLE_COLLISION:
+                return "MOVEFLAG_DISABLE_COLLISION";
+        }
+        return std::to_string(value);
+    }
+
+    enum MovementFlags2
+    {
+        MOVEFLAG2_NONE                      = 0x00000000,
+        MOVEFLAG2_NO_STRAFE                 = 0x00000001,
+        MOVEFLAG2_NO_JUMPING                = 0x00000002,
+        MOVEFLAG2_FULL_SPEED_TURNING        = 0x00000004,
+        MOVEFLAG2_FULL_SPEED_PITCHING       = 0x00000008,
+        MOVEFLAG2_ALWAYS_ALLOW_PITCHING     = 0x00000010,
+        MOVEFLAG2_IS_VEHICLE_EXIT_VOLUNTARY = 0x00000020,
+        MOVEFLAG2_UNK6                      = 0x00000040,
+        MOVEFLAG2_UNK7                      = 0x00000080,
+        MOVEFLAG2_UNK8                      = 0x00000100,
+        MOVEFLAG2_UNK9                      = 0x00000200,
+        MOVEFLAG2_CAN_SWIM_TO_FLY_TRANS     = 0x00000400,
+        MOVEFLAG2_UNK11                     = 0x00000800,
+        MOVEFLAG2_AWAITING_LOAD             = 0x00001000,
+        MOVEFLAG2_INTERPOLATED_MOVEMENT     = 0x00002000,
+        MOVEFLAG2_INTERPOLATED_TURNING      = 0x00004000,
+        MOVEFLAG2_INTERPOLATED_PITCHING     = 0x00008000,
+        MOVEFLAG2_INTERP_MASK               = MOVEFLAG2_INTERPOLATED_MOVEMENT | MOVEFLAG2_INTERPOLATED_TURNING | MOVEFLAG2_INTERPOLATED_PITCHING
+    };
+
     namespace SplineFlags
     {
         enum SplineFlag

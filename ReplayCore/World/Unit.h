@@ -129,6 +129,7 @@ public :
     void SendAllAurasUpdate() const;
     void SetDebuffLimit(uint8 slots);
 
+    bool HasActiveMoveSpline() const { return m_moveSpline.m_initialized && m_moveSpline.HasRemainingMovement(); }
     void GetMovementInfoForObjectUpdate(MovementInfo& mi, bool& sendSpline) const;
     void InitializePlaceholderUnitFields();
     void InitializeMoveSpeeds();

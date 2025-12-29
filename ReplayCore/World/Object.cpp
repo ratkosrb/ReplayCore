@@ -792,7 +792,7 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             flags.MovementUpdate = true;
         else if (wo)
             flags.Stationary = true;
-        if (wo && wo->GetTransportGuid())
+        if (wo && wo->GetTransportGuid() && wo->GetTransportGuid().IsAnyTypeGameObject())
             flags.MovementTransport = true;
         if (updateFlags & UPDATEFLAG_FULLGUID)
             flags.CombatVictim = true;
@@ -845,10 +845,10 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
 
             hasTransportTime2 = !mi.t_guid.IsEmpty() && mi.t_time2 != 0;
             hasVehicleId = false;
-            hasPitch = mi.HasMovementFlag(WotLK::MOVEFLAG_SWIMMING | WotLK::MOVEFLAG_FLYING) || mi.HasMovementFlag2(WotLK::MOVEFLAG2_ALLOW_PITCHING);
-            hasFallDirection = mi.HasMovementFlag(WotLK::MOVEFLAG_FALLING);
+            hasPitch = mi.HasMovementFlag(Cataclysm::MOVEFLAG_SWIMMING | Cataclysm::MOVEFLAG_FLYING) || mi.HasMovementFlag2(Cataclysm::MOVEFLAG2_ALWAYS_ALLOW_PITCHING);
+            hasFallDirection = mi.HasMovementFlag(Cataclysm::MOVEFLAG_FALLING);
             hasFallData = hasFallDirection || mi.fallTime != 0;
-            hasSplineElevation = mi.HasMovementFlag(WotLK::MOVEFLAG_SPLINE_ELEVATION);
+            hasSplineElevation = mi.HasMovementFlag(Cataclysm::MOVEFLAG_SPLINE_ELEVATION);
 
             data->WriteBit(!movementFlags);                                         // !Has MoveFlags0
             data->WriteBit(mi.pos.o != 0);                                          // Has Orientation

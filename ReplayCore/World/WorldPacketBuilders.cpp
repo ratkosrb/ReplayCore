@@ -1845,7 +1845,7 @@ void WorldServer::SendSetSpeed(Unit const* pUnit, uint32 moveType, float speed)
             extra.Data.floatData = speed;
 
             ObjectGuid moverGuid = pUnit->GetObjectGuid();
-            Cataclysm::WriteMovementPacket(data, &pUnit->GetMovementInfo(), &moverGuid, nullptr, &extra);
+            Cataclysm::WriteMovementPacket(data, pUnit->HasActiveMoveSpline(), &pUnit->GetMovementInfo(), &moverGuid, nullptr, &extra);
         }
         SendPacket(data);
     }
@@ -1886,7 +1886,7 @@ void WorldServer::SendSplineSetSpeed(ObjectGuid guid, uint32 moveType, float spe
             Cataclysm::ExtraMovementStatusElement extra(&speedVal);
             extra.Data.floatData = speed;
 
-            Cataclysm::WriteMovementPacket(data, nullptr, &guid, nullptr, &extra);
+            Cataclysm::WriteMovementPacket(data, false, nullptr, &guid, nullptr, &extra);
         }
         SendPacket(data);
     }
@@ -1907,7 +1907,7 @@ void WorldServer::SendMovementPacket(Unit* pUnit, uint16 opcode)
             opcode = moveUpdate;
         data.Initialize(opcode);
         ObjectGuid moverGuid = pUnit->GetObjectGuid();
-        Cataclysm::WriteMovementPacket(data, &pUnit->GetMovementInfo(), &moverGuid, nullptr, nullptr);
+        Cataclysm::WriteMovementPacket(data, pUnit->HasActiveMoveSpline(), &pUnit->GetMovementInfo(), &moverGuid, nullptr, nullptr);
     }
     SendPacket(data);
 }
@@ -1924,7 +1924,7 @@ void WorldServer::SendMoveSetCanFly(Unit* pUnit)
     else
     {
         ObjectGuid moverGuid = pUnit->GetObjectGuid();
-        Cataclysm::WriteMovementPacket(data, &pUnit->GetMovementInfo(), &moverGuid, &m_sessionData.movementCounter, nullptr);
+        Cataclysm::WriteMovementPacket(data, pUnit->HasActiveMoveSpline(), &pUnit->GetMovementInfo(), &moverGuid, &m_sessionData.movementCounter, nullptr);
     }
     SendPacket(data);
 }
@@ -1941,7 +1941,7 @@ void WorldServer::SendMoveUnsetCanFly(Unit* pUnit)
     else
     {
         ObjectGuid moverGuid = pUnit->GetObjectGuid();
-        Cataclysm::WriteMovementPacket(data, &pUnit->GetMovementInfo(), &moverGuid, &m_sessionData.movementCounter, nullptr);
+        Cataclysm::WriteMovementPacket(data, pUnit->HasActiveMoveSpline(), &pUnit->GetMovementInfo(), &moverGuid, &m_sessionData.movementCounter, nullptr);
     }
     SendPacket(data);
 }

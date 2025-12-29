@@ -121,6 +121,7 @@ class ObjectGuid
         bool IsCorpse()        const { return GetHigh() == HIGHGUID_CORPSE; }
         bool IsTransport()     const { return GetHigh() == HIGHGUID_TRANSPORT; }
         bool IsMOTransport()   const { return GetHigh() == HIGHGUID_MO_TRANSPORT; }
+        bool IsAnyTypeGameObject() const { return IsGameObject() || IsTransport() || IsMOTransport(); }
         bool IsGuild()         const { return GetHigh() == HIGHGUID_GUILD; }
 
         static TypeID GetTypeId(HighGuid high)

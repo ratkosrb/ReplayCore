@@ -113,8 +113,10 @@ void UnitData::InitializeUnit(Unit* pUnit) const
             pUnit->SetUnitMovementFlags(Vanilla::MOVEFLAG_FIXED_Z);
         else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
             pUnit->SetUnitMovementFlags(TBC::MOVEFLAG_FLYING2);
-        else
+        else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
             pUnit->SetUnitMovementFlags(WotLK::MOVEFLAG_FLYING);
+        else
+            pUnit->SetUnitMovementFlags(Cataclysm::MOVEFLAG_FLYING);
     }
 
     pUnit->SetCharmGuid(charm);
@@ -209,8 +211,10 @@ void CreatureData::InitializeCreature(Unit* pCreature) const
             pCreature->AddUnitMovementFlag(Vanilla::MOVEFLAG_FIXED_Z);
         else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
             pCreature->AddUnitMovementFlag(TBC::MOVEFLAG_FLYING2);
-        else
+        else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
             pCreature->AddUnitMovementFlag(WotLK::MOVEFLAG_FLYING);
+        else
+            pCreature->AddUnitMovementFlag(Cataclysm::MOVEFLAG_DISABLE_GRAVITY);
     }
 
     if (guid.IsPet())

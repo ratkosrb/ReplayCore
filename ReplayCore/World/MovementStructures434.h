@@ -118,7 +118,7 @@ namespace Cataclysm
     };
 
     void ReadMovementPacket(WorldPacket& data, MovementInfo* mi, ObjectGuid* guid, uint32* movementCounter, ExtraMovementStatusElement* extras);
-    void WriteMovementPacket(WorldPacket& data, MovementInfo const* mi, ObjectGuid const* guid, uint32 const* movementCounter, ExtraMovementStatusElement* extras);
+    void WriteMovementPacket(WorldPacket& data, bool hasSpline, MovementInfo const* mi, ObjectGuid const* guid, uint32 const* movementCounter, ExtraMovementStatusElement* extras);
     MovementStatusElements const* GetMovementStatusElementsSequence(uint32 opcode);
 }
 

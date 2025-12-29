@@ -327,6 +327,72 @@ inline uint32 ConvertClassicMovementFlagsToWotLK(uint32 flags)
     return newFlags;
 }
 
+inline uint32 ConvertClassicMovementFlagsToCataclysm(uint32 flags)
+{
+    uint32 newFlags = 0;
+    if (flags & Classic::MOVEFLAG_FORWARD)
+        newFlags |= Cataclysm::MOVEFLAG_FORWARD;
+    if (flags & Classic::MOVEFLAG_BACKWARD)
+        newFlags |= Cataclysm::MOVEFLAG_BACKWARD;
+    if (flags & Classic::MOVEFLAG_STRAFE_LEFT)
+        newFlags |= Cataclysm::MOVEFLAG_STRAFE_LEFT;
+    if (flags & Classic::MOVEFLAG_STRAFE_RIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_STRAFE_RIGHT;
+    if (flags & Classic::MOVEFLAG_TURN_LEFT)
+        newFlags |= Cataclysm::MOVEFLAG_TURN_LEFT;
+    if (flags & Classic::MOVEFLAG_TURN_RIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_TURN_RIGHT;
+    if (flags & Classic::MOVEFLAG_PITCH_UP)
+        newFlags |= Cataclysm::MOVEFLAG_PITCH_UP;
+    if (flags & Classic::MOVEFLAG_PITCH_DOWN)
+        newFlags |= Cataclysm::MOVEFLAG_PITCH_DOWN;
+    if (flags & Classic::MOVEFLAG_WALK_MODE)
+        newFlags |= Cataclysm::MOVEFLAG_WALK_MODE;
+    if (flags & Classic::MOVEFLAG_DISABLE_GRAVITY)
+        newFlags |= Cataclysm::MOVEFLAG_DISABLE_GRAVITY;
+    if (flags & Classic::MOVEFLAG_ROOT)
+        newFlags |= Cataclysm::MOVEFLAG_ROOT;
+    if (flags & Classic::MOVEFLAG_FALLING)
+        newFlags |= Cataclysm::MOVEFLAG_FALLING;
+    if (flags & Classic::MOVEFLAG_FALLINGFAR)
+        newFlags |= Cataclysm::MOVEFLAG_FALLINGFAR;
+    if (flags & Classic::MOVEFLAG_PENDINGSTOP)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGSTOP;
+    if (flags & Classic::MOVEFLAG_PENDINGSTRAFESTOP)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGSTRAFESTOP;
+    if (flags & Classic::MOVEFLAG_PENDINGFORWARD)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGFORWARD;
+    if (flags & Classic::MOVEFLAG_PENDINGBACKWARD)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGBACKWARD;
+    if (flags & Classic::MOVEFLAG_PENDINGSTRAFELEFT)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGSTRAFELEFT;
+    if (flags & Classic::MOVEFLAG_PENDINGSTRAFERIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGSTRAFERIGHT;
+    if (flags & Classic::MOVEFLAG_PENDINGROOT)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGROOT;
+    if (flags & Classic::MOVEFLAG_SWIMMING)
+        newFlags |= Cataclysm::MOVEFLAG_SWIMMING;
+    if (flags & Classic::MOVEFLAG_ASCENDING)
+        newFlags |= Cataclysm::MOVEFLAG_ASCENDING;
+    if (flags & Classic::MOVEFLAG_DESCENDING)
+        newFlags |= Cataclysm::MOVEFLAG_DESCENDING;
+    if (flags & Classic::MOVEFLAG_CAN_FLY)
+        newFlags |= Cataclysm::MOVEFLAG_CAN_FLY;
+    if (flags & Classic::MOVEFLAG_FLYING)
+        newFlags |= Cataclysm::MOVEFLAG_FLYING;
+    if (flags & Classic::MOVEFLAG_SPLINE_ELEVATION)
+        newFlags |= Cataclysm::MOVEFLAG_SPLINE_ELEVATION;
+    if (flags & Classic::MOVEFLAG_WATERWALKING)
+        newFlags |= Cataclysm::MOVEFLAG_WATERWALKING;
+    if (flags & Classic::MOVEFLAG_SAFE_FALL)
+        newFlags |= Cataclysm::MOVEFLAG_SAFE_FALL;
+    if (flags & Classic::MOVEFLAG_HOVER)
+        newFlags |= Cataclysm::MOVEFLAG_HOVER;
+    if (flags & Classic::MOVEFLAG_DISABLE_COLLISION)
+        newFlags |= Cataclysm::MOVEFLAG_DISABLE_COLLISION;
+    return newFlags;
+}
+
 inline uint32 ConvertClassicChatTypeToVanilla(uint8 chatType)
 {
     switch (chatType)

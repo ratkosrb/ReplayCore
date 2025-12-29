@@ -157,8 +157,9 @@ uint32 GameDataMgr::GetTransportMoveFlag() const
         return Vanilla::MOVEFLAG_ONTRANSPORT;
     else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
         return TBC::MOVEFLAG_ONTRANSPORT;
-    else
+    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_3_5a)
         return WotLK::MOVEFLAG_ONTRANSPORT;
+    return 0;
 }
 
 uint32 GameDataMgr::ConvertMovementFlags(uint32 moveFlags, bool onTransport) const
@@ -179,8 +180,10 @@ uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 client
                 return moveFlags;
             else if (clientBuild < CLIENT_BUILD_3_0_2)
                 return ConvertVanillaMovementFlagsToTBC(moveFlags);
-            else
+            else if (clientBuild <= CLIENT_BUILD_3_3_5a)
                 return ConvertVanillaMovementFlagsToWotLK(moveFlags);
+            else
+                return ConvertVanillaMovementFlagsToCataclysm(moveFlags);
             break;
         }
         case SNIFF_TBC:
@@ -189,8 +192,10 @@ uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 client
                 return ConvertTBCMovementFlagsToVanilla(moveFlags);
             else if (clientBuild < CLIENT_BUILD_3_0_2)
                 return moveFlags;
-            else
+            else if (clientBuild <= CLIENT_BUILD_3_3_5a)
                 return ConvertTBCMovementFlagsToWotLK(moveFlags);
+            else
+                return ConvertTBCMovementFlagsToCataclysm(moveFlags);
             break;
         }
         case SNIFF_WOTLK:
@@ -210,8 +215,10 @@ uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 client
                 return ConvertClassicMovementFlagsToVanilla(moveFlags);
             else if (clientBuild < CLIENT_BUILD_3_0_2)
                 return ConvertClassicMovementFlagsToTBC(moveFlags);
-            else
+            else if (clientBuild <= CLIENT_BUILD_3_3_5a)
                 return ConvertClassicMovementFlagsToWotLK(moveFlags);
+            else
+                return ConvertClassicMovementFlagsToCataclysm(moveFlags);
             break;
         }
     }

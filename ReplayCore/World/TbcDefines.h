@@ -135,6 +135,52 @@ inline uint32 ConvertTBCMovementFlagsToWotLK(uint32 flags)
     return newFlags;
 }
 
+inline uint32 ConvertTBCMovementFlagsToCataclysm(uint32 flags)
+{
+    uint32 newFlags = 0;
+    if (flags & TBC::MOVEFLAG_FORWARD)
+        newFlags |= Cataclysm::MOVEFLAG_FORWARD;
+    if (flags & TBC::MOVEFLAG_BACKWARD)
+        newFlags |= Cataclysm::MOVEFLAG_BACKWARD;
+    if (flags & TBC::MOVEFLAG_STRAFE_LEFT)
+        newFlags |= Cataclysm::MOVEFLAG_STRAFE_LEFT;
+    if (flags & TBC::MOVEFLAG_STRAFE_RIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_STRAFE_RIGHT;
+    if (flags & TBC::MOVEFLAG_TURN_LEFT)
+        newFlags |= Cataclysm::MOVEFLAG_TURN_LEFT;
+    if (flags & TBC::MOVEFLAG_TURN_RIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_TURN_RIGHT;
+    if (flags & TBC::MOVEFLAG_PITCH_UP)
+        newFlags |= Cataclysm::MOVEFLAG_PITCH_UP;
+    if (flags & TBC::MOVEFLAG_PITCH_DOWN)
+        newFlags |= Cataclysm::MOVEFLAG_PITCH_DOWN;
+    if (flags & TBC::MOVEFLAG_WALK_MODE)
+        newFlags |= Cataclysm::MOVEFLAG_WALK_MODE;
+    if (flags & TBC::MOVEFLAG_LEVITATING)
+        newFlags |= Cataclysm::MOVEFLAG_DISABLE_GRAVITY;
+    if (flags & TBC::MOVEFLAG_ROOT)
+        newFlags |= Cataclysm::MOVEFLAG_ROOT;
+    if (flags & TBC::MOVEFLAG_JUMPING)
+        newFlags |= Cataclysm::MOVEFLAG_FALLING;
+    if (flags & TBC::MOVEFLAG_FALLINGFAR)
+        newFlags |= Cataclysm::MOVEFLAG_FALLINGFAR;
+    if (flags & TBC::MOVEFLAG_SWIMMING)
+        newFlags |= Cataclysm::MOVEFLAG_SWIMMING;
+    if (flags & TBC::MOVEFLAG_CAN_FLY)
+        newFlags |= Cataclysm::MOVEFLAG_CAN_FLY;
+    if ((flags & TBC::MOVEFLAG_FLYING) || (flags & TBC::MOVEFLAG_FLYING2))
+        newFlags |= Cataclysm::MOVEFLAG_FLYING;
+    if (flags & TBC::MOVEFLAG_SPLINE_ELEVATION)
+        newFlags |= Cataclysm::MOVEFLAG_SPLINE_ELEVATION;
+    if (flags & TBC::MOVEFLAG_WATERWALKING)
+        newFlags |= Cataclysm::MOVEFLAG_WATERWALKING;
+    if (flags & TBC::MOVEFLAG_SAFE_FALL)
+        newFlags |= Cataclysm::MOVEFLAG_SAFE_FALL;
+    if (flags & TBC::MOVEFLAG_HOVER)
+        newFlags |= Cataclysm::MOVEFLAG_HOVER;
+    return newFlags;
+}
+
 inline uint32 ConvertTBCChatTypeToVanilla(uint8 chatType)
 {
     switch (chatType)

@@ -6215,21 +6215,20 @@ void Cataclysm::ReadMovementPacket(WorldPacket& data, MovementInfo* mi, ObjectGu
         mi->t_guid = tguid;
 }
 
-void Cataclysm::WriteMovementPacket(WorldPacket& data, MovementInfo const* mi, ObjectGuid const* guid, uint32 const* movementCounter, ExtraMovementStatusElement* extras)
+void Cataclysm::WriteMovementPacket(WorldPacket& data, bool hasSpline, MovementInfo const* mi, ObjectGuid const* guid, uint32 const* movementCounter, ExtraMovementStatusElement* extras)
 {
     bool hasMovementFlags = mi && mi->moveFlags != 0;
     bool hasMovementFlags2 = mi && mi->moveFlags2WotLK != 0;
     bool hasTimestamp = true;
     bool hasOrientation = mi && mi->pos.o != 0;
     bool hasTransportData = mi && !mi->t_guid.IsEmpty();
-    bool hasSpline = mi && mi->HasMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
 
     bool hasTransportTime2 = hasTransportData && mi->t_time2 != 0;
     bool hasTransportVehicleId = hasTransportData && mi->t_vehicle != 0;
-    bool hasPitch = mi && (mi->HasMovementFlag(WotLK::MOVEFLAG_SWIMMING | WotLK::MOVEFLAG_FLYING) || mi->HasMovementFlag2(WotLK::MOVEFLAG2_ALLOW_PITCHING));
-    bool hasFallDirection = mi && mi->HasMovementFlag(WotLK::MOVEFLAG_FALLING);
+    bool hasPitch = mi && (mi->HasMovementFlag(Cataclysm::MOVEFLAG_SWIMMING | Cataclysm::MOVEFLAG_FLYING) || mi->HasMovementFlag2(Cataclysm::MOVEFLAG2_ALWAYS_ALLOW_PITCHING));
+    bool hasFallDirection = mi && mi->HasMovementFlag(Cataclysm::MOVEFLAG_FALLING);
     bool hasFallData = hasFallDirection || mi && mi->fallTime != 0;
-    bool hasSplineElevation = mi && mi->HasMovementFlag(WotLK::MOVEFLAG_SPLINE_ELEVATION);
+    bool hasSplineElevation = mi && mi->HasMovementFlag(Cataclysm::MOVEFLAG_SPLINE_ELEVATION);
 
     MovementStatusElements const* sequence = GetMovementStatusElementsSequence(data.GetOpcode());
     if (!sequence)

@@ -88,45 +88,54 @@ void Unit::GetMovementInfoForObjectUpdate(MovementInfo& mi, bool& sendSpline) co
 
     sendSpline = m_moveSpline.m_initialized && GetHealth() != 0;
 
-    if (sendSpline)
+    if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
     {
-        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+        if (sendSpline)
         {
-            mi.AddMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
-            //if (!m_moveSpline.m_catmullrom)
-            //    mi.AddMovementFlag(Vanilla::MOVEFLAG_FORWARD);
-        }
-        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-        {
-            mi.AddMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
-            //if (!m_moveSpline.m_catmullrom)
-            //    mi.AddMovementFlag(TBC::MOVEFLAG_FORWARD);
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            {
+                mi.AddMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
+                //if (!m_moveSpline.m_catmullrom)
+                //    mi.AddMovementFlag(Vanilla::MOVEFLAG_FORWARD);
+            }
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            {
+                mi.AddMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
+                //if (!m_moveSpline.m_catmullrom)
+                //    mi.AddMovementFlag(TBC::MOVEFLAG_FORWARD);
+            }
+            else
+            {
+                mi.AddMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
+                //if (!m_moveSpline.m_catmullrom)
+                //    mi.AddMovementFlag(WotLK::MOVEFLAG_FORWARD);
+            }
         }
         else
         {
-            mi.AddMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
-            //if (!m_moveSpline.m_catmullrom)
-            //    mi.AddMovementFlag(WotLK::MOVEFLAG_FORWARD);
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+                mi.RemoveMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+                mi.RemoveMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
+            else
+                mi.RemoveMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
         }
     }
     else
     {
-        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-            mi.RemoveMovementFlag(Vanilla::MOVEFLAG_SPLINE_ENABLED);
-        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-            mi.RemoveMovementFlag(TBC::MOVEFLAG_SPLINE_ENABLED);
-        else
-            mi.RemoveMovementFlag(WotLK::MOVEFLAG_SPLINE_ENABLED);
+        mi.moveFlags = mi.moveFlags & Cataclysm::MOVEFLAG_MASK_CREATURE_ALLOWED;
+    }
 
-        if (GetHealth() == 0)
-        {
-            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
-                mi.RemoveMovementFlag(Vanilla::MOVEFLAG_MASK_MOVING);
-            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-                mi.RemoveMovementFlag(TBC::MOVEFLAG_MASK_MOVING);
-            else
-                mi.RemoveMovementFlag(WotLK::MOVEFLAG_MASK_MOVING);
-        }
+    if (!sendSpline && GetHealth() == 0)
+    {
+        if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            mi.RemoveMovementFlag(Vanilla::MOVEFLAG_MASK_MOVING);
+        else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            mi.RemoveMovementFlag(TBC::MOVEFLAG_MASK_MOVING);
+        else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+            mi.RemoveMovementFlag(WotLK::MOVEFLAG_MASK_MOVING);
+        else
+            mi.RemoveMovementFlag(Cataclysm::MOVEFLAG_MASK_MOVING);
     }
 }
 

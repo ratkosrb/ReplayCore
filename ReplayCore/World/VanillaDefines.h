@@ -244,6 +244,52 @@ inline uint32 ConvertVanillaMovementFlagsToWotLK(uint32 flags)
     return newFlags;
 }
 
+inline uint32 ConvertVanillaMovementFlagsToCataclysm(uint32 flags)
+{
+    uint32 newFlags = 0;
+    if (flags & Vanilla::MOVEFLAG_FORWARD)
+        newFlags |= Cataclysm::MOVEFLAG_FORWARD;
+    if (flags & Vanilla::MOVEFLAG_BACKWARD)
+        newFlags |= Cataclysm::MOVEFLAG_BACKWARD;
+    if (flags & Vanilla::MOVEFLAG_STRAFE_LEFT)
+        newFlags |= Cataclysm::MOVEFLAG_STRAFE_LEFT;
+    if (flags & Vanilla::MOVEFLAG_STRAFE_RIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_STRAFE_RIGHT;
+    if (flags & Vanilla::MOVEFLAG_TURN_LEFT)
+        newFlags |= Cataclysm::MOVEFLAG_TURN_LEFT;
+    if (flags & Vanilla::MOVEFLAG_TURN_RIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_TURN_RIGHT;
+    if (flags & Vanilla::MOVEFLAG_PITCH_UP)
+        newFlags |= Cataclysm::MOVEFLAG_PITCH_UP;
+    if (flags & Vanilla::MOVEFLAG_PITCH_DOWN)
+        newFlags |= Cataclysm::MOVEFLAG_PITCH_DOWN;
+    if (flags & Vanilla::MOVEFLAG_WALK_MODE)
+        newFlags |= Cataclysm::MOVEFLAG_WALK_MODE;
+    if (flags & Vanilla::MOVEFLAG_LEVITATING)
+        newFlags |= Cataclysm::MOVEFLAG_DISABLE_GRAVITY;
+    if (flags & Vanilla::MOVEFLAG_ROOT)
+        newFlags |= Cataclysm::MOVEFLAG_ROOT;
+    if (flags & Vanilla::MOVEFLAG_JUMPING)
+        newFlags |= Cataclysm::MOVEFLAG_FALLING;
+    if (flags & Vanilla::MOVEFLAG_FALLINGFAR)
+        newFlags |= Cataclysm::MOVEFLAG_FALLINGFAR;
+    if (flags & Vanilla::MOVEFLAG_SWIMMING)
+        newFlags |= Cataclysm::MOVEFLAG_SWIMMING;
+    if (flags & Vanilla::MOVEFLAG_CAN_FLY)
+        newFlags |= Cataclysm::MOVEFLAG_CAN_FLY;
+    if (flags & Vanilla::MOVEFLAG_FLYING)
+        newFlags |= Cataclysm::MOVEFLAG_FLYING;
+    if (flags & Vanilla::MOVEFLAG_SPLINE_ELEVATION)
+        newFlags |= Cataclysm::MOVEFLAG_SPLINE_ELEVATION;
+    if (flags & Vanilla::MOVEFLAG_WATERWALKING)
+        newFlags |= Cataclysm::MOVEFLAG_WATERWALKING;
+    if (flags & Vanilla::MOVEFLAG_SAFE_FALL)
+        newFlags |= Cataclysm::MOVEFLAG_SAFE_FALL;
+    if (flags & Vanilla::MOVEFLAG_HOVER)
+        newFlags |= Cataclysm::MOVEFLAG_HOVER;
+    return newFlags;
+}
+
 inline uint32 ConvertVanillaChatTypeToWotLK(uint8 chatType)
 {
     switch (chatType)
