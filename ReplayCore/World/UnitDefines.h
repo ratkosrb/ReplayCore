@@ -34,7 +34,8 @@ enum Races
     RACE_FOREST_TROLL       = 18, // tbc
     RACE_TAUNKA             = 19, // wotlk
     RACE_NORTHREND_SKELETON = 20, // wotlk
-    RACE_ICE_TROLL          = 21  // wotlk
+    RACE_ICE_TROLL          = 21, // wotlk
+    RACE_WORGEN             = 22, // cata
 };
 
 #define MAX_RACES         21
@@ -51,6 +52,12 @@ enum Races
     (1<<(RACE_DRAENEI-1)))
 
 #define RACEMASK_ALL_PLAYABLE_WOTLK RACEMASK_ALL_PLAYABLE_TBC
+
+#define RACEMASK_ALL_PLAYABLE_CATA \
+    ((1<<(RACE_HUMAN-1))   |(1<<(RACE_ORC-1))          |(1<<(RACE_DWARF-1))   | \
+     (1<<(RACE_NIGHTELF-1))|(1<<(RACE_UNDEAD_PLAYER-1))|(1<<(RACE_TAUREN-1))  | \
+     (1<<(RACE_GNOME-1))   |(1<<(RACE_TROLL-1))        |(1<<(RACE_BLOODELF-1))| \
+     (1<<(RACE_DRAENEI-1)) |(1<<(RACE_GOBLIN-1))       |(1<<(RACE_WORGEN-1)))
 
 #define RACEMASK_ALL_VANILLA \
     ((1<<(RACE_HUMAN-1))    |(1<<(RACE_ORC-1))      |(1<<(RACE_DWARF-1))   | \
@@ -73,6 +80,15 @@ enum Races
     (1<<(RACE_NAGA-1))      |(1<<(RACE_BROKEN-1))   |(1<<(RACE_SKELETON-1)) | \
     (1<<(RACE_VRYKUL-1))    |(1<<(RACE_TUSKARR-1))  |(1<<(RACE_FOREST_TROLL-1)) | \
     (1<<(RACE_TAUNKA-1))    |(1<<(RACE_NORTHREND_SKELETON-1))  |(1<<(RACE_ICE_TROLL-1)))
+
+#define RACEMASK_ALL_CATA \
+    ((1<<(RACE_HUMAN-1))    |(1<<(RACE_ORC-1))      |(1<<(RACE_DWARF-1))   | \
+    (1<<(RACE_NIGHTELF-1))  |(1<<(RACE_UNDEAD-1))   |(1<<(RACE_TAUREN-1))  | \
+    (1<<(RACE_GNOME-1))     |(1<<(RACE_TROLL-1))    |(1<<(RACE_GOBLIN-1))  | \
+    (1<<(RACE_BLOODELF-1))  |(1<<(RACE_DRAENEI-1))  |(1<<(RACE_FEL_ORC-1)) | \
+    (1<<(RACE_NAGA-1))      |(1<<(RACE_BROKEN-1))   |(1<<(RACE_SKELETON-1)) | \
+    (1<<(RACE_VRYKUL-1))    |(1<<(RACE_TUSKARR-1))  |(1<<(RACE_FOREST_TROLL-1)) | \
+    (1<<(RACE_TAUNKA-1))    |(1<<(RACE_NORTHREND_SKELETON-1))  |(1<<(RACE_ICE_TROLL-1)) |(1<<(RACE_WORGEN-1)))
 
 // for most cases batter use ChrRace data for team check as more safe, but when need full mask of team can be use this defines.
 #define RACEMASK_ALLIANCE \
@@ -125,6 +141,7 @@ enum Classes
 #define MAX_UNIT_DISPLAY_ID_VANILLA 17548
 #define MAX_UNIT_DISPLAY_ID_TBC 25958
 #define MAX_UNIT_DISPLAY_ID_WOTLK 32754
+#define MAX_UNIT_DISPLAY_ID_CATA 42498
 
 enum Stats
 {
@@ -217,6 +234,7 @@ enum WeaponAttackType                                       // The different wea
 #define MAX_FACTION_TEMPLATE_VANILLA 1677
 #define MAX_FACTION_TEMPLATE_TBC 2074
 #define MAX_FACTION_TEMPLATE_WOTLK 2236
+#define MAX_FACTION_TEMPLATE_CATA 2468
 
 enum Emote
 {
@@ -401,6 +419,7 @@ enum Emote
 #define MAX_EMOTE_VANILLA 376
 #define MAX_EMOTE_TBC 423
 #define MAX_EMOTE_WOTLK 476
+#define MAX_EMOTE_CATA 518
 
 inline std::string EmoteToString(uint32 id)
 {
@@ -1903,6 +1922,115 @@ namespace WotLK
                 return "UNIT_NPC_FLAG_SPELLCLICK";
             case UNIT_NPC_FLAG_PLAYER_VEHICLE:
                 return "UNIT_NPC_FLAG_PLAYER_VEHICLE";
+        }
+        return std::to_string(value);
+    }
+}
+
+namespace Cataclysm
+{
+     enum NPCFlags
+    {
+        UNIT_NPC_FLAG_NONE                  = 0x00000000,
+        UNIT_NPC_FLAG_GOSSIP                = 0x00000001,       // 100%
+        UNIT_NPC_FLAG_QUESTGIVER            = 0x00000002,       // guessed, probably ok
+        UNIT_NPC_FLAG_UNK1                  = 0x00000004,
+        UNIT_NPC_FLAG_UNK2                  = 0x00000008,
+        UNIT_NPC_FLAG_TRAINER               = 0x00000010,       // 100%
+        UNIT_NPC_FLAG_TRAINER_CLASS         = 0x00000020,       // 100%
+        UNIT_NPC_FLAG_TRAINER_PROFESSION    = 0x00000040,       // 100%
+        UNIT_NPC_FLAG_VENDOR                = 0x00000080,       // 100%
+        UNIT_NPC_FLAG_VENDOR_AMMO           = 0x00000100,       // 100%, general goods vendor
+        UNIT_NPC_FLAG_VENDOR_FOOD           = 0x00000200,       // 100%
+        UNIT_NPC_FLAG_VENDOR_POISON         = 0x00000400,       // guessed
+        UNIT_NPC_FLAG_VENDOR_REAGENT        = 0x00000800,       // 100%
+        UNIT_NPC_FLAG_REPAIR                = 0x00001000,       // 100%
+        UNIT_NPC_FLAG_FLIGHTMASTER          = 0x00002000,       // 100%
+        UNIT_NPC_FLAG_SPIRITHEALER          = 0x00004000,       // guessed
+        UNIT_NPC_FLAG_SPIRITGUIDE           = 0x00008000,       // guessed
+        UNIT_NPC_FLAG_INNKEEPER             = 0x00010000,       // 100%
+        UNIT_NPC_FLAG_BANKER                = 0x00020000,       // 100%
+        UNIT_NPC_FLAG_PETITIONER            = 0x00040000,       // 100% 0xC0000 = guild petitions, 0x40000 = arena team petitions
+        UNIT_NPC_FLAG_TABARDDESIGNER        = 0x00080000,       // 100%
+        UNIT_NPC_FLAG_BATTLEMASTER          = 0x00100000,       // 100%
+        UNIT_NPC_FLAG_AUCTIONEER            = 0x00200000,       // 100%
+        UNIT_NPC_FLAG_STABLEMASTER          = 0x00400000,       // 100%
+        UNIT_NPC_FLAG_GUILD_BANKER          = 0x00800000,       // cause client to send 997 opcode
+        UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,       // cause client to send 1015 opcode (spell click), dynamic, set at loading and don't must be set in DB
+        UNIT_NPC_FLAG_PLAYER_VEHICLE        = 0x02000000,       // players with mounts that have vehicle data should have it set
+        UNIT_NPC_FLAG_MAILBOX               = 0x04000000,       // mailbox
+        UNIT_NPC_FLAG_REFORGER              = 0x08000000,       // reforging
+        UNIT_NPC_FLAG_TRANSMOGRIFIER        = 0x10000000,       // transmogrification
+        UNIT_NPC_FLAG_VAULTKEEPER           = 0x20000000        // void storage
+    };
+
+    inline std::string NpcFlagToString(uint32 value)
+    {
+        switch (value)
+        {
+            case UNIT_NPC_FLAG_NONE:
+                return "UNIT_NPC_FLAG_NONE";
+            case UNIT_NPC_FLAG_GOSSIP:
+                return "UNIT_NPC_FLAG_GOSSIP";
+            case UNIT_NPC_FLAG_QUESTGIVER:
+                return "UNIT_NPC_FLAG_QUESTGIVER";
+            case UNIT_NPC_FLAG_UNK1:
+                return "UNIT_NPC_FLAG_UNK1";
+            case UNIT_NPC_FLAG_UNK2:
+                return "UNIT_NPC_FLAG_UNK2";
+            case UNIT_NPC_FLAG_TRAINER:
+                return "UNIT_NPC_FLAG_TRAINER";
+            case UNIT_NPC_FLAG_TRAINER_CLASS:
+                return "UNIT_NPC_FLAG_TRAINER_CLASS";
+            case UNIT_NPC_FLAG_TRAINER_PROFESSION:
+                return "UNIT_NPC_FLAG_TRAINER_PROFESSION";
+            case UNIT_NPC_FLAG_VENDOR:
+                return "UNIT_NPC_FLAG_VENDOR";
+            case UNIT_NPC_FLAG_VENDOR_AMMO:
+                return "UNIT_NPC_FLAG_VENDOR_AMMO";
+            case UNIT_NPC_FLAG_VENDOR_FOOD:
+                return "UNIT_NPC_FLAG_VENDOR_FOOD";
+            case UNIT_NPC_FLAG_VENDOR_POISON:
+                return "UNIT_NPC_FLAG_VENDOR_POISON";
+            case UNIT_NPC_FLAG_VENDOR_REAGENT:
+                return "UNIT_NPC_FLAG_VENDOR_REAGENT";
+            case UNIT_NPC_FLAG_REPAIR:
+                return "UNIT_NPC_FLAG_REPAIR";
+            case UNIT_NPC_FLAG_FLIGHTMASTER:
+                return "UNIT_NPC_FLAG_FLIGHTMASTER";
+            case UNIT_NPC_FLAG_SPIRITHEALER:
+                return "UNIT_NPC_FLAG_SPIRITHEALER";
+            case UNIT_NPC_FLAG_SPIRITGUIDE:
+                return "UNIT_NPC_FLAG_SPIRITGUIDE";
+            case UNIT_NPC_FLAG_INNKEEPER:
+                return "UNIT_NPC_FLAG_INNKEEPER";
+            case UNIT_NPC_FLAG_BANKER:
+                return "UNIT_NPC_FLAG_BANKER";
+            case UNIT_NPC_FLAG_PETITIONER:
+                return "UNIT_NPC_FLAG_PETITIONER";
+            case UNIT_NPC_FLAG_TABARDDESIGNER:
+                return "UNIT_NPC_FLAG_TABARDDESIGNER";
+            case UNIT_NPC_FLAG_BATTLEMASTER:
+                return "UNIT_NPC_FLAG_BATTLEMASTER";
+            case UNIT_NPC_FLAG_AUCTIONEER:
+                return "UNIT_NPC_FLAG_AUCTIONEER";
+            case UNIT_NPC_FLAG_STABLEMASTER:
+                return "UNIT_NPC_FLAG_STABLEMASTER";
+            case UNIT_NPC_FLAG_GUILD_BANKER:
+                return "UNIT_NPC_FLAG_GUILD_BANKER";
+            case UNIT_NPC_FLAG_SPELLCLICK:
+                return "UNIT_NPC_FLAG_SPELLCLICK";
+            case UNIT_NPC_FLAG_PLAYER_VEHICLE:
+                return "UNIT_NPC_FLAG_PLAYER_VEHICLE";
+            case UNIT_NPC_FLAG_MAILBOX:
+                return "UNIT_NPC_FLAG_MAILBOX";
+            case UNIT_NPC_FLAG_REFORGER:
+                return "UNIT_NPC_FLAG_REFORGER";
+            case UNIT_NPC_FLAG_TRANSMOGRIFIER:
+                return "UNIT_NPC_FLAG_TRANSMOGRIFIER";
+            case UNIT_NPC_FLAG_VAULTKEEPER:
+                return "UNIT_NPC_FLAG_VAULTKEEPER";
+
         }
         return std::to_string(value);
     }

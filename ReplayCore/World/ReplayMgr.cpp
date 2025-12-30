@@ -797,19 +797,19 @@ void ReplayMgr::LoadCreatures()
         ParseStringIntoVector(auras, data.auras);
         data.sourceSniffId = fields[57].GetUInt32();
 
-        if (data.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        if (data.displayId > MAX_UNIT_DISPLAY_ID_CATA)
         {
             printf("[ReplayMgr] LoadCreatures: Invalid display id for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.displayId = cInfo->displayId[0];
         }
 
-        if (data.nativeDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        if (data.nativeDisplayId > MAX_UNIT_DISPLAY_ID_CATA)
         {
             printf("[ReplayMgr] LoadCreatures: Invalid native display id for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.nativeDisplayId = cInfo->displayId[0];
         }
 
-        if (data.mountDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        if (data.mountDisplayId > MAX_UNIT_DISPLAY_ID_CATA)
         {
             printf("[ReplayMgr] LoadCreatures: Invalid mount display id for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.mountDisplayId = 0;
@@ -823,7 +823,7 @@ void ReplayMgr::LoadCreatures()
 
         if (data.emoteState == CLASSIC_STATE_DANCE)
             data.emoteState = EMOTE_STATE_DANCE;
-        if (data.emoteState > MAX_EMOTE_WOTLK)
+        if (data.emoteState > MAX_EMOTE_CATA)
         {
             printf("[ReplayMgr] LoadCreatures: Invalid emote state for creature (GUID %u, Entry %u)\n", guidCounter, entry);
             data.emoteState = 0;
@@ -1029,7 +1029,7 @@ void ReplayMgr::LoadPlayers()
         playerData.name = fields[6].GetCppString();
         playerData.raceId = fields[7].GetUInt8();
 
-        if (!playerData.raceId || (((1 << (playerData.raceId - 1)) & RACEMASK_ALL_WOTLK) == 0))
+        if (!playerData.raceId || (((1 << (playerData.raceId - 1)) & RACEMASK_ALL_CATA) == 0))
         {
             printf("[ReplayMgr] LoadPlayers: Invalid race for character %s (GUID: %u)\n", playerData.name.c_str(), guid);
             playerData.raceId = RACE_HUMAN;
@@ -1060,20 +1060,20 @@ void ReplayMgr::LoadPlayers()
         playerData.scale = fields[18].GetFloat();
 
         playerData.displayId = fields[19].GetUInt32();
-        if (playerData.displayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        if (playerData.displayId > MAX_UNIT_DISPLAY_ID_CATA)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid display id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.displayId = sGameDataMgr.GetReplacementUnitDisplayId(playerData.displayId);
         }
         playerData.nativeDisplayId = fields[20].GetUInt32();
-        if (playerData.nativeDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        if (playerData.nativeDisplayId > MAX_UNIT_DISPLAY_ID_CATA)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid native display id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.nativeDisplayId = sGameDataMgr.GetReplacementUnitDisplayId(playerData.nativeDisplayId);
         }
 
         playerData.mountDisplayId = fields[21].GetUInt32();
-        if (playerData.mountDisplayId > MAX_UNIT_DISPLAY_ID_WOTLK)
+        if (playerData.mountDisplayId > MAX_UNIT_DISPLAY_ID_CATA)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid mount display id for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.mountDisplayId = 0;
@@ -1105,7 +1105,7 @@ void ReplayMgr::LoadPlayers()
         playerData.emoteState = fields[31].GetUInt32();
         if (playerData.emoteState == CLASSIC_STATE_DANCE)
             playerData.emoteState = EMOTE_STATE_DANCE;
-        if (playerData.emoteState > MAX_EMOTE_WOTLK)
+        if (playerData.emoteState > MAX_EMOTE_CATA)
         {
             printf("[ReplayMgr] LoadPlayers: Invalid emote state for character %s (GUID %u)\n", playerData.name.c_str(), guid);
             playerData.emoteState = 0;
@@ -1156,11 +1156,11 @@ void ReplayMgr::LoadPlayers()
                 uint32 itemOrEnchantId = atoi(temp.c_str());
                 if (isItemId)
                 {
-                    if (itemOrEnchantId && !sGameDataMgr.GetItemPrototype(itemOrEnchantId))
-                    {
-                        printf("[ReplayMgr] LoadPlayers: Non existent item (Id: %u) on sniffed character with guid = %u.\n", itemOrEnchantId, guid);
-                        itemOrEnchantId = 0;
-                    }
+                    //if (itemOrEnchantId && !sGameDataMgr.GetItemPrototype(itemOrEnchantId))
+                    //{
+                    //    printf("[ReplayMgr] LoadPlayers: Non existent item (Id: %u) on sniffed character with guid = %u.\n", itemOrEnchantId, guid);
+                    //    itemOrEnchantId = 0;
+                    //}
                     playerData.visibleItems[itemCounter] = itemOrEnchantId;
                     itemCounter++;
                 }

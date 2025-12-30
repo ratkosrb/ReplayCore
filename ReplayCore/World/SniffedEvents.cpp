@@ -231,6 +231,7 @@ void ReplayMgr::PrepareClientSideMovementDataForCurrentClient()
                 moveEvent->m_opcode = opcode;
 
             moveEvent->m_moveFlags = sGameDataMgr.ConvertMovementFlags(moveEvent->m_moveFlags, !moveEvent->m_transportGuid.IsEmpty());
+            moveEvent->m_moveFlags2 = sGameDataMgr.ConvertMovementFlags2ForBuild(moveEvent->m_moveFlags2, sWorld.GetClientBuild());
             lastMovementInfo[moveEvent->m_moverGuid] = newState;
         }
     }
@@ -689,6 +690,7 @@ void ReplayMgr::LoadUnitCreate(char const* tableName, uint32 typeId, bool isSpaw
 void SniffedEvent_UnitCreate::PepareForCurrentClient()
 {
     m_moveFlags = sGameDataMgr.ConvertMovementFlags(m_moveFlags, !m_transportGuid.IsEmpty());
+    m_moveFlags2 = sGameDataMgr.ConvertMovementFlags2ForBuild(m_moveFlags2, sWorld.GetClientBuild());
 }
 
 void SniffedEvent_UnitCreate::Execute() const
@@ -2931,8 +2933,8 @@ void ReplayMgr::LoadCreatureEquipmentUpdate()
                     sConfig.GetSniffVersion() == SNIFF_TBC)
                     itemId = sGameDataMgr.GetItemIdWithDisplayId(itemId);
 
-                if (!sGameDataMgr.GetItemPrototype(itemId))
-                    continue;
+                //if (!sGameDataMgr.GetItemPrototype(itemId))
+                //    continue;
             }
 
             std::shared_ptr<SniffedEvent_CreatureEquipmentUpdate> newEvent = std::make_shared<SniffedEvent_CreatureEquipmentUpdate>(sourceGuid, slot, itemId);
@@ -3087,8 +3089,8 @@ void ReplayMgr::LoadPlayerEquipmentUpdate()
                 continue;
 
             uint32 itemId = fields[3].GetUInt32();
-            if (itemId && !sGameDataMgr.GetItemPrototype(itemId))
-                continue;
+            //if (itemId && !sGameDataMgr.GetItemPrototype(itemId))
+            //    continue;
 
             std::shared_ptr<SniffedEvent_PlayerEquipmentUpdate> newEvent = std::make_shared<SniffedEvent_PlayerEquipmentUpdate>(sourceGuid, slot, itemId);
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));

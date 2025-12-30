@@ -45,6 +45,7 @@ public:
     uint32 GetTransportMoveFlag() const;
     uint32 ConvertMovementFlags(uint32 moveFlags, bool onTransport) const;
     uint32 ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 clientBuild) const;
+    uint32 ConvertMovementFlags2ForBuild(uint32 moveFlags, uint32 clientBuild) const;
     uint32 ConvertWeatherTypeToWeatherState(uint32 type, float grade);
     void ConvertWeatherStateAndGradeForVanilla(uint32& type, float& grade);
     uint32 GetWeatherSoundForVanilla(uint32 type, float grade) const;
@@ -383,6 +384,7 @@ private:
     static CreatureDisplayScaleMap const m_creatureDisplayScalesMap5875;
     static CreatureDisplayScaleMap const m_creatureDisplayScalesMap8606;
     static CreatureDisplayScaleMap const m_creatureDisplayScalesMap12340;
+    static CreatureDisplayScaleMap const m_creatureDisplayScalesMap15595;
     static MapNamesMap const m_mapNamesMap;
     static LanguageNamesMap const m_languageNamesMap;
 };

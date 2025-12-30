@@ -19,9 +19,32 @@ enum SniffVersion
     SNIFF_VANILLA,
     SNIFF_TBC,
     SNIFF_WOTLK,
+    SNIFF_CATA,
     SNIFF_CLASSIC,
     SNIFF_SOM,
 };
+
+static uint32 const SupportedSniffVersions[] = { SNIFF_VANILLA , SNIFF_TBC , SNIFF_WOTLK , SNIFF_CATA , SNIFF_CLASSIC , SNIFF_SOM };
+
+inline char const* SniffVersionToString(uint32 version)
+{
+    switch (version)
+    {
+        case SNIFF_VANILLA:
+            return "Vanilla 1.12";
+        case SNIFF_TBC:
+            return "TBC 2.4.X";
+        case SNIFF_WOTLK:
+            return "WotLK 3.3.X";
+        case SNIFF_CATA:
+            return "Cata 4.3.X";
+        case SNIFF_CLASSIC:
+            return "Classic 1.13";
+        case SNIFF_SOM:
+            return "Classic 1.14";
+    }
+    return "UNKNOWN";
+}
 
 namespace Vanilla
 {

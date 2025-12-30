@@ -110,6 +110,7 @@
     <ClInclude Include="Input\Config.h" />
     <ClInclude Include="Input\INIReader.h" />
     <ClInclude Include="World\Aura.h" />
+    <ClInclude Include="World\CataclysmDefines.h" />
     <ClInclude Include="World\ChatDefines.h" />
     <ClInclude Include="World\ClassicDefines.h" />
     <ClInclude Include="World\DynamicObject.h" />
@@ -164,6 +165,10 @@
     <ClCompile Include="Input\Config.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="World\Aura.cpp" />
+    <ClCompile Include="World\CreatureDisplayScale12340.cpp" />
+    <ClCompile Include="World\CreatureDisplayScale15595.cpp" />
+    <ClCompile Include="World\CreatureDisplayScale5875.cpp" />
+    <ClCompile Include="World\CreatureDisplayScale8606.cpp" />
     <ClCompile Include="World\DynamicObject.cpp" />
     <ClCompile Include="World\GameData.cpp" />
     <ClCompile Include="World\GameDataMgr.cpp" />

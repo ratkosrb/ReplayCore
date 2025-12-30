@@ -393,6 +393,58 @@ inline uint32 ConvertClassicMovementFlagsToCataclysm(uint32 flags)
     return newFlags;
 }
 
+inline uint32 ConvertClassicMovementFlags2ToWotLK(uint32 flags)
+{
+    uint32 newFlags = 0;
+    if (flags & Classic::MOVEFLAG2_NO_STRAFE)
+        newFlags |= WotLK::MOVEFLAG2_NO_STRAFE;
+    if (flags & Classic::MOVEFLAG2_NO_JUMPING)
+        newFlags |= WotLK::MOVEFLAG2_NO_JUMPING;
+    if (flags & Classic::MOVEFLAG2_FULL_SPEED_TURNING)
+        newFlags |= WotLK::MOVEFLAG2_FULL_SPEED_TURNING;
+    if (flags & Classic::MOVEFLAG2_FULL_SPEED_PITCHING)
+        newFlags |= WotLK::MOVEFLAG2_FULL_SPEED_PITCHING;
+    if (flags & Classic::MOVEFLAG2_ALWAYS_ALLOW_PITCHING)
+        newFlags |= WotLK::MOVEFLAG2_ALWAYS_ALLOW_PITCHING;
+    if (flags & Classic::MOVEFLAG2_INTERPOLATED_MOVEMENT)
+        newFlags |= WotLK::MOVEFLAG2_INTERPOLATED_MOVEMENT;
+    if (flags & Classic::MOVEFLAG2_INTERPOLATED_TURNING)
+        newFlags |= WotLK::MOVEFLAG2_INTERPOLATED_TURNING;
+    if (flags & Classic::MOVEFLAG2_INTERPOLATED_PITCHING)
+        newFlags |= WotLK::MOVEFLAG2_INTERPOLATED_PITCHING;
+
+    return newFlags;
+}
+
+inline uint32 ConvertClassicMovementFlags2ToCataclysm(uint32 flags)
+{
+    uint32 newFlags = 0;
+    if (flags & Classic::MOVEFLAG2_NO_STRAFE)
+        newFlags |= Cataclysm::MOVEFLAG2_NO_STRAFE;
+    if (flags & Classic::MOVEFLAG2_NO_JUMPING)
+        newFlags |= Cataclysm::MOVEFLAG2_NO_JUMPING;
+    if (flags & Classic::MOVEFLAG2_FULL_SPEED_TURNING)
+        newFlags |= Cataclysm::MOVEFLAG2_FULL_SPEED_TURNING;
+    if (flags & Classic::MOVEFLAG2_FULL_SPEED_PITCHING)
+        newFlags |= Cataclysm::MOVEFLAG2_FULL_SPEED_PITCHING;
+    if (flags & Classic::MOVEFLAG2_ALWAYS_ALLOW_PITCHING)
+        newFlags |= Cataclysm::MOVEFLAG2_ALWAYS_ALLOW_PITCHING;
+    if (flags & Classic::MOVEFLAG2_IS_VEHICLE_EXIT_VOLUNTARY)
+        newFlags |= Cataclysm::MOVEFLAG2_IS_VEHICLE_EXIT_VOLUNTARY;
+    if (flags & Classic::MOVEFLAG2_CAN_SWIM_TO_FLY_TRANS)
+        newFlags |= Cataclysm::MOVEFLAG2_CAN_SWIM_TO_FLY_TRANS;
+    if (flags & Classic::MOVEFLAG2_AWAITING_LOAD)
+        newFlags |= Cataclysm::MOVEFLAG2_AWAITING_LOAD;
+    if (flags & Classic::MOVEFLAG2_INTERPOLATED_MOVEMENT)
+        newFlags |= Cataclysm::MOVEFLAG2_INTERPOLATED_MOVEMENT;
+    if (flags & Classic::MOVEFLAG2_INTERPOLATED_TURNING)
+        newFlags |= Cataclysm::MOVEFLAG2_INTERPOLATED_TURNING;
+    if (flags & Classic::MOVEFLAG2_INTERPOLATED_PITCHING)
+        newFlags |= Cataclysm::MOVEFLAG2_INTERPOLATED_PITCHING;
+
+    return newFlags;
+}
+
 inline uint32 ConvertClassicChatTypeToVanilla(uint8 chatType)
 {
     switch (chatType)

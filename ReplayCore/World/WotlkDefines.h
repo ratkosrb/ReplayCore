@@ -138,6 +138,93 @@ inline uint32 ConvertWotlkMovementFlagsToTBC(uint32 flags)
     return newFlags;
 }
 
+inline uint32 ConvertWotlkMovementFlagsToCataclysm(uint32 flags)
+{
+    uint32 newFlags = 0;
+    if (flags & WotLK::MOVEFLAG_FORWARD)
+        newFlags |= Cataclysm::MOVEFLAG_FORWARD;
+    if (flags & WotLK::MOVEFLAG_BACKWARD)
+        newFlags |= Cataclysm::MOVEFLAG_BACKWARD;
+    if (flags & WotLK::MOVEFLAG_STRAFE_LEFT)
+        newFlags |= Cataclysm::MOVEFLAG_STRAFE_LEFT;
+    if (flags & WotLK::MOVEFLAG_STRAFE_RIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_STRAFE_RIGHT;
+    if (flags & WotLK::MOVEFLAG_TURN_LEFT)
+        newFlags |= Cataclysm::MOVEFLAG_TURN_LEFT;
+    if (flags & WotLK::MOVEFLAG_TURN_RIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_TURN_RIGHT;
+    if (flags & WotLK::MOVEFLAG_PITCH_UP)
+        newFlags |= Cataclysm::MOVEFLAG_PITCH_UP;
+    if (flags & WotLK::MOVEFLAG_PITCH_DOWN)
+        newFlags |= Cataclysm::MOVEFLAG_PITCH_DOWN;
+    if (flags & WotLK::MOVEFLAG_WALK_MODE)
+        newFlags |= Cataclysm::MOVEFLAG_WALK_MODE;
+    if (flags & WotLK::MOVEFLAG_LEVITATING)
+        newFlags |= Cataclysm::MOVEFLAG_DISABLE_GRAVITY;
+    if (flags & WotLK::MOVEFLAG_ROOT)
+        newFlags |= Cataclysm::MOVEFLAG_ROOT;
+    if (flags & WotLK::MOVEFLAG_FALLING)
+        newFlags |= Cataclysm::MOVEFLAG_FALLING;
+    if (flags & WotLK::MOVEFLAG_FALLINGFAR)
+        newFlags |= Cataclysm::MOVEFLAG_FALLINGFAR;
+    if (flags & WotLK::MOVEFLAG_PENDINGSTOP)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGSTOP;
+    if (flags & WotLK::MOVEFLAG_PENDINGSTRAFESTOP)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGSTRAFESTOP;
+    if (flags & WotLK::MOVEFLAG_PENDINGFORWARD)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGFORWARD;
+    if (flags & WotLK::MOVEFLAG_PENDINGBACKWARD)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGBACKWARD;
+    if (flags & WotLK::MOVEFLAG_PENDINGSTRAFELEFT)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGSTRAFELEFT;
+    if (flags & WotLK::MOVEFLAG_PENDINGSTRAFERIGHT)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGSTRAFERIGHT;
+    if (flags & WotLK::MOVEFLAG_PENDINGROOT)
+        newFlags |= Cataclysm::MOVEFLAG_PENDINGROOT;
+    if (flags & WotLK::MOVEFLAG_SWIMMING)
+        newFlags |= Cataclysm::MOVEFLAG_SWIMMING;
+    if (flags & WotLK::MOVEFLAG_ASCENDING)
+        newFlags |= Cataclysm::MOVEFLAG_ASCENDING;
+    if (flags & WotLK::MOVEFLAG_DESCENDING)
+        newFlags |= Cataclysm::MOVEFLAG_DESCENDING;
+    if (flags & WotLK::MOVEFLAG_CAN_FLY)
+        newFlags |= Cataclysm::MOVEFLAG_CAN_FLY;
+    if (flags & WotLK::MOVEFLAG_FLYING)
+        newFlags |= Cataclysm::MOVEFLAG_FLYING;
+    if (flags & WotLK::MOVEFLAG_SPLINE_ELEVATION)
+        newFlags |= Cataclysm::MOVEFLAG_SPLINE_ELEVATION;
+    if (flags & WotLK::MOVEFLAG_WATERWALKING)
+        newFlags |= Cataclysm::MOVEFLAG_WATERWALKING;
+    if (flags & WotLK::MOVEFLAG_SAFE_FALL)
+        newFlags |= Cataclysm::MOVEFLAG_SAFE_FALL;
+    if (flags & WotLK::MOVEFLAG_HOVER)
+        newFlags |= Cataclysm::MOVEFLAG_HOVER;
+    return newFlags;
+}
+
+inline uint32 ConvertWotlkMovementFlags2ToCataclysm(uint32 flags)
+{
+    uint32 newFlags = 0;
+    if (flags & WotLK::MOVEFLAG2_NO_STRAFE)
+        newFlags |= Cataclysm::MOVEFLAG2_NO_STRAFE;
+    if (flags & WotLK::MOVEFLAG2_NO_JUMPING)
+        newFlags |= Cataclysm::MOVEFLAG2_NO_JUMPING;
+    if (flags & WotLK::MOVEFLAG2_FULL_SPEED_TURNING)
+        newFlags |= Cataclysm::MOVEFLAG2_FULL_SPEED_TURNING;
+    if (flags & WotLK::MOVEFLAG2_FULL_SPEED_PITCHING)
+        newFlags |= Cataclysm::MOVEFLAG2_FULL_SPEED_PITCHING;
+    if (flags & WotLK::MOVEFLAG2_ALWAYS_ALLOW_PITCHING)
+        newFlags |= Cataclysm::MOVEFLAG2_ALWAYS_ALLOW_PITCHING;
+    if (flags & WotLK::MOVEFLAG2_INTERPOLATED_MOVEMENT)
+        newFlags |= Cataclysm::MOVEFLAG2_INTERPOLATED_MOVEMENT;
+    if (flags & WotLK::MOVEFLAG2_INTERPOLATED_TURNING)
+        newFlags |= Cataclysm::MOVEFLAG2_INTERPOLATED_TURNING;
+    if (flags & WotLK::MOVEFLAG2_INTERPOLATED_PITCHING)
+        newFlags |= Cataclysm::MOVEFLAG2_INTERPOLATED_PITCHING;
+
+    return newFlags;
+}
+
 inline uint32 ConvertWotlkChatTypeToVanilla(uint8 chatType)
 {
     switch (chatType)
@@ -230,7 +317,7 @@ inline uint32 ConvertWotlkChatTypeToVanilla(uint8 chatType)
     return Vanilla::CHAT_MSG_SAY;
 }
 
-inline uint32 ConvertWotLKChatTypeToTBC(uint8 chatType)
+inline uint32 ConvertWotlkChatTypeToTBC(uint8 chatType)
 {
     switch (chatType)
     {

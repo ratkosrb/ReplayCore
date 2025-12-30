@@ -9,6 +9,7 @@
 #include "VanillaDefines.h"
 #include "TbcDefines.h"
 #include "WotlkDefines.h"
+#include "CataclysmDefines.h"
 #include "ClassicDefines.h"
 #include "../Input/Config.h"
 #include "../Defines/Utility.h"
@@ -25,8 +26,10 @@ bool GameDataMgr::IsValidEmote(uint32 id) const
         return id <= MAX_EMOTE_VANILLA;
     else if (sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
         return id <= MAX_EMOTE_TBC;
-    else
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
         return id <= MAX_EMOTE_WOTLK;
+    else
+        return id <= MAX_EMOTE_CATA;
 }
 
 bool GameDataMgr::IsValidFactionTemplate(uint32 id) const
@@ -38,8 +41,10 @@ bool GameDataMgr::IsValidFactionTemplate(uint32 id) const
         return id <= MAX_FACTION_TEMPLATE_VANILLA;
     else if (sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
         return id <= MAX_FACTION_TEMPLATE_TBC;
-    else
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
         return id <= MAX_FACTION_TEMPLATE_WOTLK;
+    else
+        return id <= MAX_FACTION_TEMPLATE_CATA;
 }
 
 bool GameDataMgr::IsValidRace(uint32 raceId) const
@@ -49,8 +54,10 @@ bool GameDataMgr::IsValidRace(uint32 raceId) const
         maxRaceMask = RACEMASK_ALL_VANILLA;
     else if (sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
         maxRaceMask = RACEMASK_ALL_TBC;
-    else
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
         maxRaceMask = RACEMASK_ALL_WOTLK;
+    else
+        maxRaceMask = RACEMASK_ALL_CATA;
 
     return (raceId && (((1 << (raceId - 1)) & maxRaceMask) != 0));
 }
@@ -96,8 +103,10 @@ bool GameDataMgr::IsValidGameObjectDisplayId(uint32 id) const
         return id <= MAX_GAMEOBJECT_DISPLAY_ID_VANILLA;
     else if (sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
         return id <= MAX_GAMEOBJECT_DISPLAY_ID_TBC;
-    else
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
         return id <= MAX_GAMEOBJECT_DISPLAY_ID_WOTLK;
+    else
+        return id <= MAX_GAMEOBJECT_DISPLAY_ID_CATA;
 }
 
 bool GameDataMgr::IsValidGameObjectType(uint32 type) const
@@ -116,8 +125,10 @@ bool GameDataMgr::IsValidSpellId(uint32 id) const
         return id <= MAX_SPELL_ID_VANILLA;
     else if (sWorld.GetClientBuild() <= CLIENT_BUILD_2_4_3)
         return id <= MAX_SPELL_ID_TBC;
-    else
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
         return id <= MAX_SPELL_ID_WOTLK;
+    else
+        return id <= MAX_SPELL_ID_CATA;
 }
 
 uint8 GameDataMgr::GetMoveSpeedsCount() const
@@ -204,6 +215,20 @@ uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 client
                 return ConvertWotlkMovementFlagsToVanilla(moveFlags);
             else if (clientBuild < CLIENT_BUILD_3_0_2)
                 return ConvertWotlkMovementFlagsToTBC(moveFlags);
+            else if (clientBuild <= CLIENT_BUILD_3_3_5a)
+                return moveFlags;
+            else
+                return ConvertWotlkMovementFlagsToCataclysm(moveFlags);
+            break;
+        }
+        case SNIFF_CATA:
+        {
+            if (clientBuild < CLIENT_BUILD_2_0_1)
+                return ConvertCataclysmMovementFlagsToVanilla(moveFlags);
+            else if (clientBuild < CLIENT_BUILD_3_0_2)
+                return ConvertCataclysmMovementFlagsToTBC(moveFlags);
+            else if (clientBuild <= CLIENT_BUILD_3_3_5a)
+                return ConvertCataclysmMovementFlagsToWotLK(moveFlags);
             else
                 return moveFlags;
             break;
@@ -219,6 +244,41 @@ uint32 GameDataMgr::ConvertMovementFlagsForBuild(uint32 moveFlags, uint32 client
                 return ConvertClassicMovementFlagsToWotLK(moveFlags);
             else
                 return ConvertClassicMovementFlagsToCataclysm(moveFlags);
+            break;
+        }
+    }
+
+    return moveFlags;
+}
+
+uint32 GameDataMgr::ConvertMovementFlags2ForBuild(uint32 moveFlags, uint32 clientBuild) const
+{
+    switch (sConfig.GetSniffVersion())
+    {
+        case SNIFF_TBC:
+        case SNIFF_WOTLK:
+        {
+            if (clientBuild <= CLIENT_BUILD_3_3_5a)
+                return moveFlags;
+            else
+                return ConvertWotlkMovementFlags2ToCataclysm(moveFlags);
+            break;
+        }
+        case SNIFF_CATA:
+        {
+            if (clientBuild <= CLIENT_BUILD_3_3_5a)
+                return ConvertCataclysmMovementFlags2ToWotLK(moveFlags);
+            else
+                return moveFlags;
+            break;
+        }
+        case SNIFF_CLASSIC:
+        case SNIFF_SOM:
+        {
+            if (clientBuild <= CLIENT_BUILD_3_3_5a)
+                return ConvertClassicMovementFlags2ToWotLK(moveFlags);
+            else
+                return ConvertClassicMovementFlags2ToCataclysm(moveFlags);
             break;
         }
     }
@@ -376,6 +436,7 @@ uint32 GameDataMgr::ConvertChatType(uint32 chatType) const
         case SNIFF_TBC:
             return ConvertTBCChatType(chatType);
         case SNIFF_WOTLK:
+        case SNIFF_CATA:
             return ConvertWotLKChatType(chatType);
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
@@ -406,7 +467,7 @@ uint32 GameDataMgr::ConvertWotLKChatType(uint32 chatType) const
     if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
         return ConvertTBCChatTypeToVanilla(chatType);
     else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
-        return ConvertWotLKChatTypeToTBC(chatType);
+        return ConvertWotlkChatTypeToTBC(chatType);
     else
         return chatType;
 }
@@ -664,6 +725,91 @@ void GameDataMgr::ConvertMoveSplineData(uint8& splineType, uint32& splineFlags, 
             }
             break;
         }
+        case SNIFF_CATA:
+        {
+            if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
+            {
+                if (splineFlags & Cataclysm::SplineFlags::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= Vanilla::SplineFlags::Cyclic;
+                }
+                if (splineFlags & Cataclysm::SplineFlags::Flying)
+                {
+                    newFlags |= Vanilla::SplineFlags::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Cataclysm::SplineFlags::Falling)
+                    newFlags |= Vanilla::SplineFlags::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+                else
+                    newFlags |= Vanilla::SplineFlags::Runmode;
+
+            }
+            else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
+            {
+                if (splineFlags & Cataclysm::SplineFlags::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= TBC::SplineFlags::Cyclic;
+                }
+                if (splineFlags & Cataclysm::SplineFlags::Flying)
+                {
+                    newFlags |= TBC::SplineFlags::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Cataclysm::SplineFlags::Falling)
+                    newFlags |= TBC::SplineFlags::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+            {
+                if (splineFlags & Cataclysm::SplineFlags::Cyclic)
+                {
+                    isCyclic = true;
+                    newFlags |= WotLK::SplineFlags::Cyclic;
+                }
+                if (splineFlags & Cataclysm::SplineFlags::Flying)
+                {
+                    newFlags |= WotLK::SplineFlags::Flying;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Cataclysm::SplineFlags::Catmullrom)
+                {
+                    newFlags |= WotLK::SplineFlags::Catmullrom;
+                    isCatmullrom = true;
+                }
+                if (splineFlags & Cataclysm::SplineFlags::Falling)
+                    newFlags |= WotLK::SplineFlags::Falling;
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            else
+            {
+                newFlags = splineFlags;
+
+                if (splineFlags & Cataclysm::SplineFlags::Cyclic)
+                    isCyclic = true;
+                if (splineFlags & Cataclysm::SplineFlags::Flying)
+                    isCatmullrom = true;
+                if (splineFlags & Cataclysm::SplineFlags::Catmullrom)
+                    isCatmullrom = true;
+
+                if (finalOrientation != 100)
+                    splineType = SPLINE_TYPE_FACING_ANGLE;
+                else if (!hasDestination)
+                    splineType = SPLINE_TYPE_STOP;
+            }
+            break;
+        }
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
         {
@@ -783,6 +929,7 @@ uint32 GameDataMgr::ConvertNpcFlagsForBuild(uint32 npcFlags, uint32 build)
         }
         case SNIFF_TBC:
         case SNIFF_WOTLK:
+        case SNIFF_CATA:
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
         {
@@ -821,6 +968,7 @@ uint8 GameDataMgr::ConvertAuraFlags(uint8 auraFlags, uint8 activeFlags, uint32 s
             break;
         }
         case SNIFF_WOTLK:
+        case SNIFF_CATA:
         {
             if (sWorld.GetClientBuild() < CLIENT_BUILD_2_0_1)
                 return ConvertWotlkAuraFlagsToVanilla(auraFlags);
@@ -861,6 +1009,7 @@ uint32 GameDataMgr::ConvertHitInfoFlags(uint32 hitInfo)
             break;
         }
         case SNIFF_WOTLK:
+        case SNIFF_CATA:
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
         {
@@ -883,6 +1032,7 @@ std::string GameDataMgr::ChatTypeToString(uint32 value) const
         case SNIFF_TBC:
             return TBC::ChatTypeToString(value);
         case SNIFF_WOTLK:
+        case SNIFF_CATA:
             return WotLK::ChatTypeToString(value);
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
@@ -900,6 +1050,7 @@ std::string GameDataMgr::ChatTypeToVerbString(uint32 value) const
         case SNIFF_TBC:
             return TBC::ChatTypeToVerbString(value);
         case SNIFF_WOTLK:
+        case SNIFF_CATA:
             return WotLK::ChatTypeToVerbString(value);
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
@@ -917,6 +1068,7 @@ inline std::string GetHitInfoName(uint32 value)
         case SNIFF_TBC:
             return TBC::HitInfoToString(value);
         case SNIFF_WOTLK:
+        case SNIFF_CATA:
             return WotLK::HitInfoToString(value);
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
@@ -951,6 +1103,8 @@ inline std::string GetMovementFlagName(uint32 value)
             return TBC::MovementFlagToString(value);
         case SNIFF_WOTLK:
             return WotLK::MovementFlagToString(value);
+        case SNIFF_CATA:
+            return Cataclysm::MovementFlagToString(value);
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
             return Classic::MovementFlagToString(value);
@@ -984,6 +1138,8 @@ inline std::string GetSplineFlagName(uint32 value)
             return TBC::SplineFlagToString(value);
         case SNIFF_WOTLK:
             return WotLK::SplineFlagToString(value);
+        case SNIFF_CATA:
+            return Cataclysm::SplineFlagToString(value);
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
             return Classic::SplineFlagToString(value);
@@ -1017,6 +1173,8 @@ inline std::string GetNpcFlagName(uint32 value)
             return TBC::NpcFlagToString(value);
         case SNIFF_WOTLK:
             return WotLK::NpcFlagToString(value);
+        case SNIFF_CATA:
+            return Cataclysm::NpcFlagToString(value);
         case SNIFF_CLASSIC:
         case SNIFF_SOM:
             return Classic::NpcFlagToString(value);
@@ -1239,7 +1397,7 @@ void GameDataMgr::LoadPlayerInfo()
             float  positionZ     = fields[6].GetFloat();
             float  orientation   = fields[7].GetFloat();
 
-            if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_WOTLK))
+            if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_CATA))
             {
                 printf("Wrong race %u in `playercreateinfo` table, ignoring.\n", current_race);
                 continue;
@@ -1294,7 +1452,7 @@ void GameDataMgr::LoadPlayerInfo()
                 uint32 current_race = fields[0].GetUInt32();
                 uint32 current_class = fields[1].GetUInt32();
 
-                if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_WOTLK))
+                if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_CATA))
                 {
                     printf("Error: Wrong race %u in `playercreateinfo_spell` table, ignoring.\n", current_race);
                     continue;
@@ -1344,7 +1502,7 @@ void GameDataMgr::LoadPlayerInfo()
                 uint32 current_race = fields[0].GetUInt32();
                 uint32 current_class = fields[1].GetUInt32();
 
-                if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_WOTLK))
+                if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_CATA))
                 {
                     printf("Error: Wrong race %u in `playercreateinfo_action` table, ignoring.\n", current_race);
                     continue;
@@ -1471,7 +1629,7 @@ void GameDataMgr::LoadPlayerInfo()
             uint32 current_race = fields[0].GetUInt32();
             uint32 current_class = fields[1].GetUInt32();
 
-            if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_WOTLK))
+            if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_CATA))
             {
                 printf("Error: Wrong race %u in `player_levelstats` table, ignoring.\n", current_race);
                 continue;
@@ -1812,8 +1970,10 @@ CreatureDisplayScaleMap const& GameDataMgr::GetCreatureDisplayScaleMapForBuild(u
         return m_creatureDisplayScalesMap5875;
     else if (build < CLIENT_BUILD_3_0_2)
         return m_creatureDisplayScalesMap8606;
+    else if (build <= CLIENT_BUILD_3_3_5a)
+        return m_creatureDisplayScalesMap12340;
 
-    return m_creatureDisplayScalesMap12340;
+    return m_creatureDisplayScalesMap15595;
 }
 
 void GameDataMgr::LoadCreatureTemplates()

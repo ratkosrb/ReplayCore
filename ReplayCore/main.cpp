@@ -119,11 +119,8 @@ int main()
     sGameDataMgr.SetDataSource(GameDataSource(sConfig.GetWorldDbType()));
 
     printf("\nSelect sniff version:\n");
-    printf("0. Vanilla 1.12\n");
-    printf("1. TBC 2.X\n");
-    printf("2. WotLK 3.X\n");
-    printf("3. Classic 1.13\n");
-    printf("4. Classic 1.14\n");
+    for (auto const& version : SupportedSniffVersions)
+        printf("%u. %s\n", version, SniffVersionToString(version));
     printf("> ");
     sConfig.SetSniffVersion(Console::GetUInt32());
     printf("\n");

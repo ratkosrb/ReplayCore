@@ -960,6 +960,36 @@ namespace Classic
         return std::to_string(value);
     }
 
+    
+    enum MovementFlags2 : uint32
+    {
+        MOVEFLAG2_NONE                                      = 0x00000000,
+        MOVEFLAG2_NO_STRAFE                                 = 0x00000001,
+        MOVEFLAG2_NO_JUMPING                                = 0x00000002,
+        MOVEFLAG2_FULL_SPEED_TURNING                        = 0x00000004,
+        MOVEFLAG2_FULL_SPEED_PITCHING                       = 0x00000008,
+        MOVEFLAG2_ALWAYS_ALLOW_PITCHING                     = 0x00000010,
+        MOVEFLAG2_IS_VEHICLE_EXIT_VOLUNTARY                 = 0x00000020,
+        MOVEFLAG2_JUMP_SPLINE_IN_AIR                        = 0x00000040,
+        MOVEFLAG2_ANIM_TIER_IN_TRANS                        = 0x00000080,
+        MOVEFLAG2_WATERWALKING_FULL_PITCH                   = 0x00000100, // will always waterwalk, even if facing the camera directly down
+        MOVEFLAG2_VEHICLE_PASSENGER_IS_TRANSITION_ALLOWED   = 0x00000200,
+        MOVEFLAG2_CAN_SWIM_TO_FLY_TRANS                     = 0x00000400,
+        MOVEFLAG2_UNK11                                     = 0x00000800, // terrain normal calculation is disabled if this flag is not present, client automatically handles setting this flag
+        MOVEFLAG2_CAN_TURN_WHILE_FALLING                    = 0x00001000,
+        MOVEFLAG2_UNK13                                     = 0x00002000, // set automatically by the client for aura 373
+        MOVEFLAG2_IGNORE_MOVEMENT_FORCES                    = 0x00004000,
+        MOVEFLAG2_UNK15                                     = 0x00008000,
+        MOVEFLAG2_CAN_DOUBLE_JUMP                           = 0x00010000,
+        MOVEFLAG2_DOUBLE_JUMP                               = 0x00020000,
+        // these flags cannot be sent (18 bits in packet)
+        MOVEFLAG2_UNK18                                     = 0x00040000,
+        MOVEFLAG2_AWAITING_LOAD                             = 0x00080000,
+        MOVEFLAG2_INTERPOLATED_MOVEMENT                     = 0x00100000,
+        MOVEFLAG2_INTERPOLATED_TURNING                      = 0x00200000,
+        MOVEFLAG2_INTERPOLATED_PITCHING                     = 0x00400000
+    };
+
     namespace SplineFlags
     {
         enum SplineFlags

@@ -110,6 +110,18 @@
     <ClCompile Include="World\MovementStructures434.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="World\CreatureDisplayScale5875.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\CreatureDisplayScale8606.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\CreatureDisplayScale12340.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\CreatureDisplayScale15595.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database\Database.h">
@@ -305,6 +317,9 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\MovementStructures434.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\CataclysmDefines.h">
       <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>
