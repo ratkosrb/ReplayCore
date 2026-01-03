@@ -1112,7 +1112,7 @@ void WorldServer::HandleMessageChat(WorldPacket& packet)
                 break;
         }
     }
-    else if (GetClientBuild() < CLIENT_BUILD_3_3_5a)
+    else if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
     {
         switch (type)
         {
@@ -1332,7 +1332,7 @@ void WorldServer::HandleCastSpell(WorldPacket& packet)
     uint8 castFlags = 0;
     SpellCastTargets targets;
 
-    if (GetClientBuild() < CLIENT_BUILD_3_3_5a)
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
     {
         if (GetClientBuild() < CLIENT_BUILD_2_0_1)
         {

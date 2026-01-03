@@ -86,7 +86,7 @@ void Unit::GetMovementInfoForObjectUpdate(MovementInfo& mi, bool& sendSpline) co
         mi.ChangePosition(GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
     }
 
-    sendSpline = m_moveSpline.m_initialized && GetHealth() != 0;
+    sendSpline = m_moveSpline.HasRemainingMovement() && GetHealth() != 0;
 
     if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
     {

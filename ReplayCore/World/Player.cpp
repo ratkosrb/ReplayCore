@@ -136,6 +136,8 @@ void Player::InitializeDefaultPlayerValues()
         }
         else
         {
+            uint16 PLAYER_SKILL_LINEID_0 = sWorld.GetUpdateField("PLAYER_SKILL_LINEID_0");
+            assert(PLAYER_SKILL_LINEID_0);
             uint16 PLAYER_SKILL_STEP_0 = sWorld.GetUpdateField("PLAYER_SKILL_STEP_0");
             assert(PLAYER_SKILL_STEP_0);
             uint16 PLAYER_SKILL_RANK_0 = sWorld.GetUpdateField("PLAYER_SKILL_RANK_0");
@@ -145,6 +147,7 @@ void Player::InitializeDefaultPlayerValues()
 
             uint16 field = count / 2;
             uint8 offset = count & 1;
+            SetUInt16Value(PLAYER_SKILL_LINEID_0 + field, offset, skill);
             SetUInt16Value(PLAYER_SKILL_STEP_0 + field, offset, value / 75);
             // update value
             SetUInt16Value(PLAYER_SKILL_RANK_0 + field, offset, value);

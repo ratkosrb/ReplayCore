@@ -311,11 +311,17 @@ void MoveSpline::WriteCreateData434(ByteBuffer& data) const
 
 bool MoveSpline::HasRemainingMovement() const
 {
+    if (!m_initialized)
+        return false;
+
     if (m_type == SPLINE_TYPE_STOP)
         return false;
 
     if (m_destinationPoints.empty())
         return false;
+
+    if (m_cyclic)
+        return true;
 
     uint64 elapsedTime = sReplayMgr.GetCurrentSniffTimeMs() - m_startTimeMs;
     if (elapsedTime >= m_moveTimeMs)

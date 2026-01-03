@@ -577,6 +577,30 @@ void WorldServer::ToggleVisibilityForAllObjects(bool visible)
         itr.second.SetVisibility(visible);
 }
 
+void WorldServer::DisableVisibilityForOtherMaps(uint32 mapId)
+{
+    for (auto& itr : m_players)
+    {
+        if (itr.second.GetMapId() != mapId)
+            itr.second.SetVisibility(false);
+    }
+    for (auto& itr : m_creatures)
+    {
+        if (itr.second.GetMapId() != mapId)
+            itr.second.SetVisibility(false);
+    }
+    for (auto& itr : m_gameObjects)
+    {
+        if (itr.second.GetMapId() != mapId)
+            itr.second.SetVisibility(false);
+    }
+    for (auto& itr : m_dynamicObjects)
+    {
+        if (itr.second.GetMapId() != mapId)
+            itr.second.SetVisibility(false);
+    }
+}
+
 void WorldServer::HideAllObjectsFromClient()
 {
     if (!m_sessionData.visibleObjects.empty())

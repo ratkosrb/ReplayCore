@@ -716,6 +716,10 @@ void SniffedEvent_UnitCreate::Execute() const
     pUnit->m_vehicleId = m_vehicleId;
     pUnit->m_vehicleOrientation = m_vehicleOrientation;
     SniffedEvent_WorldObjectCreate_Base::Execute();
+
+    // on active player create we should hide anything on other maps that was seen before logout or teleport
+    if (pUnit->IsPlayer() && sReplayMgr.IsAmongActivePlayerGuids(GetSourceGuid()))
+        sWorld.DisableVisibilityForOtherMaps(m_location.mapId);
 }
 
 void ReplayMgr::LoadWorldObjectDestroy(char const* tableName, uint32 typeId)

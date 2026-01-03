@@ -314,6 +314,7 @@ public:
     void LoadActivePlayers();
     Player* GetActivePlayer();
     ObjectGuid GetActivePlayerGuid();
+    bool IsAmongActivePlayerGuids(ObjectGuid guid) const { return m_activePlayers.find(guid) != m_activePlayers.end(); }
     std::set<ObjectGuid> const& GetActivePlayers() const { return m_activePlayers; }
     std::map<uint32, ObjectGuid> const& GetActivePlayerTimes() const { return m_activePlayerTimes; }
     PlayerData* GetPlayerSpawnData(uint32 guid)

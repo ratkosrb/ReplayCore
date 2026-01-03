@@ -168,7 +168,7 @@ uint32 GameDataMgr::GetTransportMoveFlag() const
         return Vanilla::MOVEFLAG_ONTRANSPORT;
     else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_0_2)
         return TBC::MOVEFLAG_ONTRANSPORT;
-    else if (sWorld.GetClientBuild() < CLIENT_BUILD_3_3_5a)
+    else if (sWorld.GetClientBuild() <= CLIENT_BUILD_3_3_5a)
         return WotLK::MOVEFLAG_ONTRANSPORT;
     return 0;
 }

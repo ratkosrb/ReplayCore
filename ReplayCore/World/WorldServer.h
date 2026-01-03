@@ -210,6 +210,7 @@ public:
         return max;
     }
     void ToggleVisibilityForAllObjects(bool visible);
+    void DisableVisibilityForOtherMaps(uint32 mapId);
     void HideAllObjectsFromClient();
     void DestroyAllObjects();
     bool IsClientInWorld() const { return m_sessionData.isInWorld; }

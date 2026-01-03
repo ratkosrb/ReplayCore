@@ -33,6 +33,10 @@ bool WorldObject::IsWithinVisibilityDistance(WorldObject const* pObject) const
     if (ObjectGuid transportGuid = GetTransportGuid())
         return sWorld.IsGuidVisibleToClient(transportGuid);
 
+    // during replay show us everything client sees atm
+    if (sReplayMgr.IsPlaying())
+        return true;
+
     if (GetDistance3D(pObject) <= DEFAULT_VISIBILITY_DISTANCE)
         return true;
 
@@ -804,6 +808,7 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             flags.Rotation = true;
 
         ObjectGuid guid = GetObjectGuid();
+        std::unique_ptr<MovementInfo> mi;
         bool hasTransportTime2 = false;
         bool hasVehicleId = false;
         bool hasFallDirection = false;
@@ -838,20 +843,20 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
 
         if (flags.MovementUpdate)
         {
-            MovementInfo mi;
-            unit->GetMovementInfoForObjectUpdate(mi, hasSpline);
-            uint32 movementFlags = mi.GetMovementFlags();
-            uint32 movementFlagsExtra = mi.GetMovementFlags2();
+            mi = std::make_unique<MovementInfo>();
+            unit->GetMovementInfoForObjectUpdate(*mi, hasSpline);
+            uint32 movementFlags = mi->GetMovementFlags();
+            uint32 movementFlagsExtra = mi->GetMovementFlags2();
 
-            hasTransportTime2 = !mi.t_guid.IsEmpty() && mi.t_time2 != 0;
+            hasTransportTime2 = !mi->t_guid.IsEmpty() && mi->t_time2 != 0;
             hasVehicleId = false;
-            hasPitch = mi.HasMovementFlag(Cataclysm::MOVEFLAG_SWIMMING | Cataclysm::MOVEFLAG_FLYING) || mi.HasMovementFlag2(Cataclysm::MOVEFLAG2_ALWAYS_ALLOW_PITCHING);
-            hasFallDirection = mi.HasMovementFlag(Cataclysm::MOVEFLAG_FALLING);
-            hasFallData = hasFallDirection || mi.fallTime != 0;
-            hasSplineElevation = mi.HasMovementFlag(Cataclysm::MOVEFLAG_SPLINE_ELEVATION);
+            hasPitch = mi->HasMovementFlag(Cataclysm::MOVEFLAG_SWIMMING | Cataclysm::MOVEFLAG_FLYING) || mi->HasMovementFlag2(Cataclysm::MOVEFLAG2_ALWAYS_ALLOW_PITCHING);
+            hasFallDirection = mi->HasMovementFlag(Cataclysm::MOVEFLAG_FALLING);
+            hasFallData = hasFallDirection || mi->fallTime != 0;
+            hasSplineElevation = mi->HasMovementFlag(Cataclysm::MOVEFLAG_SPLINE_ELEVATION);
 
             data->WriteBit(!movementFlags);                                         // !Has MoveFlags0
-            data->WriteBit(mi.pos.o != 0);                                          // Has Orientation
+            data->WriteBit(mi->pos.o != 0);                                          // Has Orientation
             data->WriteBit(guid[7]);
             data->WriteBit(guid[3]);
             data->WriteBit(guid[2]);
@@ -864,12 +869,12 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             data->WriteBit(hasFallData);                                            // Has fall data
             data->WriteBit(!hasSplineElevation);                                    // !Has spline elevation
             data->WriteBit(guid[5]);
-            data->WriteBit(!mi.t_guid.IsEmpty());                                   // Has transport data
+            data->WriteBit(!mi->t_guid.IsEmpty());                                   // Has transport data
             data->WriteBit(0);                                                      // !HasTime
 
-            if (!mi.t_guid.IsEmpty())
+            if (!mi->t_guid.IsEmpty())
             {
-                ObjectGuid transGuid = mi.t_guid;
+                ObjectGuid transGuid = mi->t_guid;
 
                 data->WriteBit(transGuid[1]);
                 data->WriteBit(hasTransportTime2);                             // Has PrevMoveTime
@@ -945,9 +950,6 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
 
         if (flags.MovementUpdate)
         {
-            MovementInfo mi;
-            unit->GetMovementInfoForObjectUpdate(mi, hasSpline);
-
             data->WriteByteSeq(guid[4]);
             *data << unit->GetSpeed(MOVE_RUN_BACK);
 
@@ -955,18 +957,18 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             {
                 if (hasFallDirection)
                 {
-                    *data << float(mi.jump.xyspeed);
-                    *data << float(mi.jump.sinAngle);
-                    *data << float(mi.jump.cosAngle);
+                    *data << float(mi->jump.xyspeed);
+                    *data << float(mi->jump.sinAngle);
+                    *data << float(mi->jump.cosAngle);
                 }
 
-                *data << uint32(mi.fallTime);
-                *data << float(mi.jump.zspeed);
+                *data << uint32(mi->fallTime);
+                *data << float(mi->jump.zspeed);
             }
 
             *data << unit->GetSpeed(MOVE_SWIM_BACK);
             if (hasSplineElevation)
-                *data << float(mi.splineElevation);
+                *data << float(mi->splineElevation);
 
             if (hasSpline)
                 unit->m_moveSpline.WriteCreateData434(*data);
@@ -974,16 +976,16 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             *data << float(unit->GetPositionZ());
             data->WriteByteSeq(guid[5]);
 
-            if (mi.t_guid)
+            if (mi->t_guid)
             {
-                ObjectGuid transGuid = mi.t_guid;
+                ObjectGuid transGuid = mi->t_guid;
 
                 data->WriteByteSeq(transGuid[5]);
                 data->WriteByteSeq(transGuid[7]);
-                *data << uint32(mi.t_time);
-                *data << float(mi.t_pos.o);
+                *data << uint32(mi->t_time);
+                *data << float(mi->t_pos.o);
                 if (hasTransportTime2)
-                    *data << uint32(mi.t_time2);
+                    *data << uint32(mi->t_time2);
 
                 *data << float(unit->GetTransOffsetY());
                 *data << float(unit->GetTransOffsetX());
@@ -991,9 +993,9 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
                 *data << float(unit->GetTransOffsetZ());
                 data->WriteByteSeq(transGuid[0]);
                 if (hasVehicleId)
-                    *data << uint32(mi.t_vehicle);
+                    *data << uint32(mi->t_vehicle);
 
-                *data << int8(mi.t_seat);
+                *data << int8(mi->t_seat);
                 data->WriteByteSeq(transGuid[1]);
                 data->WriteByteSeq(transGuid[6]);
                 data->WriteByteSeq(transGuid[2]);
@@ -1012,17 +1014,17 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 updateFlags) const
             *data << unit->GetSpeed(MOVE_WALK);
 
             //if (true)   // Has time, controlled by bit just after HasTransport
-            *data << uint32(mi.time);
+            *data << uint32(mi->time);
 
             *data << unit->GetSpeed(MOVE_TURN_RATE);
             data->WriteByteSeq(guid[6]);
             *data << unit->GetSpeed(MOVE_FLIGHT);
-            if (!mi.pos.o != 0)
+            if (!mi->pos.o != 0)
                 *data << float(unit->GetOrientation());
 
             *data << unit->GetSpeed(MOVE_RUN);
             if (hasPitch)
-                *data << float(mi.s_pitch);
+                *data << float(mi->s_pitch);
 
             *data << unit->GetSpeed(MOVE_FLIGHT_BACK);
         }
