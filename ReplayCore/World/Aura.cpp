@@ -27,7 +27,8 @@ void Aura::Write(ByteBuffer &data) const
         data << uint32(duration);
     }
 
-    if (auraFlags & WotLK::AFLAG_SCALABLE)
+    if ((auraFlags & WotLK::AFLAG_SCALABLE) &&
+        sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a)
     {
         if (auraFlags & WotLK::AFLAG_EFF_INDEX_0)
             data << int32(0);
