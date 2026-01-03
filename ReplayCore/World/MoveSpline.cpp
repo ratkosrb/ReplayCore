@@ -7,7 +7,7 @@
 
 uint32 MoveSpline::m_maxId = 0;
 
-void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, int8 transportSeat, bool isCyclic, bool isCatmullrom)
+void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, int8 transportSeat, uint8 animTier, float verticalSpeed, uint32 effectStartTime, bool isCyclic, bool isCatmullrom)
 {
     m_id = m_maxId++;
     m_startTimeMs = sReplayMgr.GetCurrentSniffTimeMs();
@@ -21,6 +21,9 @@ void MoveSpline::Initialize(Vector3 const& startPosition, uint32 moveTime, uint8
         m_destinationPoints.push_back(startPosition);
     m_transportGuid = transportGuid;
     m_transportSeat = transportSeat;
+    m_animTier = animTier;
+    m_verticalSpeed = verticalSpeed;
+    m_effectStartTime = effectStartTime;
     m_cyclic = isCyclic;
     m_catmullrom = isCatmullrom;
     m_initialized = true;
@@ -67,7 +70,7 @@ void MoveSpline::WriteMove(WorldPacket& data) const
     if (sWorld.ClientBuildIsBetween(CLIENT_BUILD_3_0_2, CLIENT_BUILD_3_3_5a) && (m_flags & WotLK::SplineFlags::Parabolic) ||
         sWorld.GetClientBuild() > CLIENT_BUILD_3_3_5a && (m_flags & Cataclysm::SplineFlags::Parabolic))
     {
-        data << float(m_verticalAcceleration); // Vertical Speed
+        data << float(m_verticalSpeed); // Vertical Speed
         data << uint32(m_effectStartTime);   // Async-time in ms
     }
     
@@ -144,10 +147,10 @@ void MoveSpline::WriteCreate(ByteBuffer& data) const
 
     if (sWorld.GetClientBuild() >= CLIENT_BUILD_3_1_0)
     {
-        data << float(1.0f); // Spline Duration Multiplier
-        data << float(1.0f); // Spline Duration Multiplier Next
-        data << uint32(0);   // Spline Vertical Acceleration
-        data << uint32(0);   // Spline Start Time
+        data << float(1.0f);               // Spline Duration Multiplier
+        data << float(1.0f);               // Spline Duration Multiplier Next
+        data << float(m_verticalSpeed);    // Spline Vertical Acceleration
+        data << uint32(m_effectStartTime); // Spline Start Time
     }
 
     assert(!m_destinationPoints.empty());
@@ -239,7 +242,7 @@ void MoveSpline::WriteCreateData434(ByteBuffer& data) const
     uint32 splineFlags = m_flags;
 
     if (splineFlags & Cataclysm::SplineFlags::Parabolic)
-        data << m_verticalAcceleration; // added in 3.1
+        data << m_verticalSpeed; // added in 3.1
 
     data << uint32(1 + sReplayMgr.GetCurrentSniffTimeMs() - m_startTimeMs);
 
@@ -308,6 +311,9 @@ void MoveSpline::WriteCreateData434(ByteBuffer& data) const
 
 bool MoveSpline::HasRemainingMovement() const
 {
+    if (m_type == SPLINE_TYPE_STOP)
+        return false;
+
     if (m_destinationPoints.empty())
         return false;
 

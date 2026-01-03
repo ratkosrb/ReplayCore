@@ -14,7 +14,7 @@ struct MoveSpline
 {
     MoveSpline() = default;
     MoveSpline(const MoveSpline&) = delete;
-    void Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, int8 transportSeat, bool isCyclic, bool isCatmullrom);
+    void Initialize(Vector3 const& startPosition, uint32 moveTime, uint8 type, uint32 flags, float orientation, std::vector<Vector3> const& destinationPoints, ObjectGuid transportGuid, int8 transportSeat, uint8 animTier, float verticalSpeed, uint32 effectStartTime, bool isCyclic, bool isCatmullrom);
     void Reset()
     {
         m_initialized = false;;
@@ -26,6 +26,9 @@ struct MoveSpline
         m_flags = 0;
         m_moveTimeMs = 0;
         m_transportSeat = 0;
+        m_animTier = 0;
+        m_verticalSpeed = 0.0f;
+        m_effectStartTime = 0;
         m_destinationPoints.clear();
     }
     void WriteMove(WorldPacket& data) const;
@@ -40,10 +43,10 @@ struct MoveSpline
     Vector3 m_startPosition;
     uint64 m_startTimeMs = 0; // when movement started in sniff replay time
     uint8 m_type = 0;
-    int8 m_animTier = 0;
     float m_finalOrientation = 0.0f;
-    float m_verticalAcceleration = 1.0f;
-    int32 m_effectStartTime = 0;
+    uint8 m_animTier = 0;
+    float m_verticalSpeed = 1.0f;
+    uint32 m_effectStartTime = 0;
     uint32 m_flags = 0;
     uint32 m_moveTimeMs = 0; // how long the movement should take
     std::vector<Vector3> m_destinationPoints;

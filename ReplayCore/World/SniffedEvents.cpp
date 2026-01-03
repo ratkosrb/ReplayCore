@@ -1173,8 +1173,8 @@ void ReplayMgr::LoadServerSideMovementSplines(char const* tableName, SplinesMap&
 
 void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap, bool isCombatMovements)
 {
-    //                                             0             1       2        3            4               5              6                              7                              8                              9                            10                           11                           12                         13                14              15                16
-    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, round(`start_position_x`, 20), round(`start_position_y`, 20), round(`start_position_z`, 20), round(`end_position_x`, 20), round(`end_position_y`, 20), round(`end_position_z`, 20), round(`orientation`, 20), `transport_guid`, `transport_id`, `transport_type`, `transport_seat` FROM `%s` ORDER BY `unixtimems`, `point`", tableName))
+    //                                             0             1       2        3            4               5              6                              7                              8                              9                            10                           11                           12                         13                14              15                16                17           18                19
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `point`, `move_time`, `spline_flags`, `spline_count`, round(`start_position_x`, 20), round(`start_position_y`, 20), round(`start_position_z`, 20), round(`end_position_x`, 20), round(`end_position_y`, 20), round(`end_position_z`, 20), round(`orientation`, 20), `transport_guid`, `transport_id`, `transport_type`, `transport_seat`, `anim_tier`, `vertical_speed`, `effect_start_time` FROM `%s` ORDER BY `unixtimems`, `point`", tableName))
     {
         do
         {
@@ -1213,6 +1213,9 @@ void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, Spl
                 transportGuid = MakeObjectGuidFromSniffData(transportGuidLow, transportId, transportType);
             }
             int8 transportSeat = fields[16].GetInt8();
+            uint8 animTier = fields[17].GetUInt8();
+            float verticalSpeed = fields[18].GetFloat();
+            uint32 effectStartTime = fields[19].GetUInt32();
 
             std::vector<Vector3> const* pSplines = nullptr;
             if (splineCount > 1)
@@ -1228,13 +1231,13 @@ void ReplayMgr::LoadServerSideMovement(char const* tableName, TypeID typeId, Spl
 
             std::shared_ptr<SniffedEvent_ServerSideMovement> newEvent;
             if (pSplines)
-                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, *pSplines, transportGuid, transportSeat, isCombatMovements);
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, *pSplines, transportGuid, transportSeat, isCombatMovements, animTier, verticalSpeed, effectStartTime);
             else
             {
                 std::vector<Vector3> points;
                 if (splineCount)
                     points.push_back(endPosition);
-                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, points, transportGuid, transportSeat, isCombatMovements);
+                newEvent = std::make_shared<SniffedEvent_ServerSideMovement>(sourceGuid, startPosition, moveTime, splineFlags, orientation, points, transportGuid, transportSeat, isCombatMovements, animTier, verticalSpeed, effectStartTime);
             }
 
             m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
@@ -1268,7 +1271,7 @@ void SniffedEvent_ServerSideMovement::Execute() const
     pUnit->GetMovementInfo().t_guid = m_transportGuid;
     pUnit->GetMovementInfo().t_seat = m_transportSeat;
     pUnit->SetLastPositionUpdate(sReplayMgr.GetCurrentSniffTime());
-    pUnit->m_moveSpline.Initialize(m_startPosition, m_moveTime, m_splineType, m_splineFlags, m_finalOrientation, m_splines, m_transportGuid, m_transportSeat, m_cyclic, m_catmullrom);
+    pUnit->m_moveSpline.Initialize(m_startPosition, m_moveTime, m_splineType, m_splineFlags, m_finalOrientation, m_splines, m_transportGuid, m_transportSeat, m_animTier, m_verticalSpeed, m_effectStartTime, m_cyclic, m_catmullrom);
 
     if (sReplayMgr.IsPlaying())
     {

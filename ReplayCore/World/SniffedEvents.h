@@ -745,8 +745,8 @@ struct SniffedEvent_ClientSideMovement : SniffedEventCRTP<SniffedEvent_ClientSid
 
 struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSideMovement>
 {
-    SniffedEvent_ServerSideMovement(ObjectGuid moverGuid, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines, ObjectGuid transportGuid, int8 transportSeat, bool isCombatMovement) :
-        m_moverGuid(moverGuid), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines), m_transportGuid(transportGuid), m_transportSeat(transportSeat), m_isCombatMovement(isCombatMovement) {};
+    SniffedEvent_ServerSideMovement(ObjectGuid moverGuid, Vector3 const& startPosition, uint32 moveTime, uint32 splineFlags, float finalOrientation, std::vector<Vector3> const& splines, ObjectGuid transportGuid, int8 transportSeat, bool isCombatMovement, uint8 animTier, float verticalSpeed, uint32 effectStartTime) :
+        m_moverGuid(moverGuid), m_startPosition(startPosition), m_moveTime(moveTime), m_splineFlags(splineFlags), m_finalOrientation(finalOrientation), m_splines(splines), m_transportGuid(transportGuid), m_transportSeat(transportSeat), m_isCombatMovement(isCombatMovement), m_animTier(animTier), m_verticalSpeed(verticalSpeed), m_effectStartTime(effectStartTime) {};
     
     ObjectGuid m_moverGuid;
     Vector3 m_startPosition;
@@ -757,6 +757,9 @@ struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSid
     std::vector<Vector3> const m_splines;
     ObjectGuid m_transportGuid;
     int8 m_transportSeat = 0;
+    uint8 m_animTier = 0;
+    float m_verticalSpeed = 0.0f;
+    uint32 m_effectStartTime = 0;
     bool m_cyclic = false;
     bool m_catmullrom = false;
     bool m_isCombatMovement = false;
