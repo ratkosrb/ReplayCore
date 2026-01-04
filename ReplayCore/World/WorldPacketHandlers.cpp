@@ -104,8 +104,6 @@ void WorldServer::SetupOpcodeHandlers()
     SetOpcodeHandler("CMSG_OBJECT_UPDATE_FAILED", &WorldServer::HandleObjectUpdateFailed);
 }
 
-#define WORLD_DEBUG
-
 void WorldServer::HandleAuthSession(WorldPacket& packet)
 {
     std::string account;
@@ -1456,7 +1454,7 @@ void WorldServer::HandleZoneUpdate(WorldPacket& packet)
 #ifdef WORLD_DEBUG
     printf("\n");
     printf("[HandleZoneUpdate] CMSG_ZONEUPDATE data:\n");
-    printf("Zone Id: %s (%u)\n", sGameDataMgr.GetAreaTableEntry(zoneId)->name.c_str(), zoneId);
+    printf("Zone Id: %u\n", zoneId);
     printf("\n");
 #endif
 

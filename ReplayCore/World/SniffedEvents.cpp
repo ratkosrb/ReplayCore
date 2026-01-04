@@ -44,6 +44,7 @@ void ReplayMgr::LoadSniffedEvents()
     LoadServerSideMovement("player_movement_server", TYPEID_PLAYER, m_playerMovementSplines, false);
     LoadServerSideMovement("creature_movement_server", TYPEID_UNIT, m_creatureMovementSplines, false);
     LoadServerSideMovement("creature_movement_server_combat", TYPEID_UNIT, m_creatureMovementCombatSplines, true);
+    LoadUnitFlightSplineSync("creature_flight_spline_sync", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_entry>("creature_values_update", "entry", TYPEID_UNIT);
     LoadObjectValuesUpdate_float<SniffedEvent_UnitUpdate_scale>("creature_values_update", "scale", TYPEID_UNIT);
     LoadObjectValuesUpdate<SniffedEvent_UnitUpdate_display_id>("creature_values_update", "display_id", TYPEID_UNIT);
@@ -1319,6 +1320,63 @@ std::string SniffedEvent_ServerSideMovement::GetLongDescription() const
         returnString += "Waypoint[" + std::to_string(i) + "]: " + std::to_string(m_splines[i].x) + " " + std::to_string(m_splines[i].y) + " " + std::to_string(m_splines[i].z) + "\r\n";
     }
     return returnString;
+}
+
+void ReplayMgr::LoadUnitFlightSplineSync(char const* tableName, TypeID typeId)
+{
+    //                                             0             1       2
+    if (auto result = SniffDatabase.Query("SELECT `unixtimems`, `guid`, `duration_percent` FROM `%s` ORDER BY `unixtimems`", tableName))
+    {
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint64 unixtimems = fields[0].GetUInt64();
+            uint32 guidLow = fields[1].GetUInt32();
+            ObjectGuid sourceGuid;
+            if (ObjectData const* pData = GetObjectSpawnData(guidLow, typeId))
+                sourceGuid = pData->guid;
+            else
+            {
+                printf("[ReplayMgr] Error: Unknown guid %u in table `%s`.\n", guidLow, tableName);
+                continue;
+            }
+
+            float durationPercent = fields[2].GetFloat();
+
+            std::shared_ptr<SniffedEvent_UnitFlightSplineSync> newEvent = std::make_shared<SniffedEvent_UnitFlightSplineSync>(sourceGuid, durationPercent);
+            m_eventsMapBackup.insert(std::make_pair(unixtimems, newEvent));
+
+        } while (result->NextRow());
+    }
+}
+
+std::string SniffedEvent_UnitFlightSplineSync::GetShortDescription() const
+{
+    return m_moverGuid.GetString(true) + " is at " + std::to_string(m_durationPercent) + " in its cyclic spline.";
+}
+
+std::string SniffedEvent_UnitFlightSplineSync::GetLongDescription() const
+{
+    return "Duration Percent: " + std::to_string(m_durationPercent);
+}
+
+void SniffedEvent_UnitFlightSplineSync::Execute() const
+{
+    if (!sReplayMgr.IsPlaying())
+        return;
+
+    Unit* pUnit = sWorld.FindUnit(GetSourceGuid());
+    if (!pUnit)
+    {
+        printf("SniffedEvent_UnitFlightSplineSync: Cannot find source unit!\n");
+        return;
+    }
+
+    if (!pUnit->IsVisibleToClient())
+        return;
+
+    sWorld.SendFlightSplineSync(GetSourceGuid(), m_durationPercent);
 }
 
 template <class T>

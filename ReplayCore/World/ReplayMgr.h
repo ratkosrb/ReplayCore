@@ -374,6 +374,7 @@ public:
     void LoadUnitEmote(char const* tableName, uint32 typeId);
     void LoadServerSideMovement(char const* tableName, TypeID typeId, SplinesMap const& splinesMap, bool isCombatMovements);
     void LoadServerSideMovementSplines(char const* tableName, SplinesMap& splinesMap);
+    void LoadUnitFlightSplineSync(char const* tableName, TypeID typeId);
     template <class T>
     void LoadObjectValuesUpdate(char const* tableName, char const* fieldName, uint32 typeId);
     template <class T>

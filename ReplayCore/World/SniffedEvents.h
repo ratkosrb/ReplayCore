@@ -37,6 +37,7 @@ enum SniffedEventType : uint8
     SE_UNIT_EMOTE,
     SE_UNIT_CLIENTSIDE_MOVEMENT,
     SE_UNIT_SERVERSIDE_MOVEMENT,
+    SE_UNIT_FLIGHT_SPLINE_SYNC,
     SE_UNIT_UPDATE_ENTRY,
     SE_UNIT_UPDATE_SCALE,
     SE_UNIT_UPDATE_DISPLAY_ID,
@@ -770,6 +771,26 @@ struct SniffedEvent_ServerSideMovement : SniffedEventCRTP<SniffedEvent_ServerSid
     SniffedEventType GetType() const final
     {
         return SE_UNIT_SERVERSIDE_MOVEMENT;
+    }
+    ObjectGuid GetSourceGuid() const final
+    {
+        return m_moverGuid;
+    }
+};
+
+struct SniffedEvent_UnitFlightSplineSync : SniffedEventCRTP<SniffedEvent_UnitFlightSplineSync>
+{
+    SniffedEvent_UnitFlightSplineSync(ObjectGuid moverGuid, float durationPercent) :
+        m_moverGuid(moverGuid), m_durationPercent(durationPercent) {};
+
+    ObjectGuid m_moverGuid;
+    float m_durationPercent = 0.0f;
+    void Execute() const final;
+    std::string GetShortDescription() const final;
+    std::string GetLongDescription() const final;
+    SniffedEventType GetType() const final
+    {
+        return SE_UNIT_FLIGHT_SPLINE_SYNC;
     }
     ObjectGuid GetSourceGuid() const final
     {

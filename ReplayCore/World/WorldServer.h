@@ -404,6 +404,7 @@ public:
     void SendThreatRemove(ObjectGuid creatureGuid, ObjectGuid targetGuid);
     void SendThreatUpdate(ObjectGuid creatureGuid, std::vector<std::pair<ObjectGuid, uint32>> const& threatList);
     void SendTriggerCinematic(uint32 cinematicId);
+    void SendFlightSplineSync(ObjectGuid guid, float durationPercent);
 };
 
 #define sWorld WorldServer::Instance()

@@ -12,8 +12,6 @@
 
 #include <chrono>
 
-//#define WORLD_DEBUG
-
 WorldServer& WorldServer::Instance()
 {
     static WorldServer instance;

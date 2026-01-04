@@ -193,8 +193,9 @@ bool CommandHandler::HandleGPS()
     uint32 areaId = sGameDataMgr.GetAreaIdFromCoordinates(pTarget->GetMapId(), pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
     AreaTableEntry const* pAreaEntry = sGameDataMgr.GetAreaTableEntry(areaId);
     uint32 zoneId = pAreaEntry && pAreaEntry->zoneId ? pAreaEntry->zoneId : areaId;
+    AreaTableEntry const* pZoneEntry = sGameDataMgr.GetAreaTableEntry(zoneId);
     std::string areaName = pAreaEntry ? pAreaEntry->name : "Unknown";
-    std::string zoneName = zoneId ? sGameDataMgr.GetAreaTableEntry(zoneId)->name : "Unknown";
+    std::string zoneName = pZoneEntry ? pZoneEntry->name : "Unknown";
 
     PSendSysMessage("Current position of %s:", pTarget->GetGuidStr().c_str());
     PSendSysMessage("Map: %s (%u)\nZone: %s (%u)\nArea: %s (%u)", sGameDataMgr.GetMapName(pTarget->GetMapId()), pTarget->GetMapId(), zoneName.c_str(), zoneId, areaName.c_str(), areaId);

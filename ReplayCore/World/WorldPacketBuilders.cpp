@@ -2732,3 +2732,14 @@ void WorldServer::SendTriggerCinematic(uint32 cinematicId)
     SendPacket(data);
     m_sessionData.isWatchingCinematic = true;
 }
+
+void WorldServer::SendFlightSplineSync(ObjectGuid guid, float durationPercent)
+{
+    WorldPacket data(GetOpcode("SMSG_FLIGHT_SPLINE_SYNC"), 4 + 8);
+    data << float(durationPercent);
+    if (GetClientBuild() <= CLIENT_BUILD_3_3_5a)
+        data << guid;
+    else
+        data << guid.WriteAsPacked();
+    SendPacket(data);
+}
