@@ -388,6 +388,10 @@ inline uint32 GetDefaultDisplayIdForPlayerRace(uint8 race, uint8 gender)
             return gender == GENDER_MALE ? 15476 : 15475;
         case RACE_DRAENEI:
             return gender == GENDER_MALE ? 16125 : 16126;
+        case RACE_GOBLIN:
+            return gender == GENDER_MALE ? 6894 : 6895;
+        case RACE_WORGEN:
+            return gender == GENDER_MALE ? 29422 : 29423;
         default:
             printf("Error: Unknown race %hhu in GetDefaultDisplayIdForPlayerRace!\n", race);
             break;

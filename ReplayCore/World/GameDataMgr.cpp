@@ -1409,6 +1409,7 @@ void GameDataMgr::LoadPlayerInfo()
                 continue;
             }
 
+            
             PlayerInfo* pInfo = &m_PlayerInfo[current_race][current_class];
 
             pInfo->mapId       = mapId;
@@ -1417,7 +1418,6 @@ void GameDataMgr::LoadPlayerInfo()
             pInfo->positionY   = positionY;
             pInfo->positionZ   = positionZ;
             pInfo->orientation = orientation;
-
             pInfo->displayId_m = GetDefaultDisplayIdForPlayerRace(current_race, GENDER_MALE);
             pInfo->displayId_f = GetDefaultDisplayIdForPlayerRace(current_race, GENDER_FEMALE);
             
@@ -1434,6 +1434,8 @@ void GameDataMgr::LoadPlayerInfo()
         //                                        0       1        2
         if (m_dataSource == DB_VMANGOS)
             result = WorldDatabase.Query("SELECT `race`, `class`, `spell` FROM `playercreateinfo_spell` WHERE %u BETWEEN `build_min` AND `build_max`", sConfig.GetVmangosClientBuild());
+        else if (m_dataSource == DB_TRINITY)
+            result = WorldDatabase.Query("SELECT `racemask`, `classmask`, `Spell` FROM `playercreateinfo_spell_custom`");
         else
             result = WorldDatabase.Query("SELECT `race`, `class`, `spell` FROM `playercreateinfo_spell`");
 
@@ -1449,30 +1451,48 @@ void GameDataMgr::LoadPlayerInfo()
             {
                 DbField* fields = result->fetchCurrentRow();
 
-                uint32 current_race = fields[0].GetUInt32();
-                uint32 current_class = fields[1].GetUInt32();
+                uint32 raceId;
+                uint32 classId;
+                uint32 raceMask;
+                uint32 classMask;
 
-                if (!current_race || !((1 << (current_race - 1)) & RACEMASK_ALL_CATA))
+                if (m_dataSource == DB_TRINITY)
                 {
-                    printf("Error: Wrong race %u in `playercreateinfo_spell` table, ignoring.\n", current_race);
+                    raceMask = fields[0].GetUInt32();
+                    classMask = fields[1].GetUInt32();
+                    raceId = GetFirstIndexInMask(raceMask);
+                    classId = GetFirstIndexInMask(classMask);
+                }
+                else
+                {
+                    raceId = fields[0].GetUInt32();
+                    classId = fields[1].GetUInt32();
+                    raceMask = (1 << (raceId - 1));
+                    classMask = (1 << (classId - 1));
+                }
+                
+
+                if (!raceId || !(raceMask & RACEMASK_ALL_CATA))
+                {
+                    printf("Error: Wrong race %u in `playercreateinfo_spell` table, ignoring.\n", raceId);
                     continue;
                 }
 
-                if (!current_class || !((1 << (current_class - 1)) & CLASSMASK_ALL_PLAYABLE_WOTLK))
+                if (!classId || !(classMask & CLASSMASK_ALL_PLAYABLE_WOTLK))
                 {
-                    printf("Error: Wrong class %u in `playercreateinfo_spell` table, ignoring.\n", current_class);
+                    printf("Error: Wrong class %u in `playercreateinfo_spell` table, ignoring.\n", classId);
                     continue;
                 }
 
-                uint32 spell_id = fields[2].GetUInt32();
-                if (spell_id > MAX_SPELL_ID_WOTLK)
+                uint32 spellId = fields[2].GetUInt32();
+                if (spellId > MAX_SPELL_ID_WOTLK)
                 {
-                    printf("Error: Non existing spell %u in `playercreateinfo_spell` table, ignoring.\n", spell_id);
+                    printf("Error: Non existing spell %u in `playercreateinfo_spell` table, ignoring.\n", spellId);
                     continue;
                 }
 
-                PlayerInfo* pInfo = &m_PlayerInfo[current_race][current_class];
-                pInfo->spell.push_back(spell_id);
+                PlayerInfo* pInfo = &m_PlayerInfo[raceId][classId];
+                pInfo->spell.push_back(spellId);
 
                 ++count;
             }
@@ -1533,6 +1553,7 @@ void GameDataMgr::LoadPlayerInfo()
     }
 
     // Loading levels data (class only dependent)
+    if (m_dataSource != DB_TRINITY)
     {
         //                                                               0        1        2         3
         std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `class`, `level`, `basehp`, `basemana` FROM `player_classlevelstats`"));
@@ -2131,6 +2152,67 @@ void GameDataMgr::LoadCreatureTemplates()
 
         } while (result->NextRow());
     }
+    else if (m_dataSource == DB_TRINITY)
+    {
+        //                                                               0        1       2          3             4       5         6       7                 8           9           10          11          12          13              14                15              16             17             18
+        std::shared_ptr<QueryResult> result(WorldDatabase.Query("SELECT `entry`, `name`, `subname`, `type_flags`, `type`, `family`, `rank`, `PetSpellDataId`, `modelid1`, `modelid2`, `modelid3`, `modelid4`, `IconName`, `RacialLeader`, `HealthModifier`, `ManaModifier`, `KillCredit1`, `KillCredit2`, `movementId` FROM `creature_template`"));
+        if (!result)
+        {
+            printf(">> Loaded 0 creature templates, table is empty!\n");
+            return;
+        }
+
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 entry = fields[0].GetUInt32();
+            CreatureTemplate& creatureTemplate = m_creatureTemplateMap[entry];
+            creatureTemplate.entry = entry;
+            creatureTemplate.name = fields[1].GetCppString();
+            creatureTemplate.subName = fields[2].GetCppString();
+            creatureTemplate.typeFlags = fields[3].GetUInt32();
+            creatureTemplate.type = fields[4].GetUInt32();
+            creatureTemplate.family = fields[5].GetUInt32();
+            creatureTemplate.rank = fields[6].GetUInt32();
+            creatureTemplate.petSpellDataId = fields[7].GetUInt32();
+            creatureTemplate.displayId[0] = fields[8].GetUInt32();
+            creatureTemplate.displayId[1] = fields[9].GetUInt32();
+            creatureTemplate.displayId[2] = fields[10].GetUInt32();
+            creatureTemplate.displayId[3] = fields[11].GetUInt32();
+            creatureTemplate.iconName = fields[12].GetCppString();
+            creatureTemplate.racialLeader = fields[13].GetUInt8();
+            creatureTemplate.healthMultiplier = fields[14].GetFloat();
+            creatureTemplate.powerMultiplier = fields[15].GetFloat();
+            creatureTemplate.killCredit[0] = fields[16].GetUInt32();
+            creatureTemplate.killCredit[1] = fields[17].GetUInt32();
+            creatureTemplate.movementTemplateId = fields[18].GetUInt32();
+
+        } while (result->NextRow());
+
+        printf("[GameDataMgr] Loading creature quest items..\n");
+        //                                    0                1      2
+        result = WorldDatabase.Query("SELECT `CreatureEntry`, `Idx`, `ItemId` FROM `creature_questitem`");
+        if (!result)
+        {
+            printf(">> Loaded 0 creature quest items, table is empty!\n");
+            return;
+        }
+
+        uint32 count = 0;
+        do
+        {
+            DbField* fields = result->fetchCurrentRow();
+
+            uint32 entry = fields[0].GetUInt32();
+            uint32 index = fields[1].GetUInt32();
+            CreatureTemplate& creatureTemplate = m_creatureTemplateMap[entry];
+            creatureTemplate.questItem[index] = fields[2].GetUInt32();
+            count++;
+
+        } while (result->NextRow());
+        printf(">> Loaded %u gameobject quest items.\n", count);
+    }
     printf(">> Loaded %u creature templates.\n", (uint32)m_creatureTemplateMap.size());
 }
 
@@ -2189,50 +2271,89 @@ void GameDataMgr::LoadQuests()
     printf("[GameDataMgr] Loading quest templates...\n");
     std::shared_ptr<QueryResult> result;
 
-    std::string whereClause;
-    if (m_dataSource == DB_VMANGOS)
-        whereClause = " FROM `quest_template` t1 WHERE `patch`=(SELECT max(`patch`) FROM `quest_template` t2 WHERE t1.`entry`=t2.`entry` && `patch` <= " + std::to_string(sConfig.GetVmangosContentPatch()) + ")";
-    else if (m_dataSource == DB_CMANGOS_TBC)
-    //                    123                  124
-        whereClause = ", `RewHonorableKills`, `CharTitleId` FROM `quest_template`";
-    else if (m_dataSource == DB_CMANGOS_WOTLK)
-    //                    134                 124            125             126             127                   128        129              130               131               132               133               134
-        whereClause = ", `RewHonorAddition`, `CharTitleId`, `PlayersSlain`, `BonusTalents`, `RewHonorMultiplier`, `RewXPId`, `CompletedText`, `RewRepValueId1`, `RewRepValueId2`, `RewRepValueId3`, `RewRepValueId4`, `RewRepValueId5` FROM `quest_template`";
-    else
-        whereClause = " FROM `quest_template`";
+    if (m_dataSource == DB_TRINITY)
+    {
+        result = WorldDatabase.Query("SELECT "
+        // 0   1         2          3         4           5            6
+        "ID, QuestType, QuestLevel, MinLevel, QuestSortID, QuestInfoID, SuggestedGroupNum, "
+        // 7                  8                   9                      10
+        "RequiredFactionId1, RequiredFactionId2, RequiredFactionValue1, RequiredFactionValue2, "
+        // 11              12                  13                  14           15           16
+        "RewardNextQuest, RewardXPDifficulty, RewardDisplaySpell, RewardSpell, RewardHonor, RewardKillHonor, "
+        // 17        18     19                 20           21                   22
+        "StartItem, Flags, MinimapTargetMark, RewardTitle, RequiredPlayerKills, RewardTalents, "
+        // 23                24             25                 26                    27                  28
+        "RewardArenaPoints, RewardSkillId, RewardSkillPoints, RewardReputationMask, QuestGiverPortrait, QuestTurnInPortrait, "
+        // 29          30             31           32             33           34             35           36
+        "RewardItem1, RewardAmount1, RewardItem2, RewardAmount2, RewardItem3, RewardAmount3, RewardItem4, RewardAmount4, "
+        // 37                  38                         39                   40                         41                   42                         43                   44                         45                   46                         47                   48
+        "RewardChoiceItemID1, RewardChoiceItemQuantity1, RewardChoiceItemID2, RewardChoiceItemQuantity2, RewardChoiceItemID3, RewardChoiceItemQuantity3, RewardChoiceItemID4, RewardChoiceItemQuantity4, RewardChoiceItemID5, RewardChoiceItemQuantity5, RewardChoiceItemID6, RewardChoiceItemQuantity6, "
+        // 49               50                   51                      52                53                   54                      55                56                   57                      58                59                   60                      61                62                   63
+        "RewardFactionID1, RewardFactionValue1, RewardFactionOverride1, RewardFactionID2, RewardFactionValue2, RewardFactionOverride2, RewardFactionID3, RewardFactionValue3, RewardFactionOverride3, RewardFactionID4, RewardFactionValue4, RewardFactionOverride4, RewardFactionID5, RewardFactionValue5, RewardFactionOverride5, "
+        // 64           65    66    67           68        69              70                71               72
+        "POIContinent, POIx, POIy, POIPriority, LogTitle, LogDescription, QuestDescription, AreaDescription, QuestCompletionLog, "
+        // 73               74                75                76                77                     78                     79                     80
+        "RequiredNpcOrGo1, RequiredNpcOrGo2, RequiredNpcOrGo3, RequiredNpcOrGo4, RequiredNpcOrGoCount1, RequiredNpcOrGoCount2, RequiredNpcOrGoCount3, RequiredNpcOrGoCount4, "
+        // 81        82         83         84         85                 86                 87                 88
+        "ItemDrop1, ItemDrop2, ItemDrop3, ItemDrop4, ItemDropQuantity1, ItemDropQuantity2, ItemDropQuantity3, ItemDropQuantity4, "
+        // 89              90               91               92               93               94               95                  96                  97                  98                  99                  100
+        "RequiredItemId1, RequiredItemId2, RequiredItemId3, RequiredItemId4, RequiredItemId5, RequiredItemId6, RequiredItemCount1, RequiredItemCount2, RequiredItemCount3, RequiredItemCount4, RequiredItemCount5, RequiredItemCount6, "
+        // 101           102             103             104             105              106                107                108                109                110                   111                   112                   113
+        "RequiredSpell, ObjectiveText1, ObjectiveText2, ObjectiveText3, ObjectiveText4,  RewardCurrencyId1, RewardCurrencyId2, RewardCurrencyId3, RewardCurrencyId4, RewardCurrencyCount1, RewardCurrencyCount2, RewardCurrencyCount3, RewardCurrencyCount4, "
+        // 114                 115                  116                  117                  118                     119                     120                    121
+        "RequiredCurrencyId1, RequiredCurrencyId2, RequiredCurrencyId3, RequiredCurrencyId4, RequiredCurrencyCount1, RequiredCurrencyCount2, RequiredCurrencyCount3, RequiredCurrencyCount4, "
+        // 122                  123                   124                  125                  126          127
+        "QuestGiverTextWindow, QuestGiverTargetName, QuestTurnTextWindow, QuestTurnTargetName, SoundAccept, SoundTurnIn"
+        " FROM quest_template");
 
-    //                                    0        1         2             3           4             5       6                  7                8                9
-    result = WorldDatabase.Query("SELECT `entry`, `Method`, `ZoneOrSort`, `MinLevel`, `QuestLevel`, `Type`, `RequiredClasses`, `RequiredRaces`, `RequiredSkill`, `RequiredSkillValue`,"
-    //                        10                     11                   12                       13                     14                       15                     16                  17
-                            "`RepObjectiveFaction`, `RepObjectiveValue`, `RequiredMinRepFaction`, `RequiredMinRepValue`, `RequiredMaxRepFaction`, `RequiredMaxRepValue`, `SuggestedPlayers`, `LimitTime`,"
-    //                        18            19              20             21             22                23                  24           25              26
-                            "`QuestFlags`, `SpecialFlags`, `PrevQuestId`, `NextQuestId`, `ExclusiveGroup`, `NextQuestInChain`, `SrcItemId`, `SrcItemCount`, `SrcSpell`,"
-    //                        27       28         29            30                 31                  32         33                34                35                36
-                            "`Title`, `Details`, `Objectives`, `OfferRewardText`, `RequestItemsText`, `EndText`, `ObjectiveText1`, `ObjectiveText2`, `ObjectiveText3`, `ObjectiveText4`,"
-    //                        37            38            39            40            41               42               43               44
-                            "`ReqItemId1`, `ReqItemId2`, `ReqItemId3`, `ReqItemId4`, `ReqItemCount1`, `ReqItemCount2`, `ReqItemCount3`, `ReqItemCount4`,"
-    //                        45              46              47              48              49                 50                 51                 52
-                            "`ReqSourceId1`, `ReqSourceId2`, `ReqSourceId3`, `ReqSourceId4`, `ReqSourceCount1`, `ReqSourceCount2`, `ReqSourceCount3`, `ReqSourceCount4`,"
-    //                        53                    54                    55                    56                    57                       58                       59                       60
-                            "`ReqCreatureOrGOId1`, `ReqCreatureOrGOId2`, `ReqCreatureOrGOId3`, `ReqCreatureOrGOId4`, `ReqCreatureOrGOCount1`, `ReqCreatureOrGOCount2`, `ReqCreatureOrGOCount3`, `ReqCreatureOrGOCount4`,"
-    //                        61               62               63               64
-                            "`ReqSpellCast1`, `ReqSpellCast2`, `ReqSpellCast3`, `ReqSpellCast4`,"
-    //                        65                  66                  67                  68                  69                  70
-                            "`RewChoiceItemId1`, `RewChoiceItemId2`, `RewChoiceItemId3`, `RewChoiceItemId4`, `RewChoiceItemId5`, `RewChoiceItemId6`,"
-    //                        71                     72                     73                     74                     75                     76
-                            "`RewChoiceItemCount1`, `RewChoiceItemCount2`, `RewChoiceItemCount3`, `RewChoiceItemCount4`, `RewChoiceItemCount5`, `RewChoiceItemCount6`,"
-    //                        77            78            79            80            81               82               83               84
-                            "`RewItemId1`, `RewItemId2`, `RewItemId3`, `RewItemId4`, `RewItemCount1`, `RewItemCount2`, `RewItemCount3`, `RewItemCount4`,"
-    //                        85                86                87                88                89                90              91              92              93              94
-                            "`RewRepFaction1`, `RewRepFaction2`, `RewRepFaction3`, `RewRepFaction4`, `RewRepFaction5`, `RewRepValue1`, `RewRepValue2`, `RewRepValue3`, `RewRepValue4`, `RewRepValue5`,"
-    //                        95               96                  97          98              99                   100                 101           102       103       104
-                            "`RewOrReqMoney`, `RewMoneyMaxLevel`, `RewSpell`, `RewSpellCast`, `RewMailTemplateId`, `RewMailDelaySecs`, `PointMapId`, `PointX`, `PointY`, `PointOpt`,"
-    //                        105              106              107              108              109                   110                   111                   112
-                            "`DetailsEmote1`, `DetailsEmote2`, `DetailsEmote3`, `DetailsEmote4`, `DetailsEmoteDelay1`, `DetailsEmoteDelay2`, `DetailsEmoteDelay3`, `DetailsEmoteDelay4`,"
-    //                        113                114              115                  116                  117                  118
-                            "`IncompleteEmote`, `CompleteEmote`, `OfferRewardEmote1`, `OfferRewardEmote2`, `OfferRewardEmote3`, `OfferRewardEmote4`,"
-    //                        119                       120                       121                       122
-                            "`OfferRewardEmoteDelay1`, `OfferRewardEmoteDelay2`, `OfferRewardEmoteDelay3`, `OfferRewardEmoteDelay4` %s", whereClause.c_str());
+    }
+    else
+    {
+        std::string whereClause;
+        if (m_dataSource == DB_VMANGOS)
+            whereClause = " FROM `quest_template` t1 WHERE `patch`=(SELECT max(`patch`) FROM `quest_template` t2 WHERE t1.`entry`=t2.`entry` && `patch` <= " + std::to_string(sConfig.GetVmangosContentPatch()) + ")";
+        else if (m_dataSource == DB_CMANGOS_TBC)
+        //                    123                  124
+            whereClause = ", `RewHonorableKills`, `CharTitleId` FROM `quest_template`";
+        else if (m_dataSource == DB_CMANGOS_WOTLK)
+        //                    134                 124            125             126             127                   128        129              130               131               132               133               134
+            whereClause = ", `RewHonorAddition`, `CharTitleId`, `PlayersSlain`, `BonusTalents`, `RewHonorMultiplier`, `RewXPId`, `CompletedText`, `RewRepValueId1`, `RewRepValueId2`, `RewRepValueId3`, `RewRepValueId4`, `RewRepValueId5` FROM `quest_template`";
+        else
+            whereClause = " FROM `quest_template`";
+
+        //                                    0        1         2             3           4             5       6                  7                8                9
+        result = WorldDatabase.Query("SELECT `entry`, `Method`, `ZoneOrSort`, `MinLevel`, `QuestLevel`, `Type`, `RequiredClasses`, `RequiredRaces`, `RequiredSkill`, `RequiredSkillValue`,"
+        //                        10                     11                   12                       13                     14                       15                     16                  17
+                                "`RepObjectiveFaction`, `RepObjectiveValue`, `RequiredMinRepFaction`, `RequiredMinRepValue`, `RequiredMaxRepFaction`, `RequiredMaxRepValue`, `SuggestedPlayers`, `LimitTime`,"
+        //                        18            19              20             21             22                23                  24           25              26
+                                "`QuestFlags`, `SpecialFlags`, `PrevQuestId`, `NextQuestId`, `ExclusiveGroup`, `NextQuestInChain`, `SrcItemId`, `SrcItemCount`, `SrcSpell`,"
+        //                        27       28         29            30                 31                  32         33                34                35                36
+                                "`Title`, `Details`, `Objectives`, `OfferRewardText`, `RequestItemsText`, `EndText`, `ObjectiveText1`, `ObjectiveText2`, `ObjectiveText3`, `ObjectiveText4`,"
+        //                        37            38            39            40            41               42               43               44
+                                "`ReqItemId1`, `ReqItemId2`, `ReqItemId3`, `ReqItemId4`, `ReqItemCount1`, `ReqItemCount2`, `ReqItemCount3`, `ReqItemCount4`,"
+        //                        45              46              47              48              49                 50                 51                 52
+                                "`ReqSourceId1`, `ReqSourceId2`, `ReqSourceId3`, `ReqSourceId4`, `ReqSourceCount1`, `ReqSourceCount2`, `ReqSourceCount3`, `ReqSourceCount4`,"
+        //                        53                    54                    55                    56                    57                       58                       59                       60
+                                "`ReqCreatureOrGOId1`, `ReqCreatureOrGOId2`, `ReqCreatureOrGOId3`, `ReqCreatureOrGOId4`, `ReqCreatureOrGOCount1`, `ReqCreatureOrGOCount2`, `ReqCreatureOrGOCount3`, `ReqCreatureOrGOCount4`,"
+        //                        61               62               63               64
+                                "`ReqSpellCast1`, `ReqSpellCast2`, `ReqSpellCast3`, `ReqSpellCast4`,"
+        //                        65                  66                  67                  68                  69                  70
+                                "`RewChoiceItemId1`, `RewChoiceItemId2`, `RewChoiceItemId3`, `RewChoiceItemId4`, `RewChoiceItemId5`, `RewChoiceItemId6`,"
+        //                        71                     72                     73                     74                     75                     76
+                                "`RewChoiceItemCount1`, `RewChoiceItemCount2`, `RewChoiceItemCount3`, `RewChoiceItemCount4`, `RewChoiceItemCount5`, `RewChoiceItemCount6`,"
+        //                        77            78            79            80            81               82               83               84
+                                "`RewItemId1`, `RewItemId2`, `RewItemId3`, `RewItemId4`, `RewItemCount1`, `RewItemCount2`, `RewItemCount3`, `RewItemCount4`,"
+        //                        85                86                87                88                89                90              91              92              93              94
+                                "`RewRepFaction1`, `RewRepFaction2`, `RewRepFaction3`, `RewRepFaction4`, `RewRepFaction5`, `RewRepValue1`, `RewRepValue2`, `RewRepValue3`, `RewRepValue4`, `RewRepValue5`,"
+        //                        95               96                  97          98              99                   100                 101           102       103       104
+                                "`RewOrReqMoney`, `RewMoneyMaxLevel`, `RewSpell`, `RewSpellCast`, `RewMailTemplateId`, `RewMailDelaySecs`, `PointMapId`, `PointX`, `PointY`, `PointOpt`,"
+        //                        105              106              107              108              109                   110                   111                   112
+                                "`DetailsEmote1`, `DetailsEmote2`, `DetailsEmote3`, `DetailsEmote4`, `DetailsEmoteDelay1`, `DetailsEmoteDelay2`, `DetailsEmoteDelay3`, `DetailsEmoteDelay4`,"
+        //                        113                114              115                  116                  117                  118
+                                "`IncompleteEmote`, `CompleteEmote`, `OfferRewardEmote1`, `OfferRewardEmote2`, `OfferRewardEmote3`, `OfferRewardEmote4`,"
+        //                        119                       120                       121                       122
+                                "`OfferRewardEmoteDelay1`, `OfferRewardEmoteDelay2`, `OfferRewardEmoteDelay3`, `OfferRewardEmoteDelay4` %s", whereClause.c_str());
+    }
 
     if (!result)
     {

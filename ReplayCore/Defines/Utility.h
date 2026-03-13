@@ -93,5 +93,14 @@ inline void StringToLower(std::string& text)
     });
 }
 
+inline uint32 GetFirstIndexInMask(uint32 mask)
+{
+    for (uint32 i = 0; i < 32; ++i)
+        if (mask & (1 << i))
+            return uint32(i);
+
+    return 0;
+}
+
 #endif
 

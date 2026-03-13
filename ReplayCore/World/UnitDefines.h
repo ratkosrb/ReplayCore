@@ -38,7 +38,7 @@ enum Races
     RACE_WORGEN             = 22, // cata
 };
 
-#define MAX_RACES         21
+#define MAX_RACES         23
 
 #define RACEMASK_ALL_PLAYABLE_VANILLA \
     ((1<<(RACE_HUMAN-1))    |(1<<(RACE_ORC-1))      |(1<<(RACE_DWARF-1))   | \
